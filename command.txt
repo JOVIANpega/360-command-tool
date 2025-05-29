@@ -1,9 +1,7 @@
-JOVIAN
-
-//指令可以自行修改
-
+//指令可以自行修改 
 
 ==全部指令==
+0. I LOVE JOVIAN= 
 1. 取得360序號 Get 360 SN States = diag -g sn dev|diag -g sn mb|diag -g hwver|diag -g sku|pegacmd version
 2. 檢查IVKEY Get IVKey = diag -g ivLic FD|diag -g ivLic LPR
 3. 取得SD卡 Get SD state = diag -g status sd
@@ -46,7 +44,7 @@ JOVIAN
 
 
 ==單板指令==
-1. 取得360MB序號 Get 360 SN States = diag -g sn mb|diag -g hwver|diag -g sku|pegacmd version
+1. 取得MB序號 Get 360 SN States = diag -g sn mb|diag -g hwver|diag -g sku|pegacmd version
 2. 取得SD卡狀態 Get SD state = diag -g status sd
 3. 取得Microchip序號 Get Microchip SN = cryptoauth_test sernum|diag -g status emmc
 4. 取得MAC位址 Get MAC = diag -g mac eth|diag -g mac wifi
@@ -71,7 +69,7 @@ JOVIAN
 
 
 ==整機指令==
-1. 取得360序號狀態 Get 360 SN States = diag -g sn dev|diag -g sn mb|diag -g hwver|diag -g sku|pegacmd version
+1. 取得360整機序號狀態 Get 360 SN States = diag -g sn dev|diag -g sn mb|diag -g hwver|diag -g sku|pegacmd version
 2. 檢查IVKEY Get IVKey = diag -g ivLic FD|diag -g ivLic LPR
 3. 取得SD卡狀態 Get SD state = diag -g status sd
 4. 取得Microchip序號 Get Microchip SN = cryptoauth_test sernum|diag -g status emmc
@@ -103,7 +101,7 @@ JOVIAN
 
 
 ==出貨指令==
-1. 讀取版本 Read version = pegacmd version|diag -g sn dev|diag -g sn mb|diag -g hwver|diag -g sku
+1. 讀取出貨SN版本 Read version = pegacmd version|cat /usr/lib/firmware/fw_imagetype|pegacmd version
 2. 檢查IVKEY Get IVKey = diag -g ivLic FD|diag -g ivLic LPR
 3. 執行重啟 Do Reboot = reboot
 4. 執行預設 Do Default = diag -s default|reboot|SHOW:reboot and回到初始狀態
@@ -120,4 +118,4 @@ JOVIAN
 
 //指令可以自行修改
 
-
+VALO360 指令通_V2  created by JOVIAN
