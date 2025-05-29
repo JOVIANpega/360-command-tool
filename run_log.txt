@@ -1,0 +1,10 @@
+main.py 啟動
+import TabManager 失敗：Traceback (most recent call last):
+  File "d:\((Python TOOL\指令工具-20250428T020034Z-001\V1.12\main.py", line 19, in <module>
+    from ui_parts.ui_main import TabManager
+  File "d:\((Python TOOL\指令工具-20250428T020034Z-001\V1.12\ui_parts\ui_main.py", line 14, in <module>
+    from serial_worker import SerialWorker
+  File "d:\((Python TOOL\指令工具-20250428T020034Z-001\V1.12\serial_worker.py", line 1, in <module>
+    import serial
+ModuleNotFoundError: No module named 'serial'
+

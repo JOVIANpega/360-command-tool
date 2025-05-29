@@ -1,0 +1,121 @@
+//指令可以自行修改 
+
+==全部指令==
+0. I LOVE JOVIAN= 
+1. 取得360序號 Get 360 SN States = diag -g sn dev|diag -g sn mb|diag -g hwver|diag -g sku|pegacmd version
+2. 檢查IVKEY Get IVKey = diag -g ivLic FD|diag -g ivLic LPR
+3. 取得SD卡 Get SD state = diag -g status sd
+4. 取得Microchip序號 Get Microchip SN = cryptoauth_test sernum|diag -g status emmc
+5. 取得MAC位址 Get MAC = diag -g mac eth|diag -g mac wifi
+6. 取得WIFI序號 Get WIFI SN = wpa_cli status
+7. 取得電池資訊 Get Battery info = echo 0 > /sys/bus/i2c/devices/14-0055/charger_monitor_perc
+8. 取得電池百分比 Get Battery percent = diag -g bat percent|diag -g temp bat|diag -g voltage bat
+9. 取得SIM卡狀態 Get SIM = test5g at+cfun=1|test5g at+cimi|
+10. 取得出貨版本 Get shipping version = cat /usr/lib/firmware/fw_imagetype|pegacmd version
+11. 檢查乙太網路速度 Check ETH Speed = diag -g status eth0
+12. 檢查陀螺儀與電子羅盤 Check Gyro and Compass = diag -g imu acc_calib|diag -g imu ang_calib
+13. 檢查藍牙 Check BT = bt_init
+14. 檢查LEN感測器溫度 Check LEN sensor溫度 = diag -g temp s1|diag -g temp s2|diag -g temp s3|diag -g temp s0
+15. 檢查5G模組 Check 5G Module = lspci|test5g at+egmr=0,5|test5g at+simcomati|
+16. 檢查LED燈狀態 Check LED = SHOW:確認LED綠燈橘燈熄滅，三種狀態...|diag -s led g off|diag -s led o off|diag -s led g on|diag -s led o on
+17. 檢查按鍵 Check 按鍵 = diag -s keySw|DELAY:10|diag -g keySw
+18. 檢查天線 Check 天線 = test5g AT+CSYSSEL=?|test5g at+cqcnv|test5g at+csub
+19. 檢查喇叭2_1k音調 check speaker2_1k tone = diag -s audio /usr/share/manufacturing/1kHz_0dBFS_16bit.wav
+20. 檢查喇叭1_pop音效 check speaker1_pop = aplay -Dhw:0,1 /usr/share/manufacturing/pop-sound.wav
+21. 執行私鑰 DO Private Key = diag -s privKey key|diag -g privKey key
+22. 執行陀螺儀 Do Gyro = diag -g who imu|inv_self_test -c -w
+23. 執行電子羅盤 Do E compass = SHOW:讓DUT，左右轉圈，直到發出音樂|readmag_imu_2d -c s -p 0|
+24. 執行重啟 Do Reboot = reboot
+25. 執行預設 Do Default = diag -s default|reboot|SHOW:reboot and回到初始狀態
+26. 執行關機 DO關機 = SHOW:系統即將關機，照指示拔掉POE|shutdown.sh
+27. 讀取版本 Read version = pegacmd version
+28. 燒機音量正常 Burning volume normal = burning.sh|diag -s audio volume 100
+29. 切換出貨 Switch to shipping = cp /mnt/sd/VALO360.tar.gz /var/fota|ls -l /var/fota/|diag -s fota|reboot|SHOW:切換成出貨模式
+30. 檢查出貨韌體 Check shipping FW = cat /us/lib/firmware/fw_imagetype|pegacmd version
+31. 設定固定IP Set static IP = ifconfig eth0 192.168.11.143|ifconfig
+32. 檢查DMIC設定 Check DMIC_setup = amixer -c 0 set 'DMIC1 Gain' 255|amixer -c 0 set 'DMIC2 Gain' 255|amixer -c 0 set 'DMIC3 Gain' 255|amixer -c 0 set 'DMIC4 Gain' 255|diag -s audio volume 100
+33. 檢查DMIC錄音 Check DMIC_Record = SHOW:錄音5 sec|arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic1.wav|arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic2.wav
+34. 檢查DMIC播放 Check DMIC_play = aplay -Dhw:0,1 dmic1.wav|aplay -Dhw:0,1 dmic2.wav
+35. 設定喇叭音量30% Do Speaker volume30% = diag -s audio volume 30
+36. 燒機音量小 Burning volume low = burning.sh|diag -s audio volume 30
+
+
+
+
+
+==單板指令==
+1. 取得MB序號 Get 360 SN States = diag -g sn mb|diag -g hwver|diag -g sku|pegacmd version
+2. 取得SD卡狀態 Get SD state = diag -g status sd
+3. 取得Microchip序號 Get Microchip SN = cryptoauth_test sernum|diag -g status emmc
+4. 取得MAC位址 Get MAC = diag -g mac eth|diag -g mac wifi
+5. 取得WIFI序號 Get WIFI SN = wpa_cli status
+6. 取得電池資訊 Get Battery info = echo 0 > /sys/bus/i2c/devices/14-0055/charger_monitor_perc
+7. 取得電池百分比 Get Battery percent = diag -g bat percent|diag -g temp bat|diag -g voltage bat
+8. 取得SIM卡狀態 Get SIM = test5g at+cfun=1|test5g at+cimi|
+9. 檢查乙太網路速度 Check ETH Speed = diag -g status eth0|ifconfig
+10. 檢查藍牙 Check BT = bt_init
+11. 檢查5G模組 Check 5G Module = lspci|test5g at+egmr=0,5|test5g at+simcomati|
+12. 檢查LED燈 Check LED = SHOW:確認LED綠燈橘燈熄滅，三種狀態|diag -s led g off|diag -s led o off|diag -s led g on|diag -s led o on
+13. 檢查喇叭_1k音調 check speaker2_1k tone = diag -s audio /usr/share/manufacturing/1kHz_0dBFS_16bit.wav
+14. 檢查喇叭_pop音效 check speaker1_pop = aplay -Dhw:0,1 /usr/share/manufacturing/pop-sound.wav
+15. 執行重啟 Do Reboot = reboot
+16. 執行預設 Do Default = diag -s default|reboot|SHOW:reboot and回到初始狀態
+17. 讀取版本 Read version = pegacmd version
+18. 設定固定IP Set static IP = ifconfig eth0 192.168.11.143|ifconfig
+19. 檢查DMIC設定 Check DMIC_setup = amixer -c 0 set 'DMIC1 Gain' 255|amixer -c 0 set 'DMIC2 Gain' 255|amixer -c 0 set 'DMIC3 Gain' 255|amixer -c 0 set 'DMIC4 Gain' 255|diag -s audio volume 100
+20. 檢查DMIC錄音 Check DMIC_Record = SHOW:錄音5 sec|arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic1.wav|arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic2.wav
+21. 檢查DMIC播放 Check DMIC_play = aplay -Dhw:0,1 dmic1.wav|aplay -Dhw:0,1 dmic2.wav
+
+
+
+==整機指令==
+1. 取得360整機序號狀態 Get 360 SN States = diag -g sn dev|diag -g sn mb|diag -g hwver|diag -g sku|pegacmd version
+2. 檢查IVKEY Get IVKey = diag -g ivLic FD|diag -g ivLic LPR
+3. 取得SD卡狀態 Get SD state = diag -g status sd
+4. 取得Microchip序號 Get Microchip SN = cryptoauth_test sernum|diag -g status emmc
+5. 取得MAC位址 Get MAC = diag -g mac eth|diag -g mac wifi
+6. 取得WIFI序號 Get WIFI SN = wpa_cli status
+7. 取得電池資訊 Get Battery info = echo 0 > /sys/bus/i2c/devices/14-0055/charger_monitor_perc
+8. 取得電池百分比 Get Battery percent = diag -g bat percent|diag -g temp bat|diag -g voltage bat
+9. 取得SIM卡狀態 Get SIM = test5g at+cfun=1|test5g at+cimi|
+10. 取得出貨版本 Get shipping version = cat /usr/lib/firmware/fw_imagetype|pegacmd version
+11. 檢查乙太網路速度 Check ETH Speed = diag -g status eth0
+12. 檢查陀螺儀與電子羅盤 Check Gyro and Compass = diag -g imu acc_calib|diag -g imu ang_calib
+13. 檢查藍牙 Check BT = bt_init
+14. 檢查LEN溫度 Check LEN sensor溫度 = diag -g temp s1|diag -g temp s2|diag -g temp s3|diag -g temp s0
+15. 檢查5G模組 Check 5G Module = lspci|test5g at+egmr=0,5|test5g at+simcomati|
+16. 檢查LED燈狀態 Check LED = SHOW:確認LED綠燈橘燈熄滅，三種狀態|diag -s led g off|diag -s led o off|diag -s led g on|diag -s led o on
+17. 檢查按鍵 Check 按鍵 = diag -s keySw|DELAY:10|diag -g keySw
+18. 檢查天線 Check 天線 = test5g AT+CSYSSEL=?|test5g at+cqcnv|test5g at+csub
+19. 檢查喇叭2_1k 音調 check speaker2_1k tone = diag -s audio /usr/share/manufacturing/1kHz_0dBFS_16bit.wav
+20. 檢查喇叭1_pop音效 check speaker1_pop = aplay -Dhw:0,1 /usr/share/manufacturing/pop-sound.wav
+21. 執行私鑰 DO Private Key = diag -s privKey key|diag -g privKey key
+22. 執行陀螺儀 Do Gyro = diag -g who imu|inv_self_test -c -w
+23. 執行電子羅盤 Do E compass = SHOW:讓DUT，左右轉圈，直到發出音樂|readmag_imu_2d -c s -p 0|
+24. 執行重啟 Do Reboot = reboot
+25. 執行預設 Do Default = diag -s default|reboot|SHOW:reboot and回到初始狀態
+26. 執行關機 DO關機 = SHOW:系統即將關機，照指示拔掉POE|shutdown.sh
+27. 讀取版本 Read version = pegacmd version
+
+
+
+
+==出貨指令==
+1. 讀取出貨SN版本 Read version = pegacmd version|cat /usr/lib/firmware/fw_imagetype|pegacmd version
+2. 檢查IVKEY Get IVKey = diag -g ivLic FD|diag -g ivLic LPR
+3. 執行重啟 Do Reboot = reboot
+4. 執行預設 Do Default = diag -s default|reboot|SHOW:reboot and回到初始狀態
+5. 設定喇叭音量30% Do Speaker volume30% = diag -s audio volume 30
+6. 執行關機 Turn off DUT = SHOW:系統即將關機，照指示拔掉POE，耐心等15sec|shutdown.sh
+7. 燒機音量正常 Burning volume normal = burning.sh|diag -s audio volume 100
+8. 燒機音量小 Burning volume low = burning.sh|diag -s audio volume 30
+9. 切換出貨 Switch to shipping = cp /mnt/sd/VALO360.tar.gz /var/fota|ls -l /var/fota/|diag -s fota|reboot|SHOW:切換成出貨模式
+10. 檢查出貨韌體 Check shipping FW = cat /us/lib/firmware/fw_imagetype|pegacmd version
+11. 出貨初始化設定後關機 Shipping initialization = diag -s default|diag -s ship on
+12. 設定固定IP Set static IP = ifconfig eth0 192.168.11.143|ifconfig
+
+
+
+//指令可以自行修改
+
+VALO360 指令通_V2  created by JOVIAN

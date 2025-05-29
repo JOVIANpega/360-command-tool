@@ -1,0 +1,9 @@
+pyinstaller -F -w --icon=app.ico --name "VALO360指令通" --add-data "app.ico;." --add-data "user_guide.txt;." --add-data "command.txt;." serial_ui.py
+pyinstaller VALO360指令通.spec --clean
+
+pyinstaller -F -w --icon=app.ico --name "VALO360指令通" serial_ui.py
+
+
+pyinstaller --clean --noconfirm --icon=app.ico --add-data "command.txt;." --add-data "user_guide.txt;." --add-data "setup.txt;." --add-data "ui_parts;ui_parts" --name "VALO360指令通" main.py
+
+pyinstaller --clean --noconfirm --icon=app.ico -w --add-data "command.txt;." --add-data "user_guide.txt;." --add-data "setup.txt;."  --name "VALO360指令通" main.py

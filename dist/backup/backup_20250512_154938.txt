@@ -1,0 +1,609 @@
+
+[發送] amixer -c 0 set 'DMIC1 Gain' 255
+
+[發送] amixer -c 0 set 'DMIC2 Gain' 255
+
+[發送] amixer -c 0 set 'DMIC3 Gain' 255
+
+[發送] amixer -c 0 set 'DMIC4 Gain' 255
+
+[發送] diag -s audio volume 100
+amixer -c 0 set 'DMIC1 Gain' 255
+Simple mixer control 'DMIC1 Gain',0
+  Capabilities: volume volume-joined
+  Playback channels: Mono
+  Capture channels: Mono
+  Limits: 0 - 255
+  Mono: 255 [100%]
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ amixer -c 0 set 'DMIC2 Gain' 255
+Simple mixer control 'DMIC2 Gain',0
+  Capabilities: volume volume-joined
+  Playback channels: Mono
+  Capture channels: Mono
+  Limits: 0 - 255
+  Mono: 255 [100%]
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ amixer -c 0 set 'DMIC3 Gain' 255
+Simple mixer control 'DMIC3 Gain',0
+  Capabilities: volume volume-joined
+  Playback channels: Mono
+  Capture channels: Mono
+  Limits: 0 - 255
+  Mono: 255 [100%]
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ amixer -c 0 set 'DMIC4 Gain' 255
+Simple mixer control 'DMIC4 Gain',0
+  Capabilities: volume volume-joined
+  Playback channels: Mono
+  Capture channels: Mono
+  Limits: 0 - 255
+
+[結束] 收到指定結束字串
+
+[發送] aplay -Dhw:0,1 dmic1.wav
+
+[發送] aplay -Dhw:0,1 dmic2.wav
+aplay -Dhw:0,1 dmic1.wav
+dmic1.wav: No such file or directory
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ aplay -Dhw:0,1 dmic2.wav
+dmic2.wav: No such file or directory
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ 
+[結束] 收到指定結束字串
+
+[發送] SHOW:錄音10sec
+
+[發送] arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic1.wav
+
+[發送] arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic2.wav
+SHOW:??10sec
+-sh: SHOW:錄音10sec: not found
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 
+-c 4 dmic1.wav
+Recording WAVE 'dmic1.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Channels 4
+arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic2.wav
+
+
+[結束] 收到指定結束字串
+
+[發送] aplay -Dhw:0,1 dmic1.wav
+
+[發送] aplay -Dhw:0,1 dmic2.wav
+aplay -Dhw:0,1 dmic1.wav
+Playing WAVE 'dmic1.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Channels 4
+aplay -Dhw:0,1 dmic2.wav
+
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ aplay -Dhw:0,1 dmic2.wav
+Playing WAVE 'dmic2.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Channels 4
+
+[結束] 收到指定結束字串
+
+[發送] amixer -c 0 set 'DMIC1 Gain' 255
+
+[發送] amixer -c 0 set 'DMIC2 Gain' 255
+
+[發送] amixer -c 0 set 'DMIC3 Gain' 255
+
+[發送] amixer -c 0 set 'DMIC4 Gain' 255
+
+[發送] diag -s audio volume 100
+amixer -c 0 set 'DMIC1 Gain' 255
+Simple mixer control 'DMIC1 Gain',0
+  Capabilities: volume volume-joined
+  Playback channels: Mono
+  Capture channels: Mono
+  Limits: 0 - 255
+  Mono: 255 [100%]
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ amixer -c 0 set 'DMIC2 Gain' 255
+Simple mixer control 'DMIC2 Gain',0
+  Capabilities: volume volume-joined
+  Playback channels: Mono
+  Capture channels: Mono
+  Limits: 0 - 255
+  Mono: 255 [100%]
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ amixer -c 0 set 'DMIC3 Gain' 255
+Simple mixer control 'DMIC3 Gain',0
+  Capabilities: volume volume-joined
+  Playback channels: Mono
+  Capture channels: Mono
+  Limits: 0 - 255
+  Mono: 255 [100%]
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ amixer -c 0 set 'DMIC4 Gain' 255
+Simple mixer control 'DMIC4 Gain',0
+  Capabilities: volume volume-joined
+  Playback channels: Mono
+  Capture channels: Mono
+  Limits: 0 - 255
+
+[結束] 收到指定結束字串
+
+[發送] SHOW:錄音5 sec
+
+[發送] arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic1.wav
+
+[發送] arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic2.wav
+SHOW:??5 sec
+-sh: SHOW:錄音5: not found
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 
+-c 4 dmic1.wav
+Recording WAVE 'dmic1.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Channels 4
+arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic2.wav
+
+
+[結束] 收到指定結束字串
+
+[發送] aplay -Dhw:0,1 dmic1.wav
+
+[發送] aplay -Dhw:0,1 dmic2.wav
+aplay -Dhw:0,1 dmic1.wav
+Playing WAVE 'dmic1.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Channels 4
+aplay -Dhw:0,1 dmic2.wav
+
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ aplay -Dhw:0,1 dmic2.wav
+Playing WAVE 'dmic2.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Channels 4
+
+[結束] 收到指定結束字串
+
+[發送] SHOW:錄音5 sec
+
+[發送] arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic1.wav
+
+[發送] arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic2.wav
+SHOW:??5 sec
+-sh: SHOW:錄音5: not found
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 
+-c 4 dmic1.wav
+Recording WAVE 'dmic1.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Channels 4
+arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic2.wav
+
+
+[結束] 收到指定結束字串
+
+[發送] SHOW:錄音5 sec
+
+[發送] arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic1.wav
+
+[發送] arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic2.wav
+SHOW:錄音5 sec
+
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ SHOW:??5 sec
+-sh: SHOW:錄音5: not found
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 
+-c 4 dmic1.wav
+Recording WAVE 'dmic1.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Channels 4
+arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic2.wav
+
+
+[結束] 收到指定結束字串
+
+[發送] aplay -Dhw:0,1 dmic1.wav
+
+[發送] aplay -Dhw:0,1 dmic2.wav
+aplay -Dhw:0,1 dmic1.wav
+Playing WAVE 'dmic1.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Channels 4
+aplay -Dhw:0,1 dmic2.wav
+
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ aplay -Dhw:0,1 dmic2.wav
+Playing WAVE 'dmic2.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Channels 4
+
+[結束] 收到指定結束字串
+
+[發送] aplay -Dhw:0,1 dmic1.wav
+
+[發送] aplay -Dhw:0,1 dmic2.wav
+aplay -Dhw:0,1 dmic1.wav
+Playing WAVE 'dmic1.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Channels 4
+aplay -Dhw:0,1 dmic2.wav
+
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ aplay -Dhw:0,1 dmic2.wav
+Playing WAVE 'dmic2.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Channels 4
+
+[結束] 收到指定結束字串
+
+[發送] SHOW:錄音5 sec
+
+[發送] arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic1.wav
+
+[發送] arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic2.wav
+SHOW:??5 sec
+-sh: SHOW:錄音5: not found
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 
+-c 4 dmic1.wav
+Recording WAVE 'dmic1.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Channels 4
+arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic2.wav
+
+
+[結束] 收到指定結束字串
+
+[發送] aplay -Dhw:0,1 dmic1.wav
+
+[發送] aplay -Dhw:0,1 dmic2.wav
+aplay -Dhw:0,1 dmic1.wav
+Playing WAVE 'dmic1.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Channels 4
+aplay -Dhw:0,1 dmic2.wav
+
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ aplay -Dhw:0,1 dmic2.wav
+Playing WAVE 'dmic2.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Channels 4
+
+[結束] 收到指定結束字串
+
+[發送] diag -s audio volume 30
+diag -s audio volume 30
+Simple mixer control 'Amp Output Level',0
+  Capabilities: volume volume-joined
+  Playback channels: Mono
+  Capture channels: Mono
+  Limits: 0 - 28
+  Mono: 3 [11%]
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ 
+[結束] 收到指定結束字串
+
+[發送] aplay -Dhw:0,1 dmic1.wav
+
+[發送] aplay -Dhw:0,1 dmic2.wav
+aplay -Dhw:0,1 dmic1.wav
+Playing WAVE 'dmic1.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Channels 4
+aplay -Dhw:0,1 dmic2.wav
+
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ aplay -Dhw:0,1 dmic2.wav
+Playing WAVE 'dmic2.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Channels 4
+
+[結束] 收到指定結束字串
+
+[發送] burning.sh
+burning.sh
+Starting burning...
+1
+[0;42mSD card is found. [0m
+[  906.913959] RTL8211F Gigabit Ethernet dwc_phy-chipid0-0:01: page 0x0, reg 0, data 0x1040
+[  906.922045] RTL8211F Gigabit Ethernet dwc_phy-chipid0-0:01: or value 0x5040
+[  906.929152] RTL8211F Gigabit Ethernet dwc_phy-chipid0-0:01: phy_write_paged 0x0 0 0x5040
+5G current mode
+/usr/bin/burning.sh: line 104: at+ctxftm=4,41,518598,52,4500,2,14,2,59534,24,3: not found
+Set 5G to FTM mode
+starting gslauncher
+Battery is existent
+Entering while loop
+to do aplay -Dhw:0,1 /usr/share/sounds/alsa/Rear_Right.wav
+Playing WAVE '/usr/share/sounds/alsa/Rear_Right.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Mono
+Fri May  9 08:15:21 GMT 2025: valoVProvider isn't running. Restarting...
+valoVProvider started with PID: 4168
+at+cfun=5
+OK
+at+cfun?
++CFUN: 5
+OK
+upref_enc_resolition 7680 x 3840 
+upref_enc_fps 30
+upref_enc_bitrate 8
+upref_enc_min_qp 20
+upref_enc_max_qp 36
+upref_enc_rc_mode 1
+upref_enc_gop_num 1
+upref_enc_gop 30
+upref_brightness 0
+upref_sharpness 0
+upref_whitebalance 1
+upref_nightvision 0
+upref_stitching_distance 1
+upref_VDO_DDR_ID 1
+upref_dynamic_stitching 0
+upref_hdr_enabled 0
+upref_face_detect_enable 0
+upref_license_plate_enable 0
+upref_scaling_enable 0
+lpd_country =2 
+lpd_country set to USA echo '{ "Profile":"6","Country":"USA","Backend":"16","SpeedTradeoff":"3","Reserved1":"9" }' > /usr/ivlpr/engine.config
+@@@@@ ivAI_SetLicenseKey() success
+g_fps 30
+ipp_out_fmt 420
+g_en_sub 0
+g_en_sub2 0
+parse_vsp_info index : 1 
+parse_vsp_info : read /var/vsp/1m_camview_anchors.txt 
+vsp_vpe_2d_scl_out_w[0] : 2128 
+vsp_vpe_2d_scl_out_w[1] : 2112 
+vsp_vpe_2d_scl_out_w[2] : 2112 
+vsp_vpe_2d_scl_out_w[3] : 2112 
+vsp_vpe_2d_scl_out_h : 3840 
+lut_bin[0] : /var/vsp/1m_cam0_LUT257_ROT90_hflip0.bin 
+lut_bin[1] : /var/vsp/1m_cam1_LUT257_ROT-90_hflip0.bin 
+lut_bin[2] : /var/vsp/1m_cam2_LUT257_ROT90_hflip0.bin 
+lut_bin[3] : /var/vsp/1m_cam3_LUT257_ROT-90_hflip0.bin 
+HDAL: Version: v3.400.0
+stream[4].proc_max_dim.w : 7680, stream[4].proc_max_dim.h  3840
+fusion w = 224, h = 3840, va = 0x7f8724b000, temp_va = 0x7f8731d000
+fusion_pa[0]= 0x13d88b000, va[0] = 0x7f8724b000
+fusion w = 176, h = 3840, va = 0x7f871a6000, temp_va = 0x7f8724b000
+fusion_pa[1]= 0x13db5f000, va[1] = 0x7f871a6000
+fusion w = 208, h = 3840, va = 0x7f870e3000, temp_va = 0x7f871a6000
+fusion_pa[2]= 0x13d9d7000, va[2] = 0x7f870e3000
+fusion w = 176, h = 3840, va = 0x7f8703e000, temp_va = 0x7f870e3000
+fusion_pa[3]= 0x13d6e5000, va[3] = 0x7f8703e000
+dce isp_id = 1
+video_proc_path = 0x24000105, dim = 3840, 2160
+video_proc_path = 0x24010105, dim = 3840, 2160
+video_proc_path = 0x24020105, dim = 3840, 2160
+video_proc_path = 0x24030105, dim = 3840, 2160
+set_vsp_proc_param p_dim->w = 7680, p_dim->h = 3840
+video_proc_path = 0x24040101, dim = 7680, 3840
+set_enc_cfg HD_CODEC_TYPE_H265 w:7680, h:3840
+enc_type=0
+H265 CBR
+load /mnt/persistent/isp/isp_imx678_stitch_0.cfg 
+frame_mask = 0xf
+id = 0, awb_stitch id = 0xffff9630 
+id = 0, ae_stitch id = 0xffff9630 
+
+pull_thread....
+id = 3, awb_stitch id = 0xffff9630 
+id = 3, ae_stitch id = 0xffff9630 
+id = 6, awb_stitch id = 0xffff9630 
+id = 6, ae_stitch id = 0xffff9630 
+id = 9, awb_stitch id = 0xffff9630 
+id = 9, ae_stitch id = 0xffff9630 
+load /mnt/app/isp/isp_imx678_0_ecs0.cfg 
+load /mnt/app/isp/isp_imx678_0_ecs1.cfg 
+load /mnt/app/isp/isp_imx678_0_ecs2.cfg 
+load /mnt/app/isp/isp_imx678_0_ecs3.cfg 
+
+Enable vsp mode
+hdal_panovideo_set_brightness level = 100 
+New come 0, drop olds => base_time 921472303 video_frame_time 921505597
+load /mnt/persistent/isp/isp_imx678_stitch_0.cfg 
+load /mnt/persistent/isp/isp_imx678_stitch_0.cfg 
+load /mnt/persistent/isp/isp_imx678_stitch_0.cfg 
+load /mnt/persistent/isp/isp_imx678_stitch_0.cfg 
+to do aplay -Dhw:0,1 /usr/share/sounds/alsa/Front_Right.wav
+Playing WAVE '/usr/share/sounds/alsa/Front_Right.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Mono
+id = 0, awb_stitch id = 0xffff9630 
+id = 0, ae_stitch id = 0xffff9630 
+id = 3, awb_stitch id = 0xffff9630 
+id = 3, ae_stitch id = 0xffff9630 
+id = 6, awb_stitch id = 0xffff9630 
+id = 6, ae_stitch id = 0xffff9630 
+id = 9, awb_stitch id = 0xffff9630 
+id = 9, ae_stitch id = 0xffff9630 
+load /mnt/app/isp/isp_imx678_0_ecs0.cfg 
+load /mnt/app/isp/isp_imx678_0_ecs1.cfg 
+load /mnt/app/isp/isp_imx678_0_ecs2.cfg 
+load /mnt/app/isp/isp_imx678_0_ecs3.cfg 
+to do aplay -Dhw:0,1 /usr/share/sounds/alsa/Front_Left.wav
+Playing WAVE '/usr/share/sounds/alsa/Front_Left.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Mono
+to do aplay -Dhw:0,1 /usr/share/sounds/alsa/Rear_Center.wav
+Playing WAVE '/usr/share/sounds/alsa/Rear_Center.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Mono
+Fri May  9 08:15:31 GMT 2025: valostreamer isn't running. Restarting...
+valoStreamer started with PID: 4290
+to do aplay -Dhw:0,1 /usr/share/sounds/alsa/Front_Center.wav
+Playing WAVE '/usr/share/sounds/alsa/Front_Center.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Mono
+Simple mixer control 'Amp Output Level',0
+  Capabilities: volume volume-joined
+  Playback channels: Mono
+  Capture channels: Mono
+  Limits: 0 - 28
+  Mono: 13 [46%]
+Simple mixer control 'DMIC1 Gain',0
+  Capabilities: volume volume-joined
+  Playback channels: Mono
+  Capture channels: Mono
+  Limits: 0 - 255
+  Mono: 225 [88%]
+Simple mixer control 'DMIC2 Gain',0
+  Capabilities: volume volume-joined
+  Playback channels: Mono
+  Capture channels: Mono
+  Limits: 0 - 255
+  Mono: 225 [88%]
+Simple mixer control 'DMIC3 Gain',0
+  Capabilities: volume volume-joined
+  Playback channels: Mono
+  Capture channels: Mono
+  Limits: 0 - 255
+  Mono: 225 [88%]
+Simple mixer control 'DMIC4 Gain',0
+  Capabilities: volume volume-joined
+  Playback channels: Mono
+  Capture channels: Mono
+  Limits: 0 - 255
+  Mono: 225 [88%]
+pref_is_hevc_enabled 1
+audio_format: 1
+upref_rtp_mtu: 1250
+SD card mount point: /mnt/sd
+Total capacity: 31902400512 bytes
+Used capacity: 21891809280 bytes
+Free capacity: 10010591232 bytes
+Reserved space: 4785360384 bytes
+hdal_panovideo_capture_init enc_type 2
+File created successfully at /var/vsp/rx_videof_count
+HDAL: Version: v3.400.0
+hd_videoenc_get video_info[4]
+hdal_panovideo_capture_start
+fetch_video_thread
+[ 917.491674863 ] encode_thread first ERP frame 
+to do aplay -Dhw:0,1 /usr/share/sounds/alsa/Rear_Left.wav
+Playing WAVE '/usr/share/sounds/alsa/Rear_Left.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Mono
+0:00:00.042679834 [31m 4290[00m     0x3ce41160 [31;01mERROR  [00m [00;01;36m  GST_PLUGIN_LOADING gstpluginloader.c:442:gst_plugin_loader_try_helper:[00m Spawning gst-plugin-scanner helper failed: Failed to execute child process “/usr/lib/../libexec/gstreamer-1.0/gst-plugin-scanner” (No such file or directory)
+
+(valostreamer:4290): GStreamer-[1;33mWARNING[0m **: [34m11:15:33.971[0m: External plugin loader failed. This most likely means that the plugin loader helper binary was not found or could not be run. You might need to set the GST_PLUGIN_SCANNER environment variable if your setup is unusual. This should normally not be required though.
+
+(valostreamer:4290): GStreamer-[1;33mWARNING[0m **: [34m11:15:34.983[0m: Failed to load plugin '/usr/lib/gstreamer-1.0/libgstjpegformat.so': /usr/lib/gstreamer-1.0/libgstjpegformat.so: undefined symbol: gst_jpeg_parse
+
+[發送] pegacmd version
+
+[發送] diag -g sn dev
+
+[發送] diag -g sn mb
+
+[發送] diag -g hwver
+
+[發送] diag -g sku
+pegacmd version
+
+CYCLE_TIME=1
+CMOS Temp0 34
+CMOS Temp0 34
+CMOS Temp0 34
+CMOS Temp0 33
+Battery TEmp 35
+to do aplay -Dhw:0,1 /usr/share/sounds/alsa/Rear_Right.wav
+Playing WAVE '/usr/share/sounds/alsa/Rear_Right.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Mono
+diag -g sn dev
+
+diag -g sn mb
+
+to do aplay -Dhw:0,1 /usr/share/sounds/alsa/Front_Right.wav
+Playing WAVE '/usr/share/sounds/alsa/Front_Right.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Mono
+diag -g hwver
+
+diag -g sku
+
+to do aplay -Dhw:0,1 /usr/share/sounds/alsa/Front_Left.wav
+Playing WAVE '/usr/share/sounds/alsa/Front_Left.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Mono
+to do aplay -Dhw:0,1 /usr/share/sounds/alsa/Rear_Center.wav
+Playing WAVE '/usr/share/sounds/alsa/Rear_Center.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Mono
+
+[發送] burning.sh
+
+[發送] diag -s audio volume 100
+burning.sh
+Starting burning...
+1
+[0;42mSD card is found. [0m
+diag -s audio volume 100
+
+[ 1135.303952] RTL8211F Gigabit Ethernet dwc_phy-chipid0-0:01: page 0x0, reg 0, data 0x1040
+[ 1135.312035] RTL8211F Gigabit Ethernet dwc_phy-chipid0-0:01: or value 0x5040
+[ 1135.319142] RTL8211F Gigabit Ethernet dwc_phy-chipid0-0:01: phy_write_paged 0x0 0 0x5040
+5G current mode
+/usr/bin/burning.sh: line 104: at+ctxftm=4,41,518598,52,4500,2,14,2,59534,24,3: not found
+Set 5G to FTM mode
+starting gslauncher
+Battery is existent
+ln: /var/ivfdnvt.bin: File exists
+Entering while loop
+to do aplay -Dhw:0,1 /usr/share/sounds/alsa/Rear_Right.wav
+Playing WAVE '/usr/share/sounds/alsa/Rear_Right.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Mono
+Fri May  9 08:19:09 GMT 2025: valoVProvider isn't running. Restarting...
+valoVProvider started with PID: 6511
+upref_enc_resolition 7680 x 3840 
+upref_enc_fps 30
+upref_enc_bitrate 8
+upref_enc_min_qp 20
+upref_enc_max_qp 36
+upref_enc_rc_mode 1
+upref_enc_gop_num 1
+upref_enc_gop 30
+upref_brightness 0
+upref_sharpness 0
+upref_whitebalance 1
+upref_nightvision 0
+upref_stitching_distance 1
+upref_VDO_DDR_ID 1
+upref_dynamic_stitching 0
+upref_hdr_enabled 0
+upref_face_detect_enable 0
+upref_license_plate_enable 0
+upref_scaling_enable 0
+lpd_country =2 
+lpd_country set to USA echo '{ "Profile":"6","Country":"USA","Backend":"16","SpeedTradeoff":"3","Reserved1":"9" }' > /usr/ivlpr/engine.config
+@@@@@ ivAI_SetLicenseKey() success
+g_fps 30
+ipp_out_fmt 420
+g_en_sub 0
+g_en_sub2 0
+parse_vsp_info index : 1 
+parse_vsp_info : read /var/vsp/1m_camview_anchors.txt 
+vsp_vpe_2d_scl_out_w[0] : 2128 
+vsp_vpe_2d_scl_out_w[1] : 2112 
+vsp_vpe_2d_scl_out_w[2] : 2112 
+vsp_vpe_2d_scl_out_w[3] : 2112 
+vsp_vpe_2d_scl_out_h : 3840 
+lut_bin[0] : /var/vsp/1m_cam0_LUT257_ROT90_hflip0.bin 
+lut_bin[1] : /var/vsp/1m_cam1_LUT257_ROT-90_hflip0.bin 
+lut_bin[2] : /var/vsp/1m_cam2_LUT257_ROT90_hflip0.bin 
+lut_bin[3] : /var/vsp/1m_cam3_LUT257_ROT-90_hflip0.bin 
+HDAL: Version: v3.400.0
+at+cfun=5
+OK
+at+cfun?
++CFUN: 5
+OK
+stream[4].proc_max_dim.w : 7680, stream[4].proc_max_dim.h  3840
+fusion w = 224, h = 3840, va = 0x7f9241b000, temp_va = 0x7f924ed000
+fusion_pa[0]= 0x13d88b000, va[0] = 0x7f9241b000
+fusion w = 176, h = 3840, va = 0x7f92376000, temp_va = 0x7f9241b000
+fusion_pa[1]= 0x13db5f000, va[1] = 0x7f92376000
+fusion w = 208, h = 3840, va = 0x7f922b3000, temp_va = 0x7f92376000
+fusion_pa[2]= 0x13d9d7000, va[2] = 0x7f922b3000
+fusion w = 176, h = 3840, va = 0x7f9220e000, temp_va = 0x7f922b3000
+fusion_pa[3]= 0x13d6e5000, va[3] = 0x7f9220e000
+dce isp_id = 1
+video_proc_path = 0x24000105, dim = 3840, 2160
+video_proc_path = 0x24010105, dim = 3840, 2160
+video_proc_path = 0x24020105, dim = 3840, 2160
+video_proc_path = 0x24030105, dim = 3840, 2160
+set_vsp_proc_param p_dim->w = 7680, p_dim->h = 3840
+video_proc_path = 0x24040101, dim = 7680, 3840
+set_enc_cfg HD_CODEC_TYPE_H265 w:7680, h:3840
+enc_type=0
+H265 CBR
+load /mnt/persistent/isp/isp_imx678_stitch_0.cfg 
+frame_mask = 0xf
+
+pull_thread....
+id = 0, awb_stitch id = 0xffff9630 
+id = 0, ae_stitch id = 0xffff9630 
+id = 3, awb_stitch id = 0xffff9630 
+id = 3, ae_stitch id = 0xffff9630 
+id = 6, awb_stitch id = 0xffff9630 
+id = 6, ae_stitch id = 0xffff9630 
+id = 9, awb_stitch id = 0xffff9630 
+id = 9, ae_stitch id = 0xffff9630 
+load /mnt/app/isp/isp_imx678_0_ecs0.cfg 
+load /mnt/app/isp/isp_imx678_0_ecs1.cfg 
+load /mnt/app/isp/isp_imx678_0_ecs2.cfg 
+load /mnt/app/isp/isp_imx678_0_ecs3.cfg 
+
+Enable vsp mode
+hdal_panovideo_set_brightness level = 100 
+New come 2, drop olds => base_time 1148822277 video_frame_time 1148962290
+New come 0, drop olds => base_time 1148962290 video_frame_time 1148995593
+New come 0, drop olds => base_time 1148995593 video_frame_time 1149028923
+load /mnt/persistent/isp/isp_imx678_stitch_0.cfg 
+load /mnt/persistent/isp/isp_imx678_stitch_0.cfg 
+load /mnt/persistent/isp/isp_imx678_stitch_0.cfg 
+load /mnt/persistent/isp/isp_imx678_stitch_0.cfg 
+id = 0, awb_stitch id = 0xffff9630 
+id = 0, ae_stitch id = 0xffff9630 
+id = 3, awb_stitch id = 0xffff9630 
+id = 3, ae_stitch id = 0xffff9630 
+id = 6, awb_stitch id = 0xffff9630 
+id = 6, ae_stitch id = 0xffff9630 
+id = 9, awb_stitch id = 0xffff9630 
+id = 9, ae_stitch id = 0xffff9630 
+load /mnt/app/isp/isp_imx678_0_ecs0.cfg 
+load /mnt/app/isp/isp_imx678_0_ecs1.cfg 
+load /mnt/app/isp/isp_imx678_0_ecs2.cfg 
+load /mnt/app/isp/isp_imx678_0_ecs3.cfg 
+to do aplay -Dhw:0,1 /usr/share/sounds/alsa/Front_Right.wav
+Playing WAVE '/usr/share/sounds/alsa/Front_Right.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Mono
+

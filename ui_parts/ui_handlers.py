@@ -1,0 +1,408 @@
+import subprocess
+import platform
+from tkinter import messagebox, scrolledtext
+import json
+from datetime import datetime
+import os
+import tkinter as tk
+import tkinter.ttk as ttk
+import threading
+
+from config import COMMAND_FILE, GUIDE_FILE, save_setup, list_com_ports, load_setup
+from serial_worker import SerialWorker
+
+class UIHandlers:
+    def __init__(self, parent):
+        self.parent = parent
+        self.countdown_job = None
+        
+    def parse_commands_by_section(self):
+        commands = {}
+        current_section = None
+        with open(COMMAND_FILE, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                if line.startswith('==') and line.endswith('=='):
+                    current_section = line.strip('=')
+                    commands[current_section] = {}
+                elif '=' in line and current_section:
+                    k, v = line.split('=', 1)
+                    commands[current_section][k.strip()] = v.strip()
+        return commands
+
+    def update_cmd_list(self):
+        section = self.parent.components.section_var.get()
+        if section == '全部指令':
+            # 合併所有區段的指令
+            all_commands = {}
+            for section_commands in self.parent.commands_by_section.values():
+                all_commands.update(section_commands)
+            self.parent.components.combobox_cmd['values'] = list(all_commands.keys())
+        else:
+            # 顯示特定區段的指令
+            self.parent.components.combobox_cmd['values'] = list(self.parent.commands_by_section.get(section, {}).keys())
+        
+        # 如果有指令，選擇第一個
+        if self.parent.components.combobox_cmd['values']:
+            self.parent.components.combobox_cmd.set(self.parent.components.combobox_cmd['values'][0])
+
+    def check_ping(self):
+        print("check_ping called")
+        # 如果已經在 PING，則終止
+        if hasattr(self, 'ping_thread') and self.ping_thread is not None and self.ping_thread.is_alive():
+            self.ping_stop = True
+            if hasattr(self, 'ping_process') and self.ping_process is not None:
+                try:
+                    if self.ping_process.poll() is None:
+                        self.ping_process.terminate()
+                    self.parent.components.add_to_buffer("\n[Ping 已中止]\n", "error")
+                except Exception as e:
+                    self.parent.components.add_to_buffer(f"\n[Ping 終止失敗: {e}]\n", "error")
+            self.parent.components.btn_ping.config(text='Ping')
+            self.ping_process = None
+            # ping 結束時重置進度條
+            self.parent.components.reset_progress()
+            return
+
+        def ping_worker():
+            print("ping_worker started")
+            try:
+                default_ip = self.parent.setup.get('Default_IP', '192.168.11.143')
+                ip = self.parent.components.entry_ip.get().strip() or default_ip
+                self.parent.components.progress.config(style="blue.Horizontal.TProgressbar", value=0)
+                self.update_status_light(False)
+                param = '-n' if platform.system().lower() == 'windows' else '-c'
+                command = ['ping', param, '4', '-w', '1000', ip]
+                self.ping_stop = False
+                self.parent.components.btn_ping.config(text='中止PING')
+                self.parent.components.add_to_buffer(f"\n=== 開始 Ping {ip} ===\n", "success")
+                self.parent.root.update_idletasks()
+                startupinfo = None
+                if platform.system().lower() == 'windows':
+                    startupinfo = subprocess.STARTUPINFO()
+                    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                    startupinfo.wShowWindow = subprocess.SW_HIDE
+                self.ping_process = subprocess.Popen(
+                    command,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    bufsize=1,
+                    universal_newlines=True,
+                    startupinfo=startupinfo
+                )
+                total_packets = 4
+                received_packets = 0
+                last_progress = 0
+                while True:
+                    if self.ping_stop:
+                        break
+                    output = self.ping_process.stdout.readline()
+                    if output == '' and self.ping_process.poll() is not None:
+                        break
+                    if output:
+                        self.parent.root.after(0, lambda o=output: self.parent.components.add_to_buffer(o, "error" if ("請求超時" in o or "無法連線" in o or "失敗" in o) else None))
+                        if "位元組" in output and "時間" in output or "請求超時" in output or "無法連線" in output or "失敗" in output:
+                            received_packets += 1
+                            progress = (received_packets / total_packets) * 100
+                            if progress != last_progress:
+                                self.parent.root.after(0, lambda p=progress: self.parent.components.progress.config(value=p))
+                                last_progress = progress
+                error = self.ping_process.stderr.read()
+                if error:
+                    self.parent.root.after(0, lambda: self.parent.components.add_to_buffer(error, "error"))
+                return_code = self.ping_process.poll()
+                if not self.ping_stop and return_code == 0:
+                    self.parent.root.after(0, lambda: self.parent.components.add_to_buffer("\nPing 成功！\n", "success"))
+                    self.parent.root.after(0, lambda: self.update_status_light(True))
+                elif not self.ping_stop:
+                    self.parent.root.after(0, lambda: self.parent.components.add_to_buffer("\nPing 失敗！\n", "error"))
+                    self.parent.root.after(0, lambda: self.update_status_light(False))
+            except Exception as e:
+                self.parent.root.after(0, lambda e=e: self.parent.components.add_to_buffer(f"Ping 執行錯誤: {str(e)}\n", "error"))
+                self.parent.root.after(0, lambda: self.update_status_light(False))
+            finally:
+                # ping 結束時重置進度條
+                self.parent.root.after(0, lambda: self.parent.components.reset_progress())
+                self.parent.root.after(0, lambda: self.parent.components.btn_ping.config(text='Ping'))
+                self.ping_process = None
+
+        self.ping_thread = threading.Thread(target=ping_worker, daemon=True)
+        self.ping_thread.start()
+
+    def refresh_com_ports(self):
+        self.parent.components.combobox_com['values'] = list_com_ports()
+        self.parent.components.combobox_com.set('')
+
+    def clear_output(self, event=None):
+        self.parent.components.text_output.configure(state='normal')
+        self.parent.components.text_output.delete('1.0', 'end')
+        self.parent.components.text_output.configure(state='normal')
+
+    def backup_output(self):
+        try:
+            backup_dir = 'backup'
+            if not os.path.exists(backup_dir):
+                os.makedirs(backup_dir)
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            filename = os.path.join(backup_dir, f'backup_{timestamp}.txt')
+            content = self.parent.components.text_output.get('1.0', 'end')
+            with open(filename, 'w', encoding='utf-8') as f:
+                f.write(content)
+            messagebox.showinfo('備份成功', f'回應內容已備份至：\n{filename}')
+        except Exception as e:
+            messagebox.showerror('備份失敗', f'備份時發生錯誤：\n{str(e)}')
+
+    def on_end_string_entered(self, event):
+        new_string = self.parent.components.combobox_end.get().strip()
+        if not new_string:
+            return
+        try:
+            end_strings = json.loads(self.parent.setup.get('EndStrings', '["root"]'))
+        except Exception:
+            end_strings = ['root']
+        if new_string not in end_strings:
+            end_strings.append(new_string)
+            self.parent.setup['EndStrings'] = json.dumps(end_strings, ensure_ascii=False)
+            save_setup(self.parent.setup)
+            self.parent.components.update_end_strings()
+        self.parent.components.combobox_end.set(new_string)
+
+    def change_ui_font_size(self, size):
+        try:
+            # 限制字體大小在合理範圍內
+            size = max(min(int(size), 20), 8)
+            
+            # 更新 UI 字體
+            self.parent.components.update_ui_fonts(size)
+            
+            # 保存設置
+            self.parent.setup['UIFontSize'] = str(size)
+            save_setup(self.parent.setup)
+
+            # 強制更新 UI
+            self.parent.root.update_idletasks()
+            # 同步更新 label_ui_font_value
+            if hasattr(self.parent.components, 'label_ui_font_value'):
+                self.parent.components.label_ui_font_value.config(text=str(size))
+        except Exception as e:
+            print(f"更改介面字體大小時發生錯誤: {e}")
+
+    def change_content_font_size(self, size):
+        try:
+            # 限制字體大小在合理範圍內
+            size = max(min(int(size), 20), 8)
+            
+            # 更新內容字體
+            self.parent.components.update_content_fonts(size)
+            
+            # 保存設置
+            self.parent.setup['ContentFontSize'] = str(size)
+            save_setup(self.parent.setup)
+            
+            # 強制更新 UI
+            self.parent.root.update_idletasks()
+        except Exception as e:
+            print(f"更改內容字體大小時發生錯誤: {e}")
+
+    def toggle_guide(self):
+        if self.parent.guide_window and self.parent.guide_window.winfo_exists():
+            self.parent.guide_window.destroy()
+            self.parent.guide_window = None
+        else:
+            self.parent.guide_window = tk.Toplevel(self.parent.root)
+            self.parent.guide_window.title('使用說明')
+            self.parent.guide_window.geometry('600x400')
+            try:
+                with open(GUIDE_FILE, 'r', encoding='utf-8') as f:
+                    content = f.read()
+            except Exception as e:
+                content = f'無法讀取 user_guide.txt: {e}'
+            current_font_size = self.parent.components.content_font_scale.get()
+            font = ('Consolas', current_font_size)
+            text = scrolledtext.ScrolledText(self.parent.guide_window, font=font)
+            text.pack(fill='both', expand=True)
+            text.insert('1.0', content)
+            text.config(state='disabled')
+
+    def on_execute(self):
+        if self.parent.components.btn_exec['text'] == '中止':
+            self.parent.stop_event.set()
+            return
+        # 清除舊倒數
+        if self.countdown_job:
+            self.parent.root.after_cancel(self.countdown_job)
+            self.countdown_job = None
+        com = self.parent.components.combobox_com.get()
+        cmd_key = self.parent.components.combobox_cmd.get()
+        end_str = self.parent.components.combobox_end.get()
+        section = self.parent.components.section_var.get()
+        try:
+            timeout = float(self.parent.components.entry_timeout.get())
+            self.parent.components.label_countdown.configure(text=f'倒數: {timeout}')
+            self.countdown_job = self.parent.root.after(1000, self.update_countdown, timeout)
+        except ValueError:
+            messagebox.showwarning('提示', '請輸入正確的超時秒數')
+            return
+        if not com or not cmd_key or not end_str:
+            messagebox.showwarning('提示', '請選擇COM口、指令並輸入結束字串')
+            return
+        cmd = self.parent.commands_by_section.get(section, {}).get(cmd_key, '')
+        cmd_list = cmd.split('|')
+        self.parent.components.btn_exec.config(text='中止')  # 只改文字，不改 state
+        self.parent.components.update_progress(0, "blue.Horizontal.TProgressbar")
+        self.parent.stop_event.clear()
+        # 啟動 SerialWorker
+        self.parent.thread = SerialWorker(
+            com, cmd_list, end_str, timeout,
+            on_data=lambda text, tag: self.parent.components.add_to_buffer(text, tag),
+            on_status=lambda connected: self.parent.root.after(0, lambda: self.update_status_light(connected)),
+            on_progress=lambda p: self.parent.root.after(0, lambda: self.parent.components.update_progress(p)),
+            on_finish=self.on_command_finish,
+            stop_event=self.parent.stop_event
+        )
+        self.parent.thread.start()
+        self.on_end_string_entered(None)
+
+    def on_command_finish(self):
+        self.parent.components.btn_exec.config(text='執行指令')  # 只改文字，不改 state
+        self.parent.components.reset_progress()
+        if self.countdown_job:
+            self.parent.root.after_cancel(self.countdown_job)
+            self.countdown_job = None
+        self.parent.components.label_countdown.configure(text='')
+
+    def update_status_light(self, connected):
+        color = 'green' if connected else 'red'
+        self.parent.components.status_canvas.itemconfig(self.parent.components.status_light, fill=color)
+
+    def on_save_setup(self):
+        # 保存 DUT 設定
+        dut_setup = {
+            'COM': self.parent.components.combobox_com.get(),
+            'Timeout': self.parent.components.entry_timeout.get(),
+            'EndString': self.parent.components.combobox_end.get(),
+            'UIFontSize': self.parent.components.font_size_var.get(),
+            'ContentFontSize': self.parent.components.content_font_size_var.get(),
+            'Title': self.parent.title(),
+            'EndStrings': json.dumps(self.parent.components.combobox_end['values'], ensure_ascii=False),
+            'Default_IP': self.parent.components.entry_ip.get(),
+            'WinWidth': str(self.parent.winfo_width()),
+            'WinHeight': str(self.parent.winfo_height()),
+            'LastSection': self.parent.components.section_var.get()
+        }
+        
+        # 保存 FIXTURE 設定
+        fixture_setup = {
+            'COM': self.parent.components.fixture_com_var.get(),
+            'FixtureFontSize': self.parent.components.fixture_font_size_var.get(),
+            'MB': self.parent.components.mb_var.get(),
+            'CMD': self.parent.components.fixture_cmd_var.get()
+        }
+        
+        # 保存所有設定
+        save_setup({
+            'DUT': dut_setup,
+            'FIXTURE': fixture_setup
+        })
+        messagebox.showinfo('成功', '設定已保存')
+
+    def on_load_setup(self):
+        setup = load_setup()
+        
+        # 載入 DUT 設定
+        dut_setup = setup.get('DUT', {})
+        self.parent.components.combobox_com.set(dut_setup.get('COM', ''))
+        self.parent.components.entry_timeout.delete(0, tk.END)
+        self.parent.components.entry_timeout.insert(0, dut_setup.get('Timeout', '30'))
+        self.parent.components.combobox_end.set(dut_setup.get('EndString', 'root'))
+        self.parent.components.font_size_var.set(dut_setup.get('UIFontSize', '12'))
+        self.parent.components.content_font_size_var.set(dut_setup.get('ContentFontSize', '12'))
+        self.parent.title(dut_setup.get('Title', 'VALO360 指令通'))
+        try:
+            end_strings = json.loads(dut_setup.get('EndStrings', '["root"]'))
+            self.parent.components.combobox_end['values'] = end_strings
+        except:
+            self.parent.components.combobox_end['values'] = ['root']
+        self.parent.components.entry_ip.delete(0, tk.END)
+        self.parent.components.entry_ip.insert(0, dut_setup.get('Default_IP', '192.168.11.143'))
+        self.parent.components.section_var.set(dut_setup.get('LastSection', '全部指令'))
+        
+        # 載入 FIXTURE 設定
+        fixture_setup = setup.get('FIXTURE', {})
+        self.parent.components.fixture_com_var.set(fixture_setup.get('COM', ''))
+        self.parent.components.fixture_font_size_var.set(fixture_setup.get('FixtureFontSize', '12'))
+        self.parent.components.mb_var.set(fixture_setup.get('MB', True))
+        self.parent.components.fixture_cmd_var.set(fixture_setup.get('CMD', ''))
+        
+        # 更新字體大小
+        self.parent.components.update_font_size()
+        self.parent.components.update_content_font_size()
+        self.parent.components.update_fixture_font_size()
+        
+        # 更新視窗大小
+        try:
+            width = int(dut_setup.get('WinWidth', '800'))
+            height = int(dut_setup.get('WinHeight', '600'))
+            self.parent.geometry(f'{width}x{height}')
+        except:
+            pass
+
+    def update_countdown(self, remaining):
+        if self.parent.stop_event.is_set():
+            self.parent.components.label_countdown.configure(text='')
+            return
+        if remaining > 0:
+            self.parent.components.label_countdown.configure(text=f'倒數: {remaining}')
+            self.countdown_job = self.parent.root.after(1000, self.update_countdown, remaining - 1)
+        else:
+            self.parent.components.label_countdown.configure(text='')
+            self.parent.stop_event.set()
+
+    def remove_end_string(self):
+        try:
+            # 獲取當前選擇的結束字串
+            current_value = self.parent.components.combobox_end.get()
+            if not current_value:
+                return
+                
+            # 從 combobox 的值列表中移除
+            values = list(self.parent.components.combobox_end['values'])
+            if current_value in values:
+                values.remove(current_value)
+                self.parent.components.combobox_end['values'] = values
+                
+                # 更新 setup.json 中的兩個位置
+                if 'DUT' not in self.parent.setup:
+                    self.parent.setup['DUT'] = {}
+                self.parent.setup['DUT']['EndStrings'] = values
+                self.parent.setup['EndStrings'] = values
+                
+                # 保存到文件
+                with open('setup.json', 'w', encoding='utf-8') as f:
+                    json.dump(self.parent.setup, f, indent=4, ensure_ascii=False)
+                
+                # 更新 combobox 的顯示
+                if values:
+                    self.parent.components.combobox_end.set(values[0])
+                else:
+                    self.parent.components.combobox_end.set('')
+                    
+        except Exception as e:
+            print(f"Error in remove_end_string: {e}")
+
+    def apply_font_size(self):
+        """套用字體大小設定"""
+        try:
+            size = int(self.parent.components.entry_font_size.get())
+            if 8 <= size <= 20:
+                self.parent.setup['DUT']['ContentFontSize'] = str(size)
+                self.parent.save_setup()
+                self.parent.components.text_output.configure(font=('Consolas', size))
+                messagebox.showinfo("成功", f"字體大小已更新為 {size}")
+            else:
+                messagebox.showwarning("警告", "字體大小必須在 8-20 之間")
+        except ValueError:
+            messagebox.showwarning("警告", "請輸入有效的數字")

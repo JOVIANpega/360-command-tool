@@ -1,0 +1,63 @@
+
+=== 開始 Ping 192.168.11.143 ===
+
+Ping 192.168.11.143 (使用 32 位元組的資料):
+回覆自 192.168.11.143: 位元組=32 時間=3ms TTL=64
+回覆自 192.168.11.143: 位元組=32 時間=2ms TTL=64
+回覆自 192.168.11.143: 位元組=32 時間=2ms TTL=64
+
+[Ping 已中止]
+Ping 執行錯誤: 'NoneType' object has no attribute 'poll'
+
+=== 開始 Ping 192.168.11.143 ===
+
+Ping 192.168.11.143 (使用 32 位元組的資料):
+回覆自 192.168.11.143: 位元組=32 時間=1ms TTL=64
+回覆自 192.168.11.143: 位元組=32 時間=2ms TTL=64
+回覆自 192.168.11.143: 位元組=32 時間=2ms TTL=64
+回覆自 192.168.11.143: 位元組=32 時間=2ms TTL=64
+
+192.168.11.143 的 Ping 統計資料:
+    封包: 已傳送 = 4，已收到 = 4, 已遺失 = 0 (0% 遺失)，
+大約的來回時間 (毫秒):
+    最小值 = 1ms，最大值 = 2ms，平均 = 1ms
+
+Ping 成功！
+
+=== 開始 Ping 192.168.11.143 ===
+
+Ping 192.168.11.143 (使用 32 位元組的資料):
+回覆自 192.168.11.143: 位元組=32 時間=1ms TTL=64
+回覆自 192.168.11.143: 位元組=32 時間=1ms TTL=64
+回覆自 192.168.11.143: 位元組=32 時間=2ms TTL=64
+回覆自 192.168.11.143: 位元組=32 時間=2ms TTL=64
+
+192.168.11.143 的 Ping 統計資料:
+    封包: 已傳送 = 4，已收到 = 4, 已遺失 = 0 (0% 遺失)，
+大約的來回時間 (毫秒):
+    最小值 = 1ms，最大值 = 2ms，平均 = 1ms
+
+Ping 成功！
+[送出] diag -g sn dev
+[送出] diag -g sn mb
+[送出] diag -g hwver
+[送出] diag -g sku
+[送出] pegacmd version
+diag -g sn dev
+diag: dev sn WE251400006
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ diag -g sn mb
+diag: mb sn 2560844800021
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ diag -g hwver
+diag: hwver R110
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ diag -g sku
+diag: sku N3C2401C
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ pegacmd version
+0.5.9.43.0_f0fab61
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ 
+[結束] 收到指定結束字串
+

@@ -1,0 +1,32 @@
+{
+  "fixture_description": "僅供羣元治具使用，此分頁先選擇治具串口、測試類別，並發送控制命令給治具設備。點擊下方按鈕發送。",
+  "DUT": {
+    "COM": "COM5",
+    "Timeout": "30",
+    "EndString": "root",
+    "UIFontSize": "13",
+    "ContentFontSize": "11",
+    "Title": "VALO360 指令通",
+    "EndStrings": [
+      "root",
+      "ROOT"
+    ],
+    "Default_IP": "192.168.11.143",
+    "WinWidth": "1536",
+    "WinHeight": "793",
+    "LastSection": "全部指令"
+  },
+  "FIXTURE": {
+    "COM": "COM5",
+    "CMD": "",
+    "FUNCTION": false,
+    "MB": true,
+    "原始的指令": false,
+    "FixtureFontSize": "12"
+  },
+  "UIFontSize": "13",
+  "ContentFontSize": "11",
+  "WinWidth": "1536",
+  "WinHeight": "793",
+  "EndStrings": "[\"root\", \"ROOT\"]"
+}

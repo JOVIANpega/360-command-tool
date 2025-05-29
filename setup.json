@@ -1,0 +1,33 @@
+{
+  "FIXTURE": {
+    "COM": "COM5",
+    "FixtureFontSize": "12",
+    "CMD": "",
+    "FUNCTION": false,
+    "MB": true,
+    "原始的指令": false
+  },
+  "DUT": {
+    "Timeout": "30",
+    "EndString": "root",
+    "UIFontSize": "13",
+    "ContentFontSize": "14",
+    "Title": "VALO360 指令通",
+    "EndStrings": [
+      "root",
+      "Boot_done",
+      "MAG progress=100",
+      "360_BOOT_DONE"
+    ],
+    "Default_IP": "192.168.11.143",
+    "WinWidth": "1536",
+    "WinHeight": "793",
+    "COM": "",
+    "LastSection": "整機指令"
+  },
+  "UIFontSize": "13",
+  "ContentFontSize": "14",
+  "WinWidth": "1536",
+  "WinHeight": "793",
+  "EndStrings": "[\"root\", \"Boot_done\", \"MAG progress=100\", \"360_BOOT_DONE\"]"
+}

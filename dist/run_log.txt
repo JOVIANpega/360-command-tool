@@ -1,0 +1,442 @@
+main.py 啟動
+成功 import SerialUI
+進入 main()
+建立 Tk() 完成
+SerialUI 初始化完成
+進入 mainloop()
+mainloop() 結束
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+main.py 啟動
+成功 import TabManager
+main.py 啟動
+成功 import TabManager
+main.py 啟動
+成功 import TabManager
+main.py 啟動
+成功 import TabManager
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+main.py 啟動
+成功 import TabManager
+main.py 啟動
+成功 import TabManager
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+main.py 啟動
+main.py 啟動
+main.py 啟動
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+main.py 啟動
+main.py 啟動
+main.py 啟動
+main.py 啟動
+main.py 啟動
+main.py 啟動
+main.py 啟動
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
