@@ -34,7 +34,7 @@ class UIComponents:
         x = (screen_width // 2) - (width // 2)
         y = (screen_height // 2) - (height // 2)
         self.parent.root.geometry(f'{width}x{height}+{x}+{y}')
-
+        
     def init_ui(self):
         # 建立主框架
         self.main_frame = ttk.PanedWindow(self.parent.parent, orient='horizontal', style="Main.TFrame")
@@ -141,7 +141,7 @@ class UIComponents:
             rb.bind("<Leave>", lambda e, b=rb: self.update_radio_bg())
             self.section_radiobuttons.append(rb)
         self.update_radio_bg()
-        
+
         # 添加說明文字
         self.section_description = ttk.Label(
             section_frame, 
@@ -245,52 +245,47 @@ class UIComponents:
         # 將 ui_font_scale 的 command 綁定為 handlers.change_ui_font_size，避免 lambda 導致無法正確更新
         self.ui_font_scale.config(command=self.parent.handlers.change_ui_font_size)
         # label_ui_font_value 由 change_ui_font_size 內部主動更新
+        
+        # 添加倒數計時標籤 - 移到更明顯的位置
+        countdown_frame = ttk.Frame(settings_frame, style="TFrame")
+        countdown_frame.grid(row=3, column=0, sticky='ew', pady=5)
+        countdown_frame.columnconfigure(0, weight=1)
+        
+        # 倒數計時標籤 - 使用更大的字體和明顯的顏色
+        self.label_countdown = tk.Label(
+            countdown_frame, 
+            text='', 
+            font=('Microsoft JhengHei UI', 16, 'bold'),
+            fg='red',  # 紅色文字
+            bg='white',  # 白色背景
+            anchor='center'
+        )
+        self.label_countdown.grid(row=0, column=0, sticky='ew', padx=5, pady=2)
 
     def init_output_components(self):
         try:
-            # 文字輸出區域
+            # 建立輸出區域
             self.text_output = scrolledtext.ScrolledText(
                 self.right_panel,
-                font=('Consolas', int(self.parent.setup.get('ContentFontSize', '12'))),
-                bg='white', fg='black', insertbackground='black', wrap='none'
+                wrap=tk.WORD,
+                width=50,
+                height=20,
+                font=('Microsoft JhengHei UI', int(self.parent.setup.get('ContentFontSize', '12')))
             )
             self.text_output.grid(row=0, column=0, sticky='nsew')
+            self.right_panel.grid_rowconfigure(0, weight=1)
+            self.right_panel.grid_columnconfigure(0, weight=1)
             
-            # 設定文字標籤
-            self.text_output.tag_configure("success", foreground="green")
-            self.text_output.tag_configure("error", foreground="red")
-            self.text_output.tag_configure("send", foreground="#0056d6")
+            # 設定 tag
+            self.text_output.tag_configure("send", foreground="blue")
+            self.text_output.tag_configure("end", foreground="green")  # 收到結束字串為綠色
+            self.text_output.tag_configure("timeout", foreground="red")  # 超時為紅色
+            self.text_output.tag_configure("purple", foreground="#800080")  # 紫色
             
-            # 進度條框架
-            progress_frame = ttk.Frame(self.right_panel)
-            progress_frame.grid(row=1, column=0, sticky='ew', pady=5)
-            progress_frame.columnconfigure(0, weight=1)
-
-            # 進度條
-            self.progress = ttk.Progressbar(
-                progress_frame,
-                mode='determinate',
-                style="gray.Horizontal.TProgressbar"
-            )
-            self.progress.grid(row=0, column=0, sticky='ew')
-            self.progress['value'] = 0
-            
-            # 倒數計時標籤
-            self.label_countdown = ttk.Label(
-                progress_frame,
-                text='',
-                style="TLabel",
-                font=("Consolas", 18, "bold")
-            )
-            self.label_countdown.grid(row=0, column=1, padx=10)
-            
-            # 配置 grid 權重
-            self.right_panel.rowconfigure(0, weight=1)
-            self.right_panel.rowconfigure(1, weight=0)
-            self.right_panel.columnconfigure(0, weight=1)
-            
+            # 設定唯讀
+            self.text_output.config(state='disabled')
         except Exception as e:
-            print(f"初始化輸出組件時發生錯誤: {e}")
+            print(f"Error in init_output_components: {e}")
             raise
 
     def init_exec_button_left_panel(self):
@@ -299,7 +294,7 @@ class UIComponents:
         exec_frame.grid(row=999, column=0, sticky='ew', pady=8)
         exec_frame.columnconfigure(0, weight=1)
         self.btn_exec = tk.Button(exec_frame, text='執行指令',
-                                 command=self.parent.handlers.on_execute,
+            command=self.parent.handlers.on_execute,
                                  bg='#cccccc', fg='black',
                                  activebackground='#4caf50', activeforeground='white',
                                  font=('Microsoft JhengHei UI', 20, 'bold'),
@@ -378,15 +373,28 @@ class UIComponents:
         self.combobox_end['values'] = end_strings
 
     def add_to_buffer(self, text, tag=None):
+        # 設為可編輯狀態
+        self.text_output.configure(state='normal')
+        
         # 若是 [送出] 開頭自動用 send tag
-        if text.strip().startswith('[送出]'):
-            tag = 'send'
-        self.parent.text_buffer.append((text, tag))
-        if len(self.parent.text_buffer) > self.parent.buffer_size:
-            self.parent.text_buffer = self.parent.text_buffer[-self.parent.buffer_size:]
-        if self.parent.buffer_timer:
-            self.parent.root.after_cancel(self.parent.buffer_timer)
-        self.parent.buffer_timer = self.parent.root.after(self.parent.update_interval, self.flush_buffer)
+        if text.startswith('[發送]'):
+            self.text_output.insert(tk.END, text, "send")
+        # 若是 [結束] 開頭自動用 end tag
+        elif text.startswith('[結束]'):
+            self.text_output.insert(tk.END, text, "end")
+        # 若是包含 inserted 的行，使用 purple tag
+        elif "inserted" in text:
+            self.text_output.insert(tk.END, text, "purple")
+        # 其他情況使用指定的 tag
+        elif tag:
+            self.text_output.insert(tk.END, text, tag)
+        else:
+            self.text_output.insert(tk.END, text)
+        
+        # 自動捲到最底
+        self.text_output.see(tk.END)
+        # 設回唯讀狀態
+        self.text_output.configure(state='disabled')
 
     def flush_buffer(self):
         if not self.parent.text_buffer:
@@ -398,7 +406,7 @@ class UIComponents:
             else:
                 self.text_output.insert(tk.END, text)
         self.text_output.see(tk.END)  # 自動捲到最底
-        self.text_output.configure(state='normal')
+        self.text_output.configure(state='disabled')  # 設回唯讀狀態
         self.parent.text_buffer = []
 
     def update_ui_fonts(self, size=None):

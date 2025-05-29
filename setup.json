@@ -1,33 +1,37 @@
 {
-  "FIXTURE": {
-    "COM": "COM5",
-    "FixtureFontSize": "12",
-    "CMD": "",
-    "FUNCTION": false,
-    "MB": true,
-    "原始的指令": false
-  },
   "DUT": {
-    "Timeout": "30",
-    "EndString": "root",
+    "COM": "COM5",
+    "Timeout": "10",
+    "EndString": "root77",
     "UIFontSize": "13",
-    "ContentFontSize": "14",
+    "ContentFontSize": "12",
     "Title": "VALO360 指令通",
     "EndStrings": [
       "root",
-      "Boot_done",
-      "MAG progress=100",
-      "360_BOOT_DONE"
+      "root77"
     ],
     "Default_IP": "192.168.11.143",
     "WinWidth": "1536",
     "WinHeight": "793",
-    "COM": "",
-    "LastSection": "整機指令"
+    "LastSection": "單板指令"
   },
+  "FIXTURE": {
+    "COM": "COM6",
+    "CMD": "G - 下壓制具",
+    "FUNCTION": false,
+    "MB": true,
+    "原始的指令": false,
+    "FixtureFontSize": "13"
+  },
+  "COM": "COM5",
+  "Timeout": "10",
+  "EndString": "root77",
   "UIFontSize": "13",
-  "ContentFontSize": "14",
+  "ContentFontSize": "12",
+  "Title": "VALO360 指令通",
+  "EndStrings": "[\"root\", \"root77\"]",
+  "Default_IP": "192.168.11.143",
   "WinWidth": "1536",
   "WinHeight": "793",
-  "EndStrings": "[\"root\", \"Boot_done\", \"MAG progress=100\", \"360_BOOT_DONE\"]"
+  "LastSection": "出貨指令"
 }

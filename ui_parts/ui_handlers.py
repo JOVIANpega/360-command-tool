@@ -139,7 +139,7 @@ class UIHandlers:
     def clear_output(self, event=None):
         self.parent.components.text_output.configure(state='normal')
         self.parent.components.text_output.delete('1.0', 'end')
-        self.parent.components.text_output.configure(state='normal')
+        self.parent.components.text_output.configure(state='disabled')
 
     def backup_output(self):
         try:
@@ -239,21 +239,49 @@ class UIHandlers:
         cmd_key = self.parent.components.combobox_cmd.get()
         end_str = self.parent.components.combobox_end.get()
         section = self.parent.components.section_var.get()
+        
+        print(f"[DEBUG] 執行指令: COM={com}, CMD={cmd_key}, Section={section}")
+        
         try:
             timeout = float(self.parent.components.entry_timeout.get())
-            self.parent.components.label_countdown.configure(text=f'倒數: {timeout}')
-            self.countdown_job = self.parent.root.after(1000, self.update_countdown, timeout)
+            if hasattr(self.parent.components, 'label_countdown'):
+                self.parent.components.label_countdown.configure(text=f'倒數: {int(timeout)}')
+            # 從 timeout-1 開始倒數，因為第一秒已經顯示了
+            self.countdown_job = self.parent.root.after(1000, self.update_countdown, timeout - 1)
         except ValueError:
             messagebox.showwarning('提示', '請輸入正確的超時秒數')
             return
         if not com or not cmd_key or not end_str:
             messagebox.showwarning('提示', '請選擇COM口、指令並輸入結束字串')
             return
-        cmd = self.parent.commands_by_section.get(section, {}).get(cmd_key, '')
+        
+        # 獲取指令
+        if section == '全部指令':
+            # 從所有區段中查找指令
+            cmd = ''
+            for section_commands in self.parent.commands_by_section.values():
+                if cmd_key in section_commands:
+                    cmd = section_commands[cmd_key]
+                    break
+        else:
+            cmd = self.parent.commands_by_section.get(section, {}).get(cmd_key, '')
+        
+        if not cmd:
+            messagebox.showwarning('提示', f'找不到指令: {cmd_key}')
+            return
+            
+        print(f"[DEBUG] 找到指令: {cmd}")
+        
         cmd_list = cmd.split('|')
         self.parent.components.btn_exec.config(text='中止')  # 只改文字，不改 state
         self.parent.components.update_progress(0, "blue.Horizontal.TProgressbar")
         self.parent.stop_event.clear()
+        
+        # 在回應區域顯示開始執行的訊息
+        self.parent.components.add_to_buffer(f"\n[發送] 開始執行指令: {cmd_key}\n", "send")
+        self.parent.components.add_to_buffer(f"[發送] COM口: {com}\n", "send")
+        self.parent.components.add_to_buffer(f"[發送] 指令內容: {cmd}\n", "send")
+        
         # 啟動 SerialWorker
         self.parent.thread = SerialWorker(
             com, cmd_list, end_str, timeout,
@@ -272,7 +300,8 @@ class UIHandlers:
         if self.countdown_job:
             self.parent.root.after_cancel(self.countdown_job)
             self.countdown_job = None
-        self.parent.components.label_countdown.configure(text='')
+        if hasattr(self.parent.components, 'label_countdown'):
+            self.parent.components.label_countdown.configure(text='')
 
     def update_status_light(self, connected):
         color = 'green' if connected else 'red'
@@ -352,14 +381,32 @@ class UIHandlers:
 
     def update_countdown(self, remaining):
         if self.parent.stop_event.is_set():
-            self.parent.components.label_countdown.configure(text='')
+            if hasattr(self.parent.components, 'label_countdown'):
+                self.parent.components.label_countdown.configure(text='')
             return
+            
         if remaining > 0:
-            self.parent.components.label_countdown.configure(text=f'倒數: {remaining}')
+            # 顯示倒數秒數（整數）
+            if hasattr(self.parent.components, 'label_countdown'):
+                self.parent.components.label_countdown.configure(text=f'倒數: {int(remaining)}')
+            
+            # 計算進度百分比（從 0 開始到 100）
+            try:
+                total_timeout = float(self.parent.components.entry_timeout.get())
+                progress = ((total_timeout - remaining) / total_timeout) * 100
+                self.parent.components.update_progress(progress, "blue.Horizontal.TProgressbar")
+            except (ValueError, ZeroDivisionError):
+                pass
+            
+            # 每秒更新一次
             self.countdown_job = self.parent.root.after(1000, self.update_countdown, remaining - 1)
         else:
-            self.parent.components.label_countdown.configure(text='')
-            self.parent.stop_event.set()
+            # 倒數結束
+            if hasattr(self.parent.components, 'label_countdown'):
+                self.parent.components.label_countdown.configure(text='倒數: 0')
+            self.parent.components.update_progress(100, "blue.Horizontal.TProgressbar")
+            # 稍微延遲後停止
+            self.parent.root.after(500, lambda: self.parent.stop_event.set())
 
     def remove_end_string(self):
         try:

@@ -18,12 +18,12 @@ GUIDE_FILE = resource_path('user_guide.txt')
 
 default_setup = {
     'DUT': {
-        'COM': '',
-        'Timeout': '30',
-        'EndString': 'root',
-        'UIFontSize': '12',
-        'ContentFontSize': '12',
-        'Title': 'VALO360 指令通',
+    'COM': '',
+    'Timeout': '30',
+    'EndString': 'root',
+    'UIFontSize': '12',
+    'ContentFontSize': '12',
+    'Title': 'VALO360 指令通',
         'EndStrings': json.dumps(['root'], ensure_ascii=False),
         'Default_IP': '192.168.11.143',
         'WinWidth': '800',

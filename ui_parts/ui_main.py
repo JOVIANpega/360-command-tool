@@ -5,12 +5,21 @@ from tkinter import ttk, scrolledtext, messagebox
 import threading
 import json
 from datetime import datetime
+import subprocess
+import webbrowser
 
 # 將當前目錄加入 Python 路徑
 current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(current_dir)
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
 
-from config import load_setup, save_setup, list_com_ports, GUIDE_FILE, COMMAND_FILE, load_commands
+# 導入配置模組
+try:
+    from config import load_setup, save_setup, list_com_ports, GUIDE_FILE, COMMAND_FILE, load_commands
+except ImportError as e:
+    print(f"導入 config 模組失敗: {e}")
+    print(f"當前路徑: {sys.path}")
+    sys.exit(1)
 
 # 檢查 command.txt
 try:
@@ -19,9 +28,13 @@ except Exception as e:
     messagebox.showerror('錯誤', str(e))
     sys.exit(1)
 
-from serial_worker import SerialWorker
-from ui_parts.ui_components import UIComponents
-from ui_parts.ui_handlers import UIHandlers
+try:
+    from serial_worker import SerialWorker
+    from ui_parts.ui_components import UIComponents
+    from ui_parts.ui_handlers import UIHandlers
+except ImportError as e:
+    print(f"導入模組失敗: {e}")
+    sys.exit(1)
 
 class TabManager:
     def __init__(self, root):
@@ -40,16 +53,20 @@ class TabManager:
         # 創建分頁
         self.dut_frame = ttk.Frame(self.notebook, style='Main.TFrame')
         self.fixture_frame = ttk.Frame(self.notebook, style='Main.TFrame')
+        self.handover_frame = ttk.Frame(self.notebook, style='Main.TFrame')  # 新增第三個 tab
         
         # 配置分頁的 grid
         self.dut_frame.grid_rowconfigure(0, weight=1)
         self.dut_frame.grid_columnconfigure(0, weight=1)
         self.fixture_frame.grid_rowconfigure(0, weight=1)
         self.fixture_frame.grid_columnconfigure(0, weight=1)
+        self.handover_frame.grid_rowconfigure(0, weight=1)
+        self.handover_frame.grid_columnconfigure(0, weight=1)
         
         # 添加分頁到 notebook
         self.notebook.add(self.dut_frame, text='DUT 控制')
         self.notebook.add(self.fixture_frame, text='治具控制')
+        self.notebook.add(self.handover_frame, text='使用說明')  # 改名為使用說明
         
         # 設置分頁切換事件
         self.notebook.bind('<<NotebookTabChanged>>', self.on_tab_changed)
@@ -57,6 +74,10 @@ class TabManager:
         # 初始化分頁內容
         self.init_dut_tab()
         self.init_fixture_tab()
+        self.init_guide_tab()  # 改名為 init_guide_tab
+        
+        # 綁定關閉事件
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
     
     def init_global_styles(self):
         style = ttk.Style()
@@ -94,20 +115,115 @@ class TabManager:
         self.fixture_ui = FixtureFrame(self.fixture_frame)
         self.fixture_ui.pack(fill='both', expand=True)
     
+    def init_guide_tab(self):
+        # 初始化使用說明分頁
+        # 創建主框架
+        guide_main_frame = ttk.LabelFrame(
+            self.handover_frame, 
+            text="使用說明", 
+            padding=20, 
+            style="Main.TLabelframe"
+        )
+        guide_main_frame.grid(row=0, column=0, sticky='nsew', padx=20, pady=20)
+        
+        # 標題
+        title_label = ttk.Label(
+            guide_main_frame,
+            text="VALO360 指令通 使用說明",
+            font=('Microsoft JhengHei UI', 18, 'bold'),
+            style="TLabel"
+        )
+        title_label.grid(row=0, column=0, pady=(0, 20))
+        
+        # 說明文字
+        desc_label = ttk.Label(
+            guide_main_frame,
+            text="點擊下方按鈕開啟詳細的使用說明文件",
+            font=('Microsoft JhengHei UI', 14),
+            style="TLabel"
+        )
+        desc_label.grid(row=1, column=0, pady=(0, 30))
+        
+        # 開啟使用說明按鈕
+        def open_guide():
+            try:
+                # 獲取 EXE 目錄路徑
+                if getattr(sys, 'frozen', False):
+                    # 如果是打包後的 EXE
+                    exe_dir = os.path.dirname(sys.executable)
+                else:
+                    # 如果是開發環境
+                    exe_dir = os.path.dirname(os.path.abspath(__file__))
+                    exe_dir = os.path.dirname(exe_dir)  # 回到上一層目錄
+                
+                guide_file = os.path.join(exe_dir, "VALO360 指令通使用指南.html")
+                
+                if not os.path.exists(guide_file):
+                    messagebox.showerror("錯誤", f"找不到使用指南檔案：\n{guide_file}")
+                    return
+                
+                # 嘗試用 Chrome 開啟
+                chrome_paths = [
+                    r"C:\Program Files\Google\Chrome\Application\chrome.exe",
+                    r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+                    os.path.expanduser(r"~\AppData\Local\Google\Chrome\Application\chrome.exe")
+                ]
+                
+                chrome_opened = False
+                for chrome_path in chrome_paths:
+                    if os.path.exists(chrome_path):
+                        try:
+                            subprocess.Popen([chrome_path, guide_file])
+                            chrome_opened = True
+                            break
+                        except Exception:
+                            continue
+                
+                # 如果 Chrome 開啟失敗，嘗試用預設瀏覽器
+                if not chrome_opened:
+                    try:
+                        webbrowser.open(f"file:///{guide_file.replace(os.sep, '/')}")
+                    except Exception as e:
+                        messagebox.showerror("錯誤", f"無法開啟使用指南：\n{str(e)}")
+                        
+            except Exception as e:
+                messagebox.showerror("錯誤", f"開啟使用指南時發生錯誤：\n{str(e)}")
+        
+        guide_button = tk.Button(
+            guide_main_frame,
+            text="開啟使用說明",
+            command=open_guide,
+            font=('Microsoft JhengHei UI', 16, 'bold'),
+            width=20,
+            height=3,
+            bg='#cccccc',
+            fg='black',
+            relief='groove',
+            borderwidth=2,
+            highlightthickness=0
+        )
+        guide_button.grid(row=2, column=0, pady=20)
+        
+        # 按鈕 hover 效果
+        guide_button.bind("<Enter>", lambda e: guide_button.config(bg="#4caf50", fg="white"))
+        guide_button.bind("<Leave>", lambda e: guide_button.config(bg="#cccccc", fg="black"))
+
     def on_tab_changed(self, event):
         # 獲取當前選中的分頁
-        current_tab = self.notebook.select()
-        tab_text = self.notebook.tab(current_tab, "text")
-        # 先全部設回藍底白字
-        for i in range(self.notebook.index('end')):
-            self.notebook.tab(i, style='TNotebook.Tab')
+        selected_tab = self.notebook.select()
+        tab_text = self.notebook.tab(selected_tab, "text")
+        
         # 根據分頁切換處理資源
         if tab_text == 'DUT 控制':
-            self.dut_ui.activate()
+            if hasattr(self, 'dut_ui'):
+                self.dut_ui.activate()
         elif tab_text == '治具控制':
-            self.fixture_ui.activate()
-        elif tab_text == 'HANDOVER':
-            self.notebook.tab(current_tab, style='Green.TNotebook.Tab')
+            # 治具控制分頁的處理邏輯
+            if hasattr(self, 'fixture_ui') and hasattr(self.fixture_ui, 'refresh_ports'):
+                self.fixture_ui.refresh_ports()
+        elif tab_text == '使用說明':
+            # 使用說明分頁的處理邏輯
+            pass
 
     def get_dut_settings(self):
         # 假設 self.dut_frame 內有 SerialUI 或相關元件
@@ -123,11 +239,29 @@ class TabManager:
         # 若無，請根據你的 FIXTURE 分頁元件組合自行組 dict
         return {}
 
+    def on_close(self):
+        """TabManager 關閉事件處理"""
+        try:
+            # 如果有 DUT UI，先保存其設定
+            if hasattr(self, 'dut_ui'):
+                self.dut_ui.on_close()
+            else:
+                # 如果沒有 DUT UI，直接關閉
+                self.root.destroy()
+        except Exception as e:
+            print(f'[ERROR] TabManager 關閉時發生錯誤: {e}')
+            self.root.destroy()
+
 class SerialUI:
     def __init__(self, parent, root):
         self.parent = parent
         self.root = root
-        self.setup = load_setup()
+        
+        # 首先讀取 setup.json
+        setup_data = load_setup()
+        # 從 DUT 分層中讀取設定
+        self.setup = setup_data.get('DUT', {})
+        print(f"[DEBUG] 已讀取 setup.json DUT 設定: {self.setup}")
         
         # 配置父容器的 grid
         self.parent.grid_rowconfigure(0, weight=1)
@@ -163,6 +297,12 @@ class SerialUI:
             except Exception:
                 end_strings = ["root"]
         self.components.combobox_end['values'] = end_strings
+        
+        # 讀取並應用設定
+        self.load_initial_settings()
+        
+        # 綁定關閉事件
+        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
 
     def init_styles(self):
         style = ttk.Style()
@@ -191,19 +331,54 @@ class SerialUI:
     def activate(self):
         """當分頁被選中時調用"""
         # 更新串口列表
-        self.components.update_com_ports()
+        self.handlers.refresh_com_ports()
         # 其他激活操作...
 
     def on_close(self):
+        """程式關閉時保存所有設定"""
         try:
-            self.setup['COM'] = self.components.combobox_com.get()
-            self.setup['Timeout'] = self.components.entry_timeout.get()
-            self.setup['EndString'] = self.components.combobox_end.get()
-            save_setup(self.setup)
+            print("[DEBUG] 程式關閉，正在保存設定...")
+            
+            # 收集當前所有設定
+            current_settings = {
+                'COM': self.components.combobox_com.get(),
+                'Timeout': self.components.entry_timeout.get(),
+                'EndString': self.components.combobox_end.get(),
+                'UIFontSize': str(self.components.ui_font_scale.get()),
+                'ContentFontSize': str(self.components.content_font_scale.get()),
+                'Default_IP': self.components.entry_ip.get(),
+                'WinWidth': str(self.root.winfo_width()),
+                'WinHeight': str(self.root.winfo_height()),
+                'LastSection': self.components.section_var.get()
+            }
+            
+            # 保存 EndStrings
+            try:
+                end_strings = list(self.components.combobox_end['values'])
+                current_settings['EndStrings'] = end_strings
+            except Exception:
+                current_settings['EndStrings'] = ["root"]
+            
+            # 讀取完整的 setup 資料
+            full_setup = load_setup()
+            # 更新 DUT 分層
+            full_setup['DUT'].update(current_settings)
+            
+            # 保存到檔案
+            save_setup(full_setup)
+            print(f"[DEBUG] 設定已保存到 DUT 分層: {current_settings}")
+            
+            # 停止所有執行緒
             if self.stop_event:
                 self.stop_event.set()
+                
+            # 關閉程式
+            self.root.destroy()
+            
         except Exception as e:
-            messagebox.showerror('錯誤', f'關閉程式時發生錯誤: {e}')
+            print(f'[ERROR] 關閉程式時發生錯誤: {e}')
+            # 即使發生錯誤也要關閉程式
+            self.root.destroy()
 
     def get_settings(self):
         # 回傳 DUT 分頁所有設定
@@ -225,6 +400,52 @@ class SerialUI:
         settings['WinHeight'] = str(self.root.winfo_height())
         settings['LastSection'] = c.section_var.get() if hasattr(c, 'section_var') else '全部指令'
         return settings
+
+    def load_initial_settings(self):
+        """程式啟動時讀取並應用設定"""
+        try:
+            # 讀取 COM 口設定
+            com_port = self.setup.get('COM', '')
+            if com_port:
+                # 刷新 COM 口列表
+                self.handlers.refresh_com_ports()
+                # 如果設定的 COM 口在列表中，則選擇它
+                if com_port in self.components.combobox_com['values']:
+                    self.components.combobox_com.set(com_port)
+            
+            # 讀取超時設定
+            timeout = self.setup.get('Timeout', '30')
+            self.components.entry_timeout.delete(0, tk.END)
+            self.components.entry_timeout.insert(0, timeout)
+            
+            # 讀取結束字串設定
+            end_string = self.setup.get('EndString', 'root')
+            self.components.combobox_end.set(end_string)
+            
+            # 讀取 IP 地址設定
+            default_ip = self.setup.get('Default_IP', '192.168.11.143')
+            self.components.entry_ip.delete(0, tk.END)
+            self.components.entry_ip.insert(0, default_ip)
+            
+            # 讀取字體大小設定
+            ui_font_size = int(self.setup.get('UIFontSize', '12'))
+            content_font_size = int(self.setup.get('ContentFontSize', '12'))
+            self.components.ui_font_scale.set(ui_font_size)
+            self.components.content_font_scale.set(content_font_size)
+            
+            # 應用字體設定
+            self.components.update_ui_fonts(ui_font_size)
+            self.components.update_content_fonts(content_font_size)
+            
+            # 讀取最後選擇的指令分類
+            last_section = self.setup.get('LastSection', '全部指令')
+            self.components.section_var.set(last_section)
+            self.components.update_cmd_list()
+            
+            print(f"[DEBUG] 已載入設定: COM={com_port}, Timeout={timeout}, EndString={end_string}")
+            
+        except Exception as e:
+            print(f"[ERROR] 載入設定時發生錯誤: {e}")
 
 # 若有 FixtureFrame 也在這裡加 get_settings
 from FIXTURE.fixture13 import FixtureFrame
