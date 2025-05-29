@@ -133,8 +133,19 @@ class UIHandlers:
         self.ping_thread.start()
 
     def refresh_com_ports(self):
-        self.parent.components.combobox_com['values'] = list_com_ports()
-        self.parent.components.combobox_com.set('')
+        # 保存當前選擇
+        current_selection = self.parent.components.combobox_com.get()
+        # 更新 COM 口列表
+        new_ports = list_com_ports()
+        self.parent.components.combobox_com['values'] = new_ports
+        
+        # 如果當前選擇仍在新列表中，保持選擇；否則清空
+        if current_selection and current_selection in new_ports:
+            self.parent.components.combobox_com.set(current_selection)
+            print(f"[DEBUG] refresh_com_ports: 保持選擇 {current_selection}")
+        else:
+            self.parent.components.combobox_com.set('')
+            print(f"[DEBUG] refresh_com_ports: 清空選擇，當前選擇 '{current_selection}' 不在新列表 {new_ports} 中")
 
     def clear_output(self, event=None):
         self.parent.components.text_output.configure(state='normal')

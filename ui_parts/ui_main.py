@@ -259,9 +259,9 @@ class SerialUI:
         
         # 首先讀取 setup.json
         setup_data = load_setup()
-        # 從 DUT 分層中讀取設定
-        self.setup = setup_data.get('DUT', {})
-        print(f"[DEBUG] 已讀取 setup.json DUT 設定: {self.setup}")
+        # 從 DUT_Control 分層中讀取設定
+        self.setup = setup_data.get('DUT_Control', {})
+        print(f"[DEBUG] 已讀取 setup.json DUT_Control 設定: {self.setup}")
         
         # 配置父容器的 grid
         self.parent.grid_rowconfigure(0, weight=1)
@@ -289,8 +289,8 @@ class SerialUI:
         self.commands_by_section = self.handlers.parse_commands_by_section()
         self.components.update_cmd_list()
 
-        # 載入 EndStrings
-        end_strings = self.setup.get('EndStrings', ["root"])
+        # 載入 Available_End_Strings
+        end_strings = self.setup.get('Available_End_Strings', ["root"])
         if isinstance(end_strings, str):
             try:
                 end_strings = json.loads(end_strings)
@@ -301,8 +301,7 @@ class SerialUI:
         # 讀取並應用設定
         self.load_initial_settings()
         
-        # 綁定關閉事件
-        self.root.protocol("WM_DELETE_WINDOW", self.on_close)
+        # 注意：不要在這裡綁定關閉事件，由 TabManager 統一處理
 
     def init_styles(self):
         style = ttk.Style()
@@ -341,32 +340,40 @@ class SerialUI:
             
             # 收集當前所有設定
             current_settings = {
-                'COM': self.components.combobox_com.get(),
-                'Timeout': self.components.entry_timeout.get(),
-                'EndString': self.components.combobox_end.get(),
-                'UIFontSize': str(self.components.ui_font_scale.get()),
-                'ContentFontSize': str(self.components.content_font_scale.get()),
-                'Default_IP': self.components.entry_ip.get(),
-                'WinWidth': str(self.root.winfo_width()),
-                'WinHeight': str(self.root.winfo_height()),
-                'LastSection': self.components.section_var.get()
+                'Serial_COM_Port': self.components.combobox_com.get(),
+                'Command_Timeout_Seconds': self.components.entry_timeout.get(),
+                'Command_End_String': self.components.combobox_end.get(),
+                'UI_Font_Size': str(self.components.ui_font_scale.get()),
+                'Content_Font_Size': str(self.components.content_font_scale.get()),
+                'Default_IP_Address': self.components.entry_ip.get(),
+                'Window_Width': str(self.root.winfo_width()),
+                'Window_Height': str(self.root.winfo_height()),
+                'Last_Selected_Command_Section': self.components.section_var.get()
             }
             
-            # 保存 EndStrings
+            # 保存 PanedWindow 分割位置
+            try:
+                sash_position = self.components.main_frame.sashpos(0)
+                current_settings['Pane_Sash_Position'] = str(sash_position)
+                print(f"[DEBUG] 保存分割位置: {sash_position}")
+            except Exception as e:
+                print(f"[DEBUG] 獲取分割位置失敗: {e}")
+            
+            # 保存 Available_End_Strings
             try:
                 end_strings = list(self.components.combobox_end['values'])
-                current_settings['EndStrings'] = end_strings
+                current_settings['Available_End_Strings'] = end_strings
             except Exception:
-                current_settings['EndStrings'] = ["root"]
+                current_settings['Available_End_Strings'] = ["root"]
             
             # 讀取完整的 setup 資料
             full_setup = load_setup()
             # 更新 DUT 分層
-            full_setup['DUT'].update(current_settings)
+            full_setup['DUT_Control'].update(current_settings)
             
             # 保存到檔案
             save_setup(full_setup)
-            print(f"[DEBUG] 設定已保存到 DUT 分層: {current_settings}")
+            print(f"[DEBUG] 設定已保存到 DUT_Control 分層: {current_settings}")
             
             # 停止所有執行緒
             if self.stop_event:
@@ -381,55 +388,71 @@ class SerialUI:
             self.root.destroy()
 
     def get_settings(self):
-        # 回傳 DUT 分頁所有設定
+        # 回傳 DUT_Control 分頁所有設定
         settings = {}
         c = self.components
-        settings['COM'] = c.combobox_com.get()
-        settings['Timeout'] = c.entry_timeout.get()
-        settings['EndString'] = c.combobox_end.get()
-        settings['UIFontSize'] = str(c.ui_font_scale.get())
-        settings['ContentFontSize'] = str(c.content_font_scale.get())
+        settings['Serial_COM_Port'] = c.combobox_com.get()
+        settings['Command_Timeout_Seconds'] = c.entry_timeout.get()
+        settings['Command_End_String'] = c.combobox_end.get()
+        settings['UI_Font_Size'] = str(c.ui_font_scale.get())
+        settings['Content_Font_Size'] = str(c.content_font_scale.get())
         settings['Title'] = self.root.title() if hasattr(self.root, 'title') else 'VALO360 指令通'
         try:
             end_strings = list(c.combobox_end['values'])
         except Exception:
             end_strings = ["root"]
-        settings['EndStrings'] = end_strings
-        settings['Default_IP'] = c.entry_ip.get() if hasattr(c, 'entry_ip') else '192.168.11.143'
-        settings['WinWidth'] = str(self.root.winfo_width())
-        settings['WinHeight'] = str(self.root.winfo_height())
-        settings['LastSection'] = c.section_var.get() if hasattr(c, 'section_var') else '全部指令'
+        settings['Available_End_Strings'] = end_strings
+        settings['Default_IP_Address'] = c.entry_ip.get() if hasattr(c, 'entry_ip') else '192.168.11.143'
+        settings['Window_Width'] = str(self.root.winfo_width())
+        settings['Window_Height'] = str(self.root.winfo_height())
+        settings['Last_Selected_Command_Section'] = c.section_var.get() if hasattr(c, 'section_var') else '全部指令'
         return settings
 
     def load_initial_settings(self):
         """程式啟動時讀取並應用設定"""
         try:
+            print(f"[DEBUG] load_initial_settings 開始，self.setup = {self.setup}")
+            
             # 讀取 COM 口設定
-            com_port = self.setup.get('COM', '')
+            com_port = self.setup.get('Serial_COM_Port', '')
+            print(f"[DEBUG] 讀取到 COM 口設定: '{com_port}'")
+            
             if com_port:
+                print(f"[DEBUG] COM 口不為空，開始刷新 COM 口列表")
                 # 刷新 COM 口列表
                 self.handlers.refresh_com_ports()
                 # 如果設定的 COM 口在列表中，則選擇它
-                if com_port in self.components.combobox_com['values']:
+                available_ports = self.components.combobox_com['values']
+                print(f"[DEBUG] 可用的 COM 口: {available_ports}")
+                if com_port in available_ports:
                     self.components.combobox_com.set(com_port)
+                    print(f"[DEBUG] 已設定 COM 口為: {com_port}")
+                else:
+                    print(f"[DEBUG] COM 口 {com_port} 不在可用列表中")
+            else:
+                print(f"[DEBUG] COM 口為空，跳過設定")
             
             # 讀取超時設定
-            timeout = self.setup.get('Timeout', '30')
+            timeout = self.setup.get('Command_Timeout_Seconds', '30')
+            print(f"[DEBUG] 讀取到超時設定: {timeout}")
             self.components.entry_timeout.delete(0, tk.END)
             self.components.entry_timeout.insert(0, timeout)
             
             # 讀取結束字串設定
-            end_string = self.setup.get('EndString', 'root')
+            end_string = self.setup.get('Command_End_String', 'root')
+            print(f"[DEBUG] 讀取到結束字串設定: {end_string}")
             self.components.combobox_end.set(end_string)
             
             # 讀取 IP 地址設定
-            default_ip = self.setup.get('Default_IP', '192.168.11.143')
+            default_ip = self.setup.get('Default_IP_Address', '192.168.11.143')
+            print(f"[DEBUG] 讀取到 IP 地址設定: {default_ip}")
             self.components.entry_ip.delete(0, tk.END)
             self.components.entry_ip.insert(0, default_ip)
             
             # 讀取字體大小設定
-            ui_font_size = int(self.setup.get('UIFontSize', '12'))
-            content_font_size = int(self.setup.get('ContentFontSize', '12'))
+            ui_font_size = int(self.setup.get('UI_Font_Size', '12'))
+            content_font_size = int(self.setup.get('Content_Font_Size', '12'))
+            print(f"[DEBUG] 讀取到字體設定: UI={ui_font_size}, Content={content_font_size}")
             self.components.ui_font_scale.set(ui_font_size)
             self.components.content_font_scale.set(content_font_size)
             
@@ -438,7 +461,8 @@ class SerialUI:
             self.components.update_content_fonts(content_font_size)
             
             # 讀取最後選擇的指令分類
-            last_section = self.setup.get('LastSection', '全部指令')
+            last_section = self.setup.get('Last_Selected_Command_Section', '全部指令')
+            print(f"[DEBUG] 讀取到指令分類設定: {last_section}")
             self.components.section_var.set(last_section)
             self.components.update_cmd_list()
             
@@ -446,6 +470,8 @@ class SerialUI:
             
         except Exception as e:
             print(f"[ERROR] 載入設定時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
 
 # 若有 FixtureFrame 也在這裡加 get_settings
 from FIXTURE.fixture13 import FixtureFrame

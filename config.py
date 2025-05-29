@@ -17,24 +17,25 @@ SETUP_FILE = resource_path('setup.json')
 GUIDE_FILE = resource_path('user_guide.txt')
 
 default_setup = {
-    'DUT': {
-    'COM': '',
-    'Timeout': '30',
-    'EndString': 'root',
-    'UIFontSize': '12',
-    'ContentFontSize': '12',
-    'Title': 'VALO360 指令通',
-        'EndStrings': json.dumps(['root'], ensure_ascii=False),
-        'Default_IP': '192.168.11.143',
-        'WinWidth': '800',
-        'WinHeight': '600',
-        'LastSection': '全部指令'
+    'DUT_Control': {
+        'Serial_COM_Port': '',
+        'Command_Timeout_Seconds': '30',
+        'Command_End_String': 'root',
+        'UI_Font_Size': '12',
+        'Content_Font_Size': '12',
+        'Window_Title': 'VALO360 指令通',
+        'Available_End_Strings': ['root'],
+        'Default_IP_Address': '192.168.11.143',
+        'Window_Width': '800',
+        'Window_Height': '600',
+        'Last_Selected_Command_Section': '全部指令',
+        'Pane_Sash_Position': '400'  # 預設分割位置
     },
-    'FIXTURE': {
-        'COM': '',
-        'FixtureFontSize': '12',
-        'MB': True,
-        'CMD': ''
+    'Fixture_Control': {
+        'Fixture_COM_Port': '',
+        'Fixture_Font_Size': '12',
+        'Test_Category_MB': True,
+        'Current_Command': ''
     }
 }
 
@@ -88,13 +89,13 @@ def load_setup():
                             if key not in setup[section]:
                                 setup[section][key] = value
                 # EndStrings 處理
-                dut = setup.get('DUT', {})
-                if 'EndStrings' in dut:
-                    if isinstance(dut['EndStrings'], str):
+                dut = setup.get('DUT_Control', {})
+                if 'Available_End_Strings' in dut:
+                    if isinstance(dut['Available_End_Strings'], str):
                         try:
-                            dut['EndStrings'] = json.loads(dut['EndStrings'])
+                            dut['Available_End_Strings'] = json.loads(dut['Available_End_Strings'])
                         except Exception:
-                            dut['EndStrings'] = ["root"]
+                            dut['Available_End_Strings'] = ["root"]
                 return setup
         except Exception as e:
             messagebox.showerror('錯誤', f'無法讀取設定檔: {e}')
@@ -102,30 +103,35 @@ def load_setup():
 
 def save_setup(setup_data):
     try:
-        # 讀取現有的設定
-        current_setup = {}
-        if os.path.exists(SETUP_FILE):
-            with open(SETUP_FILE, 'r', encoding='utf-8') as f:
-                current_setup = json.load(f)
+        # 只保留分層結構，不讀取舊的扁平參數
+        clean_setup = {}
+        
+        # 確保有基本的分層結構
+        for section in ['DUT_Control', 'Fixture_Control']:
+            clean_setup[section] = {}
+        
         # 更新設定
         for section, data in setup_data.items():
-            if section not in current_setup:
-                current_setup[section] = {}
-            # 保證 data 是 dict
-            if isinstance(data, dict):
-                # EndStrings 處理
-                if section == 'DUT' and 'EndStrings' in data:
-                    if isinstance(data['EndStrings'], str):
-                        try:
-                            data['EndStrings'] = json.loads(data['EndStrings'])
-                        except Exception:
-                            data['EndStrings'] = ["root"]
-                current_setup[section].update(data)
-            else:
-                current_setup[section] = data
+            if section in ['DUT_Control', 'Fixture_Control']:
+                # 保證 data 是 dict
+                if isinstance(data, dict):
+                    # EndStrings 處理
+                    if section == 'DUT_Control' and 'Available_End_Strings' in data:
+                        if isinstance(data['Available_End_Strings'], str):
+                            try:
+                                data['Available_End_Strings'] = json.loads(data['Available_End_Strings'])
+                            except Exception:
+                                data['Available_End_Strings'] = ["root"]
+                    clean_setup[section].update(data)
+                else:
+                    clean_setup[section] = data
+        
         # 保存設定
         with open(SETUP_FILE, 'w', encoding='utf-8') as f:
-            json.dump(current_setup, f, ensure_ascii=False, indent=2)
+            json.dump(clean_setup, f, ensure_ascii=False, indent=2)
+            
+        print(f"[DEBUG] 已保存乾淨的設定結構: {list(clean_setup.keys())}")
+        
     except Exception as e:
         messagebox.showerror('錯誤', f'無法保存設定檔: {e}')
 

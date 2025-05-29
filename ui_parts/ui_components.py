@@ -15,8 +15,8 @@ class UIComponents:
         self.parent = parent
         self.init_ui()
         # 讀取 setup.txt 的寬高
-        width = int(self.parent.setup.get('WinWidth', 800))
-        height = int(self.parent.setup.get('WinHeight', 600))
+        width = int(self.parent.setup.get('Window_Width', 800))
+        height = int(self.parent.setup.get('Window_Height', 600))
         # 視窗最大化
         try:
             self.parent.root.state('zoomed')  # Windows
@@ -74,6 +74,9 @@ class UIComponents:
         self.main_frame.add(left_panel_container, weight=1)
         self.main_frame.add(self.right_panel, weight=2)
         
+        # 綁定 PanedWindow 分割位置變更事件
+        self.main_frame.bind('<ButtonRelease-1>', self.on_pane_position_changed)
+        
         # 初始化各個元件
         self.init_com_components()
         self.init_cmd_components()
@@ -94,6 +97,9 @@ class UIComponents:
                 if isinstance(child, tk.Button):
                     child.bind("<Enter>", lambda e, b=child: b.config(bg="#2196f3", fg="white"))
                     child.bind("<Leave>", lambda e, b=child: b.config(bg="white", fg="black"))
+        
+        # 恢復 PanedWindow 分割位置（延遲執行，確保視窗已完全載入）
+        self.parent.root.after(200, self.restore_pane_position)
 
     def init_com_components(self):
         com_frame = ttk.Frame(self.left_panel, style="TFrame")
@@ -101,17 +107,17 @@ class UIComponents:
         com_frame.columnconfigure(0, weight=1)
         self.label_com = ttk.Label(com_frame, text='COM口:', style="TLabel")
         self.label_com.grid(row=0, column=0, sticky='w')
-        # 從 setup.json 讀取 DUT 與 FIXTURE 設定
-        dut = self.parent.setup.get('DUT', {}).get('COM', '')
-        fixture = self.parent.setup.get('FIXTURE', {}).get('COM', '')
+        
+        # 獲取可用的 COM 口列表
         com_values = list_com_ports()
-        if dut and dut in com_values:
-            com_values.insert(0, dut)
-        if fixture and fixture in com_values:
-            com_values.insert(0, fixture)
+        
+        # 創建 COM 口下拉選單
         self.combobox_com = ttk.Combobox(com_frame, values=com_values, state='readonly', width=15)
         self.combobox_com.grid(row=0, column=1, padx=5, sticky='ew')
-        self.combobox_com.set(self.parent.setup.get('DUT', {}).get('COM', ''))
+        
+        # 注意：不在這裡設定預設值，由 load_initial_settings 統一處理
+        print(f"[DEBUG] init_com_components: 已創建 COM 口選單，可用 COM 口: {com_values}")
+        
         self.btn_refresh = tk.Button(com_frame, text='刷新', command=self.parent.handlers.refresh_com_ports,
                                    bg='#e0e0e0', fg='black', activebackground='#2196f3', activeforeground='black')
         self.btn_refresh.grid(row=0, column=2, padx=5)
@@ -134,7 +140,7 @@ class UIComponents:
                 bg='#d9d9d9', fg='black', selectcolor='#d9d9d9', 
                 activebackground='#2196f3', activeforeground='white',
                 indicatoron=0, relief='flat', borderwidth=1, width=8, height=2,
-                font=('Microsoft JhengHei UI', int(self.parent.setup.get('UIFontSize', '12')))
+                font=('Microsoft JhengHei UI', int(self.parent.setup.get('UI_Font_Size', '12')))
             )
             rb.grid(row=0, column=i, padx=2, sticky='ew')
             rb.bind("<Enter>", lambda e, b=rb: b.config(bg="#2196f3", fg='white'))
@@ -179,7 +185,7 @@ class UIComponents:
         self.label_ip.grid(row=0, column=0, sticky='w')
         self.entry_ip = ttk.Entry(ip_frame, width=15)
         self.entry_ip.grid(row=0, column=1, padx=5, sticky='ew')
-        default_ip = self.parent.setup.get('Default_IP', '192.168.11.143')
+        default_ip = self.parent.setup.get('Default_IP_Address', '192.168.11.143')
         self.entry_ip.delete(0, tk.END)
         self.entry_ip.insert(0, default_ip)
         self.btn_ping = tk.Button(ip_frame, text='Ping', command=lambda: self.parent.handlers.check_ping(), bg='white', fg='black')
@@ -197,7 +203,7 @@ class UIComponents:
         self.combobox_end = ttk.Combobox(end_frame, width=15)
         self.combobox_end.grid(row=0, column=1, padx=5, sticky='ew')
         self.update_end_strings()
-        self.combobox_end.set(self.parent.setup.get('EndString', 'root'))
+        self.combobox_end.set(self.parent.setup.get('Command_End_String', 'root'))
         # 加入刪除按鈕
         self.btn_remove_end = tk.Button(end_frame, text='-', command=self.parent.handlers.remove_end_string, width=2, bg='#ffcccc', fg='black')
         self.btn_remove_end.grid(row=0, column=2, padx=2)
@@ -207,7 +213,7 @@ class UIComponents:
         self.label_timeout.grid(row=0, column=0, sticky='w')
         self.entry_timeout = ttk.Entry(timeout_frame, width=8)
         self.entry_timeout.grid(row=0, column=1, padx=5, sticky='ew')
-        self.entry_timeout.insert(0, self.parent.setup.get('Timeout', '30'))
+        self.entry_timeout.insert(0, self.parent.setup.get('Command_Timeout_Seconds', '30'))
         font_frame = ttk.LabelFrame(settings_frame, text='字體大小設定', padding=5, style="TLabelframe")
         font_frame.grid(row=2, column=0, sticky='ew', pady=2)
         ui_font_frame = ttk.Frame(font_frame, style="TFrame")
@@ -220,7 +226,7 @@ class UIComponents:
                                     command=self.parent.handlers.change_ui_font_size, length=120, bg='white', fg='black', 
                                     highlightthickness=0)
         self.ui_font_scale.grid(row=0, column=2, padx=2)
-        self.ui_font_scale.set(int(self.parent.setup.get('UIFontSize', '12')))
+        self.ui_font_scale.set(int(self.parent.setup.get('UI_Font_Size', '12')))
         self.btn_ui_font_plus = tk.Button(ui_font_frame, text='＋', width=2, command=lambda: self.ui_font_scale.set(self.ui_font_scale.get()+1))
         self.btn_ui_font_plus.grid(row=0, column=3, padx=2)
         self.label_ui_font_value = ttk.Label(ui_font_frame, text=str(self.ui_font_scale.get()), style="TLabel")
@@ -233,7 +239,7 @@ class UIComponents:
                                          command=self.parent.handlers.change_content_font_size, length=150, bg='white', fg='black', 
                                          highlightthickness=0)
         self.content_font_scale.grid(row=0, column=1, padx=5)
-        self.content_font_scale.set(int(self.parent.setup.get('ContentFontSize', '12')))
+        self.content_font_scale.set(int(self.parent.setup.get('Content_Font_Size', '12')))
         btn_frame = ttk.Frame(self.left_panel, style="TFrame")
         btn_frame.grid(row=5, column=0, sticky='ew', pady=10)
         self.btn_clear = ttk.Button(btn_frame, text='清空回應', command=self.parent.handlers.clear_output, style='Blue.TButton')
@@ -270,7 +276,7 @@ class UIComponents:
                 wrap=tk.WORD,
                 width=50,
                 height=20,
-                font=('Microsoft JhengHei UI', int(self.parent.setup.get('ContentFontSize', '12')))
+                font=('Microsoft JhengHei UI', int(self.parent.setup.get('Content_Font_Size', '12')))
             )
             self.text_output.grid(row=0, column=0, sticky='nsew')
             self.right_panel.grid_rowconfigure(0, weight=1)
@@ -367,7 +373,7 @@ class UIComponents:
 
     def update_end_strings(self):
         try:
-            end_strings = json.loads(self.parent.setup.get('EndStrings', '["root"]'))
+            end_strings = json.loads(self.parent.setup.get('Available_End_Strings', '["root"]'))
         except Exception:
             end_strings = ['root']
         self.combobox_end['values'] = end_strings
@@ -478,9 +484,18 @@ class UIComponents:
             w, h = event.width, event.height
             if (w, h) != self.last_size and w > 200 and h > 200:
                 self.last_size = (w, h)
-                self.parent.setup['WinWidth'] = str(w)
-                self.parent.setup['WinHeight'] = str(h)
-                save_setup(self.parent.setup)
+                # 更新當前設定
+                self.parent.setup['Window_Width'] = str(w)
+                self.parent.setup['Window_Height'] = str(h)
+                # 保存完整的設定結構
+                from config import load_setup, save_setup
+                full_setup = load_setup()
+                full_setup['DUT_Control'].update({
+                    'Window_Width': str(w),
+                    'Window_Height': str(h)
+                })
+                save_setup(full_setup)
+                print(f"[DEBUG] 視窗大小已保存: {w}x{h}")
         # 不再自動縮放字體
 
     def start_led_blink(self):
@@ -498,3 +513,50 @@ class UIComponents:
     def stop_led_blink(self):
         self.led_blinking = False
         self.status_canvas.itemconfig(self.status_light, fill='black')
+
+    def on_pane_drag_start(self, event):
+        self.main_frame.start_x = event.x
+        self.main_frame.start_y = event.y
+
+    def on_pane_drag_end(self, event):
+        dx = event.x - self.main_frame.start_x
+        dy = event.y - self.main_frame.start_y
+        self.main_frame.move(dx, dy)
+
+    def on_pane_position_changed(self, event):
+        """當 PanedWindow 分割位置改變時保存位置"""
+        try:
+            # 獲取當前分割位置
+            sash_position = self.main_frame.sashpos(0)  # 第一個分割線的位置
+            print(f"[DEBUG] PanedWindow 分割位置變更: {sash_position}")
+            
+            # 保存到設定中
+            self.parent.setup['Pane_Sash_Position'] = str(sash_position)
+            
+            # 保存完整的設定結構
+            from config import load_setup, save_setup
+            full_setup = load_setup()
+            full_setup['DUT_Control']['Pane_Sash_Position'] = str(sash_position)
+            save_setup(full_setup)
+            
+        except Exception as e:
+            print(f"[DEBUG] 保存分割位置時發生錯誤: {e}")
+
+    def restore_pane_position(self):
+        """恢復 PanedWindow 分割位置"""
+        try:
+            # 從設定中讀取分割位置
+            sash_position = self.parent.setup.get('Pane_Sash_Position', '')
+            if sash_position:
+                position = int(sash_position)
+                # 確保位置在合理範圍內
+                window_width = self.parent.root.winfo_width()
+                if 100 <= position <= window_width - 100:
+                    self.main_frame.sashpos(0, position)
+                    print(f"[DEBUG] 已恢復 PanedWindow 分割位置: {position}")
+                else:
+                    print(f"[DEBUG] 分割位置 {position} 超出範圍，使用預設位置")
+            else:
+                print(f"[DEBUG] 沒有保存的分割位置，使用預設位置")
+        except Exception as e:
+            print(f"[DEBUG] 恢復分割位置時發生錯誤: {e}")

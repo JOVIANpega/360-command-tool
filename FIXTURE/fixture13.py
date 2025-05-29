@@ -13,13 +13,13 @@ def load_fixture_setup():
         with open(SETUP_FILE, 'r', encoding='utf-8') as f:
             try:
                 setup = json.load(f)
-                return setup.get('FIXTURE', {})
+                return setup.get('Fixture_Control', {})
             except Exception:
                 return {}
     return {}
 
 def save_fixture_setup(data):
-    # 讀取整個 setup.json，僅更新 FIXTURE 區塊
+    # 讀取整個 setup.json，僅更新 Fixture_Control 區塊
     setup = {}
     if os.path.exists(SETUP_FILE):
         try:
@@ -27,7 +27,7 @@ def save_fixture_setup(data):
                 setup = json.load(f)
         except Exception:
             setup = {}
-    setup['FIXTURE'] = data
+    setup['Fixture_Control'] = data
     with open(SETUP_FILE, 'w', encoding='utf-8') as f:
         json.dump(setup, f, ensure_ascii=False, indent=2)
 
@@ -37,7 +37,7 @@ class FixtureFrame(ttk.Frame):
         self.parent = parent
         self.setup = load_fixture_setup()
         # 初始化字體大小，預設12，若setup有記錄則用setup
-        self._fixture_font_size = int(self.setup.get('FixtureFontSize', 12))
+        self._fixture_font_size = int(self.setup.get('Fixture_Font_Size', 12))
         self.init_vars()
         self.init_ui()
         self.refresh_ports()
@@ -56,7 +56,11 @@ class FixtureFrame(ttk.Frame):
         # 預設 MB 打勾，若 setup 有記錄則依 setup
         for cat in self.test_items.keys():
             if cat == 'MB':
-                self.category_vars[cat] = tk.BooleanVar(value=self.setup.get('MB', True))
+                self.category_vars[cat] = tk.BooleanVar(value=self.setup.get('Test_Category_MB', True))
+            elif cat == 'FUNCTION':
+                self.category_vars[cat] = tk.BooleanVar(value=self.setup.get('Test_Category_FUNCTION', False))
+            elif cat == '原始的指令':
+                self.category_vars[cat] = tk.BooleanVar(value=self.setup.get('Test_Category_Original_Commands', False))
             else:
                 self.category_vars[cat] = tk.BooleanVar(value=self.setup.get(cat, False))
 
@@ -105,7 +109,7 @@ class FixtureFrame(ttk.Frame):
         available_ports = self.list_serial_ports()
         self.com_port_dropdown["values"] = available_ports
         # 優先還原 setup 裡的 COM
-        setup_com = self.setup.get('COM')
+        setup_com = self.setup.get('Fixture_COM_Port')
         if setup_com in available_ports:
             self.com_port_var.set(setup_com)
             self.fixture_port_label.config(text=f"Fixture Com port : {setup_com}")
@@ -114,7 +118,7 @@ class FixtureFrame(ttk.Frame):
             self.com_port_var.set(default_port)
             self.fixture_port_label.config(text=f"Fixture Com port : {default_port}")
         # 優先還原 setup 裡的 CMD
-        setup_cmd = self.setup.get('CMD')
+        setup_cmd = self.setup.get('Current_Command')
         if setup_cmd and hasattr(self, 'command_dropdown'):
             values = self.command_dropdown["values"]
             if setup_cmd in values:
@@ -169,12 +173,19 @@ class FixtureFrame(ttk.Frame):
     def on_close(self, event=None):
         # 儲存所有設定
         data = {}
-        data['COM'] = self.com_port_var.get()
-        data['CMD'] = self.command_var.get()
+        data['Fixture_COM_Port'] = self.com_port_var.get()
+        data['Current_Command'] = self.command_var.get()
         for cat, var in self.category_vars.items():
-            data[cat] = var.get()
+            if cat == 'MB':
+                data['Test_Category_MB'] = var.get()
+            elif cat == 'FUNCTION':
+                data['Test_Category_FUNCTION'] = var.get()
+            elif cat == '原始的指令':
+                data['Test_Category_Original_Commands'] = var.get()
+            else:
+                data[cat] = var.get()
         # 儲存字體大小
-        data['FixtureFontSize'] = str(self._fixture_font_size)
+        data['Fixture_Font_Size'] = str(self._fixture_font_size)
         save_fixture_setup(data)
 
     def init_ui(self):
@@ -278,6 +289,6 @@ class FixtureFrame(ttk.Frame):
         # 讀取最新設定，確保不會覆蓋其他欄位
         latest = load_fixture_setup()
         latest.update(self.setup)
-        latest['FixtureFontSize'] = str(self._fixture_font_size)
+        latest['Fixture_Font_Size'] = str(self._fixture_font_size)
         self.setup = latest
         save_fixture_setup(self.setup)
