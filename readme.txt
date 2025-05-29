@@ -8,3 +8,5 @@ pyinstaller --noconfirm --onefile --windowed --icon=app.ico --add-data "ui_parts
 git status
 
 cd "D:\((Python TOOL\指令工具-20250428T020034Z-001\V1.12"
+
+git log --oneline -5

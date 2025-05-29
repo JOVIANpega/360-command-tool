@@ -1,32 +1,24 @@
 {
-  "fixture_description": "僅供羣元治具使用，此分頁先選擇治具串口、測試類別，並發送控制命令給治具設備。點擊下方按鈕發送。",
-  "DUT": {
-    "COM": "COM5",
-    "Timeout": "30",
-    "EndString": "root",
-    "UIFontSize": "13",
-    "ContentFontSize": "11",
-    "Title": "VALO360 指令通",
-    "EndStrings": [
-      "root",
-      "ROOT"
+  "DUT_Control": {
+    "Serial_COM_Port": "COM5",
+    "Command_Timeout_Seconds": "10",
+    "Command_End_String": "root",
+    "UI_Font_Size": "12",
+    "Content_Font_Size": "13",
+    "Window_Title": "VALO360 指令通",
+    "Available_End_Strings": [
+      "root"
     ],
-    "Default_IP": "192.168.11.143",
-    "WinWidth": "1536",
-    "WinHeight": "793",
-    "LastSection": "全部指令"
+    "Default_IP_Address": "192.168.11.143",
+    "Window_Width": "1536",
+    "Window_Height": "793",
+    "Last_Selected_Command_Section": "單板指令",
+    "Pane_Sash_Position": "454"
   },
-  "FIXTURE": {
-    "COM": "COM5",
-    "CMD": "",
-    "FUNCTION": false,
-    "MB": true,
-    "原始的指令": false,
-    "FixtureFontSize": "12"
-  },
-  "UIFontSize": "13",
-  "ContentFontSize": "11",
-  "WinWidth": "1536",
-  "WinHeight": "793",
-  "EndStrings": "[\"root\", \"ROOT\"]"
+  "Fixture_Control": {
+    "Fixture_COM_Port": "",
+    "Fixture_Font_Size": "12",
+    "Test_Category_MB": true,
+    "Current_Command": ""
+  }
 }

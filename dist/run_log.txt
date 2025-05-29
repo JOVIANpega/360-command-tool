@@ -440,3 +440,157 @@ __main__ 結束
 main.py 啟動
 成功 import TabManager
 __main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+import TabManager 失敗：Traceback (most recent call last):
+  File "main.py", line 19, in <module>
+  File "PyInstaller\loader\pyimod02_importers.py", line 378, in exec_module
+  File "ui_parts\ui_main.py", line 13, in <module>
+ModuleNotFoundError: No module named 'config'
+
+main.py 啟動
+import TabManager 失敗：Traceback (most recent call last):
+  File "main.py", line 19, in <module>
+  File "PyInstaller\loader\pyimod02_importers.py", line 378, in exec_module
+  File "ui_parts\ui_main.py", line 13, in <module>
+    from config import load_setup, save_setup, list_com_ports, GUIDE_FILE, COMMAND_FILE, load_commands
+ModuleNotFoundError: No module named 'config'
+
+main.py 啟動
+import TabManager 失敗：Traceback (most recent call last):
+  File "main.py", line 26, in <module>
+  File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+  File "PyInstaller\loader\pyimod02_importers.py", line 378, in exec_module
+  File "ui_parts\ui_main.py", line 32, in <module>
+    from ui_parts.ui_handlers import UIHandlers
+  File "C:\Users\PEGA_U~1\AppData\Local\Temp\_MEI210642\ui_parts\ui_handlers.py", line 76
+    param = '-n' if platform.system().lower() == 'windows' else '-c'
+SyntaxError: expected 'except' or 'finally' block
+
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
+main.py 啟動
+成功 import TabManager
+__main__ 結束
