@@ -1,0 +1,20 @@
+# VALO360 指令通打包指令
+# 成功打包指令 - 使用 PyInstaller 打包成單一執行檔
+
+# 基本打包指令
+pyinstaller --onefile --clean --noconfirm --icon=app.ico -w --add-data "command.txt;." --add-data "user_guide.txt;." --add-data "setup.json;." --add-data "ui_parts;ui_parts" --name "VALO360指令通" main.py
+
+# 包含使用說明HTML的打包指令
+pyinstaller --onefile --clean --noconfirm --icon=app.ico -w --add-data "command.txt;." --add-data "user_guide.txt;." --add-data "setup.json;." --add-data "ui_parts;ui_parts" --add-data "VALO360 指令通使用指南.html;." --add-data "VALO360 指令通使用指南_files;VALO360 指令通使用指南_files" --name "VALO360指令通" main.py
+
+# 參數說明：
+# --onefile: 將所有檔案打包成單一執行檔
+# --clean: 清理臨時檔案
+# --noconfirm: 不詢問確認
+# --icon=app.ico: 設定應用程式圖示
+# -w: 不顯示控制台視窗
+# --add-data: 添加需要的資源檔案
+# --name: 設定輸出檔案名稱
+
+# 注意：如果路徑中有特殊字元（如括號），可能會導致打包後的EXE無法執行
+# 建議在沒有特殊字元的路徑中進行打包 
