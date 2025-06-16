@@ -31,13 +31,21 @@
 27. 讀取版本 Read version = pegacmd version
 28. 燒機音量正常 Burning volume normal = burning.sh|diag -s audio volume 100
 29. 切換出貨 Switch to shipping = cp /mnt/sd/VALO360.tar.gz /var/fota|ls -l /var/fota/|diag -s fota|reboot|SHOW:切換成出貨模式
-30. 檢查出貨韌體 Check shipping FW = cat /us/lib/firmware/fw_imagetype|pegacmd version
+30. 檢查出貨韌體 Check shipping FW = cat /usr/lib/firmware/fw_imagetype|pegacmd version
 31. 設定固定IP Set static IP = ifconfig eth0 192.168.11.143|ifconfig
 32. 檢查DMIC設定 Check DMIC_setup = amixer -c 0 set 'DMIC1 Gain' 255|amixer -c 0 set 'DMIC2 Gain' 255|amixer -c 0 set 'DMIC3 Gain' 255|amixer -c 0 set 'DMIC4 Gain' 255|diag -s audio volume 100
 33. 檢查DMIC錄音 Check DMIC_Record = SHOW:錄音5 sec|arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic1.wav|arecord -Dhw:0,0 -d 3 -f S16_LE -r 48000 -c 4 dmic2.wav
 34. 檢查DMIC播放 Check DMIC_play = aplay -Dhw:0,1 dmic1.wav|aplay -Dhw:0,1 dmic2.wav
 35. 設定喇叭音量30% Do Speaker volume30% = diag -s audio volume 30
 36. 燒機音量小 Burning volume low = burning.sh|diag -s audio volume 30
+37. 取得360整機序號狀態 Get 360 SN States = diag -g sn dev|diag -g sn mb|diag -g hwver|diag -g sku|pegacmd version
+38. 取得MB序號 Get 360 SN States = diag -g sn mb|diag -g hwver|diag -g sku|pegacmd version
+39. 檢查LED燈 Check LED = SHOW:確認LED綠燈橘燈熄滅，三種狀態|diag -s led g off|diag -s led o off|diag -s led g on|diag -s led o on
+40. 檢查喇叭_1k音調 check speaker2_1k tone = diag -s audio /usr/share/manufacturing/1kHz_0dBFS_16bit.wav
+41. 檢查喇叭_pop音效 check speaker1_pop = aplay -Dhw:0,1 /usr/share/manufacturing/pop-sound.wav
+42. 讀取出貨SN版本 Read version = pegacmd version|cat /usr/lib/firmware/fw_imagetype|pegacmd version
+43. 執行關機 Turn off DUT = SHOW:系統即將關機，照指示拔掉POE，耐心等15sec|shutdown.sh
+44. 出貨初始化設定後關機 Shipping initialization = diag -s default|diag -s ship on
 
 
 
@@ -112,7 +120,6 @@
 9. 切換出貨 Switch to shipping = cp /mnt/sd/VALO360.tar.gz /var/fota|ls -l /var/fota/|diag -s fota|reboot|SHOW:切換成出貨模式
 10. 檢查出貨韌體 Check shipping FW = cat /us/lib/firmware/fw_imagetype|pegacmd version
 11. 出貨初始化設定後關機 Shipping initialization = diag -s default|diag -s ship on
-12. 設定固定IP Set static IP = ifconfig eth0 192.168.11.143|ifconfig
 
 
 
