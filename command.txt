@@ -95,12 +95,12 @@
 24. 執行重啟 Do Reboot = reboot
 25. 執行預設 Do Default = diag -s default|reboot|SHOW:reboot and回到初始狀態
 26. 執行關機 DO關機 = SHOW:系統即將關機，照指示拔掉POE|shutdown.sh
-27. 讀取版本 Read version = pegacmd version
+27. 讀取版本 Read version = pegacmd version|DELAY:5
 
 
 
 
-==出貨指令==
+==驗證喇叭==
 1. 讀取出貨SN版本 Read version = pegacmd version|cat /usr/lib/firmware/fw_imagetype|pegacmd version
 2. 檢查IVKEY Get IVKey = diag -g ivLic FD|diag -g ivLic LPR
 3. 執行重啟 Do Reboot = reboot

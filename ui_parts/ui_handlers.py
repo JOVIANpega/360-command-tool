@@ -19,34 +19,50 @@ class UIHandlers:
     def parse_commands_by_section(self):
         commands = {}
         current_section = None
-        with open(COMMAND_FILE, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if not line:
-                    continue
-                if line.startswith('==') and line.endswith('=='):
-                    current_section = line.strip('=')
-                    commands[current_section] = {}
-                elif '=' in line and current_section:
-                    k, v = line.split('=', 1)
-                    commands[current_section][k.strip()] = v.strip()
+        
+        # 確保總是有一個全部指令分類
+        commands['全部指令'] = {}
+        
+        try:
+            with open(COMMAND_FILE, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    if line.startswith('==') and line.endswith('=='):
+                        current_section = line.strip('=')
+                        if current_section not in commands:
+                            commands[current_section] = {}
+                    elif '=' in line and current_section:
+                        k, v = line.split('=', 1)
+                        k = k.strip()
+                        v = v.strip()
+                        if k and v:  # 確保鍵值都不為空
+                            commands[current_section][k] = v
+                            # 同時添加到全部指令
+                            commands['全部指令'][k] = v
+        except Exception as e:
+            print(f"[ERROR] 解析指令檔案時發生錯誤: {e}")
+            
         return commands
 
     def update_cmd_list(self):
         section = self.parent.components.section_var.get()
-        if section == '全部指令':
-            # 合併所有區段的指令
-            all_commands = {}
-            for section_commands in self.parent.commands_by_section.values():
-                all_commands.update(section_commands)
-            self.parent.components.combobox_cmd['values'] = list(all_commands.keys())
-        else:
-            # 顯示特定區段的指令
-            self.parent.components.combobox_cmd['values'] = list(self.parent.commands_by_section.get(section, {}).keys())
+        
+        # 檢查選擇的分類是否存在
+        if section not in self.parent.commands_by_section:
+            print(f"[WARNING] 選擇的分類 '{section}' 不存在，使用全部指令")
+            section = '全部指令'
+            self.parent.components.section_var.set('全部指令')
+            
+        # 顯示特定區段的指令
+        self.parent.components.combobox_cmd['values'] = list(self.parent.commands_by_section.get(section, {}).keys())
         
         # 如果有指令，選擇第一個
         if self.parent.components.combobox_cmd['values']:
             self.parent.components.combobox_cmd.set(self.parent.components.combobox_cmd['values'][0])
+        else:
+            self.parent.components.combobox_cmd.set('')
 
     def check_ping(self):
         print("check_ping called")
@@ -293,6 +309,11 @@ class UIHandlers:
         self.parent.components.add_to_buffer(f"[發送] COM口: {com}\n", "send")
         self.parent.components.add_to_buffer(f"[發送] 指令內容: {cmd}\n", "send")
         
+        # 定義消息框回調函數
+        def show_message_callback(message, callback):
+            # 在主線程中顯示消息框
+            self.parent.root.after(0, lambda: self._show_message_and_callback(message, callback))
+        
         # 啟動 SerialWorker
         self.parent.thread = SerialWorker(
             com, cmd_list, end_str, timeout,
@@ -302,8 +323,16 @@ class UIHandlers:
             on_finish=self.on_command_finish,
             stop_event=self.parent.stop_event
         )
+        # 設置消息框回調函數
+        self.parent.thread.show_message_callback = show_message_callback
         self.parent.thread.start()
         self.on_end_string_entered(None)
+    
+    def _show_message_and_callback(self, message, callback):
+        """在主線程中顯示消息框，並在用戶確認後調用回調函數"""
+        messagebox.showinfo('系統訊息', message)
+        if callback:
+            callback()
 
     def on_command_finish(self):
         self.parent.components.btn_exec.config(text='執行指令')  # 只改文字，不改 state

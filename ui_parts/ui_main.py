@@ -463,6 +463,12 @@ class SerialUI:
             # 讀取最後選擇的指令分類
             last_section = self.setup.get('Last_Selected_Command_Section', '全部指令')
             print(f"[DEBUG] 讀取到指令分類設定: {last_section}")
+            
+            # 檢查分類是否存在
+            if last_section not in self.commands_by_section:
+                print(f"[WARNING] 保存的分類 '{last_section}' 不存在，使用全部指令")
+                last_section = '全部指令'
+                
             self.components.section_var.set(last_section)
             self.components.update_cmd_list()
             

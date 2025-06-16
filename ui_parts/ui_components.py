@@ -131,7 +131,20 @@ class UIComponents:
         section_frame.grid(row=1, column=0, sticky='ew', pady=5)
         section_frame.columnconfigure(0, weight=1)
         self.section_var = tk.StringVar(value='全部指令')
-        self.sections = ['全部指令', '單板指令', '整機指令', '出貨指令']
+        
+        # 從 command.txt 動態讀取分類
+        self.sections = ['全部指令']  # 預設至少有全部指令
+        try:
+            with open(COMMAND_FILE, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith('==') and line.endswith('=='):
+                        section_name = line.strip('=')
+                        if section_name and section_name not in self.sections:
+                            self.sections.append(section_name)
+        except Exception as e:
+            print(f"[ERROR] 讀取分類時發生錯誤: {e}")
+        
         self.section_radiobuttons = []
         for i, sec in enumerate(self.sections):
             rb = tk.Radiobutton(
@@ -155,7 +168,7 @@ class UIComponents:
             style="TLabel",
             wraplength=300
         )
-        self.section_description.grid(row=1, column=0, columnspan=4, pady=5, sticky='w')
+        self.section_description.grid(row=1, column=0, columnspan=len(self.sections), pady=5, sticky='w')
         
         cmd_frame = ttk.Frame(self.left_panel, style="TFrame")
         cmd_frame.grid(row=2, column=0, sticky='ew', pady=5)
@@ -166,13 +179,21 @@ class UIComponents:
         self.combobox_cmd.grid(row=0, column=1, padx=5, sticky='ew')
 
     def get_section_description(self, section):
-        descriptions = {
+        # 預設描述
+        default_descriptions = {
             '全部指令': '顯示所有可用的指令',
             '單板指令': '用於單板測試的指令集',
             '整機指令': '用於整機測試的指令集',
+            '驗證喇叭': '用於驗證喇叭的指令集',
             '出貨指令': '用於出貨測試的指令集'
         }
-        return descriptions.get(section, '')
+        
+        # 如果有預設描述，則使用預設描述
+        if section in default_descriptions:
+            return default_descriptions[section]
+        
+        # 否則生成一個通用描述
+        return f'用於{section}的指令集'
 
     def init_ping_components(self):
         print('[DEBUG] handlers in init_ping_components:', self.parent.handlers)
@@ -428,25 +449,48 @@ class UIComponents:
             ]
             for w in widgets:
                 if w.winfo_exists():
-                    w.configure(font=font)
+                    try:
+                        w.configure(font=font)
+                    except Exception:
+                        # 如果設定字體失敗，嘗試使用其他方式
+                        try:
+                            w['font'] = font
+                        except Exception:
+                            pass
             # 更新 section_radiobuttons 字體
             for rb in getattr(self, 'section_radiobuttons', []):
                 if rb.winfo_exists():
-                    rb.configure(font=font)
+                    try:
+                        rb.configure(font=font)
+                    except Exception:
+                        try:
+                            rb['font'] = font
+                        except Exception:
+                            pass
             # 更新輸入框和下拉選單
             for widget in [self.combobox_com, self.combobox_cmd, self.combobox_end, 
                          self.entry_timeout, self.entry_ip]:
                 if widget.winfo_exists():
-                    widget.configure(font=('Consolas', size))
+                    try:
+                        widget.configure(font=('Consolas', size))
+                    except Exception:
+                        try:
+                            widget['font'] = ('Consolas', size)
+                        except Exception:
+                            pass
             # 更新 ttk 樣式
-            style = ttk.Style()
-            style.configure("TLabelframe.Label", font=font)
-            style.configure("TLabelframe", font=font)
-            style.configure("TLabel", font=font)
+            try:
+                style = ttk.Style()
+                style.configure("TLabelframe.Label", font=font)
+                style.configure("TLabelframe", font=font)
+                style.configure("TLabel", font=font)
+            except Exception:
+                pass
             # 強制更新 UI
             self.parent.root.update_idletasks()
         except Exception as e:
-            print(f"更新介面字體時發生錯誤: {e}")
+            print(f"[DEBUG] 更新介面字體時發生錯誤: {e}")
+            # 不要讓錯誤影響程式運行
 
     def update_content_fonts(self, size=None):
         try:
@@ -455,28 +499,50 @@ class UIComponents:
             content_font = ('Consolas', size)
             # 更新文字輸出區域
             if self.text_output.winfo_exists():
-                self.text_output.configure(font=content_font)
+                try:
+                    self.text_output.configure(font=content_font)
+                except Exception:
+                    try:
+                        self.text_output['font'] = content_font
+                    except Exception:
+                        pass
             # 更新所有下拉選單與輸入框
             for widget in [self.combobox_com, self.combobox_cmd, self.combobox_end, self.entry_timeout, self.entry_ip]:
                 if widget.winfo_exists():
-                    widget.configure(font=content_font)
+                    try:
+                        widget.configure(font=content_font)
+                    except Exception:
+                        try:
+                            widget['font'] = content_font
+                        except Exception:
+                            pass
             # 根據字體大小自動調整 combobox_cmd 寬度
             min_width = 25
             width = max(min_width, int(size * 2.2))
-            self.combobox_cmd.config(width=width)
+            try:
+                self.combobox_cmd.config(width=width)
+            except Exception:
+                pass
             # 強制 combobox 下拉選單選項字體同步
             try:
                 self.parent.root.option_add('*TCombobox*Listbox.font', content_font)
             except Exception as e:
-                print(f'Combobox Listbox 字體設置失敗: {e}')
+                print(f'[DEBUG] Combobox Listbox 字體設置失敗: {e}')
             # 更新使用說明視窗
             if self.parent.guide_window and self.parent.guide_window.winfo_exists():
                 for widget in self.parent.guide_window.winfo_children():
                     if isinstance(widget, scrolledtext.ScrolledText) and widget.winfo_exists():
-                        widget.configure(font=content_font)
+                        try:
+                            widget.configure(font=content_font)
+                        except Exception:
+                            try:
+                                widget['font'] = content_font
+                            except Exception:
+                                pass
             self.parent.root.update_idletasks()
         except Exception as e:
-            print(f"更新內容字體時發生錯誤: {e}")
+            print(f"[DEBUG] 更新內容字體時發生錯誤: {e}")
+            # 不要讓錯誤影響程式運行
 
     def on_window_resize(self, event):
         # 只在主視窗且尺寸真的有變時記錄
