@@ -17,33 +17,62 @@ class UIHandlers:
         self.countdown_job = None
         
     def parse_commands_by_section(self):
+        """解析命令文件，按區段整理"""
         commands = {}
-        current_section = None
+        section = "全部指令"  # 預設區段
         
-        # 確保總是有一個全部指令分類
-        commands['全部指令'] = {}
+        print("[DEBUG] 開始解析指令文件")
         
         try:
-            with open(COMMAND_FILE, 'r', encoding='utf-8') as f:
-                for line in f:
+            with open(COMMAND_FILE, "r", encoding="utf-8") as file:
+                for line in file:
                     line = line.strip()
-                    if not line:
+                    if not line or line.startswith("#") or line.startswith("//"):
                         continue
-                    if line.startswith('==') and line.endswith('=='):
-                        current_section = line.strip('=')
-                        if current_section not in commands:
-                            commands[current_section] = {}
-                    elif '=' in line and current_section:
-                        k, v = line.split('=', 1)
-                        k = k.strip()
-                        v = v.strip()
-                        if k and v:  # 確保鍵值都不為空
-                            commands[current_section][k] = v
-                            # 同時添加到全部指令
-                            commands['全部指令'][k] = v
+                    
+                    # 檢查是否為區段標記
+                    if line.startswith("==") and line.endswith("=="):
+                        section = line.strip("=").strip()
+                        if section not in commands:
+                            commands[section] = {}
+                            print(f"[DEBUG] 發現新區段：{section}")
+                        continue
+                    
+                    # 解析命令
+                    parts = line.split("=", 1)
+                    if len(parts) >= 2:
+                        label = parts[0].strip()
+                        command = parts[1].strip()
+                        
+                        # 檢查是否有顏色標記
+                        has_color = '[COLOR:' in label
+                        if has_color:
+                            print(f"[DEBUG] 發現帶顏色標記的指令：{label}")
+                        
+                        # 將命令添加到當前區段
+                        commands.setdefault(section, {})[label] = command
+                        
+                        # 不再自動添加到「全部指令」區段，因為我們已經在 command.txt 中維護了完整的全部指令列表
+                        # 這樣避免重複添加
         except Exception as e:
-            print(f"[ERROR] 解析指令檔案時發生錯誤: {e}")
+            print(f"[ERROR] 讀取命令文件時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
             
+            # 如果讀取失敗，提供一個預設命令
+            if "全部指令" not in commands or not commands["全部指令"]:
+                commands["全部指令"] = {"執行重啟 (預設命令)": "reboot"}
+        
+        # 輸出各區段指令數量
+        for section_name, section_cmds in commands.items():
+            print(f"[DEBUG] 區段 '{section_name}' 有 {len(section_cmds)} 個指令")
+            # 檢查顏色標記
+            color_cmds = [cmd for cmd in section_cmds.keys() if '[COLOR:' in cmd]
+            if color_cmds:
+                print(f"[DEBUG] 區段 '{section_name}' 有 {len(color_cmds)} 個帶顏色標記的指令")
+                for cmd in color_cmds:
+                    print(f"[DEBUG] - {cmd}")
+        
         return commands
 
     def update_cmd_list(self):
