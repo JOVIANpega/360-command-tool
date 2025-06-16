@@ -30,7 +30,7 @@ class SerialWorker(threading.Thread):
             finished = False
 
             # 執行所有指令
-            for cmd in self.cmd_list:
+            for i, cmd in enumerate(self.cmd_list):
                 if self.stop_event.is_set():
                     break
                 cmd = cmd.strip()
@@ -82,25 +82,71 @@ class SerialWorker(threading.Thread):
                 self.on_data(f'\n[發送] {cmd}\n', "send")
                 ser.write((cmd + '\r\n').encode())
                 ser.flush()
-                time.sleep(1)  # 指令間隔1秒
-
-            # 等待回應
-            while not self.stop_event.is_set():
-                elapsed = time.time() - start_time
-                if elapsed > self.timeout:
-                    self.on_data(f'\n[超時] 已超過 {self.timeout} 秒，指令自動中止\n', "timeout")
-                    break
                 
-                data = ser.read(1024)
-                if data:
-                    text = data.decode(errors='ignore')
-                    buffer += text
-                    self.on_data(text, None)
-                    if self.end_str in buffer:
-                        self.on_data(f'\n[結束] 收到指定結束字串 {self.end_str}\n', "end")
-                        finished = True
+                # 檢查每個命令的回應，但不立即結束
+                cmd_start_time = time.time()
+                cmd_buffer = ""
+                cmd_received_end = False
+                
+                # 等待這個命令的響應，但不超過超時時間的一半
+                cmd_timeout = min(self.timeout / 2, 10)  # 最多等待10秒或總超時的一半
+                
+                while not self.stop_event.is_set():
+                    cmd_elapsed = time.time() - cmd_start_time
+                    if cmd_elapsed > cmd_timeout:
+                        # 這個命令等待超時，但繼續執行下一個命令
+                        self.on_data(f'\n[警告] 命令 "{cmd}" 等待響應超過 {cmd_timeout} 秒，繼續執行下一步\n', "warning")
                         break
-                time.sleep(0.1)  # 讓進度條平滑更新
+                    
+                    data = ser.read(1024)
+                    if data:
+                        text = data.decode(errors='ignore')
+                        cmd_buffer += text
+                        buffer += text
+                        self.on_data(text, None)
+                        
+                        # 檢查是否收到結束字串，但不立即結束整個過程
+                        if self.end_str in cmd_buffer:
+                            cmd_received_end = True
+                            # 只有在最後一個命令時，才標記整個過程完成
+                            if i == len(self.cmd_list) - 1:
+                                self.on_data(f'\n[結束] 收到指定結束字串 {self.end_str}\n', "end")
+                                finished = True
+                            break
+                    
+                    time.sleep(0.1)
+                
+                # 命令間隔1秒
+                time.sleep(1)
+
+            # 如果沒有在執行命令時接收到結束字串，則繼續等待
+            if not finished and not self.stop_event.is_set():
+                self.on_data(f'\n[系統] 所有命令已發送，等待最終回應...\n', "purple")
+                
+                # 等待最終回應
+                final_wait_start = time.time()
+                while not self.stop_event.is_set():
+                    elapsed = time.time() - start_time
+                    if elapsed > self.timeout:
+                        self.on_data(f'\n[超時] 已超過 {self.timeout} 秒，指令自動中止\n', "timeout")
+                        break
+                    
+                    data = ser.read(1024)
+                    if data:
+                        text = data.decode(errors='ignore')
+                        buffer += text
+                        self.on_data(text, None)
+                        if self.end_str in buffer:
+                            self.on_data(f'\n[結束] 收到指定結束字串 {self.end_str}\n', "end")
+                            finished = True
+                            break
+                    
+                    # 如果等待最終回應已超過5秒且沒有新數據，認為已完成
+                    if time.time() - final_wait_start > 5 and not data:
+                        self.on_data(f'\n[系統] 沒有更多數據，執行完成\n', "purple")
+                        break
+                    
+                    time.sleep(0.1)  # 讓進度條平滑更新
 
             ser.flush()
         except Exception as e:
