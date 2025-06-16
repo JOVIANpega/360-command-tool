@@ -164,9 +164,14 @@ class UIHandlers:
             print(f"[DEBUG] refresh_com_ports: 清空選擇，當前選擇 '{current_selection}' 不在新列表 {new_ports} 中")
 
     def clear_output(self, event=None):
+        """清空回應內容視窗，如果正在顯示使用說明，則恢復到正常模式"""
         self.parent.components.text_output.configure(state='normal')
         self.parent.components.text_output.delete('1.0', 'end')
         self.parent.components.text_output.configure(state='disabled')
+        
+        # 重置標記
+        if hasattr(self.parent, 'showing_guide') and self.parent.showing_guide:
+            self.parent.showing_guide = False
 
     def backup_output(self):
         try:
@@ -235,24 +240,34 @@ class UIHandlers:
             print(f"更改內容字體大小時發生錯誤: {e}")
 
     def toggle_guide(self):
-        if self.parent.guide_window and self.parent.guide_window.winfo_exists():
-            self.parent.guide_window.destroy()
-            self.parent.guide_window = None
-        else:
-            self.parent.guide_window = tk.Toplevel(self.parent.root)
-            self.parent.guide_window.title('使用說明')
-            self.parent.guide_window.geometry('600x400')
-            try:
-                with open(GUIDE_FILE, 'r', encoding='utf-8') as f:
-                    content = f.read()
-            except Exception as e:
-                content = f'無法讀取 user_guide.txt: {e}'
-            current_font_size = self.parent.components.content_font_scale.get()
-            font = ('Consolas', current_font_size)
-            text = scrolledtext.ScrolledText(self.parent.guide_window, font=font)
-            text.pack(fill='both', expand=True)
-            text.insert('1.0', content)
-            text.config(state='disabled')
+        """在回應內容視窗中顯示使用說明，而不是開啟新視窗"""
+        try:
+            # 讀取使用說明文件
+            with open(GUIDE_FILE, 'r', encoding='utf-8') as f:
+                content = f.read()
+                
+            # 清空回應內容視窗
+            self.parent.components.text_output.configure(state='normal')
+            self.parent.components.text_output.delete('1.0', tk.END)
+            
+            # 在回應內容視窗中顯示使用說明
+            self.parent.components.text_output.insert('1.0', "\n=== VALO360 指令通使用說明 ===\n\n", "guide_title")
+            self.parent.components.text_output.insert(tk.END, content)
+            
+            # 添加返回按鈕的提示
+            self.parent.components.text_output.insert(tk.END, "\n\n按 [清空回應] 按鈕可返回正常模式。\n", "guide_title")
+            
+            # 自動捲到頂部
+            self.parent.components.text_output.see('1.0')
+            
+            # 設回唯讀狀態
+            self.parent.components.text_output.configure(state='disabled')
+            
+            # 標記當前正在顯示使用說明
+            self.parent.showing_guide = True
+            
+        except Exception as e:
+            messagebox.showerror('錯誤', f'無法讀取使用說明文件：{e}')
 
     def on_execute(self):
         if self.parent.components.btn_exec['text'] == '中止':

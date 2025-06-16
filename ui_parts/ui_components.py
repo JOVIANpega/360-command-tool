@@ -308,6 +308,7 @@ class UIComponents:
             self.text_output.tag_configure("end", foreground="green")  # 收到結束字串為綠色
             self.text_output.tag_configure("timeout", foreground="red")  # 超時為紅色
             self.text_output.tag_configure("purple", foreground="#800080")  # 紫色
+            self.text_output.tag_configure("guide_title", foreground="#006400", font=('Microsoft JhengHei UI', int(self.parent.setup.get('Content_Font_Size', '12')) + 2, 'bold'))  # 使用說明標題
             
             # 設定唯讀
             self.text_output.config(state='disabled')
@@ -400,6 +401,10 @@ class UIComponents:
         self.combobox_end['values'] = end_strings
 
     def add_to_buffer(self, text, tag=None):
+        # 如果正在顯示使用說明，則不添加內容
+        if hasattr(self.parent, 'showing_guide') and self.parent.showing_guide:
+            return
+            
         # 設為可編輯狀態
         self.text_output.configure(state='normal')
         

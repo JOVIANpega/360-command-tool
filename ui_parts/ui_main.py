@@ -276,6 +276,7 @@ class SerialUI:
         self.buffer_size = 1000
         self.update_interval = 100
         self.buffer_timer = None
+        self.showing_guide = False  # 標記是否正在顯示使用說明
 
         # 初始化樣式
         self.init_styles()
