@@ -26,7 +26,7 @@ class UIHandlers:
         try:
             with open(COMMAND_FILE, "r", encoding="utf-8") as file:
                 for line in file:
-                    line = line.strip()
+                line = line.strip()
                     if not line or line.startswith("#") or line.startswith("//"):
                         continue
                     
@@ -36,7 +36,7 @@ class UIHandlers:
                         if section not in commands:
                             commands[section] = {}
                             print(f"[DEBUG] 發現新區段：{section}")
-                        continue
+                    continue
                     
                     # 解析命令
                     parts = line.split("=", 1)
@@ -84,8 +84,8 @@ class UIHandlers:
             section = '全部指令'
             self.parent.components.section_var.set('全部指令')
             
-        # 顯示特定區段的指令
-        self.parent.components.combobox_cmd['values'] = list(self.parent.commands_by_section.get(section, {}).keys())
+            # 顯示特定區段的指令
+            self.parent.components.combobox_cmd['values'] = list(self.parent.commands_by_section.get(section, {}).keys())
         
         # 如果有指令，選擇第一個
         if self.parent.components.combobox_cmd['values']:
@@ -191,6 +191,12 @@ class UIHandlers:
         else:
             self.parent.components.combobox_com.set('')
             print(f"[DEBUG] refresh_com_ports: 清空選擇，當前選擇 '{current_selection}' 不在新列表 {new_ports} 中")
+        
+        # 添加 COM 口更新通知
+        if new_ports:
+            self.parent.components.show_notification(f"找到 {len(new_ports)} 個 COM 口", "blue", 3000)
+        else:
+            self.parent.components.show_notification("未找到可用的 COM 口", "red", 3000)
 
     def clear_output(self, event=None):
         """清空回應內容視窗，如果正在顯示使用說明，則恢復到正常模式"""
@@ -201,6 +207,8 @@ class UIHandlers:
         # 重置標記
         if hasattr(self.parent, 'showing_guide') and self.parent.showing_guide:
             self.parent.showing_guide = False
+            # 顯示返回正常模式的通知
+            self.parent.components.show_notification("已返回正常模式", "green", 3000)
 
     def backup_output(self):
         try:
@@ -212,9 +220,11 @@ class UIHandlers:
             content = self.parent.components.text_output.get('1.0', 'end')
             with open(filename, 'w', encoding='utf-8') as f:
                 f.write(content)
-            messagebox.showinfo('備份成功', f'回應內容已備份至：\n{filename}')
+            # 使用通知功能顯示成功訊息
+            self.parent.components.show_notification(f'已備份至: {filename}', "green", 5000)
         except Exception as e:
-            messagebox.showerror('備份失敗', f'備份時發生錯誤：\n{str(e)}')
+            # 使用通知功能顯示錯誤訊息
+            self.parent.components.show_notification(f'備份失敗: {str(e)}', "red", 5000)
 
     def on_end_string_entered(self, event):
         new_string = self.parent.components.combobox_end.get().strip()
@@ -270,10 +280,10 @@ class UIHandlers:
 
     def toggle_guide(self):
         """在回應內容視窗中顯示使用說明，而不是開啟新視窗"""
-        try:
+            try:
             # 讀取使用說明文件
-            with open(GUIDE_FILE, 'r', encoding='utf-8') as f:
-                content = f.read()
+                with open(GUIDE_FILE, 'r', encoding='utf-8') as f:
+                    content = f.read()
                 
             # 清空回應內容視窗
             self.parent.components.text_output.configure(state='normal')
@@ -295,58 +305,80 @@ class UIHandlers:
             # 標記當前正在顯示使用說明
             self.parent.showing_guide = True
             
-        except Exception as e:
+            # 在通知區域顯示提示
+            self.parent.components.show_notification("已顯示使用說明，按「清空回應」按鈕可返回", "blue", 10000)
+            
+            except Exception as e:
             messagebox.showerror('錯誤', f'無法讀取使用說明文件：{e}')
 
     def on_execute(self):
-        if self.parent.components.btn_exec['text'] == '中止':
+        # 如果正在執行，則中止
+        if hasattr(self.parent, 'thread') and self.parent.thread is not None and self.parent.thread.is_alive():
             self.parent.stop_event.set()
+            self.parent.components.btn_exec.config(text='執行指令')
+            # 使用通知功能顯示中止訊息
+            self.parent.components.show_notification("指令執行已中止", "red", 3000)
             return
-        # 清除舊倒數
-        if self.countdown_job:
-            self.parent.root.after_cancel(self.countdown_job)
-            self.countdown_job = None
+
+        # 獲取 COM 口
         com = self.parent.components.combobox_com.get()
+        if not com:
+            # 使用通知功能顯示錯誤訊息
+            self.parent.components.show_notification("請選擇 COM 口", "red", 3000)
+            return
+
+        # 獲取指令
         cmd_key = self.parent.components.combobox_cmd.get()
-        end_str = self.parent.components.combobox_end.get()
+        if not cmd_key:
+            # 使用通知功能顯示錯誤訊息
+            self.parent.components.show_notification("請選擇指令", "red", 3000)
+            return
+
+        # 獲取當前選擇的分類
         section = self.parent.components.section_var.get()
         
-        print(f"[DEBUG] 執行指令: COM={com}, CMD={cmd_key}, Section={section}")
-        
+        # 獲取指令內容
+        cmd = self.parent.commands_by_section.get(section, {}).get(cmd_key, "")
+        if not cmd:
+            # 嘗試從全部指令中查找
+            cmd = self.parent.commands_by_section.get("全部指令", {}).get(cmd_key, "")
+        if not cmd:
+            # 使用通知功能顯示錯誤訊息
+            self.parent.components.show_notification("找不到指令內容", "red", 3000)
+            return
+
+        # 獲取結束字串
+        end_str = self.parent.components.combobox_end.get()
+        if not end_str:
+            # 使用通知功能顯示錯誤訊息
+            self.parent.components.show_notification("請輸入結束字串", "red", 3000)
+            return
+
+        # 獲取超時設定
         try:
             timeout = float(self.parent.components.entry_timeout.get())
-            if hasattr(self.parent.components, 'label_countdown'):
-                self.parent.components.label_countdown.configure(text=f'倒數: {int(timeout)}')
-            # 從 timeout-1 開始倒數，因為第一秒已經顯示了
-            self.countdown_job = self.parent.root.after(1000, self.update_countdown, timeout - 1)
+            if timeout <= 0:
+                raise ValueError("超時必須大於 0")
         except ValueError:
-            messagebox.showwarning('提示', '請輸入正確的超時秒數')
-            return
-        if not com or not cmd_key or not end_str:
-            messagebox.showwarning('提示', '請選擇COM口、指令並輸入結束字串')
+            # 使用通知功能顯示錯誤訊息
+            self.parent.components.show_notification("請輸入有效的超時值", "red", 3000)
             return
         
-        # 獲取指令
-        if section == '全部指令':
-            # 從所有區段中查找指令
-            cmd = ''
-            for section_commands in self.parent.commands_by_section.values():
-                if cmd_key in section_commands:
-                    cmd = section_commands[cmd_key]
-                    break
-        else:
-            cmd = self.parent.commands_by_section.get(section, {}).get(cmd_key, '')
-        
-        if not cmd:
-            messagebox.showwarning('提示', f'找不到指令: {cmd_key}')
-            return
-            
-        print(f"[DEBUG] 找到指令: {cmd}")
-        
+        # 處理指令列表（以竖线分隔的多條指令）
         cmd_list = cmd.split('|')
+        
+        # 開始倒數計時
+        if self.countdown_job:
+            self.parent.root.after_cancel(self.countdown_job)
+        self.countdown_job = self.parent.root.after(0, self.update_countdown, timeout)
+        
+        # 更新按鈕文字
         self.parent.components.btn_exec.config(text='中止')  # 只改文字，不改 state
         self.parent.components.update_progress(0, "blue.Horizontal.TProgressbar")
         self.parent.stop_event.clear()
+        
+        # 開始 LED 閃爍
+        self.parent.components.start_led_blink()
         
         # 在回應區域顯示開始執行的訊息
         self.parent.components.add_to_buffer(f"\n[發送] 開始執行指令: {cmd_key}\n", "send")
@@ -355,8 +387,13 @@ class UIHandlers:
         
         # 定義消息框回調函數
         def show_message_callback(message, callback):
-            # 在主線程中顯示消息框
-            self.parent.root.after(0, lambda: self._show_message_and_callback(message, callback))
+            # 使用真正的消息框而不是通知
+            def on_messagebox_closed():
+                if callback:
+                    callback()
+            
+            # 在主线程中显示消息框
+            self.parent.root.after(0, lambda: self._show_messagebox_and_callback(message, on_messagebox_closed))
         
         # 啟動 SerialWorker
         self.parent.thread = SerialWorker(
@@ -371,25 +408,48 @@ class UIHandlers:
         self.parent.thread.show_message_callback = show_message_callback
         self.parent.thread.start()
         self.on_end_string_entered(None)
-    
+
     def _show_message_and_callback(self, message, callback):
+        """在主線程中顯示消息，並在用戶確認後調用回調函數"""
+        # 使用通知功能顯示訊息
+        self.parent.components.show_notification(message, "blue", 5000)
+        # 執行回調
+        if callback:
+            callback()
+
+    def _show_messagebox_and_callback(self, message, callback):
         """在主線程中顯示消息框，並在用戶確認後調用回調函數"""
-        messagebox.showinfo('系統訊息', message)
+        # 使用messagebox显示消息
+        messagebox.showinfo("系統訊息", message)
+        # 执行回调
         if callback:
             callback()
 
     def on_command_finish(self):
         self.parent.components.btn_exec.config(text='執行指令')  # 只改文字，不改 state
         self.parent.components.reset_progress()
+        # 停止 LED 閃爍
+        self.parent.components.stop_led_blink()
         if self.countdown_job:
             self.parent.root.after_cancel(self.countdown_job)
             self.countdown_job = None
         if hasattr(self.parent.components, 'label_countdown'):
             self.parent.components.label_countdown.configure(text='')
+        
+        # 添加指令完成通知
+        self.parent.components.show_notification("指令執行完成", "green", 3000)
 
     def update_status_light(self, connected):
-        color = 'green' if connected else 'red'
+        # 如果 LED 正在閃爍，則不更新其顏色
+        if not self.parent.components.led_blinking:
+            color = 'green' if connected else 'black'
         self.parent.components.status_canvas.itemconfig(self.parent.components.status_light, fill=color)
+            
+            # 添加連接狀態通知
+            if connected:
+                self.parent.components.show_notification(f"已連接到 {self.parent.components.combobox_com.get()}", "green", 3000)
+            else:
+                self.parent.components.show_notification("連接已關閉", "red", 3000)
 
     def on_save_setup(self):
         # 保存 DUT 設定
@@ -537,3 +597,31 @@ class UIHandlers:
                 messagebox.showwarning("警告", "字體大小必須在 8-20 之間")
         except ValueError:
             messagebox.showwarning("警告", "請輸入有效的數字")
+
+    def on_auto_exec_changed(self):
+        """當自動執行勾選框狀態變更時，保存設置"""
+        try:
+            # 獲取當前勾選狀態
+            auto_exec = self.parent.auto_exec_var.get()
+            print(f"[DEBUG] 自動執行設置已變更為: {auto_exec}")
+            
+            # 更新設置
+            self.parent.setup['Auto_Execute'] = auto_exec
+            
+            # 保存完整的設定結構
+            from config import load_setup, save_setup
+            full_setup = load_setup()
+            full_setup['DUT_Control']['Auto_Execute'] = auto_exec
+            save_setup(full_setup)
+            
+            # 添加自動執行狀態通知
+            if auto_exec:
+                self.parent.components.show_notification("已啟用自動執行功能", "blue", 3000)
+            else:
+                self.parent.components.show_notification("已禁用自動執行功能", "blue", 3000)
+            
+            print(f"[DEBUG] 自動執行設置已保存: {auto_exec}")
+        except Exception as e:
+            print(f"[ERROR] 保存自動執行設置時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()

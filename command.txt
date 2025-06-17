@@ -46,7 +46,7 @@
 42. 讀取出貨SN版本 Read version = pegacmd version|cat /usr/lib/firmware/fw_imagetype|pegacmd version
 43. 執行關機 Turn off DUT = SHOW:系統即將關機，照指示拔掉POE，耐心等15sec|shutdown.sh
 44. 出貨初始化設定後關機 Shipping initialization = diag -s default|diag -s ship on
-
+45.寫入預設IVKEY=diag -s mac eth 58:07:F8:F4:62:DA|diag -s ivLic LPR "w6B0M81QX@@@BB1FvBu0v0ytwk4v"|diag -s ivLic FD "9f0Zh<8CL@@@008sU0uZUZrt9w2U"
 
 
 
@@ -104,6 +104,7 @@
 25. 執行預設 Do Default = diag -s default|reboot|SHOW:reboot and回到初始狀態
 26. 執行關機 DO關機 = SHOW:系統即將關機，照指示拔掉POE|shutdown.sh
 27. 讀取版本 Read version = pegacmd version|DELAY:5
+28.寫入預設IVKEY=diag -s mac eth 58:07:F8:F4:62:DA|diag -s ivLic LPR "w6B0M81QX@@@BB1FvBu0v0ytwk4v"|diag -s ivLic FD "9f0Zh<8CL@@@008sU0uZUZrt9w2U"
 
 
 

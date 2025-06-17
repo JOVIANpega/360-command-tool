@@ -43,6 +43,10 @@ class SerialWorker(threading.Thread):
                     delay_seconds = int(delay_match.group(1))
                     self.on_data(f'\n[系統] 延遲 {delay_seconds} 秒...\n', "purple")
                     
+                    # 顯示延遲開始通知
+                    if hasattr(self, 'show_message_callback') and self.show_message_callback:
+                        self.show_message_callback(f"延遲開始: {delay_seconds} 秒", None)
+                    
                     # 分段延遲，每秒更新一次進度
                     for i in range(delay_seconds):
                         if self.stop_event.is_set():
@@ -53,6 +57,11 @@ class SerialWorker(threading.Thread):
                         self.on_data(f'剩餘 {delay_seconds - i - 1} 秒...\r', "purple")
                     
                     self.on_data(f'\n[系統] 延遲結束\n', "purple")
+                    
+                    # 顯示延遲結束通知
+                    if hasattr(self, 'show_message_callback') and self.show_message_callback:
+                        self.show_message_callback(f"延遲結束", None)
+                    
                     continue
                 
                 # 處理特殊指令: SHOW
@@ -67,11 +76,24 @@ class SerialWorker(threading.Thread):
                     # 如果設置了回調函數，則使用它來顯示消息框
                     if hasattr(self, 'show_message_callback') and self.show_message_callback:
                         # 在主線程中顯示消息框，並在用戶確認後設置事件
-                        self.show_message_callback(message, lambda: message_confirmed.set())
+                        def confirm_callback():
+                            # 標記訊息已確認
+                            message_confirmed.set()
+                            # 記錄確認訊息
+                            self.on_data(f'\n[系統] 訊息已確認\n', "purple")
+                            
+                        # 顯示訊息並設置回調
+                        self.show_message_callback(f"系統訊息: {message}", confirm_callback)
                         
-                        # 等待用戶確認或停止事件
+                        # 等待最多3秒
+                        wait_start = time.time()
                         while not message_confirmed.is_set() and not self.stop_event.is_set():
                             time.sleep(0.1)
+                            # 如果等待超過3秒，自動確認
+                            if time.time() - wait_start > 3:
+                                message_confirmed.set()
+                                self.on_data(f'\n[系統] 訊息自動確認 (超時)\n', "purple")
+                                break
                     else:
                         # 如果沒有設置回調函數，則只在控制台輸出消息
                         self.on_data(f'[警告] 無法顯示消息框，因為未設置回調函數\n', "error")
@@ -125,33 +147,37 @@ class SerialWorker(threading.Thread):
                 
                 # 等待最終回應
                 final_wait_start = time.time()
-                while not self.stop_event.is_set():
-                    elapsed = time.time() - start_time
-                    if elapsed > self.timeout:
-                        self.on_data(f'\n[超時] 已超過 {self.timeout} 秒，指令自動中止\n', "timeout")
+            while not self.stop_event.is_set():
+                elapsed = time.time() - start_time
+                if elapsed > self.timeout:
+                    self.on_data(f'\n[超時] 已超過 {self.timeout} 秒，指令自動中止\n', "timeout")
+                    break
+                
+                data = ser.read(1024)
+                if data:
+                    text = data.decode(errors='ignore')
+                    buffer += text
+                    self.on_data(text, None)
+                    if self.end_str in buffer:
+                        self.on_data(f'\n[結束] 收到指定結束字串 {self.end_str}\n', "end")
+                        finished = True
                         break
-                    
-                    data = ser.read(1024)
-                    if data:
-                        text = data.decode(errors='ignore')
-                        buffer += text
-                        self.on_data(text, None)
-                        if self.end_str in buffer:
-                            self.on_data(f'\n[結束] 收到指定結束字串 {self.end_str}\n', "end")
-                            finished = True
-                            break
                     
                     # 如果等待最終回應已超過5秒且沒有新數據，認為已完成
                     if time.time() - final_wait_start > 5 and not data:
                         self.on_data(f'\n[系統] 沒有更多數據，執行完成\n', "purple")
                         break
                     
-                    time.sleep(0.1)  # 讓進度條平滑更新
+                time.sleep(0.1)  # 讓進度條平滑更新
 
             ser.flush()
         except Exception as e:
             self.on_data(f'\n[錯誤] {e}\n', "error")
         finally:
+            try:
+                ser.close()
+            except:
+                pass
             self.stop_event.set()  # 確保 thread 狀態重設
             self.on_status(False)
             self.on_finish()

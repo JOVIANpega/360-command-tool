@@ -30,9 +30,12 @@ except Exception as e:
     messagebox.showerror('錯誤', f'導入模組失敗: {e}')
     sys.exit(1)
 
+# 定义应用版本
+APP_VERSION = "V1.35"
+
 def main():
     root = tk.Tk()
-    root.title('VALO360 指令通')
+    root.title(f'VALO360 指令通 {APP_VERSION}')
     try:
         root.iconbitmap('app.ico')
     except:

@@ -407,6 +407,13 @@ class SerialUI:
         settings['Window_Width'] = str(self.root.winfo_width())
         settings['Window_Height'] = str(self.root.winfo_height())
         settings['Last_Selected_Command_Section'] = c.section_var.get() if hasattr(c, 'section_var') else '全部指令'
+        
+        # 添加自動執行設置
+        if hasattr(c, 'auto_exec_var'):
+            settings['Auto_Execute'] = c.auto_exec_var.get()
+        else:
+            settings['Auto_Execute'] = self.setup.get('Auto_Execute', False)
+            
         return settings
 
     def load_initial_settings(self):
@@ -473,10 +480,69 @@ class SerialUI:
             self.components.section_var.set(last_section)
             self.components.update_cmd_list()
             
-            print(f"[DEBUG] 已載入設定: COM={com_port}, Timeout={timeout}, EndString={end_string}")
+            # 讀取自動執行設置
+            auto_execute = self.setup.get('Auto_Execute', False)
+            print(f"[DEBUG] 讀取到自動執行設置: {auto_execute}")
+            
+            # 更新勾選框狀態（不觸發事件）
+            if hasattr(self.components, 'auto_exec_var'):
+                self.components.auto_exec_var.set(auto_execute)
+            
+            print(f"[DEBUG] 已載入設定: COM={com_port}, Timeout={timeout}, EndString={end_string}, AutoExecute={auto_execute}")
+            
+            # 保存設置到文件，確保我們的設置被保存
+            try:
+                from config import save_setup, load_setup
+                full_setup = load_setup()
+                full_setup['DUT_Control']['Auto_Execute'] = auto_execute
+                save_setup(full_setup)
+                print(f"[DEBUG] 已保存自動執行設置: {auto_execute}")
+            except Exception as e:
+                print(f"[ERROR] 保存自動執行設置時發生錯誤: {e}")
+            
+            # 在所有設定載入完成後，如果啟用了自動執行，則安排一個延遲的模擬Enter按鍵事件
+            # 使用更長的延遲，確保UI已完全載入
+            if auto_execute:
+                print(f"[DEBUG] 自動執行已啟用，將在 2000ms 後模擬按下 Enter 鍵")
+                # 使用更長的延遲，並在主線程中執行
+                self.root.after(2000, self._safe_execute_command)
+            else:
+                print(f"[DEBUG] 自動執行未啟用，跳過模擬按下 Enter 鍵")
             
         except Exception as e:
             print(f"[ERROR] 載入設定時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
+            
+    def _safe_execute_command(self):
+        """安全地在主線程中執行命令"""
+        try:
+            print("[DEBUG] _safe_execute_command 開始執行...")
+            self.simulate_enter_key()
+        except Exception as e:
+            print(f"[ERROR] 安全執行命令時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def simulate_enter_key(self):
+        """模擬按下 Enter 鍵，觸發指令執行"""
+        try:
+            print("[DEBUG] simulate_enter_key 開始執行...")
+            
+            # 直接執行命令，不再檢查 Auto_Execute 設置
+            # 因為這個方法只有在應該自動執行時才會被調用
+            print("[DEBUG] 正在模擬按下 Enter 鍵...")
+            
+            # 確保必要的組件已經準備好
+            if not hasattr(self, 'handlers') or not hasattr(self.handlers, 'on_execute'):
+                print("[ERROR] handlers 或 on_execute 方法不存在")
+                return
+                
+            # 調用 handlers 的 on_execute 方法
+            self.handlers.on_execute()
+            print("[DEBUG] on_execute 執行完成")
+        except Exception as e:
+            print(f"[ERROR] 模擬按下 Enter 鍵時發生錯誤: {e}")
             import traceback
             traceback.print_exc()
 
