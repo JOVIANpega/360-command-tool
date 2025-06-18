@@ -3,6 +3,8 @@ import sys
 import tkinter as tk
 from tkinter import ttk, messagebox
 import traceback
+from config import load_commands
+from ui_parts.ui_main import SerialUI, TabManager
 
 # 設置路徑
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -30,31 +32,36 @@ except Exception as e:
     messagebox.showerror('錯誤', f'導入模組失敗: {e}')
     sys.exit(1)
 
-# 定义应用版本
-APP_VERSION = "V1.36"
-
 def main():
+    # 版本訊息
+    VERSION = "V1.37"
+    print(f"===== VALO360 指令通 {VERSION} =====")
+
+    # 載入命令清單
+    commands = load_commands()
+    
+    # 初始化 Tkinter
     root = tk.Tk()
-    root.title(f'VALO360 指令通 {APP_VERSION}')
+    root.title(f"VALO360 指令通 {VERSION}")
     try:
         root.iconbitmap('app.ico')
     except:
         pass
     
-    # 設置窗口大小和位置
-    window_width = 800
-    window_height = 600
-    screen_width = root.winfo_screenwidth()
-    screen_height = root.winfo_screenheight()
-    x = (screen_width - window_width) // 2
-    y = (screen_height - window_height) // 2
-    root.geometry(f'{window_width}x{window_height}+{x}+{y}')
-    
-    # 創建分頁管理器（TabManager 會自己處理關閉事件）
+    # 建立選項卡管理器並初始化 UI
     app = TabManager(root)
     
+    # 介面置中顯示
+    root.update_idletasks()  # 更新元件尺寸
+    width = root.winfo_width()
+    height = root.winfo_height()
+    x = (root.winfo_screenwidth() // 2) - (width // 2)
+    y = (root.winfo_screenheight() // 2) - (height // 2)
+    root.geometry(f'{width}x{height}+{x}+{y}')
+    
+    # 啟動應用程式
     root.mainloop()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
     write_log("__main__ 結束")

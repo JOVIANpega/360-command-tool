@@ -1,38 +1,38 @@
 @echo off
-echo Starting cleanup of unnecessary files and directories...
+echo VALO360 指令通 - 清理腳本
+echo.
 
-:: Delete Python cache files
-echo Deleting Python cache files...
-rd /s /q __pycache__ 2>nul
-rd /s /q ui_parts\__pycache__ 2>nul
+echo 正在清理打包產生的臨時文件...
 
-:: Delete PyInstaller build files
-echo Deleting PyInstaller build files...
-rd /s /q build 2>nul
+rem 刪除 PyInstaller 產生的臨時文件
+if exist "build" (
+    rmdir /s /q build
+    echo 已刪除 build 目錄
+)
 
-:: Delete backup and temporary files
-echo Deleting backup and temporary files...
-del test_command.txt 2>nul
-del build_commands.txt 2>nul
-del build_code.txt 2>nul
-del build_command.txt 2>nul
-del dist\main.exe 2>nul
-del main_backup.py 2>nul
-del "build code.txt" 2>nul
+if exist "__pycache__" (
+    rmdir /s /q __pycache__
+    echo 已刪除 __pycache__ 目錄
+)
 
-:: Delete duplicate files
-echo Deleting duplicate files...
-del VALO360指令通.spec 2>nul
-del main.spec 2>nul
+if exist "*.spec" (
+    del *.spec
+    echo 已刪除 .spec 文件
+)
 
-:: Keep readme.md, delete readme.txt
-echo Organizing documentation files...
-del readme.txt 2>nul
+rem 刪除其他模組的 __pycache__
+if exist "ui_parts\__pycache__" (
+    rmdir /s /q ui_parts\__pycache__
+    echo 已刪除 ui_parts\__pycache__ 目錄
+)
 
-:: Delete unused code files
-echo Deleting unused code files...
-del ui_parts\ui_components_new.py 2>nul
-del ui_parts\handlers.py 2>nul
+if exist "FIXTURE\__pycache__" (
+    rmdir /s /q FIXTURE\__pycache__
+    echo 已刪除 FIXTURE\__pycache__ 目錄
+)
 
-echo Cleanup completed!
+echo.
+echo 清理完成!
+echo.
+
 pause 

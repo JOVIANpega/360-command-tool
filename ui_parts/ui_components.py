@@ -497,10 +497,26 @@ class UIComponents:
         self.progress.grid()  # 確保進度條顯示
 
     def reset_progress(self):
-        """重置進度條"""
-        print("[DEBUG] reset_progress: set progress to 0 and hide")
-        self.progress.config(style="gray.Horizontal.TProgressbar", value=0)
-        self.show_progress(False)
+        """重置進度條並隱藏"""
+        try:
+            print("[DEBUG] reset_progress: set progress to 0 and hide")
+            self.progress['value'] = 0
+            self.show_progress(False)  # 隱藏進度條
+            
+            # 取消所有與進度條相關的定時器
+            if hasattr(self.parent, 'root'):
+                # 檢查是否有標記的進度條更新任務
+                if hasattr(self.parent.handlers, '_progress_update_job') and self.parent.handlers._progress_update_job:
+                    try:
+                        self.parent.root.after_cancel(self.parent.handlers._progress_update_job)
+                        self.parent.handlers._progress_update_job = None
+                        print("[DEBUG] 已取消進度條更新任務")
+                    except Exception as e:
+                        print(f"[ERROR] 取消進度條更新任務時發生錯誤: {e}")
+        except Exception as e:
+            print(f"[ERROR] 重置進度條時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
 
     def update_radio_bg(self):
         selected = self.section_var.get()

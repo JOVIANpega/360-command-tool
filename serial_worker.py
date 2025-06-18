@@ -31,7 +31,7 @@ class SerialWorker(threading.Thread):
 
             # 執行所有指令
             for i, cmd in enumerate(self.cmd_list):
-                if self.stop_event.is_set():
+                if self.stop_event.is_set() or finished:
                     break
                 cmd = cmd.strip()
                 if not cmd:
@@ -43,13 +43,11 @@ class SerialWorker(threading.Thread):
                     delay_seconds = int(delay_match.group(1))
                     self.on_data(f'\n[系統] 延遲 {delay_seconds} 秒...\n', "purple")
                     
-                    # 顯示延遲開始通知
-                    if hasattr(self, 'show_message_callback') and self.show_message_callback:
-                        self.show_message_callback(f"延遲開始: {delay_seconds} 秒", None)
+                    # 移除彈窗顯示，只在控制台顯示進度
                     
                     # 分段延遲，每秒更新一次進度
                     for i in range(delay_seconds):
-                        if self.stop_event.is_set():
+                        if self.stop_event.is_set() or finished:
                             break
                         time.sleep(1)
                         progress = ((i + 1) / delay_seconds) * 100
@@ -58,9 +56,7 @@ class SerialWorker(threading.Thread):
                     
                     self.on_data(f'\n[系統] 延遲結束\n', "purple")
                     
-                    # 顯示延遲結束通知
-                    if hasattr(self, 'show_message_callback') and self.show_message_callback:
-                        self.show_message_callback(f"延遲結束", None)
+                    # 移除延遲結束通知彈窗
                     
                     continue
                 
@@ -87,7 +83,7 @@ class SerialWorker(threading.Thread):
                         
                         # 等待最多3秒
                         wait_start = time.time()
-                        while not message_confirmed.is_set() and not self.stop_event.is_set():
+                        while not message_confirmed.is_set() and not self.stop_event.is_set() and not finished:
                             time.sleep(0.1)
                             # 如果等待超過3秒，自動確認
                             if time.time() - wait_start > 3:
@@ -113,7 +109,7 @@ class SerialWorker(threading.Thread):
                 # 等待這個命令的響應，但不超過超時時間的一半
                 cmd_timeout = min(self.timeout / 2, 10)  # 最多等待10秒或總超時的一半
                 
-                while not self.stop_event.is_set():
+                while not self.stop_event.is_set() and not finished:
                     cmd_elapsed = time.time() - cmd_start_time
                     if cmd_elapsed > cmd_timeout:
                         # 這個命令等待超時，但繼續執行下一個命令
@@ -147,28 +143,28 @@ class SerialWorker(threading.Thread):
                 
                 # 等待最終回應
                 final_wait_start = time.time()
-            while not self.stop_event.is_set():
-                elapsed = time.time() - start_time
-                if elapsed > self.timeout:
-                    self.on_data(f'\n[超時] 已超過 {self.timeout} 秒，指令自動中止\n', "timeout")
-                    break
-                
-                data = ser.read(1024)
-                if data:
-                    text = data.decode(errors='ignore')
-                    buffer += text
-                    self.on_data(text, None)
-                    if self.end_str in buffer:
-                        self.on_data(f'\n[結束] 收到指定結束字串 {self.end_str}\n', "end")
-                        finished = True
+                while not self.stop_event.is_set() and not finished:
+                    elapsed = time.time() - start_time
+                    if elapsed > self.timeout:
+                        self.on_data(f'\n[超時] 已超過 {self.timeout} 秒，指令自動中止\n', "timeout")
                         break
                     
-                    # 如果等待最終回應已超過5秒且沒有新數據，認為已完成
-                    if time.time() - final_wait_start > 5 and not data:
-                        self.on_data(f'\n[系統] 沒有更多數據，執行完成\n', "purple")
-                        break
-                    
-                time.sleep(0.1)  # 讓進度條平滑更新
+                    data = ser.read(1024)
+                    if data:
+                        text = data.decode(errors='ignore')
+                        buffer += text
+                        self.on_data(text, None)
+                        if self.end_str in buffer:
+                            self.on_data(f'\n[結束] 收到指定結束字串 {self.end_str}\n', "end")
+                            finished = True
+                            break
+                        
+                        # 如果等待最終回應已超過5秒且沒有新數據，認為已完成
+                        if time.time() - final_wait_start > 5 and not data:
+                            self.on_data(f'\n[系統] 沒有更多數據，執行完成\n', "purple")
+                            break
+                        
+                    time.sleep(0.1)  # 讓進度條平滑更新
 
             ser.flush()
         except Exception as e:

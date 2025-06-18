@@ -15,6 +15,11 @@ class UIHandlers:
     def __init__(self, parent):
         self.parent = parent
         self.countdown_job = None
+        self._progress_update_job = None  # 進度條更新任務
+        # 初始化 component_label_map，用於記錄標籤對應的索引
+        self.component_label_map = {}
+        # 解析指令文件中的分類和指令
+        self.parse_commands_by_section()
         
     def parse_commands_by_section(self):
         """解析命令文件，按區段整理"""
@@ -178,25 +183,37 @@ class UIHandlers:
         self.ping_thread.start()
 
     def refresh_com_ports(self):
-        # 保存當前選擇
-        current_selection = self.parent.components.combobox_com.get()
-        # 更新 COM 口列表
-        new_ports = list_com_ports()
-        self.parent.components.combobox_com['values'] = new_ports
-        
-        # 如果當前選擇仍在新列表中，保持選擇；否則清空
-        if current_selection and current_selection in new_ports:
-            self.parent.components.combobox_com.set(current_selection)
-            print(f"[DEBUG] refresh_com_ports: 保持選擇 {current_selection}")
-        else:
-            self.parent.components.combobox_com.set('')
-            print(f"[DEBUG] refresh_com_ports: 清空選擇，當前選擇 '{current_selection}' 不在新列表 {new_ports} 中")
-        
-        # 添加 COM 口更新通知
-        if new_ports:
-            self.parent.components.show_notification(f"找到 {len(new_ports)} 個 COM 口", "blue", 3000)
-        else:
-            self.parent.components.show_notification("未找到可用的 COM 口", "red", 3000)
+        """刷新COM口列表並保持當前選擇（如果可能）"""
+        try:
+            # 保存當前選擇
+            current_selection = self.parent.components.combobox_com.get()
+            
+            # 更新 COM 口列表
+            new_ports = list_com_ports()
+            self.parent.components.combobox_com['values'] = new_ports
+            
+            # 如果當前選擇仍在新列表中，保持選擇
+            if current_selection and current_selection in new_ports:
+                self.parent.components.combobox_com.set(current_selection)
+                print(f"[DEBUG] refresh_com_ports: 保持選擇 {current_selection}")
+            elif new_ports:  # 如果有可用的COM口但當前選擇不在列表中
+                # 選擇第一個可用的COM口，而不是清空選擇
+                self.parent.components.combobox_com.set(new_ports[0])
+                print(f"[DEBUG] refresh_com_ports: 當前選擇 '{current_selection}' 不可用，選擇新的COM口 {new_ports[0]}")
+            else:
+                # 如果沒有可用的COM口，才清空選擇
+                self.parent.components.combobox_com.set('')
+                print(f"[DEBUG] refresh_com_ports: 沒有可用的COM口，清空選擇")
+            
+            # 添加 COM 口更新通知
+            if new_ports:
+                self.parent.components.show_notification(f"找到 {len(new_ports)} 個 COM 口", "blue", 3000)
+            else:
+                self.parent.components.show_notification("未找到可用的 COM 口", "red", 3000)
+        except Exception as e:
+            print(f"[ERROR] refresh_com_ports 發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
 
     def clear_output(self, event=None):
         """清空回應內容視窗，如果正在顯示使用說明，則恢復到正常模式"""
@@ -426,30 +443,59 @@ class UIHandlers:
             callback()
 
     def on_command_finish(self):
-        self.parent.components.btn_exec.config(text='執行指令')  # 只改文字，不改 state
-        self.parent.components.reset_progress()
-        # 停止 LED 閃爍
-        self.parent.components.stop_led_blink()
-        if self.countdown_job:
-            self.parent.root.after_cancel(self.countdown_job)
-            self.countdown_job = None
-        if hasattr(self.parent.components, 'label_countdown'):
-            self.parent.components.label_countdown.configure(text='')
-        
-        # 添加指令完成通知
-        self.parent.components.show_notification("指令執行完成", "green", 3000)
+        """指令執行完成時的處理"""
+        try:
+            # 立即更新按鈕文字
+            self.parent.components.btn_exec.config(text='執行指令')
+            
+            # 立即停止進度條並重置
+            self.parent.components.reset_progress()
+            
+            # 立即停止 LED 閃爍
+            self.parent.components.stop_led_blink()
+            
+            # 取消倒計時定時器
+            if self.countdown_job:
+                self.parent.root.after_cancel(self.countdown_job)
+                self.countdown_job = None
+            
+            # 清空倒計時標籤
+            if hasattr(self.parent.components, 'label_countdown'):
+                self.parent.components.label_countdown.configure(text='')
+            
+            # 添加指令完成通知
+            self.parent.components.show_notification("指令執行完成", "green", 3000)
+            
+            # 確保所有 after 任務都已取消
+            if hasattr(self, '_progress_update_job') and self._progress_update_job:
+                try:
+                    self.parent.root.after_cancel(self._progress_update_job)
+                    self._progress_update_job = None
+                except Exception as e:
+                    print(f"[ERROR] 取消進度更新任務時發生錯誤: {e}")
+        except Exception as e:
+            print(f"[ERROR] 完成指令處理時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
 
     def update_status_light(self, connected):
-        # 如果 LED 正在閃爍，則不更新其顏色
-        if not self.parent.components.led_blinking:
-            color = 'green' if connected else 'black'
-        self.parent.components.status_canvas.itemconfig(self.parent.components.status_light, fill=color)
-            
-        # 添加連接狀態通知
-        if connected:
-            self.parent.components.show_notification(f"已連接到 {self.parent.components.combobox_com.get()}", "green", 3000)
-        else:
-            self.parent.components.show_notification("連接已關閉", "red", 3000)
+        """更新連接狀態指示燈"""
+        try:
+            # 如果 LED 正在閃爍，則不更新其顏色
+            if not hasattr(self.parent.components, 'led_blinking') or not self.parent.components.led_blinking:
+                color = 'green' if connected else 'black'
+                if hasattr(self.parent.components, 'status_canvas') and hasattr(self.parent.components, 'status_light'):
+                    self.parent.components.status_canvas.itemconfig(self.parent.components.status_light, fill=color)
+                    
+                # 添加連接狀態通知
+                if connected:
+                    self.parent.components.show_notification(f"已連接到 {self.parent.components.combobox_com.get()}", "green", 3000)
+                else:
+                    self.parent.components.show_notification("連接已關閉", "red", 3000)
+        except Exception as e:
+            print(f"[ERROR] 更新狀態指示燈時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
 
     def on_save_setup(self):
         # 保存 DUT 設定
