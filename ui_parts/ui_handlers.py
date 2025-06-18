@@ -26,7 +26,7 @@ class UIHandlers:
         try:
             with open(COMMAND_FILE, "r", encoding="utf-8") as file:
                 for line in file:
-                line = line.strip()
+                    line = line.strip()
                     if not line or line.startswith("#") or line.startswith("//"):
                         continue
                     
@@ -36,7 +36,7 @@ class UIHandlers:
                         if section not in commands:
                             commands[section] = {}
                             print(f"[DEBUG] 發現新區段：{section}")
-                    continue
+                        continue
                     
                     # 解析命令
                     parts = line.split("=", 1)
@@ -280,11 +280,11 @@ class UIHandlers:
 
     def toggle_guide(self):
         """在回應內容視窗中顯示使用說明，而不是開啟新視窗"""
-            try:
+        try:
             # 讀取使用說明文件
-                with open(GUIDE_FILE, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                
+            with open(GUIDE_FILE, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
             # 清空回應內容視窗
             self.parent.components.text_output.configure(state='normal')
             self.parent.components.text_output.delete('1.0', tk.END)
@@ -308,7 +308,7 @@ class UIHandlers:
             # 在通知區域顯示提示
             self.parent.components.show_notification("已顯示使用說明，按「清空回應」按鈕可返回", "blue", 10000)
             
-            except Exception as e:
+        except Exception as e:
             messagebox.showerror('錯誤', f'無法讀取使用說明文件：{e}')
 
     def on_execute(self):
@@ -445,11 +445,11 @@ class UIHandlers:
             color = 'green' if connected else 'black'
         self.parent.components.status_canvas.itemconfig(self.parent.components.status_light, fill=color)
             
-            # 添加連接狀態通知
-            if connected:
-                self.parent.components.show_notification(f"已連接到 {self.parent.components.combobox_com.get()}", "green", 3000)
-            else:
-                self.parent.components.show_notification("連接已關閉", "red", 3000)
+        # 添加連接狀態通知
+        if connected:
+            self.parent.components.show_notification(f"已連接到 {self.parent.components.combobox_com.get()}", "green", 3000)
+        else:
+            self.parent.components.show_notification("連接已關閉", "red", 3000)
 
     def on_save_setup(self):
         # 保存 DUT 設定

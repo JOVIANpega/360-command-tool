@@ -31,7 +31,7 @@ except Exception as e:
     sys.exit(1)
 
 # 定义应用版本
-APP_VERSION = "V1.35"
+APP_VERSION = "V1.36"
 
 def main():
     root = tk.Tk()
