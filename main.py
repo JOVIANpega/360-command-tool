@@ -3,8 +3,10 @@ import sys
 import tkinter as tk
 from tkinter import ttk, messagebox
 import traceback
-from config import load_commands
+from config import load_commands, load_highlight_keywords
 from ui_parts.ui_main import SerialUI, TabManager
+import re
+import threading
 
 # 設置路徑
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -40,6 +42,10 @@ def main():
     # 載入命令清單
     commands = load_commands()
     
+    # 載入關鍵字高亮設定
+    highlight_keywords = load_highlight_keywords()
+    print(f"[DEBUG] main 函數載入的關鍵字高亮設定: {highlight_keywords}")
+    
     # 初始化 Tkinter
     root = tk.Tk()
     root.title(f"VALO360 指令通 {VERSION}")
@@ -49,7 +55,7 @@ def main():
         pass
     
     # 建立選項卡管理器並初始化 UI
-    app = TabManager(root)
+    app = TabManager(root, highlight_keywords)
     
     # 介面置中顯示
     root.update_idletasks()  # 更新元件尺寸

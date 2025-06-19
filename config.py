@@ -4,6 +4,9 @@ import sys
 import logging
 from datetime import datetime
 from tkinter import messagebox
+import re
+import platform
+import time
 
 def resource_path(relative_path):
     """獲取資源的絕對路徑，支持開發環境和打包後的環境"""
@@ -275,3 +278,41 @@ def list_com_ports():
     except Exception as e:
         print(f"[ERROR] 獲取COM口列表時發生錯誤: {e}")
         return []
+
+def load_highlight_keywords():
+    """載入關鍵字高亮設定"""
+    highlight_keywords = {}
+    
+    try:
+        print(f"[DEBUG] 開始載入關鍵字高亮設定...")
+        with open(COMMAND_FILE, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        # 尋找關鍵字高亮區段
+        print(f"[DEBUG] 搜尋關鍵字高亮區段...")
+        keyword_section = re.search(r'\[關鍵字高亮\](.*?)(?=\[|\Z)', content, re.DOTALL)
+        if not keyword_section:
+            keyword_section = re.search(r'==關鍵字高亮==(.*?)(?===|\Z)', content, re.DOTALL)
+            
+        if keyword_section:
+            keyword_content = keyword_section.group(1).strip()
+            print(f"[DEBUG] 找到關鍵字高亮區段: {keyword_content}")
+            for line in keyword_content.split('\n'):
+                line = line.strip()
+                if line and '=' in line:
+                    keyword, color = line.split('=', 1)
+                    keyword = keyword.strip()
+                    color = color.strip()
+                    if keyword and color:
+                        highlight_keywords[keyword] = color
+                        print(f"[INFO] 載入關鍵字高亮: {keyword} -> {color}")
+        else:
+            print(f"[WARNING] 找不到關鍵字高亮區段")
+                        
+        print(f"[INFO] 總共載入了 {len(highlight_keywords)} 個關鍵字高亮設定")
+        return highlight_keywords
+    except Exception as e:
+        print(f"[ERROR] 載入關鍵字高亮設定時發生錯誤: {e}")
+        import traceback
+        traceback.print_exc()
+        return {}

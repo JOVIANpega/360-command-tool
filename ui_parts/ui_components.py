@@ -22,6 +22,9 @@ class UIComponents:
         self.max_dropdown_items = 20  # 將下拉菜單最大顯示項目數從10改為20
         # 下拉列表字典
         self.dropdown_boxes = {}
+        # 獲取高亮關鍵字
+        self.highlight_keywords = getattr(parent, 'highlight_keywords', {})
+        print(f"[DEBUG] 載入了 {len(self.highlight_keywords)} 個高亮關鍵字到 UIComponents")
         self.init_ui()
         # 讀取 setup.txt 的寬高
         width = int(self.parent.setup.get('Window_Width', 800))
@@ -126,7 +129,16 @@ class UIComponents:
         # 注意：不在這裡設定預設值，由 load_initial_settings 統一處理
         print(f"[DEBUG] init_com_components: 已創建 COM 口選單，可用 COM 口: {com_values}")
         
-        self.btn_refresh = tk.Button(com_frame, text='刷新', command=self.parent.handlers.refresh_com_ports,
+        # 確保 parent.handlers 存在
+        refresh_command = None
+        if hasattr(self.parent, 'handlers') and hasattr(self.parent.handlers, 'refresh_com_ports'):
+            refresh_command = self.parent.handlers.refresh_com_ports
+        else:
+            # 如果 handlers 不存在，提供一個臨時的空函數
+            refresh_command = lambda: None
+            print("[WARNING] handlers 不存在或沒有 refresh_com_ports 方法")
+        
+        self.btn_refresh = tk.Button(com_frame, text='刷新', command=refresh_command,
                                    bg='#e0e0e0', fg='black', activebackground='#2196f3', activeforeground='black')
         self.btn_refresh.grid(row=0, column=2, padx=3)  # 減少間距
         
@@ -390,11 +402,35 @@ class UIComponents:
             self.text_output.tag_configure("timeout", foreground="red")  # 超時為紅色
             self.text_output.tag_configure("purple", foreground="#800080")  # 紫色
             self.text_output.tag_configure("guide_title", foreground="#006400", font=('Microsoft JhengHei UI', int(self.parent.setup.get('Content_Font_Size', '12')) + 2, 'bold'))  # 使用說明標題
+            self.text_output.tag_configure("error", foreground="red")  # 錯誤訊息為紅色
+            self.text_output.tag_configure("success", foreground="green")  # 成功訊息為綠色
+            self.text_output.tag_configure("warning", foreground="orange")  # 警告訊息為橙色
+            
+            # 為高亮關鍵字定義標籤
+            print(f"[DEBUG] 初始化關鍵字高亮標籤，parent={self.parent}")
+            if hasattr(self.parent, 'highlight_keywords'):
+                print(f"[DEBUG] highlight_keywords={self.parent.highlight_keywords}")
+                for keyword, color in self.parent.highlight_keywords.items():
+                    print(f"[DEBUG] 創建關鍵字標籤: {keyword} -> {color}")
+                    self.text_output.tag_configure(color, foreground=color)
+            else:
+                print(f"[WARNING] parent 沒有 highlight_keywords 屬性")
             
             # 設定唯讀
             self.text_output.config(state='disabled')
+            
+            # 添加右鍵菜單
+            self.output_context_menu = tk.Menu(self.text_output, tearoff=0)
+            self.output_context_menu.add_command(label="複製", command=self.copy_selected_text)
+            self.output_context_menu.add_command(label="全選", command=self.select_all_text)
+            self.output_context_menu.add_separator()
+            self.output_context_menu.add_command(label="清空", command=self.parent.handlers.clear_output)
+            self.text_output.bind("<Button-3>", self.show_output_context_menu)
+            
         except Exception as e:
             print(f"Error in init_output_components: {e}")
+            import traceback
+            traceback.print_exc()
             raise
 
     def init_exec_button_left_panel(self):
@@ -574,25 +610,66 @@ class UIComponents:
         elif tag:
             self.text_output.insert(tk.END, text, tag)
         else:
-            self.text_output.insert(tk.END, text)
-        
+            # 檢查是否包含關鍵字，如果有則只高亮關鍵字部分
+            if hasattr(self.parent, 'highlight_keywords') and self.parent.highlight_keywords:
+                # 先插入文字
+                start_pos = self.text_output.index(tk.END)
+                self.text_output.insert(tk.END, text)
+                
+                # 檢查關鍵字並應用標籤
+                for keyword, color in self.parent.highlight_keywords.items():
+                    if keyword in text:
+                        # 找出所有關鍵字出現的位置
+                        start = start_pos
+                        while True:
+                            # 從當前位置開始搜索關鍵字
+                            pos = self.text_output.search(keyword, start, tk.END)
+                            if not pos:
+                                break
+                                
+                            # 計算關鍵字結束位置
+                            end_pos = f"{pos}+{len(keyword)}c"
+                            
+                            # 應用標籤 - 只對關鍵字本身應用
+                            try:
+                                self.text_output.tag_add(color, pos, end_pos)
+                            except Exception as e:
+                                print(f"[ERROR] 應用標籤時發生錯誤: {e}")
+                            
+                            # 更新搜索起點
+                            start = end_pos
+            else:
+                # 如果沒有關鍵字，直接插入文字
+                self.text_output.insert(tk.END, text)
+                
         # 自動捲到最底
         self.text_output.see(tk.END)
         # 設回唯讀狀態
         self.text_output.configure(state='disabled')
 
     def flush_buffer(self):
-        if not self.parent.text_buffer:
+        """將緩衝區的文字一次性添加到輸出區域"""
+        if not hasattr(self.parent, 'text_buffer') or not self.parent.text_buffer:
             return
-        self.text_output.configure(state='normal')
-        for text, tag in self.parent.text_buffer:
-            if tag:
-                self.text_output.insert(tk.END, text, tag)
-            else:
-                self.text_output.insert(tk.END, text)
-        self.text_output.see(tk.END)  # 自動捲到最底
-        self.text_output.configure(state='disabled')  # 設回唯讀狀態
-        self.parent.text_buffer = []
+            
+        if not hasattr(self, 'text_output'):
+            print("[ERROR] text_output 不存在，無法刷新緩衝區")
+            return
+            
+        try:
+            self.text_output.configure(state='normal')
+            for text, tag in self.parent.text_buffer:
+                if tag:
+                    self.text_output.insert(tk.END, text, tag)
+                else:
+                    self.text_output.insert(tk.END, text)
+            self.text_output.see(tk.END)  # 自動捲到最底
+            self.text_output.configure(state='disabled')  # 設回唯讀狀態
+            self.parent.text_buffer = []
+        except Exception as e:
+            print(f"[ERROR] 刷新緩衝區時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
 
     def update_ui_fonts(self, size=None):
         try:
@@ -925,5 +1002,31 @@ class UIComponents:
             self.show_notification(f"通知字體大小: {self.notification_font_size}", "blue", 2000)
         except Exception as e:
             print(f"[ERROR] 修改通知區域字體大小時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def copy_selected_text(self):
+        # 實現複製選中文字的功能
+        try:
+            selected_text = self.text_output.get(tk.SEL_FIRST, tk.SEL_LAST)
+            if selected_text:
+                self.parent.root.clipboard_clear()
+                self.parent.root.clipboard_append(selected_text)
+                self.show_notification("已複製選中文字", "green", 2000)
+        except tk.TclError:
+            # 如果沒有選中文字，會拋出 TclError
+            self.show_notification("未選中任何文字", "orange", 2000)
+
+    def select_all_text(self):
+        # 實現全選文字的功能
+        self.text_output.tag_add(tk.SEL, "1.0", tk.END)
+        self.show_notification("已全選文字", "green", 2000)
+
+    def show_output_context_menu(self, event):
+        """顯示輸出區域的右鍵菜單"""
+        try:
+            self.output_context_menu.post(event.x_root, event.y_root)
+        except Exception as e:
+            print(f"[ERROR] 顯示右鍵菜單時發生錯誤: {e}")
             import traceback
             traceback.print_exc()

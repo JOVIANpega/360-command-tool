@@ -37,8 +37,10 @@ except ImportError as e:
     sys.exit(1)
 
 class TabManager:
-    def __init__(self, root):
+    def __init__(self, root, highlight_keywords=None):
         self.root = root
+        self.highlight_keywords = highlight_keywords or {}
+        print(f"[DEBUG] TabManager 初始化，highlight_keywords={self.highlight_keywords}")
         
         # 配置根窗口的 grid
         self.root.grid_rowconfigure(0, weight=1)
@@ -107,7 +109,7 @@ class TabManager:
     
     def init_dut_tab(self):
         # 初始化 DUT 控制分頁
-        self.dut_ui = SerialUI(self.dut_frame, self.root)
+        self.dut_ui = SerialUI(self.dut_frame, self.root, self.highlight_keywords)
     
     def init_fixture_tab(self):
         # 初始化治具控制分頁
@@ -253,56 +255,37 @@ class TabManager:
             self.root.destroy()
 
 class SerialUI:
-    def __init__(self, parent, root):
+    def __init__(self, parent, root, highlight_keywords=None):
         self.parent = parent
         self.root = root
+        self.highlight_keywords = highlight_keywords or {}
+        print(f"[DEBUG] SerialUI 初始化，highlight_keywords={self.highlight_keywords}")
         
         # 首先讀取 setup.json
-        setup_data = load_setup()
-        # 從 DUT_Control 分層中讀取設定
-        self.setup = setup_data.get('DUT_Control', {})
-        print(f"[DEBUG] 已讀取 setup.json DUT_Control 設定: {self.setup}")
+        self.setup = load_setup().get('DUT_Control', {})
         
-        # 配置父容器的 grid
-        self.parent.grid_rowconfigure(0, weight=1)
-        self.parent.grid_columnconfigure(0, weight=1)
-        
-        # 初始化基本變數
-        self.serial_port = None
-        self.thread = None
-        self.stop_event = threading.Event()
-        self.guide_window = None
-        self.text_buffer = []
-        self.buffer_size = 1000
-        self.update_interval = 100
-        self.buffer_timer = None
-        self.showing_guide = False  # 標記是否正在顯示使用說明
-
         # 初始化樣式
         self.init_styles()
         
-        # 先初始化 handlers
+        # 設置 text_buffer 用於批量更新
+        self.text_buffer = []
+        
+        # 初始化處理器
         self.handlers = UIHandlers(self)
-        # 再初始化 components
+        
+        # 初始化 UI 元件
         self.components = UIComponents(self)
         
-        # 載入指令
+        # 解析 command.txt 中的指令分類
         self.commands_by_section = self.handlers.parse_commands_by_section()
-        self.components.update_cmd_list()
-
-        # 載入 Available_End_Strings
-        end_strings = self.setup.get('Available_End_Strings', ["root"])
-        if isinstance(end_strings, str):
-            try:
-                end_strings = json.loads(end_strings)
-            except Exception:
-                end_strings = ["root"]
-        self.components.combobox_end['values'] = end_strings
         
-        # 讀取並應用設定
+        # 載入初始設定
         self.load_initial_settings()
         
-        # 注意：不要在這裡綁定關閉事件，由 TabManager 統一處理
+        # 檢查是否自動執行
+        if self.setup.get('Auto_Execute', False):
+            # 延遲 500ms 執行，確保 UI 已完全載入
+            self.root.after(500, self._safe_execute_command)
 
     def init_styles(self):
         style = ttk.Style()
@@ -417,132 +400,79 @@ class SerialUI:
         return settings
 
     def load_initial_settings(self):
-        """程式啟動時讀取並應用設定"""
+        """載入初始設定"""
         try:
-            print(f"[DEBUG] load_initial_settings 開始，self.setup = {self.setup}")
-            
-            # 讀取 COM 口設定
-            com_port = self.setup.get('Serial_COM_Port', '')
-            print(f"[DEBUG] 讀取到 COM 口設定: '{com_port}'")
-            
-            if com_port:
-                print(f"[DEBUG] COM 口不為空，開始刷新 COM 口列表")
-                # 刷新 COM 口列表
-                self.handlers.refresh_com_ports()
-                # 如果設定的 COM 口在列表中，則選擇它
-                available_ports = self.components.combobox_com['values']
-                print(f"[DEBUG] 可用的 COM 口: {available_ports}")
-                if com_port in available_ports:
-                    self.components.combobox_com.set(com_port)
-                    print(f"[DEBUG] 已設定 COM 口為: {com_port}")
-                else:
-                    print(f"[DEBUG] COM 口 {com_port} 不在可用列表中")
-            else:
-                print(f"[DEBUG] COM 口為空，跳過設定")
-            
-            # 讀取超時設定
+            # 載入 COM 口設定
+            saved_com = self.setup.get('Serial_COM_Port', '')
+            com_values = self.components.combobox_com['values']
+            if saved_com and saved_com in com_values:
+                self.components.combobox_com.set(saved_com)
+            elif com_values:
+                self.components.combobox_com.set(com_values[0])
+                
+            # 載入超時設定
             timeout = self.setup.get('Command_Timeout_Seconds', '30')
-            print(f"[DEBUG] 讀取到超時設定: {timeout}")
             self.components.entry_timeout.delete(0, tk.END)
             self.components.entry_timeout.insert(0, timeout)
             
-            # 讀取結束字串設定
+            # 載入結束字串設定
             end_string = self.setup.get('Command_End_String', 'root')
-            print(f"[DEBUG] 讀取到結束字串設定: {end_string}")
             self.components.combobox_end.set(end_string)
             
-            # 讀取 IP 地址設定
-            default_ip = self.setup.get('Default_IP_Address', '192.168.11.143')
-            print(f"[DEBUG] 讀取到 IP 地址設定: {default_ip}")
+            # 載入 IP 位址設定
+            ip = self.setup.get('Default_IP_Address', '192.168.11.143')
             self.components.entry_ip.delete(0, tk.END)
-            self.components.entry_ip.insert(0, default_ip)
+            self.components.entry_ip.insert(0, ip)
             
-            # 讀取字體大小設定
-            ui_font_size = int(self.setup.get('UI_Font_Size', '12'))
-            content_font_size = int(self.setup.get('Content_Font_Size', '12'))
-            print(f"[DEBUG] 讀取到字體設定: UI={ui_font_size}, Content={content_font_size}")
-            self.components.ui_font_scale.set(ui_font_size)
-            self.components.content_font_scale.set(content_font_size)
+            # 載入上次選擇的指令分類
+            last_section = self.setup.get('Last_Selected_Command_Section', '全部指令')
+            if last_section in self.commands_by_section:
+                self.components.section_var.set(last_section)
+                
+            # 更新指令列表
+            self.components.update_cmd_list()
             
-            # 應用字體設定
+            # 載入 Available_End_Strings
+            end_strings = self.setup.get('Available_End_Strings', ["root"])
+            if isinstance(end_strings, str):
+                try:
+                    end_strings = json.loads(end_strings)
+                except Exception:
+                    end_strings = ["root"]
+            self.components.combobox_end['values'] = end_strings
+            
+            # 載入視窗大小設定
+            width = int(self.setup.get('Window_Width', 800))
+            height = int(self.setup.get('Window_Height', 600))
+            
+            # 載入字體大小設定
+            ui_font_size = int(self.setup.get('UI_Font_Size', 12))
+            content_font_size = int(self.setup.get('Content_Font_Size', 12))
+            
+            # 應用字體大小
             self.components.update_ui_fonts(ui_font_size)
             self.components.update_content_fonts(content_font_size)
             
-            # 讀取最後選擇的指令分類
-            last_section = self.setup.get('Last_Selected_Command_Section', '全部指令')
-            print(f"[DEBUG] 讀取到指令分類設定: {last_section}")
-            
-            # 檢查分類是否存在
-            if last_section not in self.commands_by_section:
-                print(f"[WARNING] 保存的分類 '{last_section}' 不存在，使用全部指令")
-                last_section = '全部指令'
-                
-            self.components.section_var.set(last_section)
-            self.components.update_cmd_list()
-            
-            # 讀取自動執行設置
+            # 載入 Auto_Execute 設定
             auto_execute = self.setup.get('Auto_Execute', False)
-            print(f"[DEBUG] 讀取到自動執行設置: {auto_execute}")
-            
-            # 更新勾選框狀態（不觸發事件）
-            if hasattr(self.components, 'auto_exec_var'):
-                self.components.auto_exec_var.set(auto_execute)
-            
-            print(f"[DEBUG] 已載入設定: COM={com_port}, Timeout={timeout}, EndString={end_string}, AutoExecute={auto_execute}")
-            
-            # 保存設置到文件，確保我們的設置被保存
-            try:
-                from config import save_setup, load_setup
-                full_setup = load_setup()
-                full_setup['DUT_Control']['Auto_Execute'] = auto_execute
-                save_setup(full_setup)
-                print(f"[DEBUG] 已保存自動執行設置: {auto_execute}")
-            except Exception as e:
-                print(f"[ERROR] 保存自動執行設置時發生錯誤: {e}")
-            
-            # 在所有設定載入完成後，如果啟用了自動執行，則安排一個延遲的模擬Enter按鍵事件
-            # 使用更長的延遲，確保UI已完全載入
-            if auto_execute:
-                print(f"[DEBUG] 自動執行已啟用，將在 2000ms 後模擬按下 Enter 鍵")
-                # 使用更長的延遲，並在主線程中執行
-                self.root.after(2000, self._safe_execute_command)
-            else:
-                print(f"[DEBUG] 自動執行未啟用，跳過模擬按下 Enter 鍵")
-            
+            if hasattr(self.components, 'auto_execute_var'):
+                self.components.auto_execute_var.set(auto_execute)
+                
         except Exception as e:
-            print(f"[ERROR] 載入設定時發生錯誤: {e}")
-            import traceback
-            traceback.print_exc()
-            
-    def _safe_execute_command(self):
-        """安全地在主線程中執行命令"""
-        try:
-            print("[DEBUG] _safe_execute_command 開始執行...")
-            self.simulate_enter_key()
-        except Exception as e:
-            print(f"[ERROR] 安全執行命令時發生錯誤: {e}")
+            print(f"[ERROR] 載入初始設定時發生錯誤: {e}")
             import traceback
             traceback.print_exc()
 
-    def simulate_enter_key(self):
-        """模擬按下 Enter 鍵，觸發指令執行"""
+    def _safe_execute_command(self):
+        """安全地執行指令（用於自動執行）"""
         try:
-            print("[DEBUG] simulate_enter_key 開始執行...")
-            
-            # 直接執行命令，不再檢查 Auto_Execute 設置
-            # 因為這個方法只有在應該自動執行時才會被調用
-            print("[DEBUG] 正在模擬按下 Enter 鍵...")
-            
-            # 確保必要的組件已經準備好
-            if not hasattr(self, 'handlers') or not hasattr(self.handlers, 'on_execute'):
-                print("[ERROR] handlers 或 on_execute 方法不存在")
-                return
-                
-            # 調用 handlers 的 on_execute 方法
-            self.handlers.on_execute()
-            print("[DEBUG] on_execute 執行完成")
+            if hasattr(self.handlers, 'on_execute'):
+                print("[DEBUG] 自動執行指令")
+                self.handlers.on_execute()
+            else:
+                print("[ERROR] handlers 不存在或沒有 on_execute 方法")
         except Exception as e:
-            print(f"[ERROR] 模擬按下 Enter 鍵時發生錯誤: {e}")
+            print(f"[ERROR] 自動執行指令時發生錯誤: {e}")
             import traceback
             traceback.print_exc()
 

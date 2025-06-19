@@ -1,7 +1,7 @@
 //指令可以自行修改 
 
 ==全部指令==
-0. I LOVE JOVIAN= 
+0. I LOVE JOVIAN=SHOW:TEST|DELAY:3
 1. 取得360序號 Get 360 SN States = diag -g sn dev|diag -g sn mb|diag -g hwver|diag -g sku|pegacmd version
 2. 檢查IVKEY Get IVKey = diag -g ivLic FD|diag -g ivLic LPR
 3. 取得SD卡 Get SD state = diag -g status sd
@@ -51,7 +51,7 @@
 
 
 
-==單板指令==
+==單板指令2==
 1. 取得MB序號 Get 360 SN States = diag -g sn mb|diag -g hwver|diag -g sku|pegacmd version
 2. 取得SD卡狀態 Get SD state = diag -g status sd
 3. 取得Microchip序號 Get Microchip SN = cryptoauth_test sernum|diag -g status emmc
@@ -76,7 +76,7 @@
 
 
 
-==整機指令==
+==整機指令3==
 1. 取得360整機序號狀態 Get 360 SN States = diag -g sn dev|diag -g sn mb|diag -g hwver|diag -g sku|pegacmd version
 2. 檢查IVKEY Get IVKey = diag -g ivLic FD|diag -g ivLic LPR
 3. 取得SD卡狀態 Get SD state = diag -g status sd
@@ -109,7 +109,7 @@
 
 
 
-==驗證喇叭==
+==喇叭==
 1. 讀取出貨SN版本 Read version = pegacmd version|cat /usr/lib/firmware/fw_imagetype|pegacmd version
 2. 檢查IVKEY Get IVKey = diag -g ivLic FD|diag -g ivLic LPR
 3. 執行重啟 Do Reboot = reboot
@@ -127,3 +127,11 @@
 //指令可以自行修改
 
 VALO360 指令通_V2  created by JOVIAN
+
+[關鍵字高亮]
+diag=red
+test5g=blue
+error=red
+fail=red
+successfully=green
+version=green

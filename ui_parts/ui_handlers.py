@@ -18,6 +18,11 @@ class UIHandlers:
         self._progress_update_job = None  # 進度條更新任務
         # 初始化 component_label_map，用於記錄標籤對應的索引
         self.component_label_map = {}
+        # 獲取高亮關鍵字
+        self.highlight_keywords = {}
+        if hasattr(parent, 'highlight_keywords'):
+            self.highlight_keywords = parent.highlight_keywords
+            print(f"[DEBUG] UIHandlers: 從 parent 獲取了 {len(self.highlight_keywords)} 個高亮關鍵字")
         # 解析指令文件中的分類和指令
         self.parse_commands_by_section()
         
@@ -332,99 +337,81 @@ class UIHandlers:
         # 如果正在執行，則中止
         if hasattr(self.parent, 'thread') and self.parent.thread is not None and self.parent.thread.is_alive():
             self.parent.stop_event.set()
-            self.parent.components.btn_exec.config(text='執行指令')
-            # 使用通知功能顯示中止訊息
-            self.parent.components.show_notification("指令執行已中止", "red", 3000)
+            self.parent.components.add_to_buffer("\n[已中止執行]\n", "error")
+            self.parent.components.reset_progress()
             return
-
+        
         # 獲取 COM 口
         com = self.parent.components.combobox_com.get()
         if not com:
-            # 使用通知功能顯示錯誤訊息
-            self.parent.components.show_notification("請選擇 COM 口", "red", 3000)
+            self.parent.components.add_to_buffer("\n[錯誤] 請選擇 COM 口\n", "error")
             return
-
+        
         # 獲取指令
-        cmd_key = self.parent.components.combobox_cmd.get()
-        if not cmd_key:
-            # 使用通知功能顯示錯誤訊息
-            self.parent.components.show_notification("請選擇指令", "red", 3000)
+        cmd = self.parent.components.combobox_cmd.get()
+        if not cmd:
+            self.parent.components.add_to_buffer("\n[錯誤] 請選擇指令\n", "error")
             return
-
-        # 獲取當前選擇的分類
-        section = self.parent.components.section_var.get()
         
         # 獲取指令內容
-        cmd = self.parent.commands_by_section.get(section, {}).get(cmd_key, "")
-        if not cmd:
-            # 嘗試從全部指令中查找
-            cmd = self.parent.commands_by_section.get("全部指令", {}).get(cmd_key, "")
-        if not cmd:
-            # 使用通知功能顯示錯誤訊息
-            self.parent.components.show_notification("找不到指令內容", "red", 3000)
+        section = self.parent.components.section_var.get()
+        cmd_content = self.parent.commands_by_section.get(section, {}).get(cmd, "")
+        if not cmd_content:
+            self.parent.components.add_to_buffer(f"\n[錯誤] 找不到指令 '{cmd}' 的內容\n", "error")
             return
-
+        
         # 獲取結束字串
         end_str = self.parent.components.combobox_end.get()
         if not end_str:
-            # 使用通知功能顯示錯誤訊息
-            self.parent.components.show_notification("請輸入結束字串", "red", 3000)
+            self.parent.components.add_to_buffer("\n[錯誤] 請輸入結束字串\n", "error")
             return
-
-        # 獲取超時設定
+        
+        # 獲取超時時間
         try:
-            timeout = float(self.parent.components.entry_timeout.get())
-            if timeout <= 0:
-                raise ValueError("超時必須大於 0")
+            timeout = int(self.parent.components.entry_timeout.get())
         except ValueError:
-            # 使用通知功能顯示錯誤訊息
-            self.parent.components.show_notification("請輸入有效的超時值", "red", 3000)
+            self.parent.components.add_to_buffer("\n[錯誤] 超時時間必須是整數\n", "error")
             return
         
-        # 處理指令列表（以竖线分隔的多條指令）
-        cmd_list = cmd.split('|')
+        # 分割指令
+        cmd_list = cmd_content.split('|')
         
-        # 開始倒數計時
-        if self.countdown_job:
-            self.parent.root.after_cancel(self.countdown_job)
-        self.countdown_job = self.parent.root.after(0, self.update_countdown, timeout)
+        # 顯示執行信息
+        self.parent.components.add_to_buffer(f"\n=== 執行指令: {cmd} ===\n", "purple")
+        self.parent.components.add_to_buffer(f"COM 口: {com}, 超時: {timeout} 秒, 結束字串: {end_str}\n", "purple")
         
-        # 更新按鈕文字
-        self.parent.components.btn_exec.config(text='中止')  # 只改文字，不改 state
-        self.parent.components.update_progress(0, "blue.Horizontal.TProgressbar")
-        self.parent.stop_event.clear()
+        # 重置進度條並顯示
+        self.parent.components.reset_progress()
+        self.parent.components.show_progress()
         
-        # 開始 LED 閃爍
-        self.parent.components.start_led_blink()
+        # 重置停止事件
+        self.parent.stop_event = threading.Event()
         
-        # 在回應區域顯示開始執行的訊息
-        self.parent.components.add_to_buffer(f"\n[發送] 開始執行指令: {cmd_key}\n", "send")
-        self.parent.components.add_to_buffer(f"[發送] COM口: {com}\n", "send")
-        self.parent.components.add_to_buffer(f"[發送] 指令內容: {cmd}\n", "send")
-        
-        # 定義消息框回調函數
-        def show_message_callback(message, callback):
-            # 使用真正的消息框而不是通知
-            def on_messagebox_closed():
-                if callback:
-                    callback()
-            
-            # 在主线程中显示消息框
-            self.parent.root.after(0, lambda: self._show_messagebox_and_callback(message, on_messagebox_closed))
-        
-        # 啟動 SerialWorker
+        # 創建並啟動線程
         self.parent.thread = SerialWorker(
             com, cmd_list, end_str, timeout,
-            on_data=lambda text, tag: self.parent.components.add_to_buffer(text, tag),
+            on_data=lambda text, tag: self.on_data(text, tag),
             on_status=lambda connected: self.parent.root.after(0, lambda: self.update_status_light(connected)),
             on_progress=lambda p: self.parent.root.after(0, lambda: self.parent.components.update_progress(p)),
-            on_finish=self.on_command_finish,
+            on_finish=lambda: self.parent.root.after(0, self.on_command_finish),
             stop_event=self.parent.stop_event
         )
-        # 設置消息框回調函數
-        self.parent.thread.show_message_callback = show_message_callback
+        
+        # 設置顯示消息的回調
+        self.parent.thread.show_message_callback = self._show_message_and_callback
+        
+        # 啟動線程
         self.parent.thread.start()
-        self.on_end_string_entered(None)
+        
+    def on_data(self, text, tag=None):
+        """處理接收到的數據，自動檢測關鍵字並應用顏色"""
+        # 如果已經指定了標籤，直接使用
+        if tag:
+            self.parent.components.add_to_buffer(text, tag)
+            return
+            
+        # 直接添加文字，在 add_to_buffer 中處理關鍵字高亮
+        self.parent.components.add_to_buffer(text, None)
 
     def _show_message_and_callback(self, message, callback):
         """在主線程中顯示消息，並在用戶確認後調用回調函數"""
