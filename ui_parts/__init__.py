@@ -1,2 +1,8 @@
-# ui_parts 包初始化文件
-# 确保在打包时能正确识别为包
+# ui_parts 包初始化文件
+# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+# 确保在打包时能正确识别为包
+
+from ui_parts.ui_components import UIComponents
+from ui_parts.ui_handlers import UIHandlers
+from ui_parts.ui_main import TabManager, SerialUI

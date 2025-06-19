@@ -1,0 +1,96 @@
+# -*- coding: utf-8 -*-
+"""
+修正 EXE 檔案的版本資訊
+"""
+import os
+import sys
+import struct
+import time
+
+def print_info(msg):
+    print(f"[INFO] {msg}")
+
+def print_error(msg):
+    print(f"[ERROR] {msg}")
+
+def create_version_resource():
+    """創建版本資源檔案"""
+    version_info = """# UTF-8
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=(1, 3, 8, 0),
+    prodvers=(1, 3, 8, 0),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+    ),
+  kids=[
+    StringFileInfo(
+      [
+      StringTable(
+        u'040404b0',
+        [StringStruct(u'CompanyName', u'VALO360'),
+        StringStruct(u'FileDescription', u'VALO360 指令通'),
+        StringStruct(u'FileVersion', u'1.3.8.0'),
+        StringStruct(u'InternalName', u'VALO360指令通'),
+        StringStruct(u'LegalCopyright', u'Copyright (C) 2023-2025'),
+        StringStruct(u'OriginalFilename', u'VALO360指令通.exe'),
+        StringStruct(u'ProductName', u'VALO360 指令通'),
+        StringStruct(u'ProductVersion', u'1.3.8.0'),
+        StringStruct(u'Comments', u'V1.38 切割程式並新增高亮顯示關鍵字')])
+      ]), 
+    VarFileInfo([VarStruct(u'Translation', [1028, 1200])])
+  ]
+)
+"""
+    with open('version_info_fixed.txt', 'w', encoding='utf-8') as f:
+        f.write(version_info)
+    print_info("已生成修正版本資訊檔案: version_info_fixed.txt")
+    return 'version_info_fixed.txt'
+
+def run_pyinstaller(version_file):
+    """執行 PyInstaller 打包"""
+    try:
+        print_info("開始執行 PyInstaller 打包...")
+        cmd = f'pyinstaller --onefile --noconsole --icon=app.ico --version-file={version_file} --name="VALO360指令通" --add-data "command.txt;." --add-data "setup.json;." --add-data "user_guide.txt;." --add-data "app.ico;." main.py'
+        os.system(cmd)
+        print_info("PyInstaller 打包完成")
+        return True
+    except Exception as e:
+        print_error(f"PyInstaller 打包失敗: {e}")
+        return False
+
+def main():
+    """主函數"""
+    print_info("開始修正 EXE 版本資訊...")
+    
+    # 確保 main.py 中的版本號正確
+    try:
+        with open('main.py', 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # 更新版本號
+        import re
+        new_content = re.sub(r'VERSION = "V1\.[0-9]+"', 'VERSION = "V1.38"', content)
+        
+        with open('main.py', 'w', encoding='utf-8') as f:
+            f.write(new_content)
+        
+        print_info("已更新 main.py 中的版本號為 V1.38")
+    except Exception as e:
+        print_error(f"更新版本號失敗: {e}")
+    
+    # 創建版本資源檔案
+    version_file = create_version_resource()
+    
+    # 執行 PyInstaller 打包
+    if run_pyinstaller(version_file):
+        print_info("版本資訊修正完成，請檢查 dist/VALO360指令通.exe")
+    else:
+        print_error("版本資訊修正失敗")
+
+if __name__ == "__main__":
+    main() 

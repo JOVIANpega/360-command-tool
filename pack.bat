@@ -1,21 +1,20 @@
 @echo off
-echo VALO360 指令通 - 一鍵打包腳本
+echo VALO360 指令通 - 打包執行腳本
 echo.
 
-echo 第一步：安裝必要依賴...
-pip install pyinstaller
-pip install pyserial
-
-echo.
-echo 第二步：運行打包腳本...
+rem 執行打包腳本
 call build.bat
 
-echo.
-echo 第三步：清理臨時文件...
-call cleanup.bat
+rem 檢查打包結果
+if exist "dist\VALO360CommandTool.exe" (
+  echo.
+  echo 打包成功，正在啟動程式...
+  start "" "dist\VALO360CommandTool.exe"
+) else (
+  echo.
+  echo 打包失敗，請檢查錯誤訊息。
+)
 
 echo.
-echo VALO360 指令通打包完成！可執行文件位於 dist 目錄中。
-echo.
-
+echo 完成
 pause 

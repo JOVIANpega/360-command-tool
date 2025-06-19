@@ -12,8 +12,9 @@
     "Default_IP_Address": "192.168.11.143",
     "Window_Width": "1536",
     "Window_Height": "793",
-    "Last_Selected_Command_Section": "整機指令",
-    "Pane_Sash_Position": "471"
+    "Last_Selected_Command_Section": "喇叭",
+    "Pane_Sash_Position": "471",
+    "Auto_Execute": false
   },
   "Fixture_Control": {
     "Fixture_COM_Port": "COM5",

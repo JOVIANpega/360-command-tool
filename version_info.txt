@@ -6,8 +6,8 @@ VSVersionInfo(
   ffi=FixedFileInfo(
     # filevers and prodvers should be always a tuple with four items: (1, 2, 3, 4)
     # Set not needed items to zero 0.
-    filevers=(1, 3, 7, 0),
-    prodvers=(1, 3, 7, 0),
+    filevers=(1, 3, 8, 0),
+    prodvers=(1, 3, 8, 0),
     # Contains a bitmask that specifies the valid bits 'flags'r
     mask=0x3f,
     # Contains a bitmask that specifies the Boolean attributes of the file.
@@ -30,14 +30,14 @@ VSVersionInfo(
       StringTable(
         u'040904B0',
         [StringStruct(u'CompanyName', u'VALO360'),
-        StringStruct(u'FileDescription', u'VALO360 指令通'),
-        StringStruct(u'FileVersion', u'1.37'),
-        StringStruct(u'InternalName', u'VALO360指令通'),
+        StringStruct(u'FileDescription', u'VALO360 Command Tool'),
+        StringStruct(u'FileVersion', u'1.3.8.0'),
+        StringStruct(u'InternalName', u'VALO360CommandTool'),
         StringStruct(u'LegalCopyright', u'Copyright (C) 2023-2025'),
-        StringStruct(u'OriginalFilename', u'VALO360指令通.exe'),
-        StringStruct(u'ProductName', u'VALO360 指令通'),
-        StringStruct(u'ProductVersion', u'1.37'),
-        StringStruct(u'Comments', u'修復DELAY顯示視窗、COM口處理與資源管理改進')])
+        StringStruct(u'OriginalFilename', u'VALO360CommandTool.exe'),
+        StringStruct(u'ProductName', u'VALO360 Command Tool'),
+        StringStruct(u'ProductVersion', u'1.3.8.0'),
+        StringStruct(u'Comments', u'V1.38 - Split code and add keyword highlighting')])
       ]), 
     VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
   ]

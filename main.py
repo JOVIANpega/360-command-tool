@@ -3,12 +3,12 @@ import sys
 import tkinter as tk
 from tkinter import ttk, messagebox
 import traceback
-from config import load_commands, load_highlight_keywords
+from config_core import load_commands, load_highlight_keywords
 from ui_parts.ui_main import SerialUI, TabManager
 import re
 import threading
 
-# 設置路徑
+# 設置路�?
 current_dir = os.path.dirname(os.path.abspath(__file__))
 if current_dir not in sys.path:
     sys.path.insert(0, current_dir)
@@ -24,50 +24,50 @@ def write_log(msg):
     except Exception:
         pass
 
-write_log("main.py 啟動")
+write_log("main.py ?��?")
 
 try:
     from ui_parts.ui_main import TabManager
-    write_log("成功 import TabManager")
+    write_log("?��? import TabManager")
 except Exception as e:
-    write_log("import TabManager 失敗：" + traceback.format_exc())
-    messagebox.showerror('錯誤', f'導入模組失敗: {e}')
+    write_log("import TabManager 失�?�? + traceback.format_exc())
+    messagebox.showerror('?�誤', f'導入模�?失�?: {e}')
     sys.exit(1)
 
 def main():
-    # 版本訊息
-    VERSION = "V1.37"
-    print(f"===== VALO360 指令通 {VERSION} =====")
+    # ?�本訊息
+    VERSION = "V1.38"
+    print(f"===== VALO360 ?�令??{VERSION} =====")
 
-    # 載入命令清單
+    # 載入?�令清單
     commands = load_commands()
     
-    # 載入關鍵字高亮設定
+    # 載入?�鍵字�?亮設�?
     highlight_keywords = load_highlight_keywords()
-    print(f"[DEBUG] main 函數載入的關鍵字高亮設定: {highlight_keywords}")
+    print(f"[DEBUG] main ?�數載入?��??��?高亮設�?: {highlight_keywords}")
     
-    # 初始化 Tkinter
+    # ?��???Tkinter
     root = tk.Tk()
-    root.title(f"VALO360 指令通 {VERSION}")
+    root.title(f"VALO360 ?�令??{VERSION}")
     try:
         root.iconbitmap('app.ico')
     except:
         pass
     
-    # 建立選項卡管理器並初始化 UI
+    # 建�??��??�管?�器並�?始�? UI
     app = TabManager(root, highlight_keywords)
     
     # 介面置中顯示
-    root.update_idletasks()  # 更新元件尺寸
+    root.update_idletasks()  # ?�新?�件尺寸
     width = root.winfo_width()
     height = root.winfo_height()
     x = (root.winfo_screenwidth() // 2) - (width // 2)
     y = (root.winfo_screenheight() // 2) - (height // 2)
     root.geometry(f'{width}x{height}+{x}+{y}')
     
-    # 啟動應用程式
+    # ?��??�用程�?
     root.mainloop()
 
 if __name__ == "__main__":
     main()
-    write_log("__main__ 結束")
+    write_log("__main__ 結�?")

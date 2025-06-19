@@ -1,0 +1,27 @@
+{
+  "DUT_Control": {
+    "Serial_COM_Port": "COM5",
+    "Command_Timeout_Seconds": "30",
+    "Command_End_String": "root",
+    "UI_Font_Size": "12",
+    "Content_Font_Size": "11",
+    "Window_Title": "VALO360 指令通",
+    "Available_End_Strings": [
+      "root"
+    ],
+    "Default_IP_Address": "192.168.11.143",
+    "Window_Width": "1536",
+    "Window_Height": "793",
+    "Last_Selected_Command_Section": "喇叭",
+    "Pane_Sash_Position": "471",
+    "Auto_Execute": false
+  },
+  "Fixture_Control": {
+    "Fixture_COM_Port": "COM5",
+    "Current_Command": "F - 給電",
+    "Test_Category_FUNCTION": true,
+    "Test_Category_MB": false,
+    "Test_Category_Original_Commands": false,
+    "Fixture_Font_Size": "12"
+  }
+}

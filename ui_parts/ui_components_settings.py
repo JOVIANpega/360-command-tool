@@ -1,0 +1,374 @@
+# -*- coding: utf-8 -*-
+import tkinter as tk
+from tkinter import ttk, scrolledtext
+import os
+import sys
+
+# 將當前目錄加入 Python 路徑
+current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(current_dir)
+
+from config_core import GUIDE_FILE
+
+class UIComponentsSettings:
+    def init_settings_components(self):
+        # 設定區域
+        settings_frame = ttk.Frame(self.left_panel, style="TFrame")
+        settings_frame.grid(row=5, column=0, sticky='ew', pady=3)
+        settings_frame.columnconfigure(0, weight=0)  # 標籤不需要擴展
+        settings_frame.columnconfigure(1, weight=1)  # 滑桿擴展
+        settings_frame.columnconfigure(2, weight=0)  # 標籤不需要擴展
+        settings_frame.columnconfigure(3, weight=1)  # 滑桿擴展
+        
+        # UI 字體大小設定
+        self.label_ui_font = ttk.Label(settings_frame, text='UI字體:', style="TLabel")
+        self.label_ui_font.grid(row=0, column=0, sticky='w')
+        
+        self.ui_font_scale = ttk.Scale(
+            settings_frame, 
+            from_=8, 
+            to=20, 
+            orient=tk.HORIZONTAL,
+            value=int(self.parent.setup.get('UI_Font_Size', '12')),
+            length=100
+        )
+        self.ui_font_scale.grid(row=0, column=1, padx=5, sticky='ew')
+        
+        # 內容字體大小設定
+        self.label_content_font = ttk.Label(settings_frame, text='內容字體:', style="TLabel")
+        self.label_content_font.grid(row=0, column=2, sticky='w')
+        
+        self.content_font_scale = ttk.Scale(
+            settings_frame, 
+            from_=8, 
+            to=20, 
+            orient=tk.HORIZONTAL,
+            value=int(self.parent.setup.get('Content_Font_Size', '12')),
+            length=100
+        )
+        self.content_font_scale.grid(row=0, column=3, padx=5, sticky='ew')
+        
+        # 功能按鈕區域
+        buttons_frame = ttk.Frame(self.left_panel, style="TFrame")
+        buttons_frame.grid(row=6, column=0, sticky='ew', pady=5)
+        buttons_frame.columnconfigure(0, weight=1)  # 按鈕平均分配空間
+        buttons_frame.columnconfigure(1, weight=1)
+        buttons_frame.columnconfigure(2, weight=1)
+        
+        # 清空按鈕
+        self.btn_clear = tk.Button(
+            buttons_frame, 
+            text='清空輸出', 
+            command=self.parent.handlers.clear_output,
+            bg='#e0e0e0', 
+            fg='black', 
+            activebackground='#2196f3', 
+            activeforeground='white'
+        )
+        self.btn_clear.grid(row=0, column=0, padx=3, sticky='ew')
+        
+        # 備份按鈕
+        self.btn_backup = tk.Button(
+            buttons_frame, 
+            text='備份輸出', 
+            command=self.parent.handlers.backup_output,
+            bg='#e0e0e0', 
+            fg='black', 
+            activebackground='#2196f3', 
+            activeforeground='white'
+        )
+        self.btn_backup.grid(row=0, column=1, padx=3, sticky='ew')
+        
+        # 使用說明按鈕
+        self.btn_guide = tk.Button(
+            buttons_frame, 
+            text='使用說明', 
+            command=self.parent.handlers.toggle_guide,
+            bg='#e0e0e0', 
+            fg='black', 
+            activebackground='#2196f3', 
+            activeforeground='white'
+        )
+        self.btn_guide.grid(row=0, column=2, padx=2, sticky='ew')
+        
+        # 將 ui_font_scale 的 command 綁定為 handlers.change_ui_font_size，避免 lambda 導致無法正確更新
+        self.ui_font_scale.config(command=self.parent.handlers.change_ui_font_size)
+        
+        # 自動執行設定
+        auto_exec_frame = ttk.Frame(self.left_panel, style="TFrame")
+        auto_exec_frame.grid(row=7, column=0, sticky='ew', pady=3)
+        
+        # 創建 Checkbutton 變數
+        self.auto_exec_var = tk.BooleanVar(value=self.parent.setup.get('Auto_Execute', False))
+        
+        # 創建 Checkbutton
+        self.auto_exec_check = ttk.Checkbutton(
+            auto_exec_frame,
+            text="自動執行指令",
+            variable=self.auto_exec_var,
+            command=self.on_auto_exec_changed
+        )
+        self.auto_exec_check.grid(row=0, column=0, sticky='w')
+
+    def init_exec_button_left_panel(self):
+        # 執行指令大圓角按鈕（預設灰色，hover 綠色），用 grid 固定在 left_panel 最下方
+        exec_frame = ttk.Frame(self.left_panel, style="TFrame")
+        exec_frame.grid(row=999, column=0, sticky='ew', pady=5)  # 減少間距
+        exec_frame.columnconfigure(0, weight=1)
+        self.btn_exec = tk.Button(exec_frame, text='執行指令',
+            command=self.parent.handlers.on_execute,
+                                 bg='#cccccc', fg='black',
+                                 activebackground='#4caf50', activeforeground='white',
+                                 font=('Microsoft JhengHei UI', 18, 'bold'),  # 稍微減小字體
+                                 relief='flat', borderwidth=0, highlightthickness=0)
+        self.btn_exec.grid(row=0, column=0, sticky='ew', padx=4, pady=4)  # 減少間距
+        self.btn_exec.bind("<Enter>", lambda e: self.btn_exec.config(bg="#4caf50", fg='white'))
+        self.btn_exec.bind("<Leave>", lambda e: self.btn_exec.config(bg="#cccccc", fg='black'))
+        
+        # 增加間距，將倒數計時/通知區域與執行按鈕分開
+        ttk.Separator(exec_frame, orient='horizontal').grid(row=1, column=0, sticky='ew', pady=10)
+        
+        # 倒數計時標籤 - 移到執行指令按鈕下方
+        countdown_frame = ttk.Frame(exec_frame, style="TFrame")
+        countdown_frame.grid(row=2, column=0, sticky='ew', pady=2)  # 減少間距
+        countdown_frame.columnconfigure(0, weight=1)
+        
+        # 通知區域控制框架 - 添加文字大小調整按鈕
+        notification_control_frame = ttk.Frame(countdown_frame)
+        notification_control_frame.grid(row=0, column=0, sticky='ew')
+        notification_control_frame.columnconfigure(1, weight=1)
+        
+        # 添加減小字體按鈕
+        self.btn_notification_font_minus = tk.Button(
+            notification_control_frame, 
+            text='－', 
+            width=2, 
+            command=lambda: self.change_notification_font_size(-1),
+            bg='#e0e0e0', fg='black'
+        )
+        self.btn_notification_font_minus.grid(row=0, column=0, padx=1)
+        
+        # 通知區域標題
+        notification_title = ttk.Label(notification_control_frame, text="通知區域", style="TLabel")
+        notification_title.grid(row=0, column=1)
+        
+        # 添加增大字體按鈕
+        self.btn_notification_font_plus = tk.Button(
+            notification_control_frame, 
+            text='＋', 
+            width=2, 
+            command=lambda: self.change_notification_font_size(1),
+            bg='#e0e0e0', fg='black'
+        )
+        self.btn_notification_font_plus.grid(row=0, column=2, padx=1)
+        
+        # 倒數計時/通知標籤 - 使用更大的字體和明顯的顏色，並增加高度，添加黑色邊框
+        self.notification_font_size = int(self.parent.setup.get('Notification_Font_Size', '14'))
+        self.label_countdown = tk.Label(
+            countdown_frame, 
+            text='', 
+            font=('Microsoft JhengHei UI', self.notification_font_size, 'bold'),
+            fg='red',  # 紅色文字
+            bg='white',  # 白色背景
+            anchor='center',
+            height=3,  # 增加高度以容納更多文字
+            wraplength=300,  # 設置文字換行寬度
+            relief='solid',  # 添加實線邊框
+            borderwidth=1,  # 邊框寬度
+        )
+        self.label_countdown.grid(row=1, column=0, sticky='ew', padx=5, pady=5)
+        
+        # 讓 left_panel 最下方 row 有 weight，確保按鈕永遠可見
+        self.left_panel.grid_rowconfigure(999, weight=0)  # 改為 weight=0，避免執行按鈕佔用太多空間
+
+    def update_ui_fonts(self, size=None):
+        try:
+            if size is None:
+                size = int(self.ui_font_scale.get())
+            font = ('Microsoft JhengHei UI', size)
+            # 更新所有標籤和按鈕
+            widgets = [
+                self.label_com, self.label_cmd, self.label_end, self.label_timeout,
+                self.label_ui_font, self.label_content_font, self.btn_refresh,
+                self.btn_clear, self.btn_backup, self.btn_guide, self.label_ip, self.btn_ping
+            ]
+            for w in widgets:
+                if w.winfo_exists():
+                    try:
+                        w.configure(font=font)
+                    except Exception:
+                        # 如果設定字體失敗，嘗試使用其他方式
+                        try:
+                            w['font'] = font
+                        except Exception:
+                            pass
+            # 更新 section_radiobuttons 字體
+            for rb in getattr(self, 'section_radiobuttons', []):
+                if rb.winfo_exists():
+                    try:
+                        rb.configure(font=font)
+                    except Exception:
+                        try:
+                            rb['font'] = font
+                        except Exception:
+                            pass
+            # 更新輸入框和下拉選單
+            for widget in [self.combobox_com, self.combobox_cmd, self.combobox_end, 
+                         self.entry_timeout, self.entry_ip]:
+                if widget.winfo_exists():
+                    try:
+                        widget.configure(font=('Consolas', size))
+                    except Exception:
+                        try:
+                            widget['font'] = ('Consolas', size)
+                        except Exception:
+                            pass
+            # 更新 ttk 樣式
+            try:
+                style = ttk.Style()
+                style.configure("TLabelframe.Label", font=font)
+                style.configure("TLabelframe", font=font)
+                style.configure("TLabel", font=font)
+            except Exception:
+                pass
+            # 強制更新 UI
+            self.parent.root.update_idletasks()
+        except Exception as e:
+            print(f"[DEBUG] 更新介面字體時發生錯誤: {e}")
+            # 不要讓錯誤影響程式運行
+
+    def update_content_fonts(self, size=None):
+        try:
+            if size is None:
+                size = int(self.content_font_scale.get())
+            content_font = ('Consolas', size)
+            # 更新文字輸出區域
+            if self.text_output.winfo_exists():
+                try:
+                    self.text_output.configure(font=content_font)
+                except Exception:
+                    try:
+                        self.text_output['font'] = content_font
+                    except Exception:
+                        pass
+            # 更新所有下拉選單與輸入框
+            for widget in [self.combobox_com, self.combobox_cmd, self.combobox_end, self.entry_timeout, self.entry_ip]:
+                if widget.winfo_exists():
+                    try:
+                        widget.configure(font=content_font)
+                    except Exception:
+                        try:
+                            widget['font'] = content_font
+                        except Exception:
+                            pass
+            # 根據字體大小自動調整 combobox_cmd 寬度
+            min_width = 25
+            width = max(min_width, int(size * 2.2))
+            try:
+                self.combobox_cmd.config(width=width)
+            except Exception:
+                pass
+            # 強制 combobox 下拉選單選項字體同步
+            try:
+                self.parent.root.option_add('*TCombobox*Listbox.font', content_font)
+            except Exception as e:
+                print(f'[DEBUG] Combobox Listbox 字體設置失敗: {e}')
+            # 更新使用說明視窗
+            if hasattr(self.parent, 'guide_window') and self.parent.guide_window and self.parent.guide_window.winfo_exists():
+                for widget in self.parent.guide_window.winfo_children():
+                    if isinstance(widget, scrolledtext.ScrolledText) and widget.winfo_exists():
+                        try:
+                            widget.configure(font=content_font)
+                        except Exception:
+                            try:
+                                widget['font'] = content_font
+                            except Exception:
+                                pass
+            self.parent.root.update_idletasks()
+        except Exception as e:
+            print(f"[DEBUG] 更新內容字體時發生錯誤: {e}")
+
+    def limit_dropdown_height(self, event=None):
+        """限制下拉選單的高度"""
+        try:
+            # 獲取所有下拉選單
+            comboboxes = [self.combobox_com, self.combobox_cmd, self.combobox_end]
+            
+            for combobox in comboboxes:
+                # 檢查是否已經設置過高度
+                if combobox not in self.dropdown_boxes:
+                    # 綁定下拉事件
+                    combobox.bind("<<ComboboxDropdown>>", self._on_dropdown)
+                    # 記錄已處理過的下拉選單
+                    self.dropdown_boxes[combobox] = True
+        except Exception as e:
+            print(f"[ERROR] 設置下拉選單高度時發生錯誤: {e}")
+
+    def _on_dropdown(self, event):
+        """當下拉選單展開時調整高度"""
+        try:
+            combobox = event.widget
+            
+            # 獲取下拉選單的項目數量
+            items_count = len(combobox['values'])
+            
+            # 限制顯示的項目數量
+            height = min(items_count, self.max_dropdown_items)
+            
+            # 設置下拉選單高度
+            combobox.configure(height=height)
+        except Exception as e:
+            print(f"[ERROR] 調整下拉選單高度時發生錯誤: {e}")
+
+    def on_auto_exec_changed(self):
+        """自動執行選項變更時的處理"""
+        try:
+            # 獲取當前選項狀態
+            auto_exec = self.auto_exec_var.get()
+            
+            # 更新設定
+            self.parent.setup['Auto_Execute'] = auto_exec
+            
+            # 顯示通知
+            if auto_exec:
+                self.show_notification("已啟用自動執行功能", "blue", 3000)
+            else:
+                self.show_notification("已停用自動執行功能", "blue", 3000)
+        except Exception as e:
+            print(f"[ERROR] 處理自動執行選項變更時發生錯誤: {e}")
+
+    def change_notification_font_size(self, delta):
+        """調整通知區域字體大小"""
+        try:
+            # 獲取當前字體大小
+            current_size = self.notification_font_size
+            
+            # 計算新的字體大小
+            new_size = current_size + delta
+            
+            # 限制字體大小範圍
+            if new_size < 8:
+                new_size = 8
+            elif new_size > 24:
+                new_size = 24
+                
+            # 如果字體大小沒有變化，則不需要更新
+            if new_size == current_size:
+                return
+                
+            # 更新字體大小
+            self.notification_font_size = new_size
+            
+            # 更新標籤字體
+            if hasattr(self, 'label_countdown'):
+                self.label_countdown.config(font=('Microsoft JhengHei UI', new_size, 'bold'))
+                
+            # 保存到設定
+            self.parent.setup['Notification_Font_Size'] = str(new_size)
+            
+            # 顯示通知
+            self.show_notification(f"通知區域字體大小: {new_size}", "blue", 2000)
+        except Exception as e:
+            print(f"[ERROR] 調整通知區域字體大小時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc() 

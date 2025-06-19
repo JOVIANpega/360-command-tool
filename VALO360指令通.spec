@@ -2,10 +2,10 @@
 
 
 a = Analysis(
-    ['main.py'],
+    ['main_utf8_fixed.py'],
     pathex=[],
     binaries=[],
-    datas=[('command.txt', '.'), ('user_guide.txt', '.'), ('setup.json', '.'), ('ui_parts', 'ui_parts')],
+    datas=[('command.txt', '.'), ('user_guide.txt', '.'), ('setup.json', '.'), ('app.ico', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -35,6 +35,6 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    version='version_info.txt',
+    version='version_info_zh.txt',
     icon=['app.ico'],
 )

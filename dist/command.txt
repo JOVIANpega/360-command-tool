@@ -127,3 +127,11 @@
 //指令可以自行修改
 
 VALO360 指令通_V2  created by JOVIAN
+
+[關鍵字高亮]
+diag=red
+test5g=blue
+error=red
+fail=red
+successfully=green
+version=green
