@@ -4,7 +4,7 @@ echo VALO360 指令通 - UTF-8 打包腳本
 echo.
 
 rem 設置版本號
-set VERSION=V1.38
+set VERSION=V1.39
 
 rem 生成版本資訊檔案
 echo 生成版本資訊檔案...

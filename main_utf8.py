@@ -4,7 +4,7 @@ import sys
 import tkinter as tk
 from tkinter import ttk, messagebox
 import traceback
-from config_core import load_commands, load_highlight_keywords
+from config_core import load_commands, load_highlight_keywords, load_setup
 from ui_parts.ui_main import SerialUI, TabManager
 import re
 import threading
@@ -37,9 +37,12 @@ except Exception as e:
 
 def main():
     # 版本訊息
-    VERSION = "V1.38"
+    VERSION = "V1.39"
     print(f"===== VALO360 指令通 {VERSION} =====")
 
+    # 載入設定
+    setup = load_setup()
+    
     # 載入命令清單
     commands = load_commands()
     
@@ -49,7 +52,11 @@ def main():
     
     # 初始化 Tkinter
     root = tk.Tk()
-    root.title(f"VALO360 指令通 {VERSION}")
+    
+    # 從設定檔讀取視窗標題，如果沒有則使用預設值
+    window_title = setup.get('Window_Title', "JOVIAN指令通")
+    root.title(f"{window_title} {VERSION}")
+    
     try:
         root.iconbitmap('app.ico')
     except:
