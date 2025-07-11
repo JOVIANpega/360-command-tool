@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 import os
 import sys
 import tkinter as tk
@@ -37,7 +37,7 @@ except Exception as e:
 
 def main():
     # 版本訊息
-    VERSION = "V1.39"
+    VERSION = "V1.39_20250711"
     print(f"===== VALO360 指令通 {VERSION} =====")
 
     # 載入設定
@@ -56,7 +56,6 @@ def main():
     # 從設定檔讀取視窗標題，如果沒有則使用預設值
     window_title = setup.get('Window_Title', "JOVIAN指令通")
     root.title(f"{window_title} {VERSION}")
-    
     try:
         root.iconbitmap('app.ico')
     except:
@@ -79,4 +78,5 @@ def main():
 if __name__ == "__main__":
     main()
     write_log("__main__ 結束")
+
 
