@@ -350,6 +350,138 @@ class TabManager:
     
 
 
+    def update_fixture_settings(self):
+
+
+        """Callback function to update Fixture tab settings."""
+
+
+        print("[DEBUG] Received callback to update Fixture settings.")
+
+
+        if hasattr(self, 'fixture_ui'):
+
+
+            # 重新載入設定
+
+
+            from config_core import load_setup
+
+
+            setup = load_setup()
+
+
+            fixture_setup = setup.get('Fixture_Control', {})
+
+
+            
+
+
+            # 更新治具UI元件
+
+
+            if hasattr(self.fixture_ui, 'setup'):
+
+
+                self.fixture_ui.setup = fixture_setup
+
+
+            
+
+
+            # 刷新串口列表和其他設定
+
+
+            if hasattr(self.fixture_ui, 'refresh_ports'):
+
+
+                self.fixture_ui.refresh_ports()
+
+
+                
+
+
+            # 更新測試類別勾選狀態
+
+
+            if hasattr(self.fixture_ui, 'category_vars'):
+
+
+                for cat, var in self.fixture_ui.category_vars.items():
+
+
+                    if cat == 'MB':
+
+
+                        var.set(fixture_setup.get('Test_Category_MB', True))
+
+
+                    elif cat == 'FUNCTION':
+
+
+                        var.set(fixture_setup.get('Test_Category_FUNCTION', False))
+
+
+                    elif cat == '原始的指令':
+
+
+                        var.set(fixture_setup.get('Test_Category_Original_Commands', False))
+
+
+            
+
+
+            # 更新字體大小
+
+
+            if hasattr(self.fixture_ui, '_fixture_font_size') and 'Fixture_Font_Size' in fixture_setup:
+
+
+                try:
+
+
+                    new_size = int(fixture_setup['Fixture_Font_Size'])
+
+
+                    if new_size != self.fixture_ui._fixture_font_size:
+
+
+                        self.fixture_ui._fixture_font_size = new_size
+
+
+                        # 應用新字體大小
+
+
+                        if hasattr(self.fixture_ui, 'change_fixture_font'):
+
+
+                            self.fixture_ui.change_fixture_font(0)  # 傳入0表示不增減，只套用當前大小
+
+
+                except (ValueError, TypeError):
+
+
+                    pass
+
+
+
+
+
+    def update_all_settings(self):
+
+
+        """Update both DUT and Fixture settings."""
+
+
+        self.update_dut_settings()
+
+
+        self.update_fixture_settings()
+
+
+    
+
+
     def init_global_styles(self):
 
 
@@ -457,7 +589,7 @@ class TabManager:
 
     def init_settings_tab(self):
         # 初始化設定分頁
-        self.settings_ui = SettingsTab(self.settings_frame, on_save_callback=self.update_dut_settings)
+        self.settings_ui = SettingsTab(self.settings_frame, on_save_callback=self.update_all_settings)
         self.settings_ui.pack(fill='both', expand=True)
 
     def init_guide_tab(self):
@@ -768,10 +900,19 @@ class TabManager:
             # 治具控制分頁的處理邏輯
 
 
-            if hasattr(self, 'fixture_ui') and hasattr(self.fixture_ui, 'refresh_ports'):
+            if hasattr(self, 'fixture_ui'):
 
 
-                self.fixture_ui.refresh_ports()
+                # 更新治具設定並刷新串口
+
+
+                self.update_fixture_settings()
+
+
+                if hasattr(self.fixture_ui, 'refresh_ports'):
+
+
+                    self.fixture_ui.refresh_ports()
 
 
         elif tab_text == '使用說明':

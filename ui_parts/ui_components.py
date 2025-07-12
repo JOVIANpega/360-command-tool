@@ -85,6 +85,9 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.combobox_com = ttk.Combobox(com_frame, values=com_values, state='readonly', width=15)
         self.combobox_com.grid(row=0, column=1, padx=5, sticky='ew')
         
+        # 綁定 COM 口選擇變更事件
+        self.combobox_com.bind("<<ComboboxSelected>>", self.on_com_port_changed)
+        
         # 注意：不在這裡設定預設值，由 load_initial_settings 統一處理
         print(f"[DEBUG] init_com_components: 已創建 COM 口選單，可用 COM 口: {com_values}")
         
@@ -106,6 +109,33 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.status_canvas.grid(row=0, column=3, padx=3)  # 減少間距
         self.status_light = self.status_canvas.create_oval(5, 5, 35, 35, fill='black')  # 調整橢圓位置和大小
         self.led_blinking = False
+        
+    def on_com_port_changed(self, event=None):
+        """當 COM 口選擇變更時，自動儲存到設定檔"""
+        try:
+            selected_com = self.combobox_com.get()
+            if selected_com:
+                print(f"[DEBUG] COM 口已變更為: {selected_com}")
+                
+                # 更新設定到 parent.setup
+                if 'DUT_Control' not in self.parent.setup:
+                    self.parent.setup['DUT_Control'] = {}
+                self.parent.setup['DUT_Control']['Serial_COM_Port'] = selected_com
+                
+                # 保存完整的設定結構到檔案
+                from config_core import load_setup, save_setup
+                full_setup = load_setup()
+                if 'DUT_Control' not in full_setup:
+                    full_setup['DUT_Control'] = {}
+                full_setup['DUT_Control']['Serial_COM_Port'] = selected_com
+                save_setup(full_setup)
+                
+                # 顯示通知
+                self.show_notification(f"COM 口已更新為 {selected_com}", "blue", 3000)
+        except Exception as e:
+            print(f"[ERROR] 儲存 COM 口設定時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
 
     def init_cmd_components(self):
         section_frame = ttk.Frame(self.left_panel, style="TFrame")

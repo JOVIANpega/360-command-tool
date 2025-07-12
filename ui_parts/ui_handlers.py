@@ -663,6 +663,45 @@ class UIHandlers(UIHandlersCore):
                 print(f"[DEBUG] refresh_com_ports: 當前選擇 '{current_selection}' 不可用，選擇新的COM口 {new_ports[0]}")
 
 
+                
+
+
+                # 自動保存新選擇的COM口到設定檔
+
+
+                if 'DUT_Control' not in self.parent.setup:
+
+
+                    self.parent.setup['DUT_Control'] = {}
+
+
+                self.parent.setup['DUT_Control']['Serial_COM_Port'] = new_ports[0]
+
+
+                
+
+
+                # 保存完整的設定結構到檔案
+
+
+                from config_core import load_setup, save_setup
+
+
+                full_setup = load_setup()
+
+
+                if 'DUT_Control' not in full_setup:
+
+
+                    full_setup['DUT_Control'] = {}
+
+
+                full_setup['DUT_Control']['Serial_COM_Port'] = new_ports[0]
+
+
+                save_setup(full_setup)
+
+
             else:
 
 
