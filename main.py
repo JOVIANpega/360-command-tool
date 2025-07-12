@@ -8,6 +8,7 @@ from config_core import load_commands, load_highlight_keywords, load_setup
 from ui_parts.ui_main import SerialUI, TabManager
 import re
 import threading
+import json
 
 # 設置路徑
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -35,47 +36,44 @@ except Exception as e:
     messagebox.showerror('錯誤', f'導入模組失敗: {e}')
     sys.exit(1)
 
-def main():
-    # 版本訊息
-    VERSION = "V1.39"
-    print(f"===== VALO360 指令通 {VERSION} =====")
-
-    # 載入設定
-    setup = load_setup()
-    
-    # 載入命令清單
-    commands = load_commands()
-    
-    # 載入關鍵字高亮設定
-    highlight_keywords = load_highlight_keywords()
-    print(f"[DEBUG] main 函數載入完成，關鍵字高亮設定: {highlight_keywords}")
-    
-    # 初始化 Tkinter
-    root = tk.Tk()
-    
-    # 從設定檔讀取視窗標題，如果沒有則使用預設值
-    window_title = setup.get('Window_Title', "JOVIAN指令通")
-    root.title(f"{window_title} {VERSION}")
-    
+def setup_logging():
     try:
-        root.iconbitmap('app.ico')
-    except:
+        with open("run_log.txt", "a", encoding="utf-8") as f:
+            f.write("=== 應用程式啟動 ===\n")
+    except Exception:
         pass
-    
-    # 建立標籤頁管理器並初始化 UI
-    app = TabManager(root, highlight_keywords)
-    
-    # 介面置中顯示
-    root.update_idletasks()  # 更新元件尺寸
-    width = root.winfo_width()
-    height = root.winfo_height()
-    x = (root.winfo_screenwidth() // 2) - (width // 2)
-    y = (root.winfo_screenheight() // 2) - (height // 2)
-    root.geometry(f'{width}x{height}+{x}+{y}')
-    
-    # 啟動應用程式
-    root.mainloop()
 
 if __name__ == "__main__":
-    main()
-    write_log("__main__ 結束")
+    log_file = "error_log.txt"
+    try:
+        setup_logging()
+        
+        # 讀取 highlight_keywords
+        try:
+            with open('highlight_keywords.json', 'r', encoding='utf-8') as f:
+                highlight_keywords = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            highlight_keywords = {}
+
+        root = tk.Tk()
+        app = TabManager(root, highlight_keywords=highlight_keywords)
+        
+        # 載入視窗標題和大小
+        setup = load_setup()
+        dut_setup = setup.get('DUT_Control', {})
+        
+        title = dut_setup.get('Title', 'VALO360 指令通 V1.40')
+        width = dut_setup.get('Window_Width', 1024)
+        height = dut_setup.get('Window_Height', 768)
+        
+        root.title(title)
+        root.geometry(f"{width}x{height}")
+        
+        root.mainloop()
+
+    except Exception as e:
+        import traceback
+        with open(log_file, "w", encoding="utf-8") as f:
+            f.write(f"An unexpected error occurred: {e}\n")
+            f.write(traceback.format_exc())
+        print(f"An error occurred. Details have been written to {log_file}")

@@ -7,8 +7,8 @@ import os
 
 def generate_version_info():
     """生成版本信息文件"""
-    version = "V1.39_20250711"
-    version_tuple = (1, 3, 9, 0)  # 主版本, 次版本, 修訂版本, 構建版本
+    version = "V1.40"
+    version_tuple = (1, 4, 0, 0)  # 主版本, 次版本, 修訂版本, 構建版本
     
     # 創建版本信息文件內容
     content = f"""VSVersionInfo(

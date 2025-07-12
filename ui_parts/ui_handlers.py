@@ -45,10 +45,13 @@ from ui_parts.ui_handlers_core import UIHandlersCore
 class UIHandlers(UIHandlersCore):
 
 
-    def __init__(self, parent):
+    def __init__(self, parent, setup, highlight_keywords=None):
 
 
-        UIHandlersCore.__init__(self, parent)
+        super().__init__(parent, setup, highlight_keywords)
+
+
+        self.parent = parent
 
 
         self.countdown_job = None
@@ -111,7 +114,40 @@ class UIHandlers(UIHandlersCore):
         try:
 
 
-            with open(COMMAND_FILE, "r", encoding="utf-8") as file:
+            # 從設定中讀取指令檔路徑
+
+
+            command_file_from_setup = self.setup.get("DUT_Control", {}).get("Command_File_Path", "")
+
+
+            
+
+
+            # 決定使用哪個指令檔路徑
+
+
+            if command_file_from_setup and os.path.isfile(command_file_from_setup):
+
+
+                command_path = command_file_from_setup
+
+
+                print(f"[INFO] 使用者自訂指令檔: {command_path}")
+
+
+            else:
+
+
+                command_path = COMMAND_FILE  # 使用預設路徑
+
+
+                print(f"[INFO] 使用預設指令檔: {command_path}")
+
+
+            
+
+
+            with open(command_path, "r", encoding="utf-8") as file:
 
 
                 for line in file:

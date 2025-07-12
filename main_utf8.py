@@ -37,7 +37,7 @@ except Exception as e:
 
 def main():
     # 版本訊息
-    VERSION = "V1.39_20250711"
+    VERSION = "V1.40"
     print(f"===== VALO360 指令通 {VERSION} =====")
 
     # 載入設定

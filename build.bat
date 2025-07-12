@@ -41,7 +41,7 @@ if not exist "dist\logs" mkdir dist\logs
 
 rem 更新主程式中的版本號
 echo 更新 main.py 中的版本號...
-powershell -Command "(Get-Content main.py) -replace 'VERSION = \"V1\.[0-9]+\"', 'VERSION = \"V1.38\"' | Set-Content main.py"
+powershell -Command "(Get-Content main.py) -replace 'VERSION = \"V1\.[0-9]+\"', 'VERSION = \"V1.40\"' | Set-Content main.py"
 
 rem 打包應用程式
 echo 開始打包應用程式...
