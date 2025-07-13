@@ -20,40 +20,74 @@ class SettingsTab(ttk.Frame):
     def create_widgets(self):
         # Main frame with scrollbar
         main_frame = ttk.Frame(self)
-        main_frame.pack(fill='both', expand=True, padx=10, pady=10)
+        main_frame.pack(fill='both', expand=True, padx=5, pady=5)
+        main_frame.columnconfigure(0, weight=1)
 
-        canvas = tk.Canvas(main_frame, bg='white')
+        # Create a canvas with scrollbar for the content
+        canvas = tk.Canvas(main_frame, bg='white', highlightthickness=0)
         scrollbar = ttk.Scrollbar(main_frame, orient="vertical", command=canvas.yview)
+        
+        # Create a frame inside the canvas to hold all settings
         scrollable_frame = ttk.Frame(canvas, style='Main.TFrame')
+        scrollable_frame.columnconfigure(0, weight=1)
+        scrollable_frame.columnconfigure(1, weight=1)
 
-        scrollable_frame.bind(
-            "<Configure>",
-            lambda e: canvas.configure(
-                scrollregion=canvas.bbox("all")
-            )
-        )
+        # Configure scrolling
+        def _on_frame_configure(event):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+            
+        scrollable_frame.bind("<Configure>", _on_frame_configure)
+        
+        # Bind mouse wheel to scroll
+        def _on_mousewheel(event):
+            # For Windows
+            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        
+        def _on_mousewheel_linux(event):
+            # For Linux
+            if event.num == 4:
+                canvas.yview_scroll(-1, "units")
+            elif event.num == 5:
+                canvas.yview_scroll(1, "units")
+                
+        # Bind mouse wheel events for different platforms
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)  # Windows and MacOS
+        canvas.bind_all("<Button-4>", _on_mousewheel_linux)  # Linux scroll up
+        canvas.bind_all("<Button-5>", _on_mousewheel_linux)  # Linux scroll down
 
-        canvas.create_window((0, 0), window=scrollable_frame, anchor="nw")
+        # Create window in canvas and configure scrollbar
+        canvas_window = canvas.create_window((0, 0), window=scrollable_frame, anchor="nw", tags="frame")
         canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # Update the canvas window width when the canvas size changes
+        def _on_canvas_configure(event):
+            canvas.itemconfig("frame", width=event.width)
+            
+        canvas.bind("<Configure>", _on_canvas_configure)
 
+        # Pack the canvas and scrollbar
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
         # --- 基本設定區 ---
-        basic_frame = ttk.LabelFrame(scrollable_frame, text="基本設定", padding=(10, 5))
-        basic_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=5)
-        basic_frame.columnconfigure(1, weight=1)
+        basic_frame = ttk.LabelFrame(scrollable_frame, text="基本設定", padding=(5, 3))
+        basic_frame.grid(row=0, column=0, columnspan=2, sticky="ew", padx=5, pady=3)
+        # 設定標籤和輸入框的寬度比例
+        basic_frame.columnconfigure(0, weight=2)  # 標籤列
+        basic_frame.columnconfigure(1, weight=3)  # 輸入框列
 
         # 添加視窗標題設定 (優先使用頂層的 Window_Title)
         window_title = self.setup_data.get('Window_Title', self.setup_data.get('DUT_Control', {}).get('Window_Title', "VALO360 指令通"))
         self.vars["_Window_Title"] = tk.StringVar(value=window_title)
         self.create_entry(basic_frame, "Window_Title", "視窗標題", '', 0)
-        ttk.Label(basic_frame, text="(不包含版本號)").grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 5))
+        ttk.Label(basic_frame, text="(不包含版本號)").grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 3))
 
-        # --- DUT 控制區 ---
-        dut_frame = ttk.LabelFrame(scrollable_frame, text="DUT 控制區", padding=(10, 5))
-        dut_frame.grid(row=1, column=0, sticky="ew", padx=10, pady=5)
-        dut_frame.columnconfigure(1, weight=1)
+        # --- 左側：DUT 控制區 ---
+        dut_frame = ttk.LabelFrame(scrollable_frame, text="DUT 控制區", padding=(5, 3))
+        dut_frame.grid(row=1, column=0, sticky="nsew", padx=(5, 2), pady=3)
+        # 設定標籤和輸入框的寬度比例
+        dut_frame.columnconfigure(0, weight=2)  # 標籤列
+        dut_frame.columnconfigure(1, weight=3)  # 輸入框列
 
         dut_settings = [
             ("Serial_COM_Port", "序列通訊埠 (COM Port)"),
@@ -69,22 +103,12 @@ class SettingsTab(ttk.Frame):
         self.create_checkbox(dut_frame, "Auto_Execute", "啟動時自動執行指令", 'DUT_Control', len(dut_settings))
         self.create_file_picker(dut_frame, "Command_File_Path", "指令檔路徑", 'DUT_Control', len(dut_settings) + 1)
         
-        # 新增：區段標題預覽區域
-        preview_frame = ttk.LabelFrame(dut_frame, text="區段標題預覽", padding=(5, 5))
-        preview_frame.grid(row=len(dut_settings) + 2, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
-        preview_frame.columnconfigure(0, weight=1)
-        
-        self.preview_listbox = tk.Listbox(preview_frame, height=5)
-        self.preview_listbox.pack(fill="both", expand=True, padx=5, pady=5)
-        
-        # 預覽說明文字
-        preview_label = ttk.Label(preview_frame, text="選擇指令檔案後，這裡會顯示檔案中的區段標題。\n儲存設定後，這些標題將成為DUT控制頁面的按鈕。")
-        preview_label.pack(fill="x", padx=5, pady=5)
-
-        # --- 治具控制區 ---
-        fixture_frame = ttk.LabelFrame(scrollable_frame, text="治具控制區", padding=(10, 5))
-        fixture_frame.grid(row=2, column=0, sticky="ew", padx=10, pady=5)
-        fixture_frame.columnconfigure(1, weight=1)
+        # --- 右側：治具控制區 ---
+        fixture_frame = ttk.LabelFrame(scrollable_frame, text="治具控制區", padding=(5, 3))
+        fixture_frame.grid(row=1, column=1, sticky="nsew", padx=(2, 5), pady=3)
+        # 設定標籤和輸入框的寬度比例
+        fixture_frame.columnconfigure(0, weight=2)  # 標籤列
+        fixture_frame.columnconfigure(1, weight=3)  # 輸入框列
 
         self.create_entry(fixture_frame, "Fixture_COM_Port", "治具通訊埠 (COM Port)", 'Fixture_Control', 0)
         self.create_entry(fixture_frame, "Fixture_Font_Size", "治具字體大小", 'Fixture_Control', 1)
@@ -93,15 +117,60 @@ class SettingsTab(ttk.Frame):
         self.create_checkbox(fixture_frame, "Test_Category_MB", "顯示 MB 測試類別", 'Fixture_Control', 3)
         self.create_checkbox(fixture_frame, "Test_Category_Original_Commands", "顯示原始指令測試類別", 'Fixture_Control', 4)
 
+        # --- 區段標題預覽區域 (跨越兩列) ---
+        preview_frame = ttk.LabelFrame(scrollable_frame, text="區段標題預覽", padding=(5, 3))
+        preview_frame.grid(row=2, column=0, columnspan=2, sticky="ew", padx=5, pady=3)
+        preview_frame.columnconfigure(0, weight=1)
+        
+        # 使用水平佈局，左側放預覽列表，右側放說明文字
+        preview_container = ttk.Frame(preview_frame)
+        preview_container.pack(fill="both", expand=True, padx=3, pady=3)
+        preview_container.columnconfigure(0, weight=3)  # 預覽列表佔更多空間
+        preview_container.columnconfigure(1, weight=2)  # 說明文字佔較少空間
+        
+        # 左側預覽列表
+        listbox_frame = ttk.Frame(preview_container)
+        listbox_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 5))
+        listbox_frame.columnconfigure(0, weight=1)
+        listbox_frame.rowconfigure(0, weight=1)
+        
+        self.preview_listbox = tk.Listbox(listbox_frame, height=3)
+        preview_scrollbar = ttk.Scrollbar(listbox_frame, orient="vertical", command=self.preview_listbox.yview)
+        self.preview_listbox.configure(yscrollcommand=preview_scrollbar.set)
+        
+        self.preview_listbox.grid(row=0, column=0, sticky="nsew")
+        preview_scrollbar.grid(row=0, column=1, sticky="ns")
+        
+        # 右側說明文字
+        preview_label = ttk.Label(preview_container, text="選擇指令檔案後，這裡會顯示檔案中的區段標題。\n儲存設定後，這些標題將成為DUT控制頁面的按鈕。", wraplength=250)
+        preview_label.grid(row=0, column=1, sticky="nsew", padx=(5, 0))
+
         # --- Save Button ---
-        save_button = ttk.Button(scrollable_frame, text="儲存設定", command=self.save_settings)
-        save_button.grid(row=3, column=0, sticky="e", padx=10, pady=10)
+        button_frame = ttk.Frame(scrollable_frame)
+        button_frame.grid(row=3, column=0, columnspan=2, sticky="e", padx=5, pady=5)
+        
+        save_button = ttk.Button(button_frame, text="儲存設定", command=self.save_settings)
+        save_button.pack(padx=5, pady=5)
 
     def create_entry(self, parent, key, text, section, row):
         ttk.Label(parent, text=text).grid(row=row, column=0, sticky="w", pady=2)
         self.vars[f"{section}_{key}"] = tk.StringVar()
-        entry = ttk.Entry(parent, textvariable=self.vars[f"{section}_{key}"])
-        entry.grid(row=row, column=1, sticky="ew", padx=5, pady=2)
+        
+        # 根據不同欄位類型設置不同的寬度
+        width = 20  # 預設寬度
+        
+        # 數字類型欄位使用較窄的輸入框
+        if key in ["UI_Font_Size", "Content_Font_Size", "Fixture_Font_Size", "Command_Timeout_Seconds"]:
+            width = 5
+        # COM埠和IP地址使用中等寬度
+        elif key in ["Serial_COM_Port", "Fixture_COM_Port", "Default_IP_Address", "Command_End_String"]:
+            width = 15
+        # 路徑和標題等長文字使用較寬的輸入框
+        elif key in ["Command_File_Path", "Window_Title"]:
+            width = 30
+            
+        entry = ttk.Entry(parent, textvariable=self.vars[f"{section}_{key}"], width=width)
+        entry.grid(row=row, column=1, sticky="ew", padx=3, pady=2)
 
     def create_checkbox(self, parent, key, text, section, row):
         self.vars[f"{section}_{key}"] = tk.BooleanVar()
@@ -111,15 +180,15 @@ class SettingsTab(ttk.Frame):
     def create_file_picker(self, parent, key, text, section, row):
         ttk.Label(parent, text=text).grid(row=row, column=0, sticky="w", pady=2)
         frame = ttk.Frame(parent)
-        frame.grid(row=row, column=1, sticky="ew", padx=5, pady=2)
+        frame.grid(row=row, column=1, sticky="ew", padx=3, pady=2)
         frame.columnconfigure(0, weight=1)
 
         self.vars[f"{section}_{key}"] = tk.StringVar()
-        entry = ttk.Entry(frame, textvariable=self.vars[f"{section}_{key}"])
+        entry = ttk.Entry(frame, textvariable=self.vars[f"{section}_{key}"], width=25)
         entry.grid(row=0, column=0, sticky="ew")
         
-        button = ttk.Button(frame, text="選擇檔案", command=lambda: self.select_command_file(f"{section}_{key}"))
-        button.grid(row=0, column=1, padx=5)
+        button = ttk.Button(frame, text="選擇檔案", command=lambda: self.select_command_file(f"{section}_{key}"), width=8)
+        button.grid(row=0, column=1, padx=3)
 
     def select_command_file(self, var_key):
         filepath = filedialog.askopenfilename(
