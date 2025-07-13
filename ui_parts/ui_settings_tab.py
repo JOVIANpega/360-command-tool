@@ -45,6 +45,8 @@ class SettingsTab(ttk.Frame):
         basic_frame.columnconfigure(1, weight=1)
 
         # 添加視窗標題設定
+        # 初始化視窗標題變數
+        self.vars["_Window_Title"] = tk.StringVar(value=self.setup_data.get('Window_Title', "VALO360 指令通"))
         self.create_entry(basic_frame, "Window_Title", "視窗標題", '', 0)
         ttk.Label(basic_frame, text="(不包含版本號)").grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 5))
 
@@ -168,6 +170,7 @@ class SettingsTab(ttk.Frame):
         window_title = self.setup_data.get('Window_Title', "VALO360 指令通")
         if "_Window_Title" in self.vars:
             self.vars["_Window_Title"].set(window_title)
+            print(f"[DEBUG] 載入視窗標題: {window_title}")
         
         # 載入其他設定
         for section, settings in self.setup_data.items():
@@ -229,7 +232,20 @@ class SettingsTab(ttk.Frame):
             traceback.print_exc()
 
     def activate(self):
-        """當分頁被選中時調用，重新載入設定以確保顯示最新"""
+        """當分頁被選中時調用"""
         print("[DEBUG] 設定分頁被啟動，重新載入設定。")
+        # 重新載入設定
         self.setup_data = load_setup()
-        self.load_settings() 
+        
+        # 更新視窗標題欄位
+        window_title = self.setup_data.get('Window_Title', "VALO360 指令通")
+        if "_Window_Title" in self.vars:
+            current_title = self.vars["_Window_Title"].get()
+            if current_title != window_title:
+                print(f"[DEBUG] 更新視窗標題欄位: {current_title} -> {window_title}")
+                self.vars["_Window_Title"].set(window_title)
+        
+        # 如果已有指令檔路徑，重新讀取區段標題
+        filepath = self.vars.get("DUT_Control_Command_File_Path", tk.StringVar()).get()
+        if filepath and os.path.exists(filepath) and not "預設:" in filepath:
+            self.read_section_titles(filepath) 
