@@ -1531,16 +1531,12 @@ class SerialUI:
 
 
     def reload_and_apply_settings(self):
-
-
         """重新載入並應用設定"""
-
-
-        logging.debug("[DEBUG] Reloading and applying settings for DUT Control tab...")
+        print("[DEBUG] Reloading and applying settings for DUT Control tab...")
         
         # 1. 重新載入設定
-        self.setup = self.config.load_setup()
-        self.handlers.reload_setup(self.setup)
+        from config_core import load_setup
+        self.setup = load_setup()
         
         # 2. 刷新 COM 口列表
         if hasattr(self, 'handlers') and hasattr(self.handlers, 'refresh_com_ports'):
@@ -1551,7 +1547,7 @@ class SerialUI:
         # 3. 使用集中式方法更新所有 UI 元件
         self.update_from_config()
         
-        logging.debug("[DEBUG] DUT Control settings applied successfully.")
+        print("[DEBUG] DUT Control settings applied successfully.")
     
     def update_from_config(self):
         """集中管理所有 UI 元件的設定同步
