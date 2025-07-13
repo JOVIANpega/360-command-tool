@@ -587,7 +587,7 @@ class TabManager:
             # 從設定檔讀取視窗標題 (優先使用頂層的 Window_Title)
             from config_core import load_setup
             setup = load_setup()
-            window_title = setup.get('Window_Title', setup.get('DUT_Control', {}).get('Window_Title', "VALO360 指令通"))
+            window_title = setup.get('Window_Title', "VALO360 指令通")
             
             # 獲取當前標題中的版本號部分
             current_title = self.root.title()
@@ -1349,8 +1349,17 @@ class SerialUI:
 
 
             full_setup = load_setup()
-
-
+            
+            # 獲取當前視窗標題 (不包含版本號)
+            current_title = self.root.title()
+            window_title = current_title
+            if " V" in current_title:
+                window_title = current_title.split(" V")[0]
+            
+            # 更新頂層和DUT_Control中的視窗標題
+            full_setup['Window_Title'] = window_title
+            print(f"[DEBUG] 保存頂層視窗標題: {window_title}")
+            
             # 更新 DUT_Control 層的設定
 
 
@@ -1358,8 +1367,10 @@ class SerialUI:
 
 
                 full_setup['DUT_Control'] = {}
-
-
+            
+            # 確保DUT_Control中的Window_Title與頂層一致
+            full_setup['DUT_Control']['Window_Title'] = window_title
+            
             full_setup['DUT_Control'].update(current_settings)
 
 

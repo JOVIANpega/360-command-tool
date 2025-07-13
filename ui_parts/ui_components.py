@@ -141,10 +141,14 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         try:
             # 從設定中獲取指令檔案路徑
             command_file_path = self.parent.setup.get("DUT_Control", {}).get("Command_File_Path", "")
+            print(f"[DEBUG] init_cmd_components: 從設定中讀取指令檔案路徑: {command_file_path}")
+            
             if command_file_path and os.path.exists(command_file_path):
                 command_file = command_file_path
+                print(f"[DEBUG] init_cmd_components: 使用設定中的指令檔案: {command_file}")
             else:
                 command_file = COMMAND_FILE
+                print(f"[DEBUG] init_cmd_components: 使用預設指令檔案: {command_file}")
                 
             with open(command_file, 'r', encoding='utf-8') as f:
                 for line in f:
@@ -153,16 +157,23 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                         section_name = line.strip('=')
                         if section_name and section_name not in self.sections:
                             self.sections.append(section_name)
+                            print(f"[DEBUG] init_cmd_components: 找到區段: {section_name}")
         except Exception as e:
             print(f"[ERROR] 讀取分類時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
             
         # 如果沒有讀取到任何分類，添加一個預設分類
         if not self.sections:
             self.sections = ['全部指令']
+            print("[DEBUG] init_cmd_components: 未找到區段，使用預設區段: ['全部指令']")
+        else:
+            print(f"[DEBUG] init_cmd_components: 找到 {len(self.sections)} 個區段: {self.sections}")
             
         # 設定預設選中的分類
         if self.sections:
             self.section_var.set(self.sections[0])
+            print(f"[DEBUG] init_cmd_components: 設定預設選中的分類: {self.sections[0]}")
         
         # 限制每行最多顯示4個按鈕
         max_buttons_per_row = 4

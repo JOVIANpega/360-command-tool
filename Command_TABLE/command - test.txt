@@ -14,32 +14,17 @@
 
 
 
-==單板指令2==
+==MB指令2==
 
 4. 取得MAC位址 Get MAC = diag -g mac eth|diag -g mac wifi
 5. 取得WIFI序號 Get WIFI SN = wpa_cli status
 
 
 
-==整機指令3==
+==整機==
 
 
 
 
 
-==喇叭==
-1. 讀取出貨SN版本 Read version = pegacmd version|cat /usr/lib/firmware/fw_imagetype|pegacmd version
 
-
-
-//指令可以自行修改
-
-VALO360 指令通_V2  created by JOVIAN
-
-[關鍵字高亮]
-diag=red
-test5g=blue
-error=red
-fail=red
-successfully=green
-version=green
