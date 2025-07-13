@@ -39,9 +39,18 @@ class SettingsTab(ttk.Frame):
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
+        # --- 基本設定區 ---
+        basic_frame = ttk.LabelFrame(scrollable_frame, text="基本設定", padding=(10, 5))
+        basic_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=5)
+        basic_frame.columnconfigure(1, weight=1)
+
+        # 添加視窗標題設定
+        self.create_entry(basic_frame, "Window_Title", "視窗標題", '', 0)
+        ttk.Label(basic_frame, text="(不包含版本號)").grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 5))
+
         # --- DUT 控制區 ---
         dut_frame = ttk.LabelFrame(scrollable_frame, text="DUT 控制區", padding=(10, 5))
-        dut_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=5)
+        dut_frame.grid(row=1, column=0, sticky="ew", padx=10, pady=5)
         dut_frame.columnconfigure(1, weight=1)
 
         dut_settings = [
@@ -72,7 +81,7 @@ class SettingsTab(ttk.Frame):
 
         # --- 治具控制區 ---
         fixture_frame = ttk.LabelFrame(scrollable_frame, text="治具控制區", padding=(10, 5))
-        fixture_frame.grid(row=1, column=0, sticky="ew", padx=10, pady=5)
+        fixture_frame.grid(row=2, column=0, sticky="ew", padx=10, pady=5)
         fixture_frame.columnconfigure(1, weight=1)
 
         self.create_entry(fixture_frame, "Fixture_COM_Port", "治具通訊埠 (COM Port)", 'Fixture_Control', 0)
@@ -155,6 +164,12 @@ class SettingsTab(ttk.Frame):
             self.preview_listbox.insert(tk.END, "未找到區段標題")
 
     def load_settings(self):
+        # 載入視窗標題
+        window_title = self.setup_data.get('Window_Title', "VALO360 指令通")
+        if "_Window_Title" in self.vars:
+            self.vars["_Window_Title"].set(window_title)
+        
+        # 載入其他設定
         for section, settings in self.setup_data.items():
             if isinstance(settings, dict):
                 for key, value in settings.items():
@@ -173,8 +188,13 @@ class SettingsTab(ttk.Frame):
 
     def save_settings(self):
         try:
+            # 保存視窗標題
+            new_window_title = self.vars["_Window_Title"].get()
+            self.setup_data['Window_Title'] = new_window_title
+            
+            # 保存其他設定
             for section, settings in self.setup_data.items():
-                 if isinstance(settings, dict):
+                if isinstance(settings, dict):
                     for key in settings:
                         var_name = f"{section}_{key}"
                         if var_name in self.vars:
@@ -191,15 +211,22 @@ class SettingsTab(ttk.Frame):
 
             print(f"[DEBUG] SettingsTab: Saving setup_data: {json.dumps(self.setup_data, indent=2, ensure_ascii=False)}")
             save_setup(self.setup_data)
-            messagebox.showinfo("成功", "設定已成功儲存！") # 移除重啟提示
+            messagebox.showinfo("成功", "設定已成功儲存！")
             
             # Call the callback to update the main UI
             if self.on_save_callback:
                 print("[DEBUG] Calling on_save_callback...")
                 self.on_save_callback()
-
+                
+            # 更新當前視窗標題
+            self.master.master.master.title(f"{new_window_title} V1.4.3.1")
+            print(f"[DEBUG] 視窗標題已立即更新為：{new_window_title} V1.4.3.1")
+            
         except Exception as e:
             messagebox.showerror("錯誤", f"儲存設定失敗：{e}")
+            print(f"[ERROR] 儲存設定失敗：{e}")
+            import traceback
+            traceback.print_exc()
 
     def activate(self):
         """當分頁被選中時調用，重新載入設定以確保顯示最新"""

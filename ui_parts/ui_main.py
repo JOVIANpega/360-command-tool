@@ -247,9 +247,6 @@ class TabManager:
         # 綁定關閉事件
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         
-        # 初始化後更新 DUT 按鈕
-        self.update_dut_buttons()
-
 
     def update_dut_settings(self):
         """Callback function to update DUT tab settings."""
@@ -295,13 +292,41 @@ class TabManager:
                 
             # 獲取設定檔中的區段標題
             section_titles = self.dut_ui.setup.get("DUT_Control", {}).get("Section_Titles", [])
+            print(f"[DEBUG] update_dut_buttons: 從設定檔中獲取的區段標題: {section_titles}")
             
-            # 如果沒有區段標題，使用預設值
+            # 如果設定檔中沒有區段標題，嘗試從指令文件中讀取
             if not section_titles:
-                print("[DEBUG] 未找到區段標題，使用預設值")
+                print("[DEBUG] update_dut_buttons: 設定檔中沒有區段標題，嘗試從指令文件中讀取")
+                
+                # 從設定中獲取指令檔案路徑
+                command_file_path = self.dut_ui.setup.get("DUT_Control", {}).get("Command_File_Path", "")
+                print(f"[DEBUG] update_dut_buttons: 指令檔案路徑: {command_file_path}")
+                
+                if command_file_path and os.path.exists(command_file_path):
+                    print(f"[DEBUG] update_dut_buttons: 使用設定中的指令檔案: {command_file_path}")
+                    try:
+                        section_titles = []
+                        with open(command_file_path, 'r', encoding='utf-8') as f:
+                            for line in f:
+                                line = line.strip()
+                                if line.startswith('==') and line.endswith('=='):
+                                    section_name = line.strip('=')
+                                    if section_name and section_name not in section_titles:
+                                        section_titles.append(section_name)
+                                        print(f"[DEBUG] update_dut_buttons: 從指令文件中找到區段: {section_name}")
+                    except Exception as e:
+                        print(f"[ERROR] update_dut_buttons: 讀取指令文件時發生錯誤: {e}")
+                        import traceback
+                        traceback.print_exc()
+                else:
+                    print(f"[DEBUG] update_dut_buttons: 指令檔案不存在或未指定，使用預設值")
+            
+            # 如果仍然沒有區段標題，使用預設值
+            if not section_titles:
+                print("[DEBUG] update_dut_buttons: 未找到區段標題，使用預設值")
                 section_titles = ['全部指令']
                 
-            print(f"[DEBUG] 更新 DUT 按鈕，區段標題: {section_titles}")
+            print(f"[DEBUG] update_dut_buttons: 最終使用的區段標題: {section_titles}")
             
             # 檢查是否有 section_frame 和 section_radiobuttons
             if not hasattr(self.dut_ui.components, 'section_frame') or not hasattr(self.dut_ui.components, 'section_radiobuttons'):
@@ -361,7 +386,7 @@ class TabManager:
             # 更新指令下拉選單
             self.dut_ui.components.update_cmd_list()
             
-            print(f"[DEBUG] 已更新 {len(section_titles)} 個 DUT 按鈕")
+            print(f"[DEBUG] update_dut_buttons: 已更新 {len(section_titles)} 個 DUT 按鈕")
             
         except Exception as e:
             print(f"[ERROR] 更新 DUT 按鈕時發生錯誤：{e}")
@@ -556,17 +581,34 @@ class TabManager:
 
 
 
+    def update_window_title(self):
+        """更新視窗標題（不包含版本號）"""
+        try:
+            # 從設定檔讀取視窗標題
+            from config_core import load_setup
+            setup = load_setup()
+            window_title = setup.get('Window_Title', "VALO360 指令通")
+            
+            # 獲取當前標題中的版本號部分
+            current_title = self.root.title()
+            version_part = ""
+            if " V" in current_title:
+                version_part = " " + current_title.split(" V")[-1]
+            
+            # 設置新標題
+            new_title = f"{window_title}{version_part}"
+            self.root.title(new_title)
+            print(f"[DEBUG] 視窗標題已更新為：{new_title}")
+        except Exception as e:
+            print(f"[ERROR] 更新視窗標題時發生錯誤：{e}")
+            import traceback
+            traceback.print_exc()
+
     def update_all_settings(self):
-
-
         """Update both DUT and Fixture settings."""
-
-
         self.update_dut_settings()
-
-
         self.update_fixture_settings()
-
+        self.update_window_title()  # 更新視窗標題
 
     
 
@@ -650,15 +692,12 @@ class TabManager:
 
 
     def init_dut_tab(self):
-
-
         # 初始化 DUT 控制分頁
-
-
         self.dut_ui = SerialUI(self.dut_frame, self.root, self.highlight_keywords)
-
-
-    
+        
+        # 初始化完成後立即更新 DUT 按鈕
+        self.update_dut_buttons()
+        print("[DEBUG] DUT 控制分頁初始化完成，已更新按鈕")
 
 
     def init_fixture_tab(self):
