@@ -220,7 +220,6 @@ class TabManager:
 
 
         self.notebook.add(self.handover_frame, text='使用說明')  # 改名為使用說明
-
         # 新增設定分頁
         self.settings_frame = ttk.Frame(self.notebook, style='Main.TFrame')
         self.notebook.add(self.settings_frame, text='設定')
@@ -244,110 +243,200 @@ class TabManager:
         self.init_guide_tab()  # 改名為 init_guide_tab
         self.init_settings_tab() # 新增
 
-
         
-
-
         # 綁定關閉事件
-
-
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
-
-
-    
+        
+        # 初始化後更新 DUT 按鈕
+        self.update_dut_buttons()
 
 
     def update_dut_settings(self):
-
-
         """Callback function to update DUT tab settings."""
-
-
         print("[DEBUG] Received callback to update DUT settings.")
-
-
         if hasattr(self, 'dut_ui'):
-
-
             # 重新載入設定並更新所有 UI 元件
-
-
             self.dut_ui.setup = self.dut_ui.config.load_setup()
-
-
             self.dut_ui.handlers.reload_setup(self.dut_ui.setup)
-
-
             self.dut_ui.update_from_config()
-
-
             
-
-
+            # 更新 DUT 控制頁面的按鈕
+            self.update_dut_buttons()
+            
             # 顯示通知給用戶 - 增加顯示時間到8秒，確保用戶能看到
-
-
             if hasattr(self.dut_ui.components, 'show_notification'):
-
-
                 # 使用更醒目的通知效果 - 背景閃爍、更大字體
-
-
                 settings_changed = [
-
-
                     "設定已更新！",
-
-
                     "• 指令檔案已重新載入",
-
-
                     "• COM口設定已更新",
-
-
                     "• 結束字串設定已更新",
-
-
                     "• IP地址設定已更新",
-
-
                     "• 超時設定已更新"
-
-
                 ]
-
-
                 
-
-
                 self.dut_ui.components.show_notification(
-
-
                     "\n".join(settings_changed), 
-
-
                     "green", 
-
-
                     8000,
-
-
                     callback=lambda: self.notebook.select(0)  # 回調函數：切換到DUT控制頁面
-
-
                 )
-
-
                 
-
-
                 # 強制切換到DUT控制頁面，確保用戶能看到更新效果
-
-
                 self.notebook.select(0)  # 假設DUT控制頁面是第一個分頁
-
-
     
+    def update_dut_buttons(self):
+        """根據設定檔中的區段標題更新 DUT 控制頁面的按鈕"""
+        try:
+            # 檢查 dut_ui 和 components 是否存在
+            if not hasattr(self, 'dut_ui') or not hasattr(self.dut_ui, 'components'):
+                print("[ERROR] dut_ui 或 components 不存在，無法更新按鈕")
+                return
+                
+            # 獲取設定檔中的區段標題
+            section_titles = self.dut_ui.setup.get("DUT_Control", {}).get("Section_Titles", [])
+            
+            # 如果沒有區段標題，使用預設值
+            if not section_titles:
+                print("[DEBUG] 未找到區段標題，使用預設值")
+                section_titles = ['全部指令']
+                
+            print(f"[DEBUG] 更新 DUT 按鈕，區段標題: {section_titles}")
+            
+            # 檢查是否有 section_frame 和 section_radiobuttons
+            if not hasattr(self.dut_ui.components, 'section_frame') or not hasattr(self.dut_ui.components, 'section_radiobuttons'):
+                print("[ERROR] section_frame 或 section_radiobuttons 不存在，無法更新按鈕")
+                return
+                
+            # 清除現有的按鈕
+            for rb in self.dut_ui.components.section_radiobuttons:
+                rb.destroy()
+            self.dut_ui.components.section_radiobuttons = []
+            
+            # 更新 sections 列表
+            self.dut_ui.components.sections = section_titles
+            
+            # 設定預設選中的分類
+            if section_titles:
+                self.dut_ui.components.section_var.set(section_titles[0])
+            
+            # 限制每行最多顯示4個按鈕
+            max_buttons_per_row = 4
+            
+            # 創建新按鈕
+            for i, sec in enumerate(section_titles):
+                # 計算行和列位置
+                row = i // max_buttons_per_row
+                col = i % max_buttons_per_row
+                
+                rb = tk.Radiobutton(
+                    self.dut_ui.components.section_frame, 
+                    text=sec, 
+                    variable=self.dut_ui.components.section_var, 
+                    value=sec, 
+                    command=self.dut_ui.components.update_cmd_list,
+                    bg='#d9d9d9', 
+                    fg='black', 
+                    selectcolor='#d9d9d9', 
+                    activebackground='#2196f3', 
+                    activeforeground='white',
+                    indicatoron=0, 
+                    relief='flat', 
+                    borderwidth=1, 
+                    width=8, 
+                    height=1,
+                    font=('Microsoft JhengHei UI', int(self.dut_ui.setup.get('UI_Font_Size', '12')))
+                )
+                rb.grid(row=row, column=col, padx=1, pady=1, sticky='ew')
+                rb.bind("<Enter>", lambda e, b=rb: b.config(bg="#2196f3", fg='white'))
+                rb.bind("<Leave>", lambda e, b=rb: self.dut_ui.components.update_radio_bg())
+                self.dut_ui.components.section_radiobuttons.append(rb)
+                
+                # 設置列的權重，使按鈕平均分配空間
+                self.dut_ui.components.section_frame.columnconfigure(col, weight=1)
+            
+            # 更新按鈕背景色
+            self.dut_ui.components.update_radio_bg()
+            
+            # 更新指令下拉選單
+            self.dut_ui.components.update_cmd_list()
+            
+            print(f"[DEBUG] 已更新 {len(section_titles)} 個 DUT 按鈕")
+            
+        except Exception as e:
+            print(f"[ERROR] 更新 DUT 按鈕時發生錯誤：{e}")
+            import traceback
+            traceback.print_exc()
+
+
+    def update_tab_names(self):
+        """根據所選指令文件中的區段名稱更新 TAB 按鈕的名稱"""
+        try:
+            # 預設的 TAB 按鈕名稱
+            default_tab_names = ['DUT 控制', '治具控制', '使用說明']
+            
+            # 如果 dut_ui 不存在，使用預設名稱
+            if not hasattr(self, 'dut_ui'):
+                print("[DEBUG] dut_ui 不存在，使用預設 TAB 按鈕名稱")
+                for i, name in enumerate(default_tab_names):
+                    self.notebook.tab(i, text=name)
+                return
+                
+            # 獲取當前指令文件路徑
+            command_file_path = self.dut_ui.setup.get("DUT_Control", {}).get("Command_File_Path", "")
+            if not command_file_path or not os.path.exists(command_file_path):
+                # 如果沒有指定或文件不存在，使用預設名稱
+                print(f"[DEBUG] 指令文件不存在或未指定：{command_file_path}，使用預設 TAB 按鈕名稱")
+                for i, name in enumerate(default_tab_names):
+                    self.notebook.tab(i, text=name)
+                return
+            
+            print(f"[DEBUG] 更新 TAB 按鈕名稱，使用指令文件：{command_file_path}")
+            
+            # 解析指令文件，獲取所有區段
+            sections = []
+            with open(command_file_path, "r", encoding="utf-8") as file:
+                for line in file:
+                    line = line.strip()
+                    if line.startswith("==") and line.endswith("=="):
+                        section_name = line.strip("=").strip()
+                        if section_name and section_name not in sections:
+                            sections.append(section_name)
+            
+            # 如果沒有找到區段，使用預設名稱
+            if not sections:
+                print("[DEBUG] 指令文件中沒有找到區段，使用預設 TAB 按鈕名稱")
+                for i, name in enumerate(default_tab_names):
+                    self.notebook.tab(i, text=name)
+                return
+            
+            print(f"[DEBUG] 從指令文件中找到的區段：{sections}")
+            
+            # 更新前三個 TAB 按鈕的名稱（如果存在對應區段）
+            tab_indices = [0, 1, 2]  # 對應 DUT 控制、治具控制、使用說明
+            
+            for i, idx in enumerate(tab_indices):
+                if i < len(sections):
+                    # 更新 TAB 按鈕名稱
+                    self.notebook.tab(idx, text=sections[i])
+                    print(f"[DEBUG] 更新 TAB {idx} 名稱為：{sections[i]}")
+                else:
+                    # 如果區段數量不足，使用預設名稱
+                    self.notebook.tab(idx, text=default_tab_names[i])
+                    print(f"[DEBUG] 使用預設名稱更新 TAB {idx} 名稱為：{default_tab_names[i]}")
+        
+        except Exception as e:
+            print(f"[ERROR] 更新 TAB 按鈕名稱時發生錯誤：{e}")
+            import traceback
+            traceback.print_exc()
+            
+            # 發生錯誤時，使用預設名稱
+            default_tab_names = ['DUT 控制', '治具控制', '使用說明']
+            for i, name in enumerate(default_tab_names):
+                try:
+                    self.notebook.tab(i, text=name)
+                except Exception:
+                    pass
 
 
     def update_fixture_settings(self):
@@ -1403,7 +1492,13 @@ class SerialUI:
         self.setup = self.config.load_setup()
         self.handlers.reload_setup(self.setup)
         
-        # 2. 使用集中式方法更新所有 UI 元件
+        # 2. 刷新 COM 口列表
+        if hasattr(self, 'handlers') and hasattr(self.handlers, 'refresh_com_ports'):
+            self.handlers.refresh_com_ports()
+        else:
+            print("[WARNING] handlers 不存在或沒有 refresh_com_ports 方法")
+        
+        # 3. 使用集中式方法更新所有 UI 元件
         self.update_from_config()
         
         logging.debug("[DEBUG] DUT Control settings applied successfully.")

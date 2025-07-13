@@ -12,6 +12,7 @@ class SettingsTab(ttk.Frame):
 
         self.setup_data = load_setup()
         self.vars = {}
+        self.sections_preview = []  # 存儲從指令檔案中讀取的區段標題
 
         self.create_widgets()
         self.load_settings()
@@ -56,7 +57,18 @@ class SettingsTab(ttk.Frame):
 
         self.create_checkbox(dut_frame, "Auto_Execute", "啟動時自動執行指令", 'DUT_Control', len(dut_settings))
         self.create_file_picker(dut_frame, "Command_File_Path", "指令檔路徑", 'DUT_Control', len(dut_settings) + 1)
-
+        
+        # 新增：區段標題預覽區域
+        preview_frame = ttk.LabelFrame(dut_frame, text="區段標題預覽", padding=(5, 5))
+        preview_frame.grid(row=len(dut_settings) + 2, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
+        preview_frame.columnconfigure(0, weight=1)
+        
+        self.preview_listbox = tk.Listbox(preview_frame, height=5)
+        self.preview_listbox.pack(fill="both", expand=True, padx=5, pady=5)
+        
+        # 預覽說明文字
+        preview_label = ttk.Label(preview_frame, text="選擇指令檔案後，這裡會顯示檔案中的區段標題。\n儲存設定後，這些標題將成為DUT控制頁面的按鈕。")
+        preview_label.pack(fill="x", padx=5, pady=5)
 
         # --- 治具控制區 ---
         fixture_frame = ttk.LabelFrame(scrollable_frame, text="治具控制區", padding=(10, 5))
@@ -105,6 +117,42 @@ class SettingsTab(ttk.Frame):
         )
         if filepath:
             self.vars[var_key].set(filepath)
+            # 選擇檔案後立即讀取區段標題並更新預覽
+            self.read_section_titles(filepath)
+
+    def read_section_titles(self, filepath):
+        """讀取指令檔案中的區段標題"""
+        self.sections_preview = []
+        try:
+            with open(filepath, "r", encoding="utf-8") as file:
+                for line in file:
+                    line = line.strip()
+                    if line.startswith("==") and line.endswith("=="):
+                        section_name = line.strip("=").strip()
+                        if section_name and section_name not in self.sections_preview:
+                            self.sections_preview.append(section_name)
+            
+            # 更新預覽列表
+            self.update_preview_listbox()
+            
+            # 將讀取到的區段標題存儲到設置中，以便保存時使用
+            self.setup_data.setdefault('DUT_Control', {})['Section_Titles'] = self.sections_preview
+            
+            print(f"[DEBUG] 從指令檔案中讀取到 {len(self.sections_preview)} 個區段標題: {self.sections_preview}")
+        except Exception as e:
+            messagebox.showerror("錯誤", f"讀取指令檔案失敗：{e}")
+            print(f"[ERROR] 讀取指令檔案失敗：{e}")
+            import traceback
+            traceback.print_exc()
+
+    def update_preview_listbox(self):
+        """更新預覽列表框"""
+        self.preview_listbox.delete(0, tk.END)
+        for section in self.sections_preview:
+            self.preview_listbox.insert(tk.END, section)
+        
+        if not self.sections_preview:
+            self.preview_listbox.insert(tk.END, "未找到區段標題")
 
     def load_settings(self):
         for section, settings in self.setup_data.items():
@@ -117,7 +165,11 @@ class SettingsTab(ttk.Frame):
         # Handle default display for command file path
         if not self.vars.get("DUT_Control_Command_File_Path", tk.StringVar()).get():
             self.vars["DUT_Control_Command_File_Path"].set("預設: command.txt (與EXE同目錄)")
-
+        else:
+            # 如果已有指令檔路徑，立即讀取區段標題
+            filepath = self.vars["DUT_Control_Command_File_Path"].get()
+            if os.path.exists(filepath):
+                self.read_section_titles(filepath)
 
     def save_settings(self):
         try:
@@ -132,6 +184,10 @@ class SettingsTab(ttk.Frame):
                                 self.setup_data[section][key] = ""
                             else:
                                 self.setup_data[section][key] = new_value
+            
+            # 確保區段標題被保存
+            if self.sections_preview:
+                self.setup_data.setdefault('DUT_Control', {})['Section_Titles'] = self.sections_preview
 
             print(f"[DEBUG] SettingsTab: Saving setup_data: {json.dumps(self.setup_data, indent=2, ensure_ascii=False)}")
             save_setup(self.setup_data)

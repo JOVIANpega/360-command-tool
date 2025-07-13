@@ -53,19 +53,12 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         # 恢復 PanedWindow 分割位置（延遲執行，確保視窗已完全載入）
         self.parent.root.after(200, self.restore_pane_position)
         
-        # 顯示版本信息
-        self.parent.root.after(500, lambda: self.show_notification("VALO360 指令通 V1.12 已啟動", "blue", 5000))
+        # 顯示歡迎訊息和基本操作提示（合併為一個通知）
+        welcome_message = "歡迎使用 VALO360 指令通 V1.12！\n選擇COM口和指令後點擊「執行指令」按鈕。\n通知區域可使用 +/- 調整文字大小。"
+        self.parent.root.after(1000, lambda: self.show_notification(welcome_message, "blue", 8000))
         
-        # 顯示歡迎訊息
-        welcome_message = "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。"
-        self.parent.root.after(6000, lambda: self.show_notification(welcome_message, "green", 8000))
-        
-        # 顯示系統狀態
-        self.parent.root.after(15000, self.show_system_status)
-        
-        # 顯示基本操作提示
-        basic_tips = "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。"
-        self.parent.root.after(25000, lambda: self.show_notification(basic_tips, "blue", 10000))
+        # 顯示系統狀態（只保留一個）
+        self.parent.root.after(10000, self.show_system_status)
 
     def init_com_components(self):
         com_frame = ttk.Frame(self.left_panel, style="TFrame")
@@ -138,15 +131,22 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             traceback.print_exc()
 
     def init_cmd_components(self):
-        section_frame = ttk.Frame(self.left_panel, style="TFrame")
-        section_frame.grid(row=1, column=0, sticky='ew', pady=5)
-        section_frame.columnconfigure(0, weight=1)
+        self.section_frame = ttk.Frame(self.left_panel, style="TFrame")
+        self.section_frame.grid(row=1, column=0, sticky='ew', pady=5)
+        self.section_frame.columnconfigure(0, weight=1)
         self.section_var = tk.StringVar()
         
         # 從 command.txt 動態讀取分類
         self.sections = []  # 移除預設的 '全部指令'
         try:
-            with open(COMMAND_FILE, 'r', encoding='utf-8') as f:
+            # 從設定中獲取指令檔案路徑
+            command_file_path = self.parent.setup.get("DUT_Control", {}).get("Command_File_Path", "")
+            if command_file_path and os.path.exists(command_file_path):
+                command_file = command_file_path
+            else:
+                command_file = COMMAND_FILE
+                
+            with open(command_file, 'r', encoding='utf-8') as f:
                 for line in f:
                     line = line.strip()
                     if line.startswith('==') and line.endswith('=='):
@@ -174,7 +174,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             col = i % max_buttons_per_row
             
             rb = tk.Radiobutton(
-                section_frame, text=sec, variable=self.section_var, value=sec, 
+                self.section_frame, text=sec, variable=self.section_var, value=sec, 
                 command=self.update_cmd_list,
                 bg='#d9d9d9', fg='black', selectcolor='#d9d9d9', 
                 activebackground='#2196f3', activeforeground='white',
@@ -187,13 +187,13 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             self.section_radiobuttons.append(rb)
             
             # 設置列的權重，使按鈕平均分配空間
-            section_frame.columnconfigure(col, weight=1)
+            self.section_frame.columnconfigure(col, weight=1)
         
         self.update_radio_bg()
 
         # 添加說明文字（減少高度）
         self.section_description = ttk.Label(
-            section_frame, 
+            self.section_frame, 
             text=self.get_section_description(self.section_var.get()),
             style="TLabel",
             wraplength=300
@@ -574,6 +574,18 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         # 解析指令文件
         self.parent.commands_by_section = self.parent.handlers.parse_commands_by_section()
         
+        # 檢查當前選擇的分類是否存在於解析後的指令中
+        if section not in self.parent.commands_by_section:
+            print(f"[WARNING] 選擇的分類 '{section}' 不存在，使用第一個可用的分類")
+            if self.parent.commands_by_section:
+                # 使用第一個可用的分類
+                section = next(iter(self.parent.commands_by_section.keys()))
+                self.section_var.set(section)
+            else:
+                # 如果沒有可用的分類，使用預設值
+                section = '全部指令'
+                self.section_var.set(section)
+        
         # 獲取當前分類的指令
         cmds = self.parent.commands_by_section.get(section, {})
         if not cmds and section != '全部指令':  # 如果沒有找到對應分類的指令，使用全部指令
@@ -941,44 +953,25 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             duration: 顯示時間(毫秒)，默認5秒，0表示不自動清除
             callback: 通知結束後要調用的回調函數
         """
-        # 保存當前顏色和字體以便恢復
+        # 保存當前顏色以便恢復
         original_fg = self.label_countdown.cget("fg")
-        original_font = self.label_countdown.cget("font")
         
         # 使用更大更粗的字體
         font_size = max(16, self.notification_font_size + 4)
         self.label_countdown.config(
             text=message, 
-            fg="white",  # 使用白色文字以便在彩色背景上更易讀
-            bg=color,    # 立即設置背景色
+            fg=color,  # 直接使用顏色
+            bg="white",  # 背景保持白色
             font=('Microsoft JhengHei UI', font_size, 'bold')
         )
         
-        # 創建更強烈的閃爍效果 - 交替顯示背景色
-        self._flash_notification(message, color, 8, original_fg, original_font, duration, callback)
+        # 如果設置了持續時間，則在指定時間後清除消息
+        if duration > 0:
+            self.parent.root.after(duration, lambda: self._restore_after_notification(original_fg, callback))
 
-    def _flash_notification(self, message, color, flash_count, original_fg, original_font, duration, callback, current_flash=0):
-        """創建通知閃爍效果"""
-        if current_flash >= flash_count * 2:  # 每次閃爍包括兩個狀態變化
-            # 閃爍結束後，保持顯示一段時間
-            if duration > 0:
-                self.parent.root.after(duration - (flash_count * 2 * 200), 
-                                      lambda: self._restore_after_notification(original_fg, original_font, callback))
-            return
-            
-        # 交替設置背景色
-        if current_flash % 2 == 0:
-            self.label_countdown.config(bg=color, fg="white")
-        else:
-            self.label_countdown.config(bg="white", fg=color)
-            
-        # 繼續閃爍
-        self.parent.root.after(200, lambda: self._flash_notification(
-            message, color, flash_count, original_fg, original_font, duration, callback, current_flash + 1))
-
-    def _restore_after_notification(self, original_fg, original_font, callback=None):
+    def _restore_after_notification(self, original_fg, callback=None):
         """通知結束後恢復"""
-        self.label_countdown.config(text="", fg=original_fg, font=original_font, bg="white")
+        self.label_countdown.config(text="", fg=original_fg, bg="white")
         # 如果有回調函數，則執行
         if callback:
             callback()

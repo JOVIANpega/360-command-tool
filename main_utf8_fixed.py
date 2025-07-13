@@ -4,7 +4,7 @@ import sys
 import tkinter as tk
 from tkinter import ttk, messagebox
 import traceback
-from config_core import load_commands, load_highlight_keywords
+from config_core import load_commands, load_highlight_keywords, load_setup
 from ui_parts.ui_main import SerialUI, TabManager
 import re
 import threading
@@ -25,7 +25,14 @@ def write_log(msg):
     except Exception:
         pass
 
-write_log("main.py 啟動")
+def write_error_log(msg):
+    try:
+        with open("error_log.txt", "a", encoding="utf-8") as f:
+            f.write(msg + "\n")
+    except Exception:
+        pass
+
+write_log("main_utf8_fixed.py 啟動")
 
 try:
     from ui_parts.ui_main import TabManager
@@ -36,38 +43,50 @@ except Exception as e:
     sys.exit(1)
 
 def main():
-    # 版本訊息
-    VERSION = "V1.38"
-    print(f"===== VALO360 指令通 {VERSION} =====")
-
-    # 載入命令清單
-    commands = load_commands()
-    
-    # 載入關鍵字高亮設定
-    highlight_keywords = load_highlight_keywords()
-    print(f"[DEBUG] main 函數載入完成，關鍵字高亮設定: {highlight_keywords}")
-    
-    # 初始化 Tkinter
-    root = tk.Tk()
-    root.title(f"VALO360 指令通 {VERSION}")
     try:
-        root.iconbitmap('app.ico')
-    except:
-        pass
-    
-    # 建立標籤頁管理器並初始化 UI
-    app = TabManager(root, highlight_keywords)
-    
-    # 介面置中顯示
-    root.update_idletasks()  # 更新元件尺寸
-    width = root.winfo_width()
-    height = root.winfo_height()
-    x = (root.winfo_screenwidth() // 2) - (width // 2)
-    y = (root.winfo_screenheight() // 2) - (height // 2)
-    root.geometry(f'{width}x{height}+{x}+{y}')
-    
-    # 啟動應用程式
-    root.mainloop()
+        # 版本訊息
+        VERSION = "V1.4.3"
+        print(f"===== VALO360 指令通 {VERSION} =====")
+
+        # 載入設定
+        setup = load_setup()
+        
+        # 載入命令清單
+        commands = load_commands()
+        
+        # 載入關鍵字高亮設定
+        highlight_keywords = load_highlight_keywords()
+        print(f"[DEBUG] main 函數載入完成，關鍵字高亮設定: {highlight_keywords}")
+        
+        # 初始化 Tkinter
+        root = tk.Tk()
+        
+        # 從設定檔讀取視窗標題，如果沒有則使用預設值
+        window_title = setup.get('Window_Title', "JOVIAN指令通")
+        root.title(f"{window_title} {VERSION}")
+        try:
+            root.iconbitmap('app.ico')
+        except:
+            pass
+        
+        # 建立標籤頁管理器並初始化 UI
+        app = TabManager(root, highlight_keywords)
+        
+        # 介面置中顯示
+        root.update_idletasks()  # 更新元件尺寸
+        width = root.winfo_width()
+        height = root.winfo_height()
+        x = (root.winfo_screenwidth() // 2) - (width // 2)
+        y = (root.winfo_screenheight() // 2) - (height // 2)
+        root.geometry(f'{width}x{height}+{x}+{y}')
+        
+        # 啟動應用程式
+        root.mainloop()
+    except Exception as e:
+        error_message = f"An unexpected error occurred: {str(e)}\n{traceback.format_exc()}"
+        write_error_log(error_message)
+        messagebox.showerror('錯誤', error_message)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
