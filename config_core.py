@@ -237,6 +237,18 @@ def load_setup():
 
             
 
+            # 確保頂層的 Window_Title 存在
+
+            if 'Window_Title' not in setup:
+
+                # 如果頂層沒有，使用 DUT_Control 中的值或預設值
+
+                setup['Window_Title'] = setup.get('DUT_Control', {}).get('Window_Title', default_setup['DUT_Control']['Window_Title'])
+
+                print(f"[DEBUG] 使用 DUT_Control 中的視窗標題: {setup['Window_Title']}")
+
+            
+
             # EndStrings 處理
 
             dut = setup.get('DUT_Control', {})
@@ -269,7 +281,13 @@ def load_setup():
 
     # 如果無法讀取或設定檔不存在，使用預設設定
 
-    return default_setup.copy()
+    default = default_setup.copy()
+
+    # 添加頂層 Window_Title
+
+    default['Window_Title'] = default_setup['DUT_Control']['Window_Title']
+
+    return default
 
 
 
@@ -379,9 +397,19 @@ def save_setup(setup_data):
 
         
 
-        # 只保留分層結構，不讀取舊的扁平參數
+        # 創建新的設定結構
 
         clean_setup = {}
+
+        
+
+        # 首先處理頂層的 Window_Title (確保它是第一個鍵)
+
+        if 'Window_Title' in setup_data:
+
+            clean_setup['Window_Title'] = setup_data['Window_Title']
+
+            print(f"[DEBUG] 保存頂層視窗標題: {setup_data['Window_Title']}")
 
         
 
@@ -425,15 +453,39 @@ def save_setup(setup_data):
 
         
 
+        # 保存設定前先顯示完整內容
+
+        print(f"[DEBUG] 即將保存的設定內容: {json.dumps(clean_setup, ensure_ascii=False, indent=2)}")
+
+        
+
         # 保存設定
 
         with open(SETUP_FILE, 'w', encoding='utf-8') as f:
 
             json.dump(clean_setup, f, ensure_ascii=False, indent=2)
 
-            
+        
 
-        print(f"[DEBUG] 已保存乾淨的設定結構: {list(clean_setup.keys())}")
+        # 驗證設定是否已正確保存
+
+        try:
+
+            with open(SETUP_FILE, 'r', encoding='utf-8') as f:
+
+                saved_setup = json.load(f)
+
+            print(f"[DEBUG] 已保存的設定結構: {list(saved_setup.keys())}")
+
+            print(f"[DEBUG] 視窗標題是否存在: {'Window_Title' in saved_setup}")
+
+            if 'Window_Title' in saved_setup:
+
+                print(f"[DEBUG] 已保存的視窗標題: {saved_setup['Window_Title']}")
+
+        except Exception as e:
+
+            print(f"[ERROR] 驗證保存的設定時發生錯誤: {e}")
 
         
 

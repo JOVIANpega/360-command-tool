@@ -44,9 +44,9 @@ class SettingsTab(ttk.Frame):
         basic_frame.grid(row=0, column=0, sticky="ew", padx=10, pady=5)
         basic_frame.columnconfigure(1, weight=1)
 
-        # 添加視窗標題設定
-        # 初始化視窗標題變數
-        self.vars["_Window_Title"] = tk.StringVar(value=self.setup_data.get('Window_Title', "VALO360 指令通"))
+        # 添加視窗標題設定 (優先使用頂層的 Window_Title)
+        window_title = self.setup_data.get('Window_Title', self.setup_data.get('DUT_Control', {}).get('Window_Title', "VALO360 指令通"))
+        self.vars["_Window_Title"] = tk.StringVar(value=window_title)
         self.create_entry(basic_frame, "Window_Title", "視窗標題", '', 0)
         ttk.Label(basic_frame, text="(不包含版本號)").grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 5))
 
@@ -191,9 +191,10 @@ class SettingsTab(ttk.Frame):
 
     def save_settings(self):
         try:
-            # 保存視窗標題
+            # 保存視窗標題 (保存到頂層)
             new_window_title = self.vars["_Window_Title"].get()
             self.setup_data['Window_Title'] = new_window_title
+            print(f"[DEBUG] SettingsTab: 設置頂層視窗標題為: {new_window_title}")
             
             # 保存其他設定
             for section, settings in self.setup_data.items():
@@ -212,8 +213,19 @@ class SettingsTab(ttk.Frame):
             if self.sections_preview:
                 self.setup_data.setdefault('DUT_Control', {})['Section_Titles'] = self.sections_preview
 
-            print(f"[DEBUG] SettingsTab: Saving setup_data: {json.dumps(self.setup_data, indent=2, ensure_ascii=False)}")
+            print(f"[DEBUG] SettingsTab: 即將保存的設定資料: {json.dumps(self.setup_data, indent=2, ensure_ascii=False)}")
             save_setup(self.setup_data)
+            
+            # 確認設定是否已正確保存
+            try:
+                saved_setup = load_setup()
+                if 'Window_Title' in saved_setup:
+                    print(f"[DEBUG] SettingsTab: 確認已保存的視窗標題: {saved_setup['Window_Title']}")
+                else:
+                    print(f"[ERROR] SettingsTab: 保存後無法找到頂層視窗標題!")
+            except Exception as e:
+                print(f"[ERROR] SettingsTab: 確認保存設定時發生錯誤: {e}")
+            
             messagebox.showinfo("成功", "設定已成功儲存！")
             
             # Call the callback to update the main UI
@@ -221,9 +233,17 @@ class SettingsTab(ttk.Frame):
                 print("[DEBUG] Calling on_save_callback...")
                 self.on_save_callback()
                 
-            # 更新當前視窗標題
-            self.master.master.master.title(f"{new_window_title} V1.4.3.1")
-            print(f"[DEBUG] 視窗標題已立即更新為：{new_window_title} V1.4.3.1")
+            # 更新當前視窗標題 (使用頂層的 Window_Title)
+            # 獲取當前版本號
+            current_title = self.master.master.master.title()
+            version_part = ""
+            if " V" in current_title:
+                version_part = " " + current_title.split(" V")[-1]
+            
+            # 設置新標題
+            new_title = f"{new_window_title}{version_part}"
+            self.master.master.master.title(new_title)
+            print(f"[DEBUG] 視窗標題已立即更新為：{new_title}")
             
         except Exception as e:
             messagebox.showerror("錯誤", f"儲存設定失敗：{e}")
@@ -237,8 +257,8 @@ class SettingsTab(ttk.Frame):
         # 重新載入設定
         self.setup_data = load_setup()
         
-        # 更新視窗標題欄位
-        window_title = self.setup_data.get('Window_Title', "VALO360 指令通")
+        # 更新視窗標題欄位 (優先使用頂層的 Window_Title)
+        window_title = self.setup_data.get('Window_Title', self.setup_data.get('DUT_Control', {}).get('Window_Title', "VALO360 指令通"))
         if "_Window_Title" in self.vars:
             current_title = self.vars["_Window_Title"].get()
             if current_title != window_title:

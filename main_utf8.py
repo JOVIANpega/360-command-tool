@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-﻿# -*- coding: utf-8 -*-
 
 import os
 
@@ -77,7 +76,7 @@ def main():
 
     # 版本訊息
 
-    VERSION = "V1.4.2"
+    VERSION = "V1.4.3.2"
 
     print(f"===== VALO360 指令通 {VERSION} =====")
 
@@ -109,9 +108,9 @@ def main():
 
     
 
-    # 從設定檔讀取視窗標題，如果沒有則使用預設值
+    # 從設定檔讀取視窗標題，優先使用頂層的 Window_Title
 
-    window_title = setup.get('Window_Title', "JOVIAN指令通")
+    window_title = setup.get('Window_Title', setup.get('DUT_Control', {}).get('Window_Title', "VALO360 指令通"))
 
     root.title(f"{window_title} {VERSION}")
 

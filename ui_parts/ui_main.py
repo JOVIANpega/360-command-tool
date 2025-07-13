@@ -584,10 +584,10 @@ class TabManager:
     def update_window_title(self):
         """更新視窗標題（不包含版本號）"""
         try:
-            # 從設定檔讀取視窗標題
+            # 從設定檔讀取視窗標題 (優先使用頂層的 Window_Title)
             from config_core import load_setup
             setup = load_setup()
-            window_title = setup.get('Window_Title', "VALO360 指令通")
+            window_title = setup.get('Window_Title', setup.get('DUT_Control', {}).get('Window_Title', "VALO360 指令通"))
             
             # 獲取當前標題中的版本號部分
             current_title = self.root.title()
