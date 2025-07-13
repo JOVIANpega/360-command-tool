@@ -251,31 +251,49 @@ class SettingsTab(ttk.Frame):
             dut_control = self.setup_data.get('DUT_Control', {})
             fixture_control = self.setup_data.get('Fixture_Control', {})
             
-            # 載入基本設定
+            print(f"[DEBUG] SettingsTab.load_settings: 載入設定 - {json.dumps(self.setup_data, ensure_ascii=False)[:200]}...")
+            
+            # 載入基本設定 - 優先使用頂層的 Window_Title
             self.vars["_Window_Title"].set(self.setup_data.get('Window_Title', dut_control.get('Window_Title', '')))
             
-            # 載入 DUT 控制設定
-            for key in ["Serial_COM_Port", "Default_IP_Address", "Command_Timeout_Seconds", 
-                        "Command_End_String", "UI_Font_Size", "Content_Font_Size", "Command_File_Path"]:
+            # 載入 DUT 控制設定 - 確保所有字段都被處理
+            dut_fields = [
+                "Serial_COM_Port", "Default_IP_Address", "Command_Timeout_Seconds", 
+                "Command_End_String", "UI_Font_Size", "Content_Font_Size", "Command_File_Path",
+                "Notification_Font_Size", "Pane_Sash_Position", "Window_Width", "Window_Height"
+            ]
+            
+            for key in dut_fields:
                 var_key = f"DUT_Control_{key}"
                 if var_key in self.vars:
-                    self.vars[var_key].set(dut_control.get(key, ''))
+                    value = dut_control.get(key, '')
+                    self.vars[var_key].set(value)
+                    print(f"[DEBUG] SettingsTab.load_settings: 設置 {var_key} = {value}")
             
             # 載入自動執行設定
-            self.vars["DUT_Control_Auto_Execute"].set(dut_control.get('Auto_Execute', False))
+            auto_execute = dut_control.get('Auto_Execute', False)
+            self.vars["DUT_Control_Auto_Execute"].set(auto_execute)
+            print(f"[DEBUG] SettingsTab.load_settings: 設置 Auto_Execute = {auto_execute}")
             
             # 載入治具控制設定
-            self.vars["Fixture_Control_Fixture_COM_Port"].set(fixture_control.get('Fixture_COM_Port', ''))
-            self.vars["Fixture_Control_Fixture_Font_Size"].set(fixture_control.get('Fixture_Font_Size', ''))
-            self.vars["Fixture_Control_Test_Category_FUNCTION"].set(fixture_control.get('Test_Category_FUNCTION', False))
-            self.vars["Fixture_Control_Test_Category_MB"].set(fixture_control.get('Test_Category_MB', False))
-            self.vars["Fixture_Control_Test_Category_Original_Commands"].set(fixture_control.get('Test_Category_Original_Commands', False))
+            fixture_fields = {
+                "Fixture_COM_Port": "Fixture_Control_Fixture_COM_Port",
+                "Fixture_Font_Size": "Fixture_Control_Fixture_Font_Size",
+                "Test_Category_FUNCTION": "Fixture_Control_Test_Category_FUNCTION",
+                "Test_Category_MB": "Fixture_Control_Test_Category_MB",
+                "Test_Category_Original_Commands": "Fixture_Control_Test_Category_Original_Commands"
+            }
             
-            # 載入介面佈局設定
-            self.vars["DUT_Control_Pane_Sash_Position"].set(dut_control.get('Pane_Sash_Position', '400'))
-            self.vars["DUT_Control_Window_Width"].set(dut_control.get('Window_Width', '1024'))
-            self.vars["DUT_Control_Window_Height"].set(dut_control.get('Window_Height', '768'))
-            self.vars["DUT_Control_Notification_Font_Size"].set(dut_control.get('Notification_Font_Size', '11'))
+            for field, var_key in fixture_fields.items():
+                if var_key in self.vars:
+                    if field.startswith("Test_Category"):
+                        # 布尔值处理
+                        value = fixture_control.get(field, False)
+                    else:
+                        # 字符串处理
+                        value = fixture_control.get(field, '')
+                    self.vars[var_key].set(value)
+                    print(f"[DEBUG] SettingsTab.load_settings: 設置 {var_key} = {value}")
             
             # 如果有指令檔案路徑，嘗試讀取區段標題
             cmd_file_path = dut_control.get('Command_File_Path', '')
@@ -298,8 +316,12 @@ class SettingsTab(ttk.Frame):
             # 讀取當前設定
             current_setup = load_setup()
             
+            print("[DEBUG] SettingsTab.save_settings: 開始保存設定...")
+            
             # 更新 Window_Title (頂層)
-            current_setup['Window_Title'] = self.vars["_Window_Title"].get()
+            window_title = self.vars["_Window_Title"].get()
+            current_setup['Window_Title'] = window_title
+            print(f"[DEBUG] SettingsTab.save_settings: 設置頂層 Window_Title = {window_title}")
             
             # 確保 DUT_Control 和 Fixture_Control 存在
             if 'DUT_Control' not in current_setup:
@@ -308,37 +330,45 @@ class SettingsTab(ttk.Frame):
                 current_setup['Fixture_Control'] = {}
             
             # 更新 DUT_Control 設定
-            dut_settings = [
+            dut_fields = [
                 "Serial_COM_Port", "Default_IP_Address", "Command_Timeout_Seconds",
-                "Command_End_String", "UI_Font_Size", "Content_Font_Size", "Command_File_Path"
+                "Command_End_String", "UI_Font_Size", "Content_Font_Size", "Command_File_Path",
+                "Notification_Font_Size", "Pane_Sash_Position", "Window_Width", "Window_Height"
             ]
             
-            for key in dut_settings:
+            for key in dut_fields:
                 var_key = f"DUT_Control_{key}"
                 if var_key in self.vars:
-                    current_setup['DUT_Control'][key] = self.vars[var_key].get()
+                    value = self.vars[var_key].get()
+                    current_setup['DUT_Control'][key] = value
+                    print(f"[DEBUG] SettingsTab.save_settings: 保存 {key} = {value}")
             
             # 更新自動執行設定
-            current_setup['DUT_Control']['Auto_Execute'] = self.vars["DUT_Control_Auto_Execute"].get()
+            auto_execute = self.vars["DUT_Control_Auto_Execute"].get()
+            current_setup['DUT_Control']['Auto_Execute'] = auto_execute
+            print(f"[DEBUG] SettingsTab.save_settings: 保存 Auto_Execute = {auto_execute}")
             
             # 更新治具控制設定
-            current_setup['Fixture_Control']['Fixture_COM_Port'] = self.vars["Fixture_Control_Fixture_COM_Port"].get()
-            current_setup['Fixture_Control']['Fixture_Font_Size'] = self.vars["Fixture_Control_Fixture_Font_Size"].get()
-            current_setup['Fixture_Control']['Test_Category_FUNCTION'] = self.vars["Fixture_Control_Test_Category_FUNCTION"].get()
-            current_setup['Fixture_Control']['Test_Category_MB'] = self.vars["Fixture_Control_Test_Category_MB"].get()
-            current_setup['Fixture_Control']['Test_Category_Original_Commands'] = self.vars["Fixture_Control_Test_Category_Original_Commands"].get()
+            fixture_fields = {
+                "Fixture_COM_Port": "Fixture_Control_Fixture_COM_Port",
+                "Fixture_Font_Size": "Fixture_Control_Fixture_Font_Size",
+                "Test_Category_FUNCTION": "Fixture_Control_Test_Category_FUNCTION",
+                "Test_Category_MB": "Fixture_Control_Test_Category_MB",
+                "Test_Category_Original_Commands": "Fixture_Control_Test_Category_Original_Commands"
+            }
             
-            # 更新介面佈局設定
-            current_setup['DUT_Control']['Pane_Sash_Position'] = self.vars["DUT_Control_Pane_Sash_Position"].get()
-            current_setup['DUT_Control']['Window_Width'] = self.vars["DUT_Control_Window_Width"].get()
-            current_setup['DUT_Control']['Window_Height'] = self.vars["DUT_Control_Window_Height"].get()
-            current_setup['DUT_Control']['Notification_Font_Size'] = self.vars["DUT_Control_Notification_Font_Size"].get()
+            for field, var_key in fixture_fields.items():
+                if var_key in self.vars:
+                    value = self.vars[var_key].get()
+                    current_setup['Fixture_Control'][field] = value
+                    print(f"[DEBUG] SettingsTab.save_settings: 保存 {field} = {value}")
             
             # 確保 DUT_Control 中的 Window_Title 與頂層一致
-            current_setup['DUT_Control']['Window_Title'] = self.vars["_Window_Title"].get()
+            current_setup['DUT_Control']['Window_Title'] = window_title
             
             # 保存區段標題
             current_setup['DUT_Control']['Section_Titles'] = self.sections_preview
+            print(f"[DEBUG] SettingsTab.save_settings: 保存 Section_Titles = {self.sections_preview}")
             
             # 保存設定
             save_setup(current_setup)
@@ -348,6 +378,7 @@ class SettingsTab(ttk.Frame):
             
             # 如果有回調函數，則執行
             if self.on_save_callback:
+                print("[DEBUG] SettingsTab.save_settings: 執行回調函數")
                 self.on_save_callback()
             
         except Exception as e:

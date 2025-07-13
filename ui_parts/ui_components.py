@@ -267,7 +267,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         default_ip = self.parent.setup.get('Default_IP_Address', '192.168.11.143')
         self.entry_ip.delete(0, tk.END)
         self.entry_ip.insert(0, default_ip)
-        self.btn_ping = tk.Button(ip_frame, text='Ping', command=lambda: self.parent.handlers.check_ping(), bg='white', fg='black')
+        self.btn_ping = tk.Button(ip_frame, text='Ping', command=lambda: self.parent.handlers.on_ping(), bg='white', fg='black')
         self.btn_ping.grid(row=0, column=2, padx=5)
         self.btn_ping.bind("<Enter>", lambda e: self.btn_ping.config(bg="#ff9999"))
         self.btn_ping.bind("<Leave>", lambda e: self.btn_ping.config(bg="white"))

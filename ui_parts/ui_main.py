@@ -1128,38 +1128,82 @@ class TabManager:
 
 
     def on_close(self):
-
-
         """TabManager 關閉事件處理"""
-
-
         try:
-
-
-            # 如果有 DUT UI，先保存其設定
-
-
+            print("[DEBUG] TabManager.on_close: 程式正在關閉，保存所有設定...")
+            
+            # 保存所有分頁的設定
+            settings_to_save = {}
+            
+            # 收集DUT控制分頁設定
+            if hasattr(self, 'dut_ui') and hasattr(self.dut_ui, 'get_settings'):
+                dut_settings = self.dut_ui.get_settings()
+                settings_to_save['DUT_Control'] = dut_settings
+                print(f"[DEBUG] TabManager.on_close: 已收集DUT控制設定: {list(dut_settings.keys())}")
+            
+            # 收集治具控制分頁設定
+            if hasattr(self, 'fixture_ui') and hasattr(self.fixture_ui, 'get_settings'):
+                fixture_settings = self.fixture_ui.get_settings()
+                # 將fixture_settings轉換為標準格式
+                fixture_control = {}
+                
+                # 處理COM口設定
+                if 'COM' in fixture_settings:
+                    fixture_control['Fixture_COM_Port'] = fixture_settings['COM']
+                
+                # 處理當前指令
+                if 'CMD' in fixture_settings:
+                    fixture_control['Current_Command'] = fixture_settings['CMD']
+                
+                # 處理字體大小
+                if 'FixtureFontSize' in fixture_settings:
+                    fixture_control['Fixture_Font_Size'] = fixture_settings['FixtureFontSize']
+                
+                # 處理測試類別
+                for cat in ['FUNCTION', 'MB', 'Original_Commands']:
+                    if cat in fixture_settings:
+                        fixture_control[f'Test_Category_{cat}'] = fixture_settings[cat]
+                
+                settings_to_save['Fixture_Control'] = fixture_control
+                print(f"[DEBUG] TabManager.on_close: 已收集治具控制設定: {list(fixture_control.keys())}")
+            
+            # 獲取當前視窗標題 (不包含版本號)
+            current_title = self.root.title()
+            window_title = current_title
+            if " V" in current_title:
+                window_title = current_title.split(" V")[0]
+            
+            settings_to_save['Window_Title'] = window_title
+            print(f"[DEBUG] TabManager.on_close: 設置視窗標題: {window_title}")
+            
+            # 載入現有設定，確保不會丟失其他設定
+            from config_core import load_setup, save_setup
+            current_setup = load_setup()
+            
+            # 合併設定
+            for section, data in settings_to_save.items():
+                if section in current_setup:
+                    if isinstance(data, dict) and isinstance(current_setup[section], dict):
+                        current_setup[section].update(data)
+                    else:
+                        current_setup[section] = data
+                else:
+                    current_setup[section] = data
+            
+            # 保存設定
+            save_setup(current_setup)
+            print("[DEBUG] TabManager.on_close: 所有設定已保存")
+            
+            # 如果有 DUT UI，調用其關閉方法
             if hasattr(self, 'dut_ui'):
-
-
                 self.dut_ui.on_close()
-
-
             else:
-
-
                 # 如果沒有 DUT UI，直接關閉
-
-
                 self.root.destroy()
-
-
         except Exception as e:
-
-
             print(f'[ERROR] TabManager 關閉時發生錯誤: {e}')
-
-
+            import traceback
+            traceback.print_exc()
             self.root.destroy()
 
 
@@ -1306,7 +1350,7 @@ class SerialUI:
         try:
 
 
-            print("[DEBUG] 程式關閉，正在保存設定...")
+            print("[DEBUG] SerialUI.on_close: 程式關閉，正在保存設定...")
 
 
             
@@ -1318,6 +1362,9 @@ class SerialUI:
             current_settings = self.get_settings_from_ui()
 
 
+            print(f"[DEBUG] SerialUI.on_close: 已收集UI設定: {list(current_settings.keys())}")
+
+
             
 
 
@@ -1327,19 +1374,64 @@ class SerialUI:
             try:
 
 
-                sash_position = self.components.main_frame.sashpos(0)
+                if hasattr(self.components, 'main_frame'):
 
 
-                current_settings['Pane_Sash_Position'] = str(sash_position)
+                    sash_position = self.components.main_frame.sashpos(0)
 
 
-                print(f"[DEBUG] 保存分割位置: {sash_position}")
+                    if sash_position > 0:  # 確保分割位置有效
+
+
+                        current_settings['Pane_Sash_Position'] = str(sash_position)
+
+
+                        print(f"[DEBUG] SerialUI.on_close: 保存分割位置: {sash_position}")
 
 
             except Exception as e:
 
 
-                print(f"[DEBUG] 獲取分割位置失敗: {e}")
+                print(f"[DEBUG] SerialUI.on_close: 獲取分割位置失敗: {e}")
+
+
+                import traceback
+
+
+                traceback.print_exc()
+
+
+            
+
+
+            # 保存當前視窗大小
+
+
+            try:
+
+
+                width = self.root.winfo_width()
+
+
+                height = self.root.winfo_height()
+
+
+                if width > 100 and height > 100:  # 確保視窗大小有效
+
+
+                    current_settings['Window_Width'] = str(width)
+
+
+                    current_settings['Window_Height'] = str(height)
+
+
+                    print(f"[DEBUG] SerialUI.on_close: 保存視窗大小: {width}x{height}")
+
+
+            except Exception as e:
+
+
+                print(f"[DEBUG] SerialUI.on_close: 獲取視窗大小失敗: {e}")
 
 
             
@@ -1358,62 +1450,42 @@ class SerialUI:
             
             # 更新頂層和DUT_Control中的視窗標題
             full_setup['Window_Title'] = window_title
-            print(f"[DEBUG] 保存頂層視窗標題: {window_title}")
+            print(f"[DEBUG] SerialUI.on_close: 保存頂層視窗標題: {window_title}")
             
             # 更新 DUT_Control 層的設定
-
-
             if 'DUT_Control' not in full_setup:
-
-
                 full_setup['DUT_Control'] = {}
             
             # 確保DUT_Control中的Window_Title與頂層一致
             full_setup['DUT_Control']['Window_Title'] = window_title
             
-            full_setup['DUT_Control'].update(current_settings)
-
-
+            # 更新所有設定字段
+            for key, value in current_settings.items():
+                full_setup['DUT_Control'][key] = value
+                print(f"[DEBUG] SerialUI.on_close: 保存設定 {key} = {value}")
             
-
-
             # 保存到檔案
-
-
             save_setup(full_setup)
-
-
-            print(f"[DEBUG] 設定已保存到 DUT_Control 分層: {current_settings}")
-
-
+            print(f"[DEBUG] SerialUI.on_close: 設定已保存到 setup.json")
             
-
-
             # 停止所有執行緒
-
-
             if hasattr(self, 'stop_event') and self.stop_event:
-
-
                 self.stop_event.set()
-
-
+                print("[DEBUG] SerialUI.on_close: 已停止所有執行緒")
                 
-
-
             # 關閉程式
-
-
             self.root.destroy()
-
-
             
-
-
         except Exception as e:
 
 
-            print(f'[ERROR] 關閉程式時發生錯誤: {e}')
+            print(f'[ERROR] SerialUI.on_close: 關閉程式時發生錯誤: {e}')
+
+
+            import traceback
+
+
+            traceback.print_exc()
 
 
             # 即使發生錯誤也要關閉程式

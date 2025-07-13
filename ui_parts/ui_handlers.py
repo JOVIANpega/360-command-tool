@@ -417,7 +417,7 @@ class UIHandlers(UIHandlersCore):
             return
 
 
-
+        # 定義 ping 工作函數
 
 
         def ping_worker():
@@ -429,22 +429,49 @@ class UIHandlers(UIHandlersCore):
             try:
 
 
-                default_ip = self.parent.setup.get('Default_IP', '192.168.11.143')
+                # 從設定中獲取預設IP地址，使用正確的鍵名
+
+
+                default_ip = self.parent.setup.get('Default_IP_Address', '192.168.11.143')
 
 
                 ip = self.parent.components.entry_ip.get().strip() or default_ip
 
 
-                self.parent.components.progress.config(style="blue.Horizontal.TProgressbar", value=0)
+                
+
+
+                # 確保進度條已初始化
+
+
+                if hasattr(self.parent.components, 'progress'):
+
+
+                    self.parent.components.progress.config(style="blue.Horizontal.TProgressbar", value=0)
+
+
+                
+
+
+                # 更新狀態燈
 
 
                 self.update_status_light(False)
+
+
+                
+
+
+                # 根據作業系統設定 ping 參數
 
 
                 param = '-n' if platform.system().lower() == 'windows' else '-c'
 
 
                 command = ['ping', param, '4', '-w', '1000', ip]
+
+
+                
 
 
                 self.ping_stop = False
@@ -457,6 +484,12 @@ class UIHandlers(UIHandlersCore):
 
 
                 self.parent.root.update_idletasks()
+
+
+                
+
+
+                # 設定 Windows 下隱藏命令視窗
 
 
                 startupinfo = None
@@ -472,6 +505,12 @@ class UIHandlers(UIHandlersCore):
 
 
                     startupinfo.wShowWindow = subprocess.SW_HIDE
+
+
+                
+
+
+                # 執行 ping 命令
 
 
                 self.ping_process = subprocess.Popen(
@@ -501,6 +540,12 @@ class UIHandlers(UIHandlersCore):
                 )
 
 
+                
+
+
+                # 監控 ping 輸出
+
+
                 total_packets = 4
 
 
@@ -508,6 +553,9 @@ class UIHandlers(UIHandlersCore):
 
 
                 last_progress = 0
+
+
+                
 
 
                 while True:
@@ -519,6 +567,9 @@ class UIHandlers(UIHandlersCore):
                         break
 
 
+                    
+
+
                     output = self.ping_process.stdout.readline()
 
 
@@ -528,10 +579,25 @@ class UIHandlers(UIHandlersCore):
                         break
 
 
+                    
+
+
                     if output:
 
 
-                        self.parent.root.after(0, lambda o=output: self.parent.components.add_to_buffer(o, "error" if ("請求超時" in o or "無法連線" in o or "失敗" in o) else None))
+                        # 使用 lambda 函數來確保變數被正確捕獲
+
+
+                        output_copy = output  # 創建一個副本
+
+
+                        self.parent.root.after(0, lambda o=output_copy: self.parent.components.add_to_buffer(o, "error" if ("請求超時" in o or "無法連線" in o or "失敗" in o) else None))
+
+
+                        
+
+
+                        # 更新進度
 
 
                         if "位元組" in output and "時間" in output or "請求超時" in output or "無法連線" in output or "失敗" in output:
@@ -546,10 +612,19 @@ class UIHandlers(UIHandlersCore):
                             if progress != last_progress:
 
 
-                                self.parent.root.after(0, lambda p=progress: self.parent.components.progress.config(value=p))
+                                progress_copy = progress  # 創建一個副本
+
+
+                                self.parent.root.after(0, lambda p=progress_copy: self.parent.components.progress.config(value=p))
 
 
                                 last_progress = progress
+
+
+                
+
+
+                # 處理錯誤輸出
 
 
                 error = self.ping_process.stderr.read()
@@ -559,6 +634,12 @@ class UIHandlers(UIHandlersCore):
 
 
                     self.parent.root.after(0, lambda: self.parent.components.add_to_buffer(error, "error"))
+
+
+                
+
+
+                # 根據 ping 結果更新狀態
 
 
                 return_code = self.ping_process.poll()
@@ -582,6 +663,9 @@ class UIHandlers(UIHandlersCore):
                     self.parent.root.after(0, lambda: self.update_status_light(False))
 
 
+                
+
+
             except Exception as e:
 
 
@@ -591,10 +675,16 @@ class UIHandlers(UIHandlersCore):
                 self.parent.root.after(0, lambda: self.update_status_light(False))
 
 
+                import traceback
+
+
+                traceback.print_exc()
+
+
             finally:
 
 
-                # ping 結束時重置進度條
+                # ping 結束時重置進度條和按鈕
 
 
                 self.parent.root.after(0, lambda: self.parent.components.reset_progress())
@@ -604,6 +694,24 @@ class UIHandlers(UIHandlersCore):
 
 
                 self.ping_process = None
+
+
+        
+
+
+        # 創建並啟動 ping 執行緒
+
+
+        import threading
+
+
+        self.ping_thread = threading.Thread(target=ping_worker)
+
+
+        self.ping_thread.daemon = True
+
+
+        self.ping_thread.start()
 
 
 

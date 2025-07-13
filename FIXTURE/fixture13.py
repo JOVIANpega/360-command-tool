@@ -206,56 +206,54 @@ class FixtureFrame(ttk.Frame):
 
 
     def load_test_items(self, filename="Fixture_Command.txt"):
-
         """從 Fixture_Command.txt 讀取測試項目，返回分類對應的選單內容"""
-
-        # 檢查檔案是否在 FIXTURE 目錄中
-
-        if not os.path.exists(filename):
-
-            fixture_path = os.path.join("FIXTURE", filename)
-
-            if os.path.exists(fixture_path):
-
-                filename = fixture_path
-
-            else:
-
-                messagebox.showerror("錯誤", f"找不到 {filename} 檔案！")
-
-                return {}
-
+        # 使用 resource_path 函數獲取文件路徑
+        from config_utils import resource_path
         
-
-        categories = {}
-
-        current_category = None
-
-        
-
-        with open(filename, "r", encoding="utf-8") as file:
-
-            for line in file:
-
-                line = line.strip()
-
-                if line.endswith(":"):
-
-                    current_category = line[:-1]
-
-                    categories[current_category] = []
-
-                elif current_category and line:
-
-                    # 移除 strip('\"') 因為檔案中已經沒有引號
-
-                    categories[current_category].append(line)
-
-        
-
-        print(f"[DEBUG] 載入的測試類別: {list(categories.keys())}")
-
-        return categories
+        try:
+            # 嘗試使用 resource_path 獲取文件路徑
+            file_path = resource_path(filename)
+            
+            if not os.path.exists(file_path):
+                # 嘗試其他可能的路徑
+                possible_paths = [
+                    os.path.join("FIXTURE", filename),
+                    filename,
+                    os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+                ]
+                
+                for path in possible_paths:
+                    if os.path.exists(path):
+                        file_path = path
+                        break
+                else:
+                    messagebox.showerror("錯誤", f"找不到 {filename} 檔案！")
+                    return {}
+            
+            print(f"[INFO] 使用夾具指令檔: {file_path}")
+            
+            categories = {}
+            current_category = None
+            
+            with open(file_path, "r", encoding="utf-8") as file:
+                for line in file:
+                    line = line.strip()
+                    if line.endswith(":"):
+                        current_category = line[:-1]
+                        categories[current_category] = []
+                    elif current_category and line:
+                        # 移除 strip('\"') 因為檔案中已經沒有引號
+                        categories[current_category].append(line)
+            
+            print(f"[DEBUG] 載入的測試類別: {list(categories.keys())}")
+            return categories
+            
+        except Exception as e:
+            print(f"[ERROR] 讀取夾具指令檔時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
+            messagebox.showerror("錯誤", f"讀取夾具指令檔時發生錯誤: {e}")
+            return {}
 
 
 
