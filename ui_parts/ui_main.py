@@ -602,6 +602,7 @@ class TabManager:
         self.update_dut_settings()
         self.update_fixture_settings()
         self.update_window_title()  # 更新視窗標題
+        self.update_tab_names()    # 更新標籤頁名稱
 
     
 
@@ -1123,83 +1124,56 @@ class TabManager:
 
 
     def on_close(self):
-        """TabManager 關閉事件處理"""
+        """處理關閉視窗事件"""
         try:
-            print("[DEBUG] TabManager.on_close: 程式正在關閉，保存所有設定...")
+            # 如果有開啟的 DOS 視窗，關閉它
+            if self.dos_process and self.dos_process.poll() is None:  # 檢查進程是否仍在運行
+                try:
+                    self.dos_process.terminate()  # 嘗試終止進程
+                    print("[DEBUG] 關閉 DOS 視窗進程")
+                except Exception as e:
+                    print(f"[WARNING] 無法關閉 DOS 視窗進程：{e}")
             
-            # 保存所有分頁的設定
-            settings_to_save = {}
-            
-            # 收集DUT控制分頁設定
-            if hasattr(self, 'dut_ui') and hasattr(self.dut_ui, 'get_settings'):
-                dut_settings = self.dut_ui.get_settings()
-                settings_to_save['DUT_Control'] = dut_settings
-                print(f"[DEBUG] TabManager.on_close: 已收集DUT控制設定: {list(dut_settings.keys())}")
-            
-            # 收集治具控制分頁設定
-            if hasattr(self, 'fixture_ui') and hasattr(self.fixture_ui, 'get_settings'):
-                fixture_settings = self.fixture_ui.get_settings()
-                # 將fixture_settings轉換為標準格式
-                fixture_control = {}
-                
-                # 處理COM口設定
-                if 'COM' in fixture_settings:
-                    fixture_control['Fixture_COM_Port'] = fixture_settings['COM']
-                
-                # 處理當前指令
-                if 'CMD' in fixture_settings:
-                    fixture_control['Current_Command'] = fixture_settings['CMD']
-                
-                # 處理字體大小
-                if 'FixtureFontSize' in fixture_settings:
-                    fixture_control['Fixture_Font_Size'] = fixture_settings['FixtureFontSize']
-                
-                # 處理測試類別
-                for cat in ['FUNCTION', 'MB', 'Original_Commands']:
-                    if cat in fixture_settings:
-                        fixture_control[f'Test_Category_{cat}'] = fixture_settings[cat]
-                
-                settings_to_save['Fixture_Control'] = fixture_control
-                print(f"[DEBUG] TabManager.on_close: 已收集治具控制設定: {list(fixture_control.keys())}")
-            
-            # 獲取當前視窗標題 (不包含版本號)
-            current_title = self.root.title()
-            window_title = current_title
-            if " V" in current_title:
-                window_title = current_title.split(" V")[0]
-            
-            settings_to_save['Window_Title'] = window_title
-            print(f"[DEBUG] TabManager.on_close: 設置視窗標題: {window_title}")
-            
-            # 載入現有設定，確保不會丟失其他設定
+            # 儲存設定
             from config_core import load_setup, save_setup
-            current_setup = load_setup()
+            setup = load_setup()
             
-            # 合併設定
-            for section, data in settings_to_save.items():
-                if section in current_setup:
-                    if isinstance(data, dict) and isinstance(current_setup[section], dict):
-                        current_setup[section].update(data)
-                    else:
-                        current_setup[section] = data
-                else:
-                    current_setup[section] = data
+            # 確保保存最新的標籤頁名稱
+            if hasattr(self, 'notebook'):
+                # 獲取當前標籤頁名稱
+                tab_names = setup.get('tab_names', {})
+                for i in range(min(4, self.notebook.index('end'))):
+                    tab_names[f'tab{i}'] = self.notebook.tab(i, 'text')
+                setup['tab_names'] = tab_names
+                print(f"[DEBUG] 關閉時保存標籤頁名稱：{tab_names}")
             
             # 保存設定
-            save_setup(current_setup)
-            print("[DEBUG] TabManager.on_close: 所有設定已保存")
+            save_setup(setup)
             
-            # 如果有 DUT UI，調用其關閉方法
-            if hasattr(self, 'dut_ui'):
+            # 關閉其他組件
+            if hasattr(self, 'dut_ui') and hasattr(self.dut_ui, 'on_close'):
                 self.dut_ui.on_close()
-            else:
-                # 如果沒有 DUT UI，直接關閉
-                self.root.destroy()
+            
+            # 如果有串口連接，斷開它
+            if hasattr(self, 'dut_ui') and hasattr(self.dut_ui, 'handlers') and self.dut_ui.handlers.worker:
+                try:
+                    self.dut_ui.handlers.disconnect()
+                except Exception as e:
+                    print(f"[WARNING] 關閉時斷開連接失敗：{e}")
+            
+            # 關閉根窗口
+            self.root.destroy()
+            
         except Exception as e:
-            print(f'[ERROR] TabManager 關閉時發生錯誤: {e}')
+            print(f"[ERROR] 關閉視窗時發生錯誤：{e}")
             import traceback
             traceback.print_exc()
-            self.root.destroy()
+            
+            # 即使出錯，也要嘗試關閉窗口
+            try:
+                self.root.destroy()
+            except:
+                pass
 
 
 

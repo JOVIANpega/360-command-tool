@@ -26,10 +26,26 @@ class SettingsTab(ttk.Frame):
         main_frame.columnconfigure(0, weight=2)  # 左側列權重更大
         main_frame.columnconfigure(1, weight=1)
         main_frame.rowconfigure(3, weight=1)  # 讓預覽區域可以擴展
+        
+        # --- 儲存按鈕置頂 ---
+        button_frame = ttk.Frame(main_frame)
+        button_frame.grid(row=0, column=0, columnspan=2, sticky="e", padx=5, pady=5)
+        
+        save_button = ttk.Button(button_frame, text="儲存設定", command=self.save_settings, 
+                               style="Accent.TButton", width=15)
+        save_button.pack(padx=5, pady=5)
+        
+        # 自定義按鈕樣式
+        style = ttk.Style()
+        style.configure("Accent.TButton", font=('Microsoft JhengHei UI', 12, 'bold'), 
+                      background="#2196f3", foreground="white", padding=10)
+        style.map("Accent.TButton",
+                background=[("active", "#0d47a1"), ("!active", "#2196f3")],
+                foreground=[("active", "white"), ("!active", "white")])
 
         # --- 基本設定區 ---
         basic_frame = ttk.LabelFrame(main_frame, text="基本設定", padding=(10, 5))
-        basic_frame.grid(row=0, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
+        basic_frame.grid(row=1, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
         
         # 添加視窗標題設定 (優先使用頂層的 Window_Title)
         window_title = self.setup_data.get('Window_Title', self.setup_data.get('DUT_Control', {}).get('Window_Title', "VALO360 指令通"))
@@ -42,7 +58,7 @@ class SettingsTab(ttk.Frame):
 
         # --- 標籤頁名稱設定區 ---
         tab_frame = ttk.LabelFrame(main_frame, text="標籤頁名稱設定", padding=(10, 5))
-        tab_frame.grid(row=0, column=0, columnspan=2, sticky="ew", padx=5, pady=5, rowspan=1)
+        tab_frame.grid(row=1, column=0, columnspan=2, sticky="ew", padx=5, pady=5, rowspan=1)
         tab_frame.grid_remove()  # 先隱藏，後面再插入到正確位置
         
         # 獲取當前的標籤頁名稱
@@ -60,8 +76,8 @@ class SettingsTab(ttk.Frame):
         
         # 將標籤頁設定插入到基本設定之後
         basic_frame.grid_remove()
-        basic_frame.grid(row=0, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
-        tab_frame.grid(row=1, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
+        basic_frame.grid(row=1, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
+        tab_frame.grid(row=2, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
         
         # --- 左側：DUT 控制區 ---
         dut_frame = ttk.LabelFrame(main_frame, text="DUT 控制區", padding=(10, 5))
@@ -197,12 +213,12 @@ class SettingsTab(ttk.Frame):
         )
         preview_label.pack(side=tk.RIGHT, fill="both", expand=True)
 
-        # --- Save Button ---
-        button_frame = ttk.Frame(main_frame)
-        button_frame.grid(row=5, column=0, columnspan=2, sticky="e", padx=5, pady=5)
+        # --- Save Button (移除，因為已經移到頂部) ---
+        # button_frame = ttk.Frame(main_frame)
+        # button_frame.grid(row=5, column=0, columnspan=2, sticky="e", padx=5, pady=5)
         
-        save_button = ttk.Button(button_frame, text="儲存設定", command=self.save_settings)
-        save_button.pack(padx=5, pady=5)
+        # save_button = ttk.Button(button_frame, text="儲存設定", command=self.save_settings)
+        # save_button.pack(padx=5, pady=5)
 
     def create_entry(self, parent, key, text, section, row, width=None):
         # 這個方法已不再使用，因為我們在 create_widgets 中直接創建了所有控件
@@ -350,7 +366,6 @@ class SettingsTab(ttk.Frame):
             self.setup_data = {}
 
     def save_settings(self):
-        """保存設定到 setup.json"""
         try:
             # 從UI取得設定值
             settings = self.setup_data.copy()
@@ -420,9 +435,13 @@ class SettingsTab(ttk.Frame):
             # 儲存到檔案
             save_setup(settings)
             
-            messagebox.showinfo("成功", "設定已儲存！")
+            # 顯示成功消息
+            messagebox.showinfo("成功", "設定已儲存！標籤頁名稱已更新。")
             
-            # 執行回調函數
+            # 更新此設定檔實例中的數據，確保下次讀取時是最新的
+            self.setup_data = settings.copy()
+            
+            # 執行回調函數 - 通知所有需要更新的UI元素
             if self.on_save_callback:
                 self.on_save_callback()
                 

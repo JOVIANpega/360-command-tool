@@ -144,9 +144,16 @@ if __name__ == "__main__":
 
         
 
+        # 設置視窗標題和大小
+
         root.title(title)
 
         root.geometry(f"{width}x{height}")
+        
+        # 讀取標籤頁名稱並立即更新
+        if hasattr(app, 'update_tab_names'):
+            print(f"[DEBUG] 程式啟動時更新標籤頁名稱")
+            app.update_tab_names()
 
         
 
