@@ -197,6 +197,53 @@ class SettingsTab(ttk.Frame):
         
         button = ttk.Button(file_frame, text="選擇", command=lambda: self.select_command_file("DUT_Control_Command_File_Path"), width=5)
         button.grid(row=0, column=1, padx=5)
+        
+        # --- 界面布局设定（作为DUT控制区的一部分） ---
+        layout_separator = ttk.Separator(dut_frame, orient="horizontal")
+        layout_separator.grid(row=len(dut_settings)+2, column=0, columnspan=2, sticky="ew", pady=10)
+        
+        ttk.Label(dut_frame, text="介面佈局設定", font=('Microsoft JhengHei UI', 10, 'bold')).grid(row=len(dut_settings)+3, column=0, columnspan=2, sticky="w", pady=(0, 5))
+        
+        # 分割位置设定
+        ttk.Label(dut_frame, text="左右分割位置", width=15).grid(row=len(dut_settings)+4, column=0, sticky="w", pady=2)
+        self.vars["DUT_Control_Pane_Sash_Position"] = tk.StringVar()
+        entry = ttk.Entry(dut_frame, textvariable=self.vars["DUT_Control_Pane_Sash_Position"], width=5)
+        entry.grid(row=len(dut_settings)+4, column=1, sticky="w", padx=5, pady=2)
+        ttk.Label(dut_frame, text="(數值越大，左側越寬)", font=('Microsoft JhengHei UI', 8)).grid(row=len(dut_settings)+4, column=1, sticky="w", padx=(50, 0))
+        
+        # 视窗大小设定
+        ttk.Label(dut_frame, text="視窗寬度", width=15).grid(row=len(dut_settings)+5, column=0, sticky="w", pady=2)
+        self.vars["DUT_Control_Window_Width"] = tk.StringVar()
+        entry = ttk.Entry(dut_frame, textvariable=self.vars["DUT_Control_Window_Width"], width=5)
+        entry.grid(row=len(dut_settings)+5, column=1, sticky="w", padx=5, pady=2)
+        
+        ttk.Label(dut_frame, text="視窗高度", width=15).grid(row=len(dut_settings)+6, column=0, sticky="w", pady=2)
+        self.vars["DUT_Control_Window_Height"] = tk.StringVar()
+        entry = ttk.Entry(dut_frame, textvariable=self.vars["DUT_Control_Window_Height"], width=5)
+        entry.grid(row=len(dut_settings)+6, column=1, sticky="w", padx=5, pady=2)
+        
+        # 通知区域字体大小
+        ttk.Label(dut_frame, text="通知字體大小", width=15).grid(row=len(dut_settings)+7, column=0, sticky="w", pady=2)
+        # 设置通知字体大小默认值为11
+        self.vars["DUT_Control_Notification_Font_Size"] = tk.StringVar(value="11")
+        
+        # 创建一个包含输入框和加减按钮的容器
+        notification_font_frame = ttk.Frame(dut_frame)
+        notification_font_frame.grid(row=len(dut_settings)+7, column=1, sticky="w", padx=5, pady=2)
+        
+        # 减小按钮
+        minus_btn = ttk.Button(notification_font_frame, text="-", width=2, 
+                              command=lambda: self.adjust_font_size("DUT_Control_Notification_Font_Size", -1))
+        minus_btn.pack(side=tk.LEFT, padx=(0, 2))
+        
+        # 输入框
+        entry = ttk.Entry(notification_font_frame, textvariable=self.vars["DUT_Control_Notification_Font_Size"], width=3)
+        entry.pack(side=tk.LEFT)
+        
+        # 增大按钮
+        plus_btn = ttk.Button(notification_font_frame, text="+", width=2, 
+                             command=lambda: self.adjust_font_size("DUT_Control_Notification_Font_Size", 1))
+        plus_btn.pack(side=tk.LEFT, padx=(2, 0))
 
         # --- 右侧：治具控制区 ---
         fixture_frame = ttk.LabelFrame(main_frame, text="治具控制區", padding=(10, 5))
@@ -243,54 +290,9 @@ class SettingsTab(ttk.Frame):
         cb3 = ttk.Checkbutton(fixture_frame, text="原始指令", variable=self.vars["Fixture_Control_Test_Category_Original_Commands"])
         cb3.grid(row=4, column=0, columnspan=2, sticky="w", pady=2)
 
-        # --- 新增：界面布局设定区 ---
-        layout_frame = ttk.LabelFrame(main_frame, text="介面佈局設定", padding=(10, 5))
-        layout_frame.grid(row=3, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
-        
-        # 分割位置设定
-        ttk.Label(layout_frame, text="左右分割位置", width=15).grid(row=0, column=0, sticky="w", pady=2)
-        self.vars["DUT_Control_Pane_Sash_Position"] = tk.StringVar()
-        entry = ttk.Entry(layout_frame, textvariable=self.vars["DUT_Control_Pane_Sash_Position"], width=5)
-        entry.grid(row=0, column=1, sticky="w", padx=5, pady=2)
-        ttk.Label(layout_frame, text="(數值越大，左側越寬)", font=('Microsoft JhengHei UI', 8)).grid(row=0, column=2, sticky="w")
-        
-        # 视窗大小设定
-        ttk.Label(layout_frame, text="視窗寬度", width=15).grid(row=1, column=0, sticky="w", pady=2)
-        self.vars["DUT_Control_Window_Width"] = tk.StringVar()
-        entry = ttk.Entry(layout_frame, textvariable=self.vars["DUT_Control_Window_Width"], width=5)
-        entry.grid(row=1, column=1, sticky="w", padx=5, pady=2)
-        
-        ttk.Label(layout_frame, text="視窗高度", width=15).grid(row=2, column=0, sticky="w", pady=2)
-        self.vars["DUT_Control_Window_Height"] = tk.StringVar()
-        entry = ttk.Entry(layout_frame, textvariable=self.vars["DUT_Control_Window_Height"], width=5)
-        entry.grid(row=2, column=1, sticky="w", padx=5, pady=2)
-        
-        # 通知区域字体大小
-        ttk.Label(layout_frame, text="通知字體大小", width=15).grid(row=3, column=0, sticky="w", pady=2)
-        # 设置通知字体大小默认值为11
-        self.vars["DUT_Control_Notification_Font_Size"] = tk.StringVar(value="11")
-        
-        # 创建一个包含输入框和加减按钮的容器
-        notification_font_frame = ttk.Frame(layout_frame)
-        notification_font_frame.grid(row=3, column=1, sticky="w", padx=5, pady=2)
-        
-        # 减小按钮
-        minus_btn = ttk.Button(notification_font_frame, text="-", width=2, 
-                              command=lambda: self.adjust_font_size("DUT_Control_Notification_Font_Size", -1))
-        minus_btn.pack(side=tk.LEFT, padx=(0, 2))
-        
-        # 输入框
-        entry = ttk.Entry(notification_font_frame, textvariable=self.vars["DUT_Control_Notification_Font_Size"], width=3)
-        entry.pack(side=tk.LEFT)
-        
-        # 增大按钮
-        plus_btn = ttk.Button(notification_font_frame, text="+", width=2, 
-                             command=lambda: self.adjust_font_size("DUT_Control_Notification_Font_Size", 1))
-        plus_btn.pack(side=tk.LEFT, padx=(2, 0))
-
         # --- 区段标题预览区域 (放在底部) ---
         preview_frame = ttk.LabelFrame(main_frame, text="區段標題預覽", padding=(10, 5))
-        preview_frame.grid(row=4, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
+        preview_frame.grid(row=3, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
         
         # 使用简单的水平布局，减少嵌套级别
         preview_container = ttk.Frame(preview_frame)
