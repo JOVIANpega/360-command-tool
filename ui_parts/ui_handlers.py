@@ -27,7 +27,7 @@ import tkinter.ttk as ttk
 import threading
 
 
-
+from config_utils import get_notification_text, get_app_version
 
 
 from config_core import COMMAND_FILE, GUIDE_FILE, save_setup, list_com_ports, load_setup
@@ -885,7 +885,16 @@ class UIHandlers(UIHandlersCore):
             # 顯示返回正常模式的通知
 
 
-            self.parent.components.show_notification("已返回正常模式", "green", 3000)
+            self.parent.components.show_notification(
+
+
+                get_notification_text("normal_mode"), 
+
+
+                "green", 3000
+
+
+            )
 
 
 
@@ -924,7 +933,16 @@ class UIHandlers(UIHandlersCore):
             # 使用通知功能顯示成功訊息
 
 
-            self.parent.components.show_notification(f'已備份至: {filename}', "green", 5000)
+            self.parent.components.show_notification(
+
+
+                get_notification_text("backup_success", filename), 
+
+
+                "green", 5000
+
+
+            )
 
 
         except Exception as e:
@@ -933,7 +951,16 @@ class UIHandlers(UIHandlersCore):
             # 使用通知功能顯示錯誤訊息
 
 
-            self.parent.components.show_notification(f'備份失敗: {str(e)}', "red", 5000)
+            self.parent.components.show_notification(
+
+
+                get_notification_text("backup_failed", str(e)), 
+
+
+                "red", 5000
+
+
+            )
 
 
 
@@ -1548,7 +1575,7 @@ class UIHandlers(UIHandlersCore):
             # 添加指令完成通知
 
 
-            self.parent.components.show_notification("指令執行完成", "green", 3000)
+            self.parent.components.show_notification(get_notification_text("cmd_done"), "green", 3000)
 
 
             
@@ -1623,13 +1650,13 @@ class UIHandlers(UIHandlersCore):
                 if connected:
 
 
-                    self.parent.components.show_notification(f"已連接到 {self.parent.components.combobox_com.get()}", "green", 3000)
+                    self.parent.components.show_notification(get_notification_text("connected", self.parent.components.combobox_com.get()), "green", 3000)
 
 
                 else:
 
 
-                    self.parent.components.show_notification("連接已關閉", "red", 3000)
+                    self.parent.components.show_notification(get_notification_text("disconnected"), "red", 3000)
 
 
         except Exception as e:

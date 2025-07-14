@@ -1,5 +1,0 @@
-# 基本打包指令
-pyinstaller --onefile --clean --noconfirm --icon=app.ico -w --version-file=version_info.txt --add-data "command.txt;." --add-data "user_guide.txt;." --add-data "setup.json;." --add-data "ui_parts;ui_parts" --name "VALO360指令通" main.py
- 
-# 如果还需要包含VALO360指令通使用指南.html文件，可以使用以下命令
-pyinstaller --onefile --clean --noconfirm --icon=app.ico -w --version-file=version_info.txt --add-data "command.txt;." --add-data "user_guide.txt;." --add-data "setup.json;." --add-data "ui_parts;ui_parts" --add-data "VALO360 指令通使用指南.html;." --add-data "VALO360 指令通使用指南_files;VALO360 指令通使用指南_files" --name "VALO360指令通" main.py 

@@ -36,6 +36,33 @@ from config_core import list_com_ports, save_setup, GUIDE_FILE, COMMAND_FILE
 
 
 
+import platform
+
+
+import re
+
+
+import threading
+
+
+import time
+
+
+from datetime import datetime
+
+
+import psutil
+
+
+# 導入通知訊息系統
+
+
+from config_utils import get_notification_text, get_app_version
+
+
+
+
+
 class UIComponentsBase:
 
 
@@ -255,7 +282,8 @@ class UIComponentsBase:
         # 顯示版本信息
 
 
-        self.parent.root.after(500, lambda: self.show_notification("VALO360 指令通 V1.12 已啟動", "blue", 5000))
+        app_version = get_app_version()
+        self.parent.root.after(500, lambda: self.show_notification(get_notification_text("app_started"), "blue", 5000))
 
 
         
@@ -341,7 +369,7 @@ class UIComponentsBase:
                 
                 # 立即保存到設定檔
                 try:
-                    from config import load_setup, save_setup
+                    from config_core import load_setup, save_setup
                     full_setup = load_setup()
                     if 'DUT_Control' not in full_setup:
                         full_setup['DUT_Control'] = {}
@@ -469,54 +497,32 @@ class UIComponentsBase:
 
 
     def show_system_status(self):
-
-
-        """顯示系統狀態通知"""
-
-
+        """顯示系統狀態（COM口、超時設定、分類）"""
         try:
-
-
-            import platform
-
-
-            import psutil
-
-
-            
-
-
-            # 獲取系統信息
-
-
-            system_info = platform.system() + " " + platform.version()
-
-
-            cpu_usage = psutil.cpu_percent()
-
-
-            memory_usage = psutil.virtual_memory().percent
-
-
-            
-
-
-            # 顯示系統狀態通知
-
-
-            status_message = f"系統狀態: {system_info}\nCPU: {cpu_usage}%, 記憶體: {memory_usage}%"
-
-
-            self.show_notification(status_message, "blue", 8000)
-
-
+            if hasattr(self, 'label_countdown') and hasattr(self.parent, 'setup'):
+                # 獲取COM口設定
+                com_port = self.parent.setup.get('Serial_COM_Port', 'N/A')
+                
+                # 獲取當前選中的分類及該分類下的指令數量
+                section = "全部指令"
+                cmd_count = 0
+                
+                if hasattr(self, 'section_var') and hasattr(self, 'sections'):
+                    section = self.section_var.get()
+                
+                # 獲取指令數量
+                if hasattr(self.parent, 'handlers') and hasattr(self.parent.handlers, 'commands'):
+                    cmd_count = len(self.parent.handlers.commands.get(section, {}))
+                
+                # 獲取超時設定
+                timeout = self.parent.setup.get('Command_Timeout_Seconds', '30')
+                
+                # 構建狀態訊息
+                status_message = get_notification_text("system_status", com_port, section, cmd_count, timeout)
+                
+                # 顯示狀態訊息
+                self.show_notification(status_message, "blue", 10000)
         except Exception as e:
-
-
-            print(f"[ERROR] 獲取系統狀態時發生錯誤: {e}")
-
-
-            # 顯示簡化版本的狀態通知
-
-
-            self.show_notification("系統已就緒", "blue", 5000) 
+            print(f"[ERROR] 顯示系統狀態時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc() 

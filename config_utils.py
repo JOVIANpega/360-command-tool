@@ -5,6 +5,84 @@ import sys
 
 from datetime import datetime
 
+import json
+
+# 全局變數，存儲通知訊息
+NOTIFY_TEXTS = {}
+APP_VERSION = ""
+
+def load_notification_messages():
+    """從 setup.json 中讀取通知訊息"""
+    global NOTIFY_TEXTS, APP_VERSION
+    
+    try:
+        # 確定 setup.json 的路徑
+        if getattr(sys, 'frozen', False):
+            # 如果是打包後的 EXE
+            base_dir = os.path.dirname(sys.executable)
+        else:
+            # 如果是開發環境
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        setup_path = os.path.join(base_dir, "setup.json")
+        
+        # 檢查文件是否存在
+        if not os.path.exists(setup_path):
+            print(f"[ERROR] 找不到設定檔：{setup_path}")
+            return
+        
+        # 讀取 setup.json
+        with open(setup_path, 'r', encoding='utf-8') as file:
+            setup_data = json.load(file)
+        
+        # 讀取版本號
+        APP_VERSION = setup_data.get("version", "1.0.0")
+        
+        # 讀取通知訊息
+        messages = setup_data.get("notification_messages", {})
+        if messages:
+            NOTIFY_TEXTS.update(messages)
+            print(f"[INFO] 已載入 {len(messages)} 個通知訊息")
+        else:
+            print("[WARNING] 設定檔中沒有通知訊息")
+            
+    except Exception as e:
+        print(f"[ERROR] 載入通知訊息時發生錯誤：{e}")
+        import traceback
+        traceback.print_exc()
+
+def get_notification_text(key, *args):
+    """獲取指定鍵的通知訊息，並進行格式化"""
+    global NOTIFY_TEXTS
+    
+    # 如果通知訊息字典為空，先載入
+    if not NOTIFY_TEXTS:
+        load_notification_messages()
+    
+    # 獲取訊息，如果不存在則使用鍵名作為預設值
+    message = NOTIFY_TEXTS.get(key, key)
+    
+    # 如果有參數，進行格式化
+    if args:
+        try:
+            message = message.format(*args)
+        except Exception as e:
+            print(f"[ERROR] 格式化通知訊息時發生錯誤：{e}, key={key}, args={args}")
+    
+    return message
+
+def get_app_version():
+    """獲取應用程式版本號"""
+    global APP_VERSION
+    
+    # 如果版本號為空，先載入
+    if not APP_VERSION:
+        load_notification_messages()
+    
+    return APP_VERSION
+
+# 在模塊導入時自動載入通知訊息
+load_notification_messages()
 
 
 def resource_path(relative_path):

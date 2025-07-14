@@ -27,7 +27,7 @@ import threading
 import logging
 
 
-
+from config_utils import get_notification_text, get_app_version
 
 
 from config_core import COMMAND_FILE, GUIDE_FILE, save_setup, list_com_ports, load_setup
@@ -249,7 +249,7 @@ class UIHandlersCore:
         except Exception as e:
 
 
-            print(f"[ERROR] 讀取命令文件時發生錯誤: {e}")
+            print(f"[ERROR] 解析指令文件時發生錯誤：{e}")
 
 
             import traceback
@@ -258,55 +258,37 @@ class UIHandlersCore:
             traceback.print_exc()
 
 
-            
-
-
-            # 如果讀取失敗，提供一個預設命令
-
-
-            if "全部指令" not in commands or not commands["全部指令"]:
-
-
-                commands["全部指令"] = {"執行重啟 (預設命令)": "reboot"}
+            commands = {"全部指令": {}}
 
 
         
 
 
-        # 輸出各區段指令數量
+        # 將解析結果保存到實例變量中
 
 
-        for section_name, section_cmds in commands.items():
-
-
-            print(f"[DEBUG] 區段 '{section_name}' 有 {len(section_cmds)} 個指令")
-
-
-            # 檢查顏色標記
-
-
-            color_cmds = [cmd for cmd in section_cmds.keys() if '[COLOR:' in cmd]
-
-
-            if color_cmds:
-
-
-                print(f"[DEBUG] 區段 '{section_name}' 有 {len(color_cmds)} 個帶顏色標記的指令")
-
-
-                for cmd in color_cmds:
-
-
-                    print(f"[DEBUG] - {cmd}")
+        self.commands = commands
 
 
         
+
+
+        # 計算並輸出每個區段的指令數量
+
+
+        for section, cmds in commands.items():
+
+
+            print(f"[DEBUG] 區段 '{section}' 有 {len(cmds)} 個指令")
+
+
+        
+
+
+        # 返回解析結果（雖然已經保存到實例變量中，但有時需要直接返回）
 
 
         return commands
-
-
-
 
 
     def update_cmd_list(self):
@@ -364,135 +346,47 @@ class UIHandlersCore:
 
 
     def refresh_com_ports(self):
-
-
-        """刷新COM口列表並保持當前選擇（如果可能）"""
-
-
-        try:
-
-
-            # 保存當前選擇
-
-
-            current_selection = self.parent.components.combobox_com.get()
-
-
+        """刷新 COM 口列表"""
+        # 列出所有可用的 COM 口
+        ports = list_com_ports()
+        print(f"[DEBUG] 找到 {len(ports)} 個COM口: {ports}")
+        
+        # 清空當前選擇
+        self.parent.components.combobox_com.set('')
+        self.parent.components.combobox_com['values'] = []
+        
+        if not ports:
+            # 沒有 COM 口時顯示通知
+            self.parent.components.show_notification(get_notification_text("no_ports"), "red", 3000)
+            return
             
-
-
-            # 更新 COM 口列表
-
-
-            new_ports = list_com_ports()
-
-
-            self.parent.components.combobox_com['values'] = new_ports
-
-
-            
-
-
-            # 如果當前選擇仍在新列表中，保持選擇
-
-
-            if current_selection and current_selection in new_ports:
-
-
-                self.parent.components.combobox_com.set(current_selection)
-
-
-            # 否則選擇第一個 COM 口
-
-
-            elif new_ports:
-
-
-                self.parent.components.combobox_com.set(new_ports[0])
-
-
-            else:
-
-
-                self.parent.components.combobox_com.set('')
-
-
-                
-
-
-            # 顯示通知
-
-
-            if new_ports:
-
-
-                self.parent.components.show_notification(f"找到 {len(new_ports)} 個 COM 口", "blue", 3000)
-
-
-            else:
-
-
-                self.parent.components.show_notification("未找到任何 COM 口", "red", 3000)
-
-
-                
-
-
-        except Exception as e:
-
-
-            print(f"[ERROR] 刷新 COM 口列表時發生錯誤: {e}")
-
-
-            import traceback
-
-
-            traceback.print_exc()
-
-
-
+        # 設置 COM 口下拉選單的值
+        self.parent.components.combobox_com['values'] = ports
+        
+        # 如果有保存的設定，使用設定中的 COM 口
+        saved_com = self.setup.get('Serial_COM_Port', '')
+        if saved_com and saved_com in ports:
+            self.parent.components.combobox_com.set(saved_com)
+            print(f"[DEBUG] refresh_com_ports: 保持選擇 {saved_com}")
+        else:
+            # 選擇第一個 COM 口
+            self.parent.components.combobox_com.set(ports[0])
+            print(f"[DEBUG] refresh_com_ports: 選擇第一個 COM 口 {ports[0]}")
+            # 同時更新設定
+            self.setup['Serial_COM_Port'] = ports[0]
 
 
     def clear_output(self, event=None):
-
-
         """清空輸出區域"""
-
-
-        try:
-
-
-            # 設為可編輯狀態
-
-
+        if hasattr(self.parent.components, 'text_output'):
             self.parent.components.text_output.configure(state='normal')
-
-
-            # 清空內容
-
-
             self.parent.components.text_output.delete(1.0, tk.END)
-
-
-            # 設回唯讀狀態
-
-
             self.parent.components.text_output.configure(state='disabled')
-
-
-            # 顯示通知
-
-
-            self.parent.components.show_notification("已清空輸出區域", "blue", 2000)
-
-
-        except Exception as e:
-
-
-            print(f"[ERROR] 清空輸出區域時發生錯誤: {e}")
-
-
-
+            # 如果有圖片ID，需要先刪除所有圖片標籤，以避免內存洩漏
+            if hasattr(self.parent.components, 'image_refs'):
+                self.parent.components.image_refs = []
+            # 顯示清空通知
+            self.parent.components.show_notification(get_notification_text("output_cleared"), "blue", 2000)
 
 
     def backup_output(self):

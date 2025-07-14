@@ -397,61 +397,26 @@ def save_setup(setup_data):
 
         
 
-        # 創建新的設定結構
-
-        clean_setup = {}
-
+        # 創建新的設定結構 - 複製全部頂層字段
+        clean_setup = setup_data.copy()
         
-
-        # 首先處理頂層的 Window_Title (確保它是第一個鍵)
-
-        if 'Window_Title' in setup_data:
-
-            clean_setup['Window_Title'] = setup_data['Window_Title']
-
-            print(f"[DEBUG] 保存頂層視窗標題: {setup_data['Window_Title']}")
-
-        
-
         # 確保有基本的分層結構
-
         for section in ['DUT_Control', 'Fixture_Control']:
-
-            clean_setup[section] = {}
-
+            if section not in clean_setup:
+                clean_setup[section] = {}
         
-
-        # 更新設定
-
-        for section, data in setup_data.items():
-
-            if section in ['DUT_Control', 'Fixture_Control']:
-
+        # 處理 DUT_Control 和 Fixture_Control 區段
+        for section in ['DUT_Control', 'Fixture_Control']:
+            if section in setup_data:
                 # 保證 data 是 dict
-
-                if isinstance(data, dict):
-
+                if isinstance(setup_data[section], dict):
                     # EndStrings 處理
-
-                    if section == 'DUT_Control' and 'Available_End_Strings' in data:
-
-                        if isinstance(data['Available_End_Strings'], str):
-
+                    if section == 'DUT_Control' and 'Available_End_Strings' in setup_data[section]:
+                        if isinstance(setup_data[section]['Available_End_Strings'], str):
                             try:
-
-                                data['Available_End_Strings'] = json.loads(data['Available_End_Strings'])
-
+                                setup_data[section]['Available_End_Strings'] = json.loads(setup_data[section]['Available_End_Strings'])
                             except Exception:
-
-                                data['Available_End_Strings'] = ["root"]
-
-                    clean_setup[section].update(data)
-
-                else:
-
-                    clean_setup[section] = data
-
-        
+                                setup_data[section]['Available_End_Strings'] = ["root"]
 
         # 保存設定前先顯示完整內容
 

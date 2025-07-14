@@ -370,3 +370,54 @@ main.py 啟動
 main.py 啟動
 成功 import TabManager
 === 應用程式啟動 ===
+main.py 啟動
+成功 import TabManager
+=== 應用程式啟動 ===
+main.py 啟動
+成功 import TabManager
+=== 應用程式啟動 ===
+main.py 啟動
+成功 import TabManager
+=== 應用程式啟動 ===
+main.py 啟動
+成功 import TabManager
+=== 應用程式啟動 ===
+main.py 啟動
+成功 import TabManager
+=== 應用程式啟動 ===
+main.py 啟動
+成功 import TabManager
+=== 應用程式啟動 ===
+main.py 啟動
+成功 import TabManager
+=== 應用程式啟動 ===
+main.py 啟動
+成功 import TabManager
+=== 應用程式啟動 ===
+main.py 啟動
+成功 import TabManager
+=== 應用程式啟動 ===
+main.py 啟動
+成功 import TabManager
+=== 應用程式啟動 ===
+main.py 啟動
+成功 import TabManager
+=== 應用程式啟動 ===
+main.py 啟動
+成功 import TabManager
+=== 應用程式啟動 ===
+main.py 啟動
+成功 import TabManager
+=== 應用程式啟動 ===
+main.py 啟動
+成功 import TabManager
+=== 應用程式啟動 ===
+main.py 啟動
+成功 import TabManager
+=== 應用程式啟動 ===
+main.py 啟動
+成功 import TabManager
+=== 應用程式啟動 ===
+main.py 啟動
+成功 import TabManager
+=== 應用程式啟動 ===

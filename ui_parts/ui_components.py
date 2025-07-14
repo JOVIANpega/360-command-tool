@@ -1,10 +1,18 @@
 # -*- coding: utf-8 -*-
 
 import tkinter as tk
-from tkinter import ttk, scrolledtext
+from tkinter import ttk, scrolledtext, messagebox
 import os
 import sys
-import json
+import re
+import threading
+import time
+from datetime import datetime
+from ui_parts.ui_components_base import UIComponentsBase
+from ui_parts.ui_components_input import UIComponentsInput
+from ui_parts.ui_components_output import UIComponentsOutput
+from ui_parts.ui_components_settings import UIComponentsSettings
+from config_utils import get_notification_text, get_app_version
 
 
 # 將當前目錄加入 Python 路徑
@@ -19,7 +27,7 @@ from ui_parts.ui_components_output import UIComponentsOutput
 from ui_parts.ui_components_settings import UIComponentsSettings
 
 
-from config import list_com_ports, save_setup, GUIDE_FILE, COMMAND_FILE
+from config_core import list_com_ports, save_setup, GUIDE_FILE, COMMAND_FILE
 
 
 class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UIComponentsSettings):
@@ -835,7 +843,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                 self.parent.setup['Window_Width'] = str(w)
                 self.parent.setup['Window_Height'] = str(h)
                 # 保存完整的設定結構
-                from config import load_setup, save_setup
+                from config_core import load_setup, save_setup
                 full_setup = load_setup()
                 full_setup['DUT_Control'].update({
                     'Window_Width': str(w),
@@ -882,7 +890,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             self.parent.setup['Pane_Sash_Position'] = str(sash_position)
             
             # 保存完整的設定結構
-            from config import load_setup, save_setup
+            from config_core import load_setup, save_setup
             full_setup = load_setup()
             full_setup['DUT_Control']['Pane_Sash_Position'] = str(sash_position)
             save_setup(full_setup)
@@ -955,8 +963,9 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             save_setup(full_setup)
             
             # 顯示通知給使用者
+            message_key = "auto_exec_enabled" if auto_exec else "auto_exec_disabled"
             self.show_notification(
-                f"自動執行設定已{'啟用' if auto_exec else '停用'}",
+                get_notification_text(message_key),
                 "green" if auto_exec else "blue",
                 3000
             )
@@ -966,7 +975,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             print(f"[ERROR] 保存自動執行設置時發生錯誤: {e}")
             import traceback
             traceback.print_exc()
-            self.show_notification(f"保存設定失敗: {e}", "red", 5000)
+            self.show_notification(get_notification_text("save_failed", str(e)), "red", 5000)
 
     def show_notification(self, message, color="red", duration=5000, callback=None):
         """
@@ -1011,15 +1020,15 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                 cmd = self.parent.commands_by_section.get("全部指令", {}).get(cmd_key, "")
             
             # 顯示選擇的指令內容
-            self.show_notification(f"已選擇: {cmd_key}", "blue", 3000)
+            self.show_notification(get_notification_text("cmd_selected", cmd_key), "blue", 3000)
             
             # 如果是特殊指令，顯示提示
             if cmd.startswith("DELAY:"):
                 delay_time = cmd.split(":")[1]
-                self.show_notification(f"延遲指令: {delay_time}秒", "purple", 3000)
+                self.show_notification(get_notification_text("delay_cmd", delay_time), "purple", 3000)
             elif cmd.startswith("SHOW:"):
                 message = cmd.split(":")[1]
-                self.show_notification(f"顯示訊息: {message}", "green", 3000)
+                self.show_notification(get_notification_text("show_msg", message), "green", 3000)
 
     def show_system_status(self):
         """顯示系統狀態信息"""
@@ -1037,8 +1046,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             timeout = self.entry_timeout.get() or "30"
             
             # 顯示系統狀態
-            status_msg = f"COM口: {com} | 分類: {section} ({cmd_count}個指令) | 超時: {timeout}秒"
-            self.show_notification(status_msg, "blue", 5000)
+            self.show_notification(get_notification_text("system_status", com, section, cmd_count, timeout), "blue", 5000)
         except Exception as e:
             print(f"[ERROR] 顯示系統狀態時發生錯誤: {e}")
             import traceback
@@ -1067,7 +1075,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             print(f"[DEBUG] 通知區域字體大小已更新並保存: {self.notification_font_size}")
             
             # 顯示通知
-            self.show_notification(f"通知字體大小: {self.notification_font_size}", "blue", 2000)
+            self.show_notification(get_notification_text("notification_font_size", self.notification_font_size), "blue", 2000)
         except Exception as e:
             print(f"[ERROR] 修改通知區域字體大小時發生錯誤: {e}")
             import traceback
@@ -1080,15 +1088,15 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             if selected_text:
                 self.parent.root.clipboard_clear()
                 self.parent.root.clipboard_append(selected_text)
-                self.show_notification("已複製選中文字", "green", 2000)
+                self.show_notification(get_notification_text("text_copied"), "green", 2000)
         except tk.TclError:
             # 如果沒有選中文字，會拋出 TclError
-            self.show_notification("未選中任何文字", "orange", 2000)
+            self.show_notification(get_notification_text("no_text_selected"), "orange", 2000)
 
     def select_all_text(self):
         # 實現全選文字的功能
         self.text_output.tag_add(tk.SEL, "1.0", tk.END)
-        self.show_notification("已全選文字", "green", 2000)
+        self.show_notification(get_notification_text("all_text_selected"), "green", 2000)
 
     def show_output_context_menu(self, event):
         """顯示輸出區域的右鍵菜單"""
