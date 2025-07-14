@@ -1155,11 +1155,16 @@ class TabManager:
                 self.dut_ui.on_close()
             
             # 如果有串口連接，斷開它
-            if hasattr(self, 'dut_ui') and hasattr(self.dut_ui, 'handlers') and self.dut_ui.handlers.worker:
-                try:
+            try:
+                if (hasattr(self, 'dut_ui') and 
+                    hasattr(self.dut_ui, 'handlers') and 
+                    hasattr(self.dut_ui.handlers, 'worker') and 
+                    self.dut_ui.handlers.worker is not None):
+                    
                     self.dut_ui.handlers.disconnect()
-                except Exception as e:
-                    print(f"[WARNING] 關閉時斷開連接失敗：{e}")
+                    print("[DEBUG] 關閉時斷開串口連接")
+            except Exception as e:
+                print(f"[WARNING] 關閉時斷開連接失敗：{e}")
             
             # 關閉根窗口
             self.root.destroy()
