@@ -68,5 +68,11 @@
   "Window_Width": "1536",
   "Window_Height": "793",
   "ContentFontSize": "12",
-  "UIFontSize": "13"
+  "UIFontSize": "13",
+  "tab_names": {
+    "tab0": "DUT指令控制",
+    "tab1": "測試治具Fixture",
+    "tab2": "使用指南_DOS",
+    "tab3": "系統設定"
+  }
 }

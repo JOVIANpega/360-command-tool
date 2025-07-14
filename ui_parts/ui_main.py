@@ -33,7 +33,10 @@ import logging
 import config_core
 
 
+import config_utils
 
+
+from config_utils import get_notification_text, get_app_version
 
 
 # 將當前目錄加入 Python 路徑
@@ -208,23 +211,35 @@ class TabManager:
 
         self.handover_frame.grid_columnconfigure(0, weight=1)
 
-
+        # 從設定檔讀取標籤名稱
+        from config_core import load_setup
+        setup = load_setup()
+        tab_names = setup.get('tab_names', {})
+        
+        # 使用從設定檔中讀取的標籤名稱，如果不存在則使用預設值
+        tab0_name = tab_names.get('tab0', 'DUT 控制')
+        tab1_name = tab_names.get('tab1', '治具控制')
+        tab2_name = tab_names.get('tab2', '使用說明')
+        tab3_name = tab_names.get('tab3', '設定')
+        
+        print(f"[DEBUG] 從設定檔讀取的標籤名稱: {tab_names}")
         
 
 
         # 添加分頁到 notebook
 
 
-        self.notebook.add(self.dut_frame, text='DUT 控制')
+        self.notebook.add(self.dut_frame, text=tab0_name)
 
 
-        self.notebook.add(self.fixture_frame, text='治具控制')
+        self.notebook.add(self.fixture_frame, text=tab1_name)
 
 
-        self.notebook.add(self.handover_frame, text='使用說明')  # 改名為使用說明
+        self.notebook.add(self.handover_frame, text=tab2_name)  # 改名為使用說明
+        
         # 新增設定分頁
         self.settings_frame = ttk.Frame(self.notebook, style='Main.TFrame')
-        self.notebook.add(self.settings_frame, text='設定')
+        self.notebook.add(self.settings_frame, text=tab3_name)
 
         # 設置分頁切換事件
         self.notebook.bind('<<NotebookTabChanged>>', self.on_tab_changed)
@@ -264,22 +279,26 @@ class TabManager:
             
             # 顯示通知給用戶 - 增加顯示時間到8秒，確保用戶能看到
             if hasattr(self.dut_ui.components, 'show_notification'):
-                # 使用更醒目的通知效果 - 背景閃爍、更大字體
-                settings_changed = [
-                    "設定已更新！",
-                    "• 指令檔案已重新載入",
-                    "• COM口設定已更新",
-                    "• 結束字串設定已更新",
-                    "• IP地址設定已更新",
-                    "• 超時設定已更新"
-                ]
-                
-                self.dut_ui.components.show_notification(
-                    "\n".join(settings_changed), 
-                    "green", 
-                    8000,
-                    callback=lambda: self.notebook.select(0)  # 回調函數：切換到DUT控制頁面
-                )
+                try:
+                    # 使用更醒目的通知效果 - 背景閃爍、更大字體
+                    settings_changed = [
+                        get_notification_text("settings_updated"),
+                        get_notification_text("cmd_reloaded"),
+                        get_notification_text("com_updated"),
+                        get_notification_text("end_string_updated"),
+                        get_notification_text("ip_updated"),
+                        get_notification_text("timeout_updated")
+                    ]
+                    
+                    self.dut_ui.components.show_notification(
+                        "\n".join(settings_changed), 
+                        "green", 
+                        8000,
+                        callback=lambda: self.notebook.select(0)  # 回調函數：切換到DUT控制頁面
+                    )
+                except Exception as e:
+                    print(f"[ERROR] 顯示通知時發生錯誤：{e}")
+                    # 繼續執行，不讓通知錯誤影響其他功能
                 
                 # 強制切換到DUT控制頁面，確保用戶能看到更新效果
                 self.notebook.select(0)  # 假設DUT控制頁面是第一個分頁
@@ -397,60 +416,27 @@ class TabManager:
 
 
     def update_tab_names(self):
-        """根據所選指令文件中的區段名稱更新 TAB 按鈕的名稱"""
+        """根據設定檔中的標籤名稱更新 TAB 按鈕的名稱"""
         try:
+            # 從設定檔讀取標籤名稱
+            from config_core import load_setup
+            setup = load_setup()
+            tab_names = setup.get('tab_names', {})
+            
             # 預設的 TAB 按鈕名稱
-            default_tab_names = ['DUT 控制', '治具控制', '使用說明']
+            default_tab_names = ['DUT 控制', '治具控制', '使用說明', '設定']
             
-            # 如果 dut_ui 不存在，使用預設名稱
-            if not hasattr(self, 'dut_ui'):
-                print("[DEBUG] dut_ui 不存在，使用預設 TAB 按鈕名稱")
-                for i, name in enumerate(default_tab_names):
-                    self.notebook.tab(i, text=name)
-                return
-                
-            # 獲取當前指令文件路徑
-            command_file_path = self.dut_ui.setup.get("DUT_Control", {}).get("Command_File_Path", "")
-            if not command_file_path or not os.path.exists(command_file_path):
-                # 如果沒有指定或文件不存在，使用預設名稱
-                print(f"[DEBUG] 指令文件不存在或未指定：{command_file_path}，使用預設 TAB 按鈕名稱")
-                for i, name in enumerate(default_tab_names):
-                    self.notebook.tab(i, text=name)
-                return
-            
-            print(f"[DEBUG] 更新 TAB 按鈕名稱，使用指令文件：{command_file_path}")
-            
-            # 解析指令文件，獲取所有區段
-            sections = []
-            with open(command_file_path, "r", encoding="utf-8") as file:
-                for line in file:
-                    line = line.strip()
-                    if line.startswith("==") and line.endswith("=="):
-                        section_name = line.strip("=").strip()
-                        if section_name and section_name not in sections:
-                            sections.append(section_name)
-            
-            # 如果沒有找到區段，使用預設名稱
-            if not sections:
-                print("[DEBUG] 指令文件中沒有找到區段，使用預設 TAB 按鈕名稱")
-                for i, name in enumerate(default_tab_names):
-                    self.notebook.tab(i, text=name)
-                return
-            
-            print(f"[DEBUG] 從指令文件中找到的區段：{sections}")
-            
-            # 更新前三個 TAB 按鈕的名稱（如果存在對應區段）
-            tab_indices = [0, 1, 2]  # 對應 DUT 控制、治具控制、使用說明
-            
-            for i, idx in enumerate(tab_indices):
-                if i < len(sections):
-                    # 更新 TAB 按鈕名稱
-                    self.notebook.tab(idx, text=sections[i])
-                    print(f"[DEBUG] 更新 TAB {idx} 名稱為：{sections[i]}")
+            # 更新標籤名稱
+            for i in range(4):  # 目前有4個標籤頁
+                tab_key = f'tab{i}'
+                if tab_key in tab_names:
+                    # 使用設定檔中的名稱
+                    self.notebook.tab(i, text=tab_names[tab_key])
+                    print(f"[DEBUG] 更新 TAB {i} 名稱為：{tab_names[tab_key]}（從設定檔）")
                 else:
-                    # 如果區段數量不足，使用預設名稱
-                    self.notebook.tab(idx, text=default_tab_names[i])
-                    print(f"[DEBUG] 使用預設名稱更新 TAB {idx} 名稱為：{default_tab_names[i]}")
+                    # 使用預設名稱
+                    self.notebook.tab(i, text=default_tab_names[i])
+                    print(f"[DEBUG] 更新 TAB {i} 名稱為：{default_tab_names[i]}（預設值）")
         
         except Exception as e:
             print(f"[ERROR] 更新 TAB 按鈕名稱時發生錯誤：{e}")
@@ -458,7 +444,7 @@ class TabManager:
             traceback.print_exc()
             
             # 發生錯誤時，使用預設名稱
-            default_tab_names = ['DUT 控制', '治具控制', '使用說明']
+            default_tab_names = ['DUT 控制', '治具控制', '使用說明', '設定']
             for i, name in enumerate(default_tab_names):
                 try:
                     self.notebook.tab(i, text=name)
@@ -584,7 +570,7 @@ class TabManager:
 
 
     def update_window_title(self):
-        """更新視窗標題（不包含版本號）"""
+        """更新視窗標題（包含版本號）"""
         try:
             # 從設定檔讀取視窗標題 (優先使用頂層的 Window_Title)
             from config_core import load_setup
@@ -599,14 +585,11 @@ class TabManager:
             if not window_title:
                 window_title = "VALO360 指令通"
             
-            # 獲取當前標題中的版本號部分
-            current_title = self.root.title()
-            version_part = ""
-            if " V" in current_title:
-                version_part = " " + current_title.split(" V")[-1]
+            # 獲取版本號
+            app_version = config_utils.get_app_version()
             
             # 設置新標題
-            new_title = f"{window_title}{version_part}"
+            new_title = f"{window_title} V{app_version}"
             self.root.title(new_title)
             print(f"[DEBUG] 視窗標題已更新為：{new_title}")
         except Exception as e:
@@ -729,57 +712,28 @@ class TabManager:
         # 初始化設定分頁
         self.settings_ui = SettingsTab(self.settings_frame, on_save_callback=self.update_all_settings)
         self.settings_ui.pack(fill='both', expand=True)
-
+    
     def init_guide_tab(self):
         # 初始化使用說明分頁
         # 創建主框架
-
-
         guide_main_frame = ttk.LabelFrame(
-
-
             self.handover_frame, 
-
-
             text="使用說明", 
-
-
             padding=20, 
-
-
             style="Main.TLabelframe"
-
-
         )
-
-
         guide_main_frame.grid(row=0, column=0, sticky='nsew', padx=20, pady=20)
-
-
         
-
-
+        # 獲取版本號
+        app_version = config_utils.get_app_version()
+        
         # 標題
-
-
         title_label = ttk.Label(
-
-
             guide_main_frame,
-
-
-            text="VALO360 指令通 使用說明",
-
-
+            text=f"VALO360 指令通 V{app_version} 使用說明",
             font=('Microsoft JhengHei UI', 18, 'bold'),
-
-
             style="TLabel"
-
-
         )
-
-
         title_label.grid(row=0, column=0, pady=(0, 20))
 
 

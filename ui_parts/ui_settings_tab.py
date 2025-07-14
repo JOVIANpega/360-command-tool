@@ -40,9 +40,32 @@ class SettingsTab(ttk.Frame):
         entry.grid(row=0, column=1, sticky="ew", padx=5, pady=2)
         ttk.Label(basic_frame, text="(不包含版本號)").grid(row=1, column=0, columnspan=2, sticky="w", pady=(0, 5))
 
+        # --- 標籤頁名稱設定區 ---
+        tab_frame = ttk.LabelFrame(main_frame, text="標籤頁名稱設定", padding=(10, 5))
+        tab_frame.grid(row=0, column=0, columnspan=2, sticky="ew", padx=5, pady=5, rowspan=1)
+        tab_frame.grid_remove()  # 先隱藏，後面再插入到正確位置
+        
+        # 獲取當前的標籤頁名稱
+        tab_names = self.setup_data.get('tab_names', {})
+        default_tab_names = ['DUT 控制', '治具控制', '使用說明', '設定']
+        
+        # 創建標籤頁名稱輸入框
+        for i in range(4):
+            tab_key = f'tab{i}'
+            tab_name = tab_names.get(tab_key, default_tab_names[i])
+            ttk.Label(tab_frame, text=f"標籤頁 {i+1}", width=15).grid(row=i, column=0, sticky="w", pady=2)
+            self.vars[f"tab_names_{tab_key}"] = tk.StringVar(value=tab_name)
+            entry = ttk.Entry(tab_frame, textvariable=self.vars[f"tab_names_{tab_key}"], width=25)
+            entry.grid(row=i, column=1, sticky="ew", padx=5, pady=2)
+        
+        # 將標籤頁設定插入到基本設定之後
+        basic_frame.grid_remove()
+        basic_frame.grid(row=0, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
+        tab_frame.grid(row=1, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
+        
         # --- 左側：DUT 控制區 ---
         dut_frame = ttk.LabelFrame(main_frame, text="DUT 控制區", padding=(10, 5))
-        dut_frame.grid(row=1, column=0, sticky="nsew", padx=5, pady=5)  # 使用nsew而不是nw，讓框架可以擴展
+        dut_frame.grid(row=2, column=0, sticky="nsew", padx=5, pady=5)  # 行號變為2
         
         # 設定DUT框架的列配置，讓輸入框列可以擴展
         dut_frame.columnconfigure(1, weight=1)
@@ -86,7 +109,7 @@ class SettingsTab(ttk.Frame):
 
         # --- 右側：治具控制區 ---
         fixture_frame = ttk.LabelFrame(main_frame, text="治具控制區", padding=(10, 5))
-        fixture_frame.grid(row=1, column=1, sticky="nw", padx=5, pady=5)
+        fixture_frame.grid(row=2, column=1, sticky="nw", padx=5, pady=5)
 
         # 治具設定項目
         ttk.Label(fixture_frame, text="治具通訊埠", width=15).grid(row=0, column=0, sticky="w", pady=2)
@@ -114,7 +137,7 @@ class SettingsTab(ttk.Frame):
 
         # --- 新增：介面佈局設定區 ---
         layout_frame = ttk.LabelFrame(main_frame, text="介面佈局設定", padding=(10, 5))
-        layout_frame.grid(row=2, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
+        layout_frame.grid(row=3, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
         
         # 分割位置設定
         ttk.Label(layout_frame, text="左右分割位置", width=15).grid(row=0, column=0, sticky="w", pady=2)
@@ -142,7 +165,7 @@ class SettingsTab(ttk.Frame):
 
         # --- 區段標題預覽區域 (放在底部) ---
         preview_frame = ttk.LabelFrame(main_frame, text="區段標題預覽", padding=(10, 5))
-        preview_frame.grid(row=3, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
+        preview_frame.grid(row=4, column=0, columnspan=2, sticky="ew", padx=5, pady=5)
         
         # 使用簡單的水平佈局，減少嵌套層級
         preview_container = ttk.Frame(preview_frame)
@@ -176,7 +199,7 @@ class SettingsTab(ttk.Frame):
 
         # --- Save Button ---
         button_frame = ttk.Frame(main_frame)
-        button_frame.grid(row=4, column=0, columnspan=2, sticky="e", padx=5, pady=5)
+        button_frame.grid(row=5, column=0, columnspan=2, sticky="e", padx=5, pady=5)
         
         save_button = ttk.Button(button_frame, text="儲存設定", command=self.save_settings)
         save_button.pack(padx=5, pady=5)
@@ -256,6 +279,13 @@ class SettingsTab(ttk.Frame):
             # 載入基本設定 - 優先使用頂層的 Window_Title
             self.vars["_Window_Title"].set(self.setup_data.get('Window_Title', dut_control.get('Window_Title', '')))
             
+            # 載入標籤頁名稱
+            tab_names = self.setup_data.get('tab_names', {})
+            for i in range(4):
+                tab_key = f'tab{i}'
+                if f"tab_names_{tab_key}" in self.vars:
+                    self.vars[f"tab_names_{tab_key}"].set(tab_names.get(tab_key, f"標籤頁 {i+1}"))
+            
             # 載入 DUT 控制設定 - 確保所有字段都被處理
             dut_fields = [
                 "Serial_COM_Port", "Default_IP_Address", "Command_Timeout_Seconds", 
@@ -298,92 +328,106 @@ class SettingsTab(ttk.Frame):
             # 如果有指令檔案路徑，嘗試讀取區段標題
             cmd_file_path = dut_control.get('Command_File_Path', '')
             if cmd_file_path and os.path.exists(cmd_file_path):
-                self.read_section_titles(cmd_file_path)
+                try:
+                    self.read_section_titles(cmd_file_path)
+                except Exception as e:
+                    print(f"[ERROR] SettingsTab.load_settings: 讀取區段標題失敗: {e}")
+                    # 從設定中讀取區段標題作為備用
+                    self.sections_preview = dut_control.get('Section_Titles', [])
+                    self.update_preview_listbox()
             else:
                 # 如果沒有檔案路徑或檔案不存在，則從設定中讀取區段標題
                 self.sections_preview = dut_control.get('Section_Titles', [])
                 self.update_preview_listbox()
             
         except Exception as e:
-            messagebox.showerror("錯誤", f"載入設定失敗：{e}")
             print(f"[ERROR] SettingsTab: 載入設定失敗：{e}")
             import traceback
             traceback.print_exc()
+            # 不要彈出錯誤對話框，這可能會導致更多問題
+            # messagebox.showerror("錯誤", f"載入設定失敗：{e}")
+            # 使用空的設定數據
+            self.setup_data = {}
 
     def save_settings(self):
         """保存設定到 setup.json"""
         try:
-            # 讀取當前設定
-            current_setup = load_setup()
+            # 從UI取得設定值
+            settings = self.setup_data.copy()
             
-            print("[DEBUG] SettingsTab.save_settings: 開始保存設定...")
+            # 儲存視窗標題到頂層
+            settings['Window_Title'] = self.vars["_Window_Title"].get()
             
-            # 更新 Window_Title (頂層)
-            window_title = self.vars["_Window_Title"].get()
-            current_setup['Window_Title'] = window_title
-            print(f"[DEBUG] SettingsTab.save_settings: 設置頂層 Window_Title = {window_title}")
-            
-            # 確保 DUT_Control 和 Fixture_Control 存在
-            if 'DUT_Control' not in current_setup:
-                current_setup['DUT_Control'] = {}
-            if 'Fixture_Control' not in current_setup:
-                current_setup['Fixture_Control'] = {}
+            # 儲存標籤頁名稱
+            tab_names = {}
+            for i in range(4):
+                tab_key = f'tab{i}'
+                if f"tab_names_{tab_key}" in self.vars:
+                    tab_names[tab_key] = self.vars[f"tab_names_{tab_key}"].get()
+            settings['tab_names'] = tab_names
             
             # 更新 DUT_Control 設定
-            dut_fields = [
-                "Serial_COM_Port", "Default_IP_Address", "Command_Timeout_Seconds",
-                "Command_End_String", "UI_Font_Size", "Content_Font_Size", "Command_File_Path",
-                "Notification_Font_Size", "Pane_Sash_Position", "Window_Width", "Window_Height"
-            ]
+            if 'DUT_Control' not in settings:
+                settings['DUT_Control'] = {}
             
-            for key in dut_fields:
-                var_key = f"DUT_Control_{key}"
-                if var_key in self.vars:
-                    value = self.vars[var_key].get()
-                    current_setup['DUT_Control'][key] = value
-                    print(f"[DEBUG] SettingsTab.save_settings: 保存 {key} = {value}")
+            # 複製 DUT_Control 設定
+            for key in self.vars:
+                if key.startswith("DUT_Control_"):
+                    setting_key = key.replace("DUT_Control_", "")
+                    
+                    # 根據控件類型取值
+                    var = self.vars[key]
+                    if isinstance(var, tk.BooleanVar):
+                        value = var.get()
+                    else:
+                        value = var.get()
+                        
+                    settings['DUT_Control'][setting_key] = value
+                    
+            # 確保 Window_Title 同時更新到 DUT_Control
+            settings['DUT_Control']['Window_Title'] = settings['Window_Title']
             
-            # 更新自動執行設定
-            auto_execute = self.vars["DUT_Control_Auto_Execute"].get()
-            current_setup['DUT_Control']['Auto_Execute'] = auto_execute
-            print(f"[DEBUG] SettingsTab.save_settings: 保存 Auto_Execute = {auto_execute}")
+            # 更新 Fixture_Control 設定
+            if 'Fixture_Control' not in settings:
+                settings['Fixture_Control'] = {}
+                
+            # 複製 Fixture_Control 設定
+            for key in self.vars:
+                if key.startswith("Fixture_Control_"):
+                    setting_key = key.replace("Fixture_Control_", "")
+                    
+                    # 根據控件類型取值
+                    var = self.vars[key]
+                    if isinstance(var, tk.BooleanVar):
+                        value = var.get()
+                    else:
+                        value = var.get()
+                        
+                    settings['Fixture_Control'][setting_key] = value
             
-            # 更新治具控制設定
-            fixture_fields = {
-                "Fixture_COM_Port": "Fixture_Control_Fixture_COM_Port",
-                "Fixture_Font_Size": "Fixture_Control_Fixture_Font_Size",
-                "Test_Category_FUNCTION": "Fixture_Control_Test_Category_FUNCTION",
-                "Test_Category_MB": "Fixture_Control_Test_Category_MB",
-                "Test_Category_Original_Commands": "Fixture_Control_Test_Category_Original_Commands"
-            }
+            # 儲存視窗大小到頂層
+            settings['Window_Width'] = settings['DUT_Control']['Window_Width']
+            settings['Window_Height'] = settings['DUT_Control']['Window_Height']
+            settings['UIFontSize'] = settings['DUT_Control']['UI_Font_Size']
+            settings['ContentFontSize'] = settings['DUT_Control']['Content_Font_Size']
             
-            for field, var_key in fixture_fields.items():
-                if var_key in self.vars:
-                    value = self.vars[var_key].get()
-                    current_setup['Fixture_Control'][field] = value
-                    print(f"[DEBUG] SettingsTab.save_settings: 保存 {field} = {value}")
+            # 如果有Section_Titles，確保它們被保留
+            if 'Section_Titles' in settings['DUT_Control']:
+                pass  # 保留現有的 Section_Titles
+            elif self.sections_preview:
+                settings['DUT_Control']['Section_Titles'] = self.sections_preview
             
-            # 確保 DUT_Control 中的 Window_Title 與頂層一致
-            current_setup['DUT_Control']['Window_Title'] = window_title
+            # 儲存到檔案
+            save_setup(settings)
             
-            # 保存區段標題
-            current_setup['DUT_Control']['Section_Titles'] = self.sections_preview
-            print(f"[DEBUG] SettingsTab.save_settings: 保存 Section_Titles = {self.sections_preview}")
+            messagebox.showinfo("成功", "設定已儲存！")
             
-            # 保存設定
-            save_setup(current_setup)
-            
-            # 顯示成功消息
-            messagebox.showinfo("成功", "設定已儲存")
-            
-            # 如果有回調函數，則執行
+            # 執行回調函數
             if self.on_save_callback:
-                print("[DEBUG] SettingsTab.save_settings: 執行回調函數")
                 self.on_save_callback()
-            
+                
         except Exception as e:
-            messagebox.showerror("錯誤", f"儲存設定失敗：{e}")
-            print(f"[ERROR] SettingsTab: 儲存設定失敗：{e}")
+            messagebox.showerror("錯誤", f"儲存設定時發生錯誤：{e}")
             import traceback
             traceback.print_exc()
 
