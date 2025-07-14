@@ -1,4 +1,0 @@
-[2025-07-12 12:00:25] 找不到指令檔 (command.txt)
-路徑: M:\PYTHON\指令工具\360-command-tool\dist_new\command.txt
-[2025-07-12 12:01:45] 找不到指令檔 (command.txt)
-路徑: M:\PYTHON\指令工具\360-command-tool\dist_new\command.txt

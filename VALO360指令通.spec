@@ -2,17 +2,16 @@
 
 
 a = Analysis(
-    ['main_utf8_fixed.py'],
+    ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('command.txt', '.'), ('user_guide.txt', '.'), ('setup.json', '.'), ('app.ico', '.'), ('VALO360 指令通使用指南.html', '.'), ('VALO360 指令通使用指南_files', 'VALO360 指令通使用指南_files'), ('Command_TABLE', 'Command_TABLE'), ('FIXTURE', 'FIXTURE')],
+    datas=[('Command_TABLE/command.txt', 'Command_TABLE'), ('FIXTURE/Fixture_Command.txt', 'FIXTURE'), ('user_guide.txt', '.'), ('setup.json', '.'), ('assets/app.ico', 'assets')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
     noarchive=False,
-    optimize=0,
 )
 pyz = PYZ(a.pure)
 
@@ -36,5 +35,5 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     version='version_info_zh.txt',
-    icon=['app.ico'],
+    icon=['assets\\app.ico'],
 )

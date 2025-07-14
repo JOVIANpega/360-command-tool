@@ -1651,16 +1651,31 @@ class UIHandlers(UIHandlersCore):
         # 讀取當前的完整設定，確保不會遺失既有資料
         current_setup = load_setup()
         
-        # 保存 DUT 設定
-        current_setup['Window_Title'] = self.parent.title()
+        # 獲取當前視窗標題（不包含版本號部分）
+        current_title = self.parent.title()
+        window_title = current_title
+        if " V" in current_title:
+            window_title = current_title.split(" V")[0]
+        
+        # 保存頂層 Window_Title
+        current_setup['Window_Title'] = window_title
         
         # 更新 DUT_Control 設定
+        if 'DUT_Control' not in current_setup:
+            current_setup['DUT_Control'] = {}
+            
         current_setup['DUT_Control']['Serial_COM_Port'] = self.parent.components.combobox_com.get()
         current_setup['DUT_Control']['Command_Timeout_Seconds'] = self.parent.components.entry_timeout.get()
         current_setup['DUT_Control']['Command_End_String'] = self.parent.components.combobox_end.get()
         current_setup['DUT_Control']['UI_Font_Size'] = self.parent.components.font_size_var.get()
         current_setup['DUT_Control']['Content_Font_Size'] = self.parent.components.content_font_size_var.get()
-        current_setup['DUT_Control']['Window_Title'] = self.parent.title()
+        # 確保 DUT_Control 下的 Window_Title 與頂層一致
+        current_setup['DUT_Control']['Window_Title'] = window_title
+        
+        # 保存通知字體大小設定
+        if hasattr(self.parent.components, 'notification_font_size'):
+            current_setup['DUT_Control']['Notification_Font_Size'] = str(self.parent.components.notification_font_size)
+            print(f"[DEBUG] 保存通知字體大小設定: {self.parent.components.notification_font_size}")
         
         # 處理可用結束字串列表
         end_strings = self.parent.components.combobox_end['values']
@@ -1675,6 +1690,9 @@ class UIHandlers(UIHandlersCore):
         current_setup['DUT_Control']['Auto_Execute'] = self.parent.components.auto_execute_var.get() if hasattr(self.parent.components, 'auto_execute_var') else False
         
         # 更新 Fixture_Control 設定
+        if 'Fixture_Control' not in current_setup:
+            current_setup['Fixture_Control'] = {}
+            
         current_setup['Fixture_Control']['Fixture_COM_Port'] = self.parent.components.fixture_com_var.get()
         current_setup['Fixture_Control']['Fixture_Font_Size'] = self.parent.components.fixture_font_size_var.get()
         current_setup['Fixture_Control']['Test_Category_MB'] = self.parent.components.mb_var.get()
@@ -1701,7 +1719,13 @@ class UIHandlers(UIHandlersCore):
         self.parent.components.content_font_size_var.set(dut_setup.get('Content_Font_Size', '12'))
         
         # 設定視窗標題 (優先使用頂層 Window_Title)
-        window_title = setup.get('Window_Title', dut_setup.get('Window_Title', 'VALO360 指令通'))
+        window_title = setup.get('Window_Title')
+        if not window_title:
+            window_title = dut_setup.get('Window_Title')
+        if not window_title:
+            window_title = 'VALO360 指令通'
+            
+        print(f"[DEBUG] 載入視窗標題: {window_title}")
         self.parent.title(window_title)
         
         # 設定可用結束字串

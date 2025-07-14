@@ -486,7 +486,21 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.btn_notification_font_plus.grid(row=0, column=2, padx=1)
         
         # 倒數計時/通知標籤 - 使用更大的字體和明顯的顏色，並增加高度，添加黑色邊框
-        self.notification_font_size = int(self.parent.setup.get('Notification_Font_Size', '14'))
+        # 優先從 DUT_Control 中讀取通知字體大小設定
+        dut_control = self.parent.setup.get('DUT_Control', {})
+        notification_font_size = dut_control.get('Notification_Font_Size')
+        
+        # 如果 DUT_Control 中沒有，則嘗試從頂層讀取
+        if not notification_font_size:
+            notification_font_size = self.parent.setup.get('Notification_Font_Size')
+            
+        # 如果都沒有，使用預設值
+        if not notification_font_size:
+            notification_font_size = '14'
+            
+        self.notification_font_size = int(notification_font_size)
+        print(f"[DEBUG] 初始化通知字體大小: {self.notification_font_size}")
+        
         self.label_countdown = tk.Label(
             countdown_frame, 
             text='', 
@@ -1039,14 +1053,18 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             # 更新標籤字體
             self.label_countdown.config(font=('Microsoft JhengHei UI', self.notification_font_size, 'bold'))
             
-            # 保存設置
+            # 保存設置到內存中
             self.parent.setup['Notification_Font_Size'] = str(self.notification_font_size)
-            from config import save_setup
-            full_setup = self.parent.setup
+            
+            # 保存到設定檔
+            from config_core import load_setup, save_setup
+            full_setup = load_setup()
             if 'DUT_Control' not in full_setup:
                 full_setup['DUT_Control'] = {}
             full_setup['DUT_Control']['Notification_Font_Size'] = str(self.notification_font_size)
             save_setup(full_setup)
+            
+            print(f"[DEBUG] 通知區域字體大小已更新並保存: {self.notification_font_size}")
             
             # 顯示通知
             self.show_notification(f"通知字體大小: {self.notification_font_size}", "blue", 2000)

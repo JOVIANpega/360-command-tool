@@ -126,7 +126,17 @@ if __name__ == "__main__":
 
         
 
-        title = dut_setup.get('Title', 'VALO360 指令通 V1.4.2')
+        # 優先使用頂層的 Window_Title
+
+        title = setup.get('Window_Title')
+
+        if not title:
+
+            title = dut_setup.get('Window_Title', 'VALO360 指令通')
+
+            
+
+        print(f"[DEBUG] 程式啟動時設置視窗標題: {title}")
 
         width = dut_setup.get('Window_Width', 1024)
 
