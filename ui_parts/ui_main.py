@@ -136,7 +136,9 @@ class TabManager:
 
 
         print(f"[DEBUG] TabManager 初始化，highlight_keywords={self.highlight_keywords}")
-
+        
+        # 初始化 DOS 視窗進程追蹤變數
+        self.dos_process = None
 
         
 
@@ -587,7 +589,15 @@ class TabManager:
             # 從設定檔讀取視窗標題 (優先使用頂層的 Window_Title)
             from config_core import load_setup
             setup = load_setup()
-            window_title = setup.get('Window_Title', "VALO360 指令通")
+            
+            # 優先使用頂層的 Window_Title，如果不存在則使用 DUT_Control 中的 Window_Title
+            window_title = setup.get('Window_Title')
+            if not window_title:
+                window_title = setup.get('DUT_Control', {}).get('Window_Title')
+            
+            # 如果兩者都不存在，才使用預設值
+            if not window_title:
+                window_title = "VALO360 指令通"
             
             # 獲取當前標題中的版本號部分
             current_title = self.root.title()
@@ -990,6 +1000,37 @@ class TabManager:
 
 
         guide_button.bind("<Leave>", lambda e: guide_button.config(bg="#cccccc", fg="black"))
+
+
+        # 添加「開啟 DOS 視窗」按鈕
+        def open_dos_window():
+            # 檢查是否已經開啟 DOS 視窗
+            if self.dos_process is None or self.dos_process.poll() is not None:
+                # 如果沒有開啟或已關閉，則開啟新的 DOS 視窗
+                self.dos_process = subprocess.Popen(["cmd"], creationflags=subprocess.CREATE_NEW_CONSOLE)
+                print("[DEBUG] 已開啟 DOS 視窗")
+            else:
+                # 如果已經開啟，則顯示提示訊息
+                messagebox.showinfo("提示", "DOS 視窗已經開啟")
+        
+        dos_button = tk.Button(
+            guide_main_frame,
+            text="開啟 DOS 視窗",
+            command=open_dos_window,
+            font=('Microsoft JhengHei UI', 16, 'bold'),
+            width=20,
+            height=3,
+            bg='#cccccc',
+            fg='black',
+            relief='groove',
+            borderwidth=2,
+            highlightthickness=0
+        )
+        dos_button.grid(row=3, column=0, pady=20)
+        
+        # 按鈕 hover 效果
+        dos_button.bind("<Enter>", lambda e: dos_button.config(bg="#4caf50", fg="white"))
+        dos_button.bind("<Leave>", lambda e: dos_button.config(bg="#cccccc", fg="black"))
 
 
 
