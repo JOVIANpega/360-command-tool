@@ -37,6 +37,10 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.root = root
         self.handlers = handlers
         
+        # 獲取全域通知管理器的引用
+        self.global_notification_manager = None
+        # 會在init_dut_tab中被設定
+        
         # 初始化各個元件
         self.init_com_components()
         self.init_cmd_components()
@@ -61,12 +65,12 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         # 恢復 PanedWindow 分割位置（延遲執行，確保視窗已完全載入）
         self.parent.root.after(200, self.restore_pane_position)
         
-        # 顯示歡迎訊息和基本操作提示（合併為一個通知）
-        welcome_message = "歡迎使用 VALO360 指令通 V1.12！\n選擇COM口和指令後點擊「執行指令」按鈕。\n通知區域可使用 +/- 調整文字大小。"
-        self.parent.root.after(1000, lambda: self.show_notification(welcome_message, "blue", 8000))
+        # 使用全域通知管理器顯示歡迎訊息
+        welcome_message = "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。"
+        self.parent.root.after(3000, lambda: self.show_notification(welcome_message, "success", 5000))
         
-        # 顯示系統狀態（只保留一個）
-        self.parent.root.after(10000, self.show_system_status)
+        # 顯示系統狀態
+        self.parent.root.after(8000, self.show_system_status)
 
     def init_com_components(self):
         com_frame = ttk.Frame(self.left_panel, style="TFrame")
@@ -443,85 +447,33 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
 
     def init_exec_button_left_panel(self):
         # 執行指令大圓角按鈕（預設灰色，hover 綠色），用 grid 固定在 left_panel 最下方
-        exec_frame = ttk.Frame(self.left_panel, style="TFrame")
-        exec_frame.grid(row=999, column=0, sticky='ew', pady=5)  # 減少間距
-        exec_frame.columnconfigure(0, weight=1)
-        self.btn_exec = tk.Button(exec_frame, text='執行指令',
+
+        # 使用 Frame 來放置下拉選單和按鈕
+        exec_frame = ttk.Frame(self.left_panel)
+        exec_frame.grid(row=6, column=0, sticky='ew', padx=5, pady=10)
+        exec_frame.columnconfigure(0, weight=1)  # 設置第 0 欄可拉伸
+
+        # 建立執行按鈕 
+        self.btn_execute = tk.Button(
+            exec_frame,
+            text='執行指令',
+            font=('Microsoft JhengHei UI', 16, 'bold'),
+            bg='#808080',
+            fg='white',
+            relief='raised',
+            borderwidth=2,
             command=self.parent.handlers.on_execute,
-                                 bg='#cccccc', fg='black',
-                                 activebackground='#4caf50', activeforeground='white',
-                                 font=('Microsoft JhengHei UI', 18, 'bold'),  # 稍微減小字體
-                                 relief='flat', borderwidth=0, highlightthickness=0)
-        self.btn_exec.grid(row=0, column=0, sticky='ew', padx=4, pady=4)  # 減少間距
-        self.btn_exec.bind("<Enter>", lambda e: self.btn_exec.config(bg="#4caf50", fg='white'))
-        self.btn_exec.bind("<Leave>", lambda e: self.btn_exec.config(bg="#cccccc", fg='black'))
-        
-        # 增加間距，將倒數計時/通知區域與執行按鈕分開
-        ttk.Separator(exec_frame, orient='horizontal').grid(row=1, column=0, sticky='ew', pady=10)
-        
-        # 倒數計時標籤 - 移到執行指令按鈕下方
-        countdown_frame = ttk.Frame(exec_frame, style="TFrame")
-        countdown_frame.grid(row=2, column=0, sticky='ew', pady=2)  # 減少間距
-        countdown_frame.columnconfigure(0, weight=1)
-        
-        # 通知區域控制框架 - 添加文字大小調整按鈕
-        notification_control_frame = ttk.Frame(countdown_frame)
-        notification_control_frame.grid(row=0, column=0, sticky='ew')
-        notification_control_frame.columnconfigure(1, weight=1)
-        
-        # 添加減小字體按鈕
-        self.btn_notification_font_minus = tk.Button(
-            notification_control_frame, 
-            text='－', 
-            width=2, 
-            command=lambda: self.change_notification_font_size(-1),
-            bg='#e0e0e0', fg='black'
+            width=15,
+            height=2
         )
-        self.btn_notification_font_minus.grid(row=0, column=0, padx=1)
-        
-        # 通知區域標題
-        notification_title = ttk.Label(notification_control_frame, text="通知區域", style="TLabel")
-        notification_title.grid(row=0, column=1)
-        
-        # 添加增大字體按鈕
-        self.btn_notification_font_plus = tk.Button(
-            notification_control_frame, 
-            text='＋', 
-            width=2, 
-            command=lambda: self.change_notification_font_size(1),
-            bg='#e0e0e0', fg='black'
-        )
-        self.btn_notification_font_plus.grid(row=0, column=2, padx=1)
-        
-        # 倒數計時/通知標籤 - 使用更大的字體和明顯的顏色，並增加高度，添加黑色邊框
-        # 優先從 DUT_Control 中讀取通知字體大小設定
-        dut_control = self.parent.setup.get('DUT_Control', {})
-        notification_font_size = dut_control.get('Notification_Font_Size')
-        
-        # 如果 DUT_Control 中沒有，則嘗試從頂層讀取
-        if not notification_font_size:
-            notification_font_size = self.parent.setup.get('Notification_Font_Size')
-            
-        # 如果都沒有，使用預設值
-        if not notification_font_size:
-            notification_font_size = '14'
-            
-        self.notification_font_size = int(notification_font_size)
-        print(f"[DEBUG] 初始化通知字體大小: {self.notification_font_size}")
-        
-        self.label_countdown = tk.Label(
-            countdown_frame, 
-            text='', 
-            font=('Microsoft JhengHei UI', self.notification_font_size, 'bold'),
-            fg='red',  # 紅色文字
-            bg='white',  # 白色背景
-            anchor='center',
-            height=3,  # 增加高度以容納更多文字
-            wraplength=300,  # 設置文字換行寬度
-            relief='solid',  # 添加實線邊框
-            borderwidth=1,  # 邊框寬度
-        )
-        self.label_countdown.grid(row=1, column=0, sticky='ew', padx=5, pady=5)
+        self.btn_execute.grid(row=0, column=0, sticky='ew', padx=5)
+        self.btn_execute.bind('<Enter>', lambda event: self.btn_execute.config(bg='green'))
+        self.btn_execute.bind('<Leave>', lambda event: self.btn_execute.config(bg='#808080'))
+
+        self.current_left_row += 1
+
+        # === 移除舊的通知區域功能 ===
+        # 原本的通知區域已被全域通知管理器取代，不再需要
         
         # 讓 left_panel 最下方 row 有 weight，確保按鈕永遠可見
         self.left_panel.grid_rowconfigure(999, weight=0)  # 改為 weight=0，避免執行按鈕佔用太多空間
@@ -977,38 +929,61 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             traceback.print_exc()
             self.show_notification(get_notification_text("save_failed", str(e)), "red", 5000)
 
-    def show_notification(self, message, color="red", duration=5000, callback=None):
+    def show_notification(self, message, color="info", duration=2000, callback=None):
         """
-        在倒數計時標籤顯示通知消息
+        統一的通知顯示方法，優先使用全域通知管理器
         
         參數:
             message: 要顯示的消息
-            color: 文字顏色，默認為紅色
-            duration: 顯示時間(毫秒)，默認5秒，0表示不自動清除
+            color: 訊息類型 ("info", "success", "warning", "error") 或顏色名稱
+            duration: 顯示時間(毫秒)，默認2秒
             callback: 通知結束後要調用的回調函數
         """
-        # 保存當前顏色以便恢復
-        original_fg = self.label_countdown.cget("fg")
+        # 轉換顏色名稱到訊息類型
+        color_mapping = {
+            "blue": "info",
+            "green": "success", 
+            "orange": "warning",
+            "red": "error",
+            "purple": "info",
+            "black": "default"
+        }
         
-        # 使用更大更粗的字體
-        font_size = max(16, self.notification_font_size + 4)
-        self.label_countdown.config(
-            text=message, 
-            fg=color,  # 直接使用顏色
-            bg="white",  # 背景保持白色
-            font=('Microsoft JhengHei UI', font_size, 'bold')
-        )
+        message_type = color_mapping.get(color, color)
         
-        # 如果設置了持續時間，則在指定時間後清除消息
-        if duration > 0:
-            self.parent.root.after(duration, lambda: self._restore_after_notification(original_fg, callback))
+        # 優先使用全域通知管理器
+        try:
+            if self.global_notification_manager:
+                self.global_notification_manager.show_notification(message, message_type)
+                return
+            
+            # 嘗試尋找TabManager並使用其通知管理器
+            current_widget = self.root
+            while current_widget:
+                if hasattr(current_widget, 'notification_manager'):
+                    current_widget.notification_manager.show_notification(message, message_type)
+                    return
+                current_widget = getattr(current_widget, 'master', None)
+            
+            # 如果找不到全域通知管理器，使用本地通知（備用方案）
+            print(f"[INFO] 未找到全域通知管理器，使用本地通知: {message}")
+            self._show_local_notification(message, color, duration, callback)
+            
+        except Exception as e:
+            print(f"[ERROR] 顯示全域通知失敗，使用本地通知: {e}")
+            self._show_local_notification(message, color, duration, callback)
+    
+    def _show_local_notification(self, message, color="red", duration=5000, callback=None):
+        """
+        本地通知顯示方法（備用方案）
+        """
+        # 原本的通知區域已被全域通知管理器取代，不再需要
+        pass
 
     def _restore_after_notification(self, original_fg, callback=None):
         """通知結束後恢復"""
-        self.label_countdown.config(text="", fg=original_fg, bg="white")
-        # 如果有回調函數，則執行
-        if callback:
-            callback()
+        # 原本的通知區域已被全域通知管理器取代，不再需要
+        pass
 
     def on_cmd_selected(self):
         """當選擇指令時的回調函數"""
@@ -1055,27 +1030,8 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
     def change_notification_font_size(self, delta):
         """修改通知區域字體大小"""
         try:
-            # 更新字體大小
-            self.notification_font_size = max(10, min(20, self.notification_font_size + delta))
-            
-            # 更新標籤字體
-            self.label_countdown.config(font=('Microsoft JhengHei UI', self.notification_font_size, 'bold'))
-            
-            # 保存設置到內存中
-            self.parent.setup['Notification_Font_Size'] = str(self.notification_font_size)
-            
-            # 保存到設定檔
-            from config_core import load_setup, save_setup
-            full_setup = load_setup()
-            if 'DUT_Control' not in full_setup:
-                full_setup['DUT_Control'] = {}
-            full_setup['DUT_Control']['Notification_Font_Size'] = str(self.notification_font_size)
-            save_setup(full_setup)
-            
-            print(f"[DEBUG] 通知區域字體大小已更新並保存: {self.notification_font_size}")
-            
-            # 顯示通知
-            self.show_notification(get_notification_text("notification_font_size", self.notification_font_size), "blue", 2000)
+            # 原本的通知區域已被全域通知管理器取代，不再需要
+            pass
         except Exception as e:
             print(f"[ERROR] 修改通知區域字體大小時發生錯誤: {e}")
             import traceback

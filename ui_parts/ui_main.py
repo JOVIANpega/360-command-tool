@@ -152,6 +152,9 @@ class TabManager:
         self.root.grid_rowconfigure(0, weight=1)
 
 
+        self.root.grid_rowconfigure(1, weight=0)  # 通知區域不擴展
+
+
         self.root.grid_columnconfigure(0, weight=1)
 
 
@@ -167,10 +170,31 @@ class TabManager:
         
 
 
-        self.notebook = ttk.Notebook(root)
+        # 創建主內容框架
 
 
-        self.notebook.grid(row=0, column=0, sticky='nsew', padx=5, pady=5)
+        main_content_frame = ttk.Frame(root)
+
+
+        main_content_frame.grid(row=0, column=0, sticky='nsew', padx=5, pady=5)
+
+
+        main_content_frame.grid_rowconfigure(0, weight=1)
+
+
+        main_content_frame.grid_columnconfigure(0, weight=1)
+
+
+        
+
+
+        # 創建Notebook
+
+
+        self.notebook = ttk.Notebook(main_content_frame)
+
+
+        self.notebook.grid(row=0, column=0, sticky='nsew')
 
 
         
@@ -248,7 +272,10 @@ class TabManager:
         
 
 
-        # 初始化分頁內容
+        # 先創建全域通知區域 - 放在整個GUI的最底部
+        self.init_global_notification_area(root, setup)
+        
+        # 初始化分頁內容（此時通知管理器已經可用）
 
 
         self.init_dut_tab()
@@ -259,11 +286,49 @@ class TabManager:
 
         self.init_guide_tab()  # 改名為 init_guide_tab
         self.init_settings_tab() # 新增
-
         
         # 綁定關閉事件
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         
+    def init_global_notification_area(self, parent, setup):
+        """初始化全域通知區域"""
+        try:
+            # 導入NotificationManager
+            from ui_parts.notification_manager import NotificationManager
+            
+            # 創建通知管理器
+            self.notification_manager = NotificationManager(parent, setup)
+            
+            # 創建全域變數方便其他模組使用
+            self.notification_text = self.notification_manager.notification_text
+            
+            # 顯示啟動訊息
+            app_version = config_utils.get_app_version()
+            app_name = setup.get('Window_Title', setup.get('DUT_Control', {}).get('Window_Title', 'VALO360 指令通'))
+            
+            # 延遲1秒顯示啟動訊息
+            self.root.after(1000, lambda: self.notification_manager.show_notification(
+                f"{app_name} 已啟動 (版本：V{app_version})", "success"
+            ))
+            
+            print("[DEBUG] 全域通知區域初始化完成")
+            
+        except Exception as e:
+            print(f"[ERROR] 初始化全域通知區域失敗: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def show_global_notification(self, message, message_type="info", duration=2000, callback=None):
+        """顯示全域通知的快捷方法"""
+        if hasattr(self, 'notification_manager'):
+            self.notification_manager.show_notification(message, message_type)
+        else:
+            print(f"[WARNING] 通知管理器未初始化: {message}")
+    
+    def update_notification(self, message, message_type="info", duration=2000):
+        """更新全域通知區域的內容（統一管理所有提示訊息）"""
+        self.show_global_notification(message, message_type, duration)
+
 
     def update_dut_settings(self):
         """Callback function to update DUT tab settings."""
@@ -598,13 +663,261 @@ class TabManager:
             traceback.print_exc()
 
     def update_all_settings(self):
-        """Update both DUT and Fixture settings."""
-        self.update_dut_settings()
-        self.update_fixture_settings()
-        self.update_window_title()  # 更新視窗標題
-        self.update_tab_names()    # 更新標籤頁名稱
-
+        """更新所有設定，確保雙向同步"""
+        try:
+            print("[DEBUG] 開始更新所有設定...")
+            
+            # 重新載入最新設定
+            from config_core import load_setup
+            latest_setup = load_setup()
+            
+            # 更新DUT設定
+            self.update_dut_settings()
+            
+            # 更新治具設定
+            self.update_fixture_settings()
+            
+            # 更新視窗標題
+            self.update_window_title()
+            
+            # 更新標籤頁名稱
+            self.update_tab_names_from_settings()
+            
+            # 同步所有字體設定
+            self.sync_font_settings(latest_setup)
+            
+            # 同步通知設定
+            self.sync_notification_settings(latest_setup)
+            
+            # 顯示綜合更新通知
+            self.show_global_notification(
+                "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱", 
+                "success", 
+                5000
+            )
+            
+            print("[DEBUG] 所有設定更新完成")
+            
+        except Exception as e:
+            print(f"[ERROR] 更新所有設定時發生錯誤：{e}")
+            import traceback
+            traceback.print_exc()
+            self.show_global_notification(f"設定更新失敗：{str(e)}", "error", 5000)
     
+    def sync_font_settings(self, setup):
+        """同步字體設定"""
+        try:
+            dut_settings = setup.get('DUT_Control', {})
+            
+            # 同步各種字體設定
+            ui_font_size = dut_settings.get('UI_Font_Size', '14')
+            content_font_size = dut_settings.get('Content_Font_Size', '11')
+            notification_font_size = dut_settings.get('Notification_Font_Size', '14')
+            
+            print(f"[DEBUG] 字體設定同步 - UI:{ui_font_size}, 內容:{content_font_size}, 通知:{notification_font_size}")
+            
+            # 更新DUT UI的字體設定
+            if hasattr(self, 'dut_ui') and hasattr(self.dut_ui, 'components'):
+                # 更新通知字體大小
+                if hasattr(self.dut_ui.components, 'notification_font_size'):
+                    self.dut_ui.components.notification_font_size = int(notification_font_size)
+                
+                # 更新標籤字體
+                if hasattr(self.dut_ui.components, 'label_countdown'):
+                    self.dut_ui.components.label_countdown.config(
+                        font=('Microsoft JhengHei UI', int(notification_font_size), 'bold')
+                    )
+            
+            # 同步系統字體設定到全域通知管理器
+            if hasattr(self, 'notification_manager'):
+                system_settings = setup.get('System', {})
+                global_font_size = system_settings.get('Notification_Font_Size', 12)
+                if hasattr(self.notification_manager, 'notification_text'):
+                    current_font = self.notification_manager.notification_text.cget("font")
+                    if isinstance(current_font, tuple):
+                        family, size, style = current_font
+                    else:
+                        family, size, style = 'Microsoft JhengHei UI', 12, 'bold'
+                    
+                    new_font = (family, int(global_font_size), style)
+                    self.notification_manager.notification_text.config(font=new_font)
+                    
+        except Exception as e:
+            print(f"[ERROR] 同步字體設定時發生錯誤：{e}")
+    
+    def sync_notification_settings(self, setup):
+        """同步通知設定"""
+        try:
+            # 同步通知相關設定
+            system_settings = setup.get('System', {})
+            notification_history_count = system_settings.get('Notification_History_Count', 20)
+            
+            if hasattr(self, 'notification_manager'):
+                # 確保通知歷史不超過設定的數量
+                if len(self.notification_manager.notification_log) > notification_history_count:
+                    self.notification_manager.notification_log = self.notification_manager.notification_log[-notification_history_count:]
+                    self.notification_manager.save_notification_history()
+                    
+                print(f"[DEBUG] 通知設定同步 - 歷史保留數量:{notification_history_count}")
+                
+        except Exception as e:
+            print(f"[ERROR] 同步通知設定時發生錯誤：{e}")
+    
+    def on_setting_changed(self, setting_category, setting_key, new_value):
+        """當任何設定被更改時調用此方法進行雙向同步"""
+        try:
+            # 載入當前設定
+            from config_core import load_setup, save_setup
+            setup = load_setup()
+            
+            # 確保設定類別存在
+            if setting_category not in setup:
+                setup[setting_category] = {}
+            
+            # 更新設定值
+            old_value = setup[setting_category].get(setting_key, "未設定")
+            setup[setting_category][setting_key] = new_value
+            
+            # 保存設定
+            save_setup(setup)
+            
+            # 立即同步到相關UI組件
+            self.sync_setting_to_ui(setting_category, setting_key, new_value)
+            
+            # 顯示變更通知
+            self.show_global_notification(
+                f"設定已更新\n分類: {setting_category}\n項目: {setting_key}\n舊值: {old_value}\n新值: {new_value}", 
+                "info", 
+                3000
+            )
+            
+            print(f"[DEBUG] 設定同步完成 - {setting_category}.{setting_key}: {old_value} → {new_value}")
+            
+        except Exception as e:
+            print(f"[ERROR] 設定變更同步失敗：{e}")
+            import traceback
+            traceback.print_exc()
+    
+    def sync_setting_to_ui(self, category, key, value):
+        """將單一設定同步到UI組件"""
+        try:
+            if category == "DUT_Control":
+                if hasattr(self, 'dut_ui') and hasattr(self.dut_ui, 'components'):
+                    components = self.dut_ui.components
+                    
+                    # 同步COM口設定
+                    if key == "Serial_COM_Port" and hasattr(components, 'combobox_com'):
+                        components.combobox_com.set(value)
+                        
+                    # 同步IP地址設定
+                    elif key == "Default_IP_Address" and hasattr(components, 'entry_ip'):
+                        components.entry_ip.delete(0, tk.END)
+                        components.entry_ip.insert(0, value)
+                        
+                    # 同步超時設定
+                    elif key == "Command_Timeout_Seconds" and hasattr(components, 'entry_timeout'):
+                        components.entry_timeout.delete(0, tk.END)
+                        components.entry_timeout.insert(0, value)
+                        
+                    # 同步結束字串設定
+                    elif key == "Command_End_String" and hasattr(components, 'combobox_end'):
+                        components.combobox_end.set(value)
+                        
+                    # 同步字體設定
+                    elif key == "Notification_Font_Size" and hasattr(components, 'notification_font_size'):
+                        components.notification_font_size = int(value)
+                        if hasattr(components, 'label_countdown'):
+                            components.label_countdown.config(
+                                font=('Microsoft JhengHei UI', int(value), 'bold')
+                            )
+                            
+            elif category == "tab_names":
+                # 同步標籤頁名稱
+                tab_index = int(key.replace('tab', ''))
+                if 0 <= tab_index < self.notebook.index('end'):
+                    self.notebook.tab(tab_index, text=value)
+                    
+            elif category == "System":
+                # 同步系統設定到全域通知管理器
+                if hasattr(self, 'notification_manager'):
+                    if key == "Notification_Font_Size":
+                        # 更新全域通知字體
+                        if hasattr(self.notification_manager, 'notification_text'):
+                            current_font = self.notification_manager.notification_text.cget("font")
+                            if isinstance(current_font, tuple):
+                                family, size, style = current_font
+                            else:
+                                family, size, style = 'Microsoft JhengHei UI', 12, 'bold'
+                            
+                            new_font = (family, int(value), style)
+                            self.notification_manager.notification_text.config(font=new_font)
+                            
+        except Exception as e:
+            print(f"[ERROR] 同步設定到UI時發生錯誤：{e}")
+            import traceback
+            traceback.print_exc()
+            
+    def update_tab_names_from_settings(self):
+        """從設定檔同步更新標籤頁名稱"""
+        try:
+            # 重新載入設定
+            from config_core import load_setup
+            setup = load_setup()
+            tab_names = setup.get('tab_names', {})
+            
+            # 預設的標籤頁名稱
+            default_tab_names = ['DUT 控制', '治具控制', '使用說明', '設定']
+            
+            # 更新每個標籤頁的名稱
+            for i in range(min(4, self.notebook.index('end'))):
+                tab_key = f'tab{i}'
+                if tab_key in tab_names:
+                    new_name = tab_names[tab_key]
+                else:
+                    new_name = default_tab_names[i] if i < len(default_tab_names) else f"標籤頁 {i+1}"
+                
+                # 只有當名稱實際改變時才更新
+                current_name = self.notebook.tab(i, "text")
+                if current_name != new_name:
+                    self.notebook.tab(i, text=new_name)
+                    print(f"[DEBUG] 標籤頁 {i} 名稱已更新: {current_name} → {new_name}")
+            
+            # 使用全域通知管理器顯示更新訊息
+            self.show_global_notification("標籤頁名稱已同步更新", "success", 2000)
+            
+        except Exception as e:
+            print(f"[ERROR] 更新標籤頁名稱時發生錯誤：{e}")
+            import traceback
+            traceback.print_exc()
+            
+    def on_tab_name_changed(self, tab_index, new_name):
+        """當標籤頁名稱被手動更改時調用"""
+        try:
+            # 載入當前設定
+            from config_core import load_setup, save_setup
+            setup = load_setup()
+            
+            # 確保tab_names存在
+            if 'tab_names' not in setup:
+                setup['tab_names'] = {}
+            
+            # 更新指定標籤頁的名稱
+            tab_key = f'tab{tab_index}'
+            setup['tab_names'][tab_key] = new_name
+            
+            # 保存設定
+            save_setup(setup)
+            
+            # 更新Notebook中的標籤頁名稱
+            self.notebook.tab(tab_index, text=new_name)
+            
+            # 顯示更新通知
+            self.show_global_notification(f"標籤頁 {tab_index + 1} 名稱已更新為: {new_name}", "info", 3000)
+            
+        except Exception as e:
+            print(f"[ERROR] 更新標籤頁名稱時發生錯誤：{e}")
+            import traceback
+            traceback.print_exc()
 
 
     def init_global_styles(self):
@@ -688,6 +1001,12 @@ class TabManager:
     def init_dut_tab(self):
         # 初始化 DUT 控制分頁
         self.dut_ui = SerialUI(self.dut_frame, self.root, self.highlight_keywords)
+        
+        # 將全域通知管理器傳遞給DUT UI
+        if hasattr(self, 'notification_manager'):
+            self.dut_ui.global_notification_manager = self.notification_manager
+            if hasattr(self.dut_ui, 'components'):
+                self.dut_ui.components.global_notification_manager = self.notification_manager
         
         # 初始化完成後立即更新 DUT 按鈕
         self.update_dut_buttons()

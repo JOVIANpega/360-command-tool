@@ -99,6 +99,12 @@ class UIComponentsBase:
         self.dropdown_boxes = {}
 
 
+        # 左側面板行數追蹤
+
+
+        self.current_left_row = 0
+
+
         # 獲取高亮關鍵字
 
 

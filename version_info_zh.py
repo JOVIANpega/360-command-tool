@@ -13,14 +13,14 @@ import sys
 import datetime
 
 # 設置版本號
-VERSION = "V1.50"
+VERSION = "V1.5.0.1"
 
 # 生成版本資訊檔案
 with open("version_info_zh.txt", "w", encoding="utf-8") as f:
     f.write("VSVersionInfo(\n")
     f.write("  ffi=FixedFileInfo(\n")
-    f.write("    filevers=(1, 50, 0, 0),\n")
-    f.write("    prodvers=(1, 50, 0, 0),\n")
+    f.write("    filevers=(1, 5, 0, 1),\n")
+    f.write("    prodvers=(1, 5, 0, 1),\n")
     f.write("    mask=0x3f,\n")
     f.write("    flags=0x0,\n")
     f.write("    OS=0x40004,\n")
