@@ -369,43 +369,53 @@ class TabManager:
                 self.notebook.select(0)  # 假設DUT控制頁面是第一個分頁
     
     def update_dut_buttons(self):
-        """根據設定檔中的區段標題更新 DUT 控制頁面的按鈕"""
+        """根據當前指令檔案動態更新 DUT 控制頁面的分類按鈕"""
         try:
             # 檢查 dut_ui 和 components 是否存在
             if not hasattr(self, 'dut_ui') or not hasattr(self.dut_ui, 'components'):
                 print("[ERROR] dut_ui 或 components 不存在，無法更新按鈕")
                 return
                 
-            # 獲取設定檔中的區段標題
-            section_titles = self.dut_ui.setup.get("DUT_Control", {}).get("Section_Titles", [])
-            print(f"[DEBUG] update_dut_buttons: 從設定檔中獲取的區段標題: {section_titles}")
+            # 直接從當前指令檔案中讀取區段標題，不依賴設定檔中的快取
+            print("[DEBUG] update_dut_buttons: 從當前指令檔案中讀取區段標題")
             
-            # 如果設定檔中沒有區段標題，嘗試從指令文件中讀取
-            if not section_titles:
-                print("[DEBUG] update_dut_buttons: 設定檔中沒有區段標題，嘗試從指令文件中讀取")
-                
-                # 從設定中獲取指令檔案路徑
-                command_file_path = self.dut_ui.setup.get("DUT_Control", {}).get("Command_File_Path", "")
-                print(f"[DEBUG] update_dut_buttons: 指令檔案路徑: {command_file_path}")
-                
-                if command_file_path and os.path.exists(command_file_path):
-                    print(f"[DEBUG] update_dut_buttons: 使用設定中的指令檔案: {command_file_path}")
+            # 從設定中獲取指令檔案路徑
+            command_file_path = self.dut_ui.setup.get("DUT_Control", {}).get("Command_File_Path", "")
+            print(f"[DEBUG] update_dut_buttons: 指令檔案路徑: {command_file_path}")
+            
+            section_titles = []
+            
+            if command_file_path and os.path.exists(command_file_path):
+                print(f"[DEBUG] update_dut_buttons: 使用設定中的指令檔案: {command_file_path}")
+                try:
+                    with open(command_file_path, 'r', encoding='utf-8') as f:
+                        for line in f:
+                            line = line.strip()
+                            if line.startswith('==') and line.endswith('=='):
+                                section_name = line.strip('=')
+                                if section_name and section_name not in section_titles:
+                                    section_titles.append(section_name)
+                                    print(f"[DEBUG] update_dut_buttons: 從指令文件中找到區段: {section_name}")
+                except Exception as e:
+                    print(f"[ERROR] update_dut_buttons: 讀取指令文件時發生錯誤: {e}")
+                    import traceback
+                    traceback.print_exc()
+            else:
+                # 嘗試使用預設指令檔案
+                print(f"[DEBUG] update_dut_buttons: 指令檔案不存在，嘗試使用預設檔案")
+                from config_core import COMMAND_FILE
+                if os.path.exists(COMMAND_FILE):
                     try:
-                        section_titles = []
-                        with open(command_file_path, 'r', encoding='utf-8') as f:
+                        with open(COMMAND_FILE, 'r', encoding='utf-8') as f:
                             for line in f:
                                 line = line.strip()
                                 if line.startswith('==') and line.endswith('=='):
                                     section_name = line.strip('=')
                                     if section_name and section_name not in section_titles:
                                         section_titles.append(section_name)
-                                        print(f"[DEBUG] update_dut_buttons: 從指令文件中找到區段: {section_name}")
+                                        print(f"[DEBUG] update_dut_buttons: 從預設指令文件中找到區段: {section_name}")
                     except Exception as e:
-                        print(f"[ERROR] update_dut_buttons: 讀取指令文件時發生錯誤: {e}")
-                        import traceback
-                        traceback.print_exc()
-                else:
-                    print(f"[DEBUG] update_dut_buttons: 指令檔案不存在或未指定，使用預設值")
+                        print(f"[ERROR] update_dut_buttons: 讀取預設指令文件時發生錯誤: {e}")
             
             # 如果仍然沒有區段標題，使用預設值
             if not section_titles:

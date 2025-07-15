@@ -470,8 +470,6 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.btn_execute.bind('<Enter>', lambda event: self.btn_execute.config(bg='green'))
         self.btn_execute.bind('<Leave>', lambda event: self.btn_execute.config(bg='#808080'))
 
-        self.current_left_row += 1
-
         # === 移除舊的通知區域功能 ===
         # 原本的通知區域已被全域通知管理器取代，不再需要
         
@@ -544,20 +542,30 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         此方法會重新解析指令文件，並根據當前選擇的分類更新下拉選單的選項。
         當設定中的指令檔路徑變更時，此方法會被調用以重新載入指令。
         """
-        self.update_radio_bg()
-        section = self.section_var.get()
-        # 更新說明文字
-        self.section_description.config(text=self.get_section_description(section))
-        
         # 重新讀取指令文件 - 確保每次都從設定中獲取最新的指令檔路徑
         print("[DEBUG] update_cmd_list: 重新解析指令文件")
         
-        # 強制重新載入設定，確保獲取最新的指令檔路徑
+        # 強制重新載入設定，確保獲取最新的指令檔路徎
         self.parent.setup = self.parent.config.load_setup()
         self.parent.handlers.reload_setup(self.parent.setup)
         
         # 解析指令文件
         self.parent.commands_by_section = self.parent.handlers.parse_commands_by_section()
+        
+        # 檢查是否需要重新生成分類按鈕
+        available_sections = list(self.parent.commands_by_section.keys())
+        current_sections = getattr(self, 'sections', [])
+        
+        print(f"[DEBUG] update_cmd_list: 當前分類按鈕: {current_sections}")
+        print(f"[DEBUG] update_cmd_list: 檔案中的分類: {available_sections}")
+        
+        # 如果分類有變化，重新生成分類按鈕
+        if set(current_sections) != set(available_sections):
+            print("[DEBUG] update_cmd_list: 分類有變化，重新生成分類按鈕")
+            self.regenerate_section_buttons(available_sections)
+        
+        # 獲取當前選擇的分類
+        section = self.section_var.get()
         
         # 檢查當前選擇的分類是否存在於解析後的指令中
         if section not in self.parent.commands_by_section:
@@ -570,6 +578,10 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                 # 如果沒有可用的分類，使用預設值
                 section = '全部指令'
                 self.section_var.set(section)
+        
+        # 更新按鈕背景和說明文字
+        self.update_radio_bg()
+        self.section_description.config(text=self.get_section_description(section))
         
         # 獲取當前分類的指令
         cmds = self.parent.commands_by_section.get(section, {})
@@ -587,6 +599,97 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             self.combobox_cmd.set('')
             
         print(f"[DEBUG] update_cmd_list: 已更新指令下拉選單，共 {len(cmds)} 個指令")
+
+    def regenerate_section_buttons(self, new_sections):
+        """重新生成分類按鈕"""
+        try:
+            print(f"[DEBUG] regenerate_section_buttons: 重新生成分類按鈕，新分類: {new_sections}")
+            
+            # 清除現有的分類按鈕
+            if hasattr(self, 'section_radiobuttons'):
+                for rb in self.section_radiobuttons:
+                    rb.destroy()
+                self.section_radiobuttons = []
+            
+            # 更新分類列表
+            self.sections = new_sections
+            
+            # 更新設定檔中的分類標題
+            self.update_section_titles_in_config(new_sections)
+            
+            # 設定預設選中的分類
+            if self.sections:
+                current_selection = self.section_var.get()
+                if current_selection not in self.sections:
+                    # 如果當前選擇的分類不在新分類中，選擇第一個分類
+                    self.section_var.set(self.sections[0])
+                    print(f"[DEBUG] regenerate_section_buttons: 設定預設選中的分類: {self.sections[0]}")
+            
+            # 限制每行最多顯示4個按鈕
+            max_buttons_per_row = 4
+            self.section_radiobuttons = []
+            
+            # 創建新的分類按鈕
+            for i, sec in enumerate(self.sections):
+                # 計算行和列位置
+                row = i // max_buttons_per_row
+                col = i % max_buttons_per_row
+                
+                rb = tk.Radiobutton(
+                    self.section_frame, text=sec, variable=self.section_var, value=sec, 
+                    command=self.update_cmd_list,
+                    bg='#d9d9d9', fg='black', selectcolor='#d9d9d9', 
+                    activebackground='#2196f3', activeforeground='white',
+                    indicatoron=0, relief='flat', borderwidth=1, width=8, height=1,
+                    font=('Microsoft JhengHei UI', int(self.parent.setup.get('UI_Font_Size', '12')))
+                )
+                rb.grid(row=row, column=col, padx=1, pady=1, sticky='ew')
+                rb.bind("<Enter>", lambda e, b=rb: b.config(bg="#2196f3", fg='white'))
+                rb.bind("<Leave>", lambda e, b=rb: self.update_radio_bg())
+                self.section_radiobuttons.append(rb)
+                
+                # 設置列的權重，使按鈕平均分配空間
+                self.section_frame.columnconfigure(col, weight=1)
+            
+            # 更新按鈕背景色
+            self.update_radio_bg()
+            
+            # 更新說明文字的位置
+            if hasattr(self, 'section_description'):
+                last_row = (len(self.sections) - 1) // max_buttons_per_row + 1
+                self.section_description.grid(row=last_row, column=0, columnspan=max_buttons_per_row, pady=2, sticky='w')
+            
+            print(f"[DEBUG] regenerate_section_buttons: 已重新生成 {len(self.sections)} 個分類按鈕")
+            
+        except Exception as e:
+            print(f"[ERROR] regenerate_section_buttons: 重新生成分類按鈕時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def update_section_titles_in_config(self, section_titles):
+        """更新設定檔中的分類標題"""
+        try:
+            from config_core import load_setup, save_setup
+            
+            # 載入當前設定
+            setup = load_setup()
+            
+            # 確保 DUT_Control 存在
+            if 'DUT_Control' not in setup:
+                setup['DUT_Control'] = {}
+            
+            # 更新分類標題
+            setup['DUT_Control']['Section_Titles'] = section_titles
+            
+            # 保存設定
+            save_setup(setup)
+            
+            print(f"[DEBUG] update_section_titles_in_config: 已更新設定檔中的分類標題: {section_titles}")
+            
+        except Exception as e:
+            print(f"[ERROR] update_section_titles_in_config: 更新設定檔中的分類標題時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
 
     def update_end_strings(self):
         try:

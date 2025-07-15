@@ -1,17 +1,15 @@
-An unexpected error occurred: 'UIComponents' object has no attribute 'refresh_com_ports'
+An unexpected error occurred: 'UIComponents' object has no attribute 'current_left_row'
 Traceback (most recent call last):
-  File "M:\PYTHON\指令工具\360-command-tool\main.py", line 59, in <module>
+  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\main.py", line 117, in <module>
     app = TabManager(root, highlight_keywords=highlight_keywords)
-  File "M:\PYTHON\指令工具\360-command-tool\ui_parts\ui_main.py", line 238, in __init__
+  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\ui_parts\ui_main.py", line 281, in __init__
     self.init_dut_tab()
-    ~~~~~~~~~~~~~~~~~^^
-  File "M:\PYTHON\指令工具\360-command-tool\ui_parts\ui_main.py", line 362, in init_dut_tab
+  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\ui_parts\ui_main.py", line 1003, in init_dut_tab
     self.dut_ui = SerialUI(self.dut_frame, self.root, self.highlight_keywords)
-                  ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "M:\PYTHON\指令工具\360-command-tool\ui_parts\ui_main.py", line 849, in __init__
-    self.reload_and_apply_settings()
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
-  File "M:\PYTHON\指令工具\360-command-tool\ui_parts\ui_main.py", line 1194, in reload_and_apply_settings
-    self.components.refresh_com_ports()
-    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-AttributeError: 'UIComponents' object has no attribute 'refresh_com_ports'
+  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\ui_parts\ui_main.py", line 1529, in __init__
+    self.components = UIComponents(self, self.handlers, self.root)
+  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\ui_parts\ui_components.py", line 57, in __init__
+    self.init_exec_button_left_panel()
+  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\ui_parts\ui_components.py", line 453, in init_exec_button_left_panel
+    exec_frame.grid(row=self.current_left_row, column=0, sticky='ew', padx=5, pady=10)
+AttributeError: 'UIComponents' object has no attribute 'current_left_row'

@@ -59,11 +59,14 @@ if exist "*.spec" del /f /q "*.spec"
 rem 開始打包
 echo 開始打包程式...
 pyinstaller --onefile --clean --noconfirm --icon=assets/app.ico -w --version-file=version_info_zh.txt ^
-  --add-data "Command_TABLE/command.txt;Command_TABLE" ^
-  --add-data "FIXTURE/Fixture_Command.txt;FIXTURE" ^
+  --add-data "Command_TABLE;Command_TABLE" ^
+  --add-data "Command_TABLE/*.txt;Command_TABLE" ^
+  --add-data "FIXTURE;FIXTURE" ^
+  --add-data "FIXTURE/*.txt;FIXTURE" ^
   --add-data "user_guide.txt;." ^
   --add-data "setup.json;." ^
-  --add-data "assets/app.ico;assets" ^
+  --add-data "assets;assets" ^
+  --add-data "ui_parts;ui_parts" ^
   --name "VALO360指令通" main.py
 
 rem 創建必要的目錄

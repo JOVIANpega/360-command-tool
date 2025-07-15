@@ -29,7 +29,130 @@
     "cmd_selected": "已選擇: {0}",
     "delay_cmd": "延遲指令: {0}秒",
     "show_msg": "顯示訊息: {0}",
-    "system_status": "COM口: {0} | 分類: {1} ({2}個指令) | 超時: {3}秒"
+    "system_status": "COM口: {0} | 分類: {1} ({2}個指令) | 超時: {3}秒",
+    "history": [
+      {
+        "timestamp": "15:20:08",
+        "message": "找到 3 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:20:08",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:20:08",
+        "message": "MU310 指令通_test 已啟動 (版本：V1.4.8)",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:20:10",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:20:13",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:20:15",
+        "message": "COM口: COM3 | 分類: 全部指令 (46個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:20:22",
+        "message": "COM口: COM3 | 分類: 全部指令 (46個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:20:32",
+        "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:20:42",
+        "message": "設定已更新！\n• 指令檔案已重新載入\n• COM口設定已更新\n• 結束字串設定已更新\n• IP地址設定已更新\n• 超時設定已更新",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:20:42",
+        "message": "標籤頁名稱已同步更新",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:20:42",
+        "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:20:42",
+        "message": "找到 3 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:20:47",
+        "message": "找到 3 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:21:07",
+        "message": "設定已更新！\n• 指令檔案已重新載入\n• COM口設定已更新\n• 結束字串設定已更新\n• IP地址設定已更新\n• 超時設定已更新",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:21:07",
+        "message": "標籤頁名稱已同步更新",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:21:07",
+        "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:21:07",
+        "message": "找到 3 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:21:10",
+        "message": "找到 3 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:24:14",
+        "message": "找到 3 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:24:14",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:24:15",
+        "message": "MU310 指令通_test 已啟動 (版本：V1.4.8)",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:24:17",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:24:19",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:24:22",
+        "message": "COM口: COM3 | 分類: 全部指令 (18個指令) | 超時: 30秒",
+        "type": "info"
+      }
+    ],
+    "last_updated": "2025-07-15T15:24:22.151475"
   },
   "DUT_Control": {
     "Serial_COM_Port": "COM3",
@@ -45,9 +168,9 @@
     "Window_Width": "1536",
     "Window_Height": "793",
     "Last_Selected_Command_Section": "全部指令",
-    "Pane_Sash_Position": "492",
+    "Pane_Sash_Position": "627",
     "Auto_Execute": false,
-    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/程式代碼/Command_Table/command.txt",
+    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/程式代碼/Command_TABLE/MU310_command.txt",
     "Notification_Font_Size": "10",
     "Section_Titles": [
       "全部指令",
@@ -68,5 +191,11 @@
   "Window_Width": "1536",
   "Window_Height": "793",
   "ContentFontSize": "12",
-  "UIFontSize": "13"
+  "UIFontSize": "13",
+  "tab_names": {
+    "tab0": "DUT 控制",
+    "tab1": "治具控制",
+    "tab2": "DOS",
+    "tab3": "設定"
+  }
 }

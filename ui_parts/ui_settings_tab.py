@@ -61,7 +61,7 @@ class SettingsTab(ttk.Frame):
         
         # 應用程式版本
         ttk.Label(basic_frame, text="應用程式版本:").grid(row=0, column=0, sticky="w", pady=4)
-        self.vars["version"] = tk.StringVar(value=self.setup_data.get("version", "V1.5.0.1"))
+        self.vars["version"] = tk.StringVar(value=self.setup_data.get("version", "V1.5.0.2"))
         ttk.Entry(basic_frame, textvariable=self.vars["version"], width=30).grid(row=0, column=1, sticky="ew", padx=(10, 0), pady=4)
         
         # 視窗標題
@@ -317,7 +317,7 @@ class SettingsTab(ttk.Frame):
             # 更新所有變量
             for var_name, var in self.vars.items():
                 if var_name == "version":
-                    var.set(self.setup_data.get("version", "V1.5.0.1"))
+                    var.set(self.setup_data.get("version", "V1.5.0.2"))
                 elif var_name == "Window_Title":
                     var.set(self.setup_data.get("Window_Title", "VALO360 指令通"))
                 elif var_name == "Window_Width":

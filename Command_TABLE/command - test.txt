@@ -22,7 +22,8 @@
 
 
 ==整機==
-
+16. 檢查LED燈狀態 Check LED = SHOW:確認LED綠燈橘燈熄滅，三種狀態...|diag -s led g off|diag -s led o off|diag -s led g on|diag -s led o on
+17. 檢查按鍵 Check 按鍵 = diag -s keySw|DELAY:10|diag -g keySw
 
 
 
