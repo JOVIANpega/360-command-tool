@@ -73,6 +73,8 @@ default_setup = {
 
         'Default_IP_Address': '192.168.11.143',
 
+        'IP_History': [],  # 新增IP記錄欄位
+
         'Window_Width': '800',
 
         'Window_Height': '600',
@@ -583,3 +585,66 @@ def load_highlight_keywords():
         traceback.print_exc()
 
         return {} 
+
+
+
+def load_color_word():
+    """
+    從 color_word.txt 讀取關鍵字與顏色對應，回傳 dict。
+    檔案格式：keyword=color，每行一組。
+    支援顏色名稱與 #HEX，遇到錯誤自動略過。
+    """
+    color_word_file = resource_path('color_word.txt')
+    color_dict = {}
+    valid_colors = [
+        'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'black', 'white', 'gray', 'pink', 'brown', 'cyan', 'magenta'
+    ]
+    try:
+        if not os.path.exists(color_word_file):
+            print(f"[WARNING] 找不到 color_word.txt：{color_word_file}")
+            return color_dict
+        with open(color_word_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                if '=' in line:
+                    keyword, color = line.split('=', 1)
+                    keyword = keyword.strip()
+                    color = color.strip()
+                    if not keyword or not color:
+                        continue
+                    # 檢查顏色是否合法
+                    if color.lower() not in valid_colors and not color.startswith('#'):
+                        print(f"[WARNING] color_word.txt 無效顏色：{color}，自動略過")
+                        continue
+                    color_dict[keyword] = color
+        print(f"[INFO] color_word.txt 載入 {len(color_dict)} 組關鍵字高亮")
+    except Exception as e:
+        print(f"[ERROR] 讀取 color_word.txt 發生錯誤: {e}")
+    return color_dict
+
+def reload_color_word():
+    """
+    重新載入 color_word.txt，用於即時更新關鍵字高亮設定
+    """
+    print("[INFO] 重新載入 color_word.txt...")
+    return load_color_word()
+
+def open_color_word_editor():
+    """
+    開啟 color_word.txt 進行編輯
+    """
+    color_word_file = resource_path('color_word.txt')
+    try:
+        if platform.system() == 'Windows':
+            os.startfile(color_word_file)
+        elif platform.system() == 'Darwin':  # macOS
+            os.system(f'open "{color_word_file}"')
+        else:  # Linux
+            os.system(f'xdg-open "{color_word_file}"')
+        print(f"[INFO] 已開啟關鍵字設定檔：{color_word_file}")
+        return True
+    except Exception as e:
+        print(f"[ERROR] 無法開啟關鍵字設定檔：{e}")
+        return False 

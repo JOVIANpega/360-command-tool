@@ -269,20 +269,47 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         print('[DEBUG] handlers in init_ping_components:', self.parent.handlers)
         ping_frame = ttk.LabelFrame(self.left_panel, text='Ping 檢查', padding=5, style="TLabelframe")
         ping_frame.grid(row=3, column=0, sticky='ew', pady=5)  # 減少間距
+        
+        # IP輸入區域
         ip_frame = ttk.Frame(ping_frame, style="TFrame")
         ip_frame.grid(row=0, column=0, sticky='ew', pady=1)  # 減少間距
         ip_frame.columnconfigure(1, weight=1)
         self.label_ip = ttk.Label(ip_frame, text='IP地址:', style="TLabel")
         self.label_ip.grid(row=0, column=0, sticky='w')
-        self.entry_ip = ttk.Entry(ip_frame, width=15)
+        
+        # 使用Combobox替代Entry，支援IP記錄
+        self.entry_ip = ttk.Combobox(ip_frame, width=15)
         self.entry_ip.grid(row=0, column=1, padx=5, sticky='ew')
-        default_ip = self.parent.setup.get('Default_IP_Address', '192.168.11.143')
-        self.entry_ip.delete(0, tk.END)
-        self.entry_ip.insert(0, default_ip)
-        self.btn_ping = tk.Button(ip_frame, text='Ping', command=lambda: self.parent.handlers.on_ping(), bg='white', fg='black')
+        
+        # 載入並設定IP記錄
+        self.load_ip_history()
+        default_ip = self.parent.setup.get('DUT_Control', {}).get('Default_IP_Address', '192.168.11.143')
+        self.entry_ip.set(default_ip)
+        
+        # Ping按鈕
+        self.btn_ping = tk.Button(ip_frame, text='Ping', command=self.on_ping_with_save, bg='white', fg='black')
         self.btn_ping.grid(row=0, column=2, padx=5)
         self.btn_ping.bind("<Enter>", lambda e: self.btn_ping.config(bg="#ff9999"))
         self.btn_ping.bind("<Leave>", lambda e: self.btn_ping.config(bg="white"))
+        
+        # IP管理按鈕區域
+        ip_mgmt_frame = ttk.Frame(ping_frame, style="TFrame")
+        ip_mgmt_frame.grid(row=1, column=0, sticky='ew', pady=2)
+        
+        # 保存IP按鈕
+        self.btn_save_ip = tk.Button(ip_mgmt_frame, text='保存IP', command=self.save_current_ip, 
+                                    bg='#e6ffe6', fg='black', width=8)
+        self.btn_save_ip.grid(row=0, column=0, padx=2)
+        
+        # 刪除IP按鈕
+        self.btn_delete_ip = tk.Button(ip_mgmt_frame, text='刪除IP', command=self.delete_current_ip, 
+                                      bg='#ffe6e6', fg='black', width=8)
+        self.btn_delete_ip.grid(row=0, column=1, padx=2)
+        
+        # 清空記錄按鈕
+        self.btn_clear_ip = tk.Button(ip_mgmt_frame, text='清空記錄', command=self.clear_ip_history, 
+                                     bg='#fff0e6', fg='black', width=8)
+        self.btn_clear_ip.grid(row=0, column=2, padx=2)
 
     def init_settings_components(self):
         settings_frame = ttk.LabelFrame(self.left_panel, text='設定', padding=5, style="TLabelframe")
@@ -699,61 +726,42 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.combobox_end['values'] = end_strings
 
     def add_to_buffer(self, text, tag=None):
-        # 如果正在顯示使用說明，則不添加內容
         if hasattr(self.parent, 'showing_guide') and self.parent.showing_guide:
             return
-            
-        # 設為可編輯狀態
         self.text_output.configure(state='normal')
-        
-        # 若是 [送出] 開頭自動用 send tag
         if text.startswith('[發送]'):
             self.text_output.insert(tk.END, text, "send")
-        # 若是 [結束] 開頭自動用 end tag
         elif text.startswith('[結束]'):
             self.text_output.insert(tk.END, text, "end")
-        # 若是包含 inserted 的行，使用 purple tag
         elif "inserted" in text:
             self.text_output.insert(tk.END, text, "purple")
-        # 其他情況使用指定的 tag
         elif tag:
             self.text_output.insert(tk.END, text, tag)
         else:
-            # 檢查是否包含關鍵字，如果有則只高亮關鍵字部分
-            if hasattr(self.parent, 'highlight_keywords') and self.parent.highlight_keywords:
-                # 先插入文字
+            # 關鍵字高亮：每行只要包含 color_word.txt 的任一關鍵字就上色
+            if hasattr(self.parent, 'highlight_keywords') and self.parent.highlight_keywords and hasattr(self, 'keyword_tag_map'):
                 start_pos = self.text_output.index(tk.END)
                 self.text_output.insert(tk.END, text)
                 
-                # 檢查關鍵字並應用標籤
-                for keyword, color in self.parent.highlight_keywords.items():
-                    if keyword in text:
-                        # 找出所有關鍵字出現的位置
-                        start = start_pos
-                        while True:
-                            # 從當前位置開始搜索關鍵字
-                            pos = self.text_output.search(keyword, start, tk.END)
-                            if not pos:
-                                break
-                                
-                            # 計算關鍵字結束位置
-                            end_pos = f"{pos}+{len(keyword)}c"
-                            
-                            # 應用標籤 - 只對關鍵字本身應用
-                            try:
-                                self.text_output.tag_add(color, pos, end_pos)
-                            except Exception as e:
-                                print(f"[ERROR] 應用標籤時發生錯誤: {e}")
-                            
-                            # 更新搜索起點
-                            start = end_pos
-            else:
-                # 如果沒有關鍵字，直接插入文字
-                self.text_output.insert(tk.END, text)
+                # 按關鍵字長度降序排列，讓較長的關鍵字優先匹配
+                sorted_keywords = sorted(self.keyword_tag_map.items(), key=lambda x: len(x[0]), reverse=True)
                 
-        # 自動捲到最底
+                for keyword, tag_name in sorted_keywords:
+                    search_start = start_pos
+                    while True:
+                        idx = self.text_output.search(keyword, search_start, tk.END)
+                        if not idx:
+                            break
+                        end_idx = f"{idx}+{len(keyword)}c"
+                        try:
+                            self.text_output.tag_add(tag_name, idx, end_idx)
+                            print(f"[DEBUG] 應用關鍵字高亮: '{keyword}' 於位置 {idx}-{end_idx}, 標籤: {tag_name}")
+                        except Exception as e:
+                            print(f"[ERROR] tag_add 失敗: {e}")
+                        search_start = end_idx
+            else:
+                self.text_output.insert(tk.END, text)
         self.text_output.see(tk.END)
-        # 設回唯讀狀態
         self.text_output.configure(state='disabled')
 
     def flush_buffer(self):
@@ -1165,3 +1173,212 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             print(f"[ERROR] 顯示右鍵菜單時發生錯誤: {e}")
             import traceback
             traceback.print_exc()
+
+    def load_ip_history(self):
+        """載入IP記錄到下拉選單"""
+        try:
+            from config_core import load_setup
+            setup = load_setup()
+            ip_history = setup.get('DUT_Control', {}).get('IP_History', [])
+            
+            # 確保IP記錄是列表
+            if not isinstance(ip_history, list):
+                ip_history = []
+            
+            # 移除重複項目並保持順序
+            unique_ips = []
+            for ip in ip_history:
+                if ip not in unique_ips:
+                    unique_ips.append(ip)
+            
+            # 限制最多保存20個IP記錄
+            if len(unique_ips) > 20:
+                unique_ips = unique_ips[-20:]
+            
+            self.entry_ip['values'] = unique_ips
+            print(f"[INFO] 載入 {len(unique_ips)} 個IP記錄")
+            
+        except Exception as e:
+            print(f"[ERROR] 載入IP記錄時發生錯誤: {e}")
+            self.entry_ip['values'] = []
+
+    def save_current_ip(self):
+        """保存當前IP到記錄中"""
+        try:
+            current_ip = self.entry_ip.get().strip()
+            if not current_ip:
+                from tkinter import messagebox
+                messagebox.showwarning("警告", "請輸入IP地址")
+                return
+                
+            # 簡單的IP格式檢查
+            import re
+            ip_pattern = r'^(\d{1,3}\.){3}\d{1,3}$'
+            if not re.match(ip_pattern, current_ip):
+                from tkinter import messagebox
+                messagebox.showwarning("警告", "請輸入有效的IP地址格式")
+                return
+            
+            from config_core import load_setup, save_setup
+            setup = load_setup()
+            
+            if 'DUT_Control' not in setup:
+                setup['DUT_Control'] = {}
+            if 'IP_History' not in setup['DUT_Control']:
+                setup['DUT_Control']['IP_History'] = []
+            
+            ip_history = setup['DUT_Control']['IP_History']
+            
+            # 如果IP已存在，先移除然後加到最前面
+            if current_ip in ip_history:
+                ip_history.remove(current_ip)
+            ip_history.insert(0, current_ip)
+            
+            # 限制最多保存20個記錄
+            if len(ip_history) > 20:
+                ip_history = ip_history[:20]
+            
+            setup['DUT_Control']['IP_History'] = ip_history
+            save_setup(setup)
+            
+            # 重新載入下拉選單
+            self.load_ip_history()
+            
+            from tkinter import messagebox
+            messagebox.showinfo("成功", f"IP地址 {current_ip} 已保存到記錄中")
+            print(f"[INFO] IP {current_ip} 已保存到記錄")
+            
+        except Exception as e:
+            print(f"[ERROR] 保存IP記錄時發生錯誤: {e}")
+            from tkinter import messagebox
+            messagebox.showerror("錯誤", f"保存IP記錄失敗: {e}")
+
+    def delete_current_ip(self):
+        """從記錄中刪除當前選中的IP"""
+        try:
+            current_ip = self.entry_ip.get().strip()
+            if not current_ip:
+                from tkinter import messagebox
+                messagebox.showwarning("警告", "請選擇要刪除的IP地址")
+                return
+                
+            from config_core import load_setup, save_setup
+            setup = load_setup()
+            
+            ip_history = setup.get('DUT_Control', {}).get('IP_History', [])
+            
+            if current_ip not in ip_history:
+                from tkinter import messagebox
+                messagebox.showwarning("警告", "該IP地址不在記錄中")
+                return
+            
+            # 詢問確認
+            from tkinter import messagebox
+            result = messagebox.askyesno("確認刪除", f"確定要刪除IP地址 {current_ip} 嗎？")
+            if not result:
+                return
+            
+            ip_history.remove(current_ip)
+            setup['DUT_Control']['IP_History'] = ip_history
+            save_setup(setup)
+            
+            # 重新載入下拉選單
+            self.load_ip_history()
+            
+            # 清空輸入框
+            self.entry_ip.set("")
+            
+            messagebox.showinfo("成功", f"IP地址 {current_ip} 已從記錄中刪除")
+            print(f"[INFO] IP {current_ip} 已從記錄中刪除")
+            
+        except Exception as e:
+            print(f"[ERROR] 刪除IP記錄時發生錯誤: {e}")
+            from tkinter import messagebox
+            messagebox.showerror("錯誤", f"刪除IP記錄失敗: {e}")
+
+    def clear_ip_history(self):
+        """清空所有IP記錄"""
+        try:
+            from tkinter import messagebox
+            result = messagebox.askyesno("確認清空", "確定要清空所有IP記錄嗎？此操作無法恢復。")
+            if not result:
+                return
+                
+            from config_core import load_setup, save_setup
+            setup = load_setup()
+            
+            if 'DUT_Control' not in setup:
+                setup['DUT_Control'] = {}
+            setup['DUT_Control']['IP_History'] = []
+            save_setup(setup)
+            
+            # 重新載入下拉選單
+            self.load_ip_history()
+            
+            messagebox.showinfo("成功", "所有IP記錄已清空")
+            print(f"[INFO] 所有IP記錄已清空")
+            
+        except Exception as e:
+            print(f"[ERROR] 清空IP記錄時發生錯誤: {e}")
+            from tkinter import messagebox
+            messagebox.showerror("錯誤", f"清空IP記錄失敗: {e}")
+
+    def on_ping_with_save(self):
+        """執行Ping並自動保存IP到記錄"""
+        try:
+            current_ip = self.entry_ip.get().strip()
+            if current_ip:
+                # 執行Ping前自動保存IP到記錄
+                self.save_current_ip_silent()
+            
+            # 執行Ping操作
+            if hasattr(self.parent, 'handlers') and hasattr(self.parent.handlers, 'on_ping'):
+                self.parent.handlers.on_ping()
+            else:
+                print("[ERROR] 找不到ping處理程序")
+                
+        except Exception as e:
+            print(f"[ERROR] 執行Ping時發生錯誤: {e}")
+
+    def save_current_ip_silent(self):
+        """靜默保存當前IP（不顯示訊息框）"""
+        try:
+            current_ip = self.entry_ip.get().strip()
+            if not current_ip:
+                return
+                
+            # 簡單的IP格式檢查
+            import re
+            ip_pattern = r'^(\d{1,3}\.){3}\d{1,3}$'
+            if not re.match(ip_pattern, current_ip):
+                return
+            
+            from config_core import load_setup, save_setup
+            setup = load_setup()
+            
+            if 'DUT_Control' not in setup:
+                setup['DUT_Control'] = {}
+            if 'IP_History' not in setup['DUT_Control']:
+                setup['DUT_Control']['IP_History'] = []
+            
+            ip_history = setup['DUT_Control']['IP_History']
+            
+            # 如果IP已存在，先移除然後加到最前面
+            if current_ip in ip_history:
+                ip_history.remove(current_ip)
+            ip_history.insert(0, current_ip)
+            
+            # 限制最多保存20個記錄
+            if len(ip_history) > 20:
+                ip_history = ip_history[:20]
+            
+            setup['DUT_Control']['IP_History'] = ip_history
+            save_setup(setup)
+            
+            # 重新載入下拉選單
+            self.load_ip_history()
+            
+            print(f"[INFO] IP {current_ip} 已自動保存到記錄")
+            
+        except Exception as e:
+            print(f"[ERROR] 自動保存IP記錄時發生錯誤: {e}")

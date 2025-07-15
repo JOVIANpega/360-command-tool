@@ -114,7 +114,7 @@ class UIComponentsOutput:
             
 
 
-            # 為高亮關鍵字定義標籤
+            # 為高亮關鍵字定義標籤，使用特殊前綴確保優先權
 
 
             print(f"[DEBUG] 初始化關鍵字高亮標籤，parent={self.parent}")
@@ -126,7 +126,7 @@ class UIComponentsOutput:
                 print(f"[DEBUG] highlight_keywords={self.parent.highlight_keywords}")
 
 
-                # 創建關鍵字到標籤的映射
+                # 建立 keyword -> tag_name 對應，確保每個關鍵字唯一 tag
 
 
                 self.keyword_tag_map = {}
@@ -141,13 +141,16 @@ class UIComponentsOutput:
                     print(f"[DEBUG] 創建關鍵字標籤: {keyword} -> {color}")
 
 
-                    # 為每個關鍵字創建唯一的標籤名稱
+                    # 為每個關鍵字創建唯一的標籤名稱，使用 keyword_ 前綴避免衝突
 
 
-                    tag_name = f"keyword_{keyword}_{color}"
+                    tag_name = f"keyword_{keyword}_{color}_{id(self)}"
 
 
                     try:
+
+
+                        # 設定關鍵字標籤，優先權設為最高
 
 
                         self.text_output.tag_configure(tag_name, foreground=color)
@@ -159,16 +162,37 @@ class UIComponentsOutput:
                         self.keyword_tag_map[keyword] = tag_name
 
 
+                        print(f"[DEBUG] 成功創建關鍵字標籤: {tag_name}")
+
+
                     except Exception as e:
 
 
-                        print(f"[ERROR] 無法創建標籤 {tag_name}，錯誤: {e}")
+                        print(f"[ERROR] 無法建立標籤 {tag_name}，錯誤: {e}")
 
 
                         # 使用預設標籤
 
 
                         self.keyword_tag_map[keyword] = "send"
+
+
+                # 設定標籤優先權：關鍵字標籤優先於系統標籤
+
+
+                for tag_name in self.keyword_tag_map.values():
+
+
+                    try:
+
+
+                        self.text_output.tag_raise(tag_name)
+
+
+                    except:
+
+
+                        pass
 
 
             else:
@@ -444,13 +468,10 @@ class UIComponentsOutput:
         else:
 
 
-            # 檢查是否包含關鍵字，如果有則只高亮關鍵字部分
+            # 關鍵字高亮：每行只要包含 color_word.txt 的任一關鍵字就上色
 
 
             if hasattr(self.parent, 'highlight_keywords') and self.parent.highlight_keywords and hasattr(self, 'keyword_tag_map'):
-
-
-                # 先插入文字
 
 
                 start_pos = self.text_output.index(tk.END)
@@ -462,103 +483,106 @@ class UIComponentsOutput:
                 
 
 
-                # 檢查關鍵字並應用標籤
+                # 按關鍵字長度降序排列，讓較長的關鍵字優先匹配
 
 
-                for keyword, tag_name in self.keyword_tag_map.items():
+                sorted_keywords = sorted(self.keyword_tag_map.items(), key=lambda x: len(x[0]), reverse=True)
 
 
-                    # 不區分大小寫的關鍵字檢查
+                
 
 
-                    text_lower = text.lower()
+                found_keywords = []  # 記錄找到的關鍵字，用於調試
 
 
-                    keyword_lower = keyword.lower()
+                
 
 
-                    
+                for keyword, tag_name in sorted_keywords:
 
 
-                    if keyword_lower in text_lower:
+                    search_start = start_pos
 
 
-                        # 獲取插入點的行號
+                    keyword_found = False
 
 
-                        line = start_pos.split('.')[0]
+                    while True:
 
 
-                        
+                        idx = self.text_output.search(keyword, search_start, tk.END)
 
 
-                        # 在文本中查找所有關鍵字出現的位置
+                        if not idx:
 
 
-                        start_idx = 0
+                            break
 
 
-                        while True:
+                            
 
 
-                            idx = text_lower.find(keyword_lower, start_idx)
+                        end_idx = f"{idx}+{len(keyword)}c"
 
 
-                            if idx == -1:
+                        try:
 
 
-                                break
+                            # 先移除該區域的其他標籤，確保關鍵字標籤優先
+
+
+                            for tag in self.text_output.tag_names(idx):
+
+
+                                if not tag.startswith('keyword_'):
+
+
+                                    self.text_output.tag_remove(tag, idx, end_idx)
+
+
+                            
+
+
+                            self.text_output.tag_add(tag_name, idx, end_idx)
+
+
+                            
+
+
+                            if not keyword_found:
+
+
+                                found_keywords.append(keyword)
+
+
+                                keyword_found = True
 
 
                                 
 
 
-                            # 計算在文本中的實際位置
+                            print(f"[DEBUG] 成功應用關鍵字高亮: '{keyword}' 於位置 {idx}-{end_idx}, 標籤: {tag_name}")
 
 
-                            start_col = int(start_pos.split('.')[1]) + idx
+                        except Exception as e:
 
 
-                            pos = f"{line}.{start_col}"
-
-
-                            
-
-
-                            # 計算關鍵字結束位置
-
-
-                            end_col = start_col + len(keyword)
-
-
-                            end_pos = f"{line}.{end_col}"
+                            print(f"[ERROR] tag_add 失敗: {e}")
 
 
                             
 
 
-                            # 應用標籤 - 只對關鍵字本身應用
+                        search_start = end_idx
 
 
-                            try:
+                
 
 
-                                self.text_output.tag_add(tag_name, pos, end_pos)
+                if found_keywords:
 
 
-                            except Exception as e:
-
-
-                                print(f"[ERROR] 應用標籤時發生錯誤: {e}")
-
-
-                            
-
-
-                            # 更新搜索起點
-
-
-                            start_idx = idx + len(keyword_lower)
+                    print(f"[INFO] 本行找到關鍵字: {found_keywords}")
 
 
             else:
