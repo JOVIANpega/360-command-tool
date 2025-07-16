@@ -145,14 +145,9 @@
         "timestamp": "16:55:36",
         "message": "MU310 指令通_test 已啟動 (版本：VV1.5.0.5)",
         "type": "success"
-      },
-      {
-        "timestamp": "16:55:38",
-        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
-        "type": "success"
       }
     ],
-    "last_updated": "2025-07-16T16:55:38.164687"
+    "last_updated": "2025-07-16T16:55:36.098073"
   },
   "DUT_Control": {
     "Serial_COM_Port": "COM5",

@@ -49,525 +49,491 @@ class FixtureControlWindow:
         
         # 只有在根視窗是 Tk 實例時才設定視窗屬性
         if isinstance(root, tk.Tk):
-            self.root.title("制具控制系統")
-            self.root.geometry("800x700")
-            self.root.resizable(True, True)
+            self.root.title("制具控制測試")
+            self.root.geometry("800x600")
         
-        # 設定字體大小
-        self.font_size = 12
+        # 初始化變數
+        self.setup_variables()
         
-        # 初始化 COM 埠
-        self.serial_connection = None
-        self.available_ports = []
-        
-        # 初始化 ToolTip 管理器
-        try:
-            self.tooltip_manager = ToolTipManager()
-        except Exception as e:
-            print(f"ToolTip 管理器初始化失敗: {e}")
-            # 提供一個備用的 ToolTip 管理器
-            class DummyToolTipManager:
-                def add_tooltip(self, widget, text):
-                    pass
-            self.tooltip_manager = DummyToolTipManager()
-        
-        # 讀取設定檔
+        # 載入設定
         self.load_settings()
         
-        # 初始化指令資料
-        self.command_data = {}
-        self.current_selected_command = ""
+        # 載入指令數據
+        self.load_commands()
         
-        # 載入指令檔案
-        self.load_command_file()
+        # 建立界面
+        self.create_interface()
         
-        # 建立 GUI
-        self.create_gui()
+        # 初始化 ToolTip
+        try:
+            self.tooltip_manager = ToolTipManager(self.root)
+        except:
+            self.tooltip_manager = None
         
-        # 更新 COM 埠列表
-        self.refresh_com_ports()
+        # 設定 ToolTips
+        self.setup_tooltips()
+
+    def setup_variables(self):
+        """初始化變數"""
+        self.serial_connection = None
+        self.commands = {
+            'FUNCTION': [],
+            'MB': [], 
+            '原始的指令': []
+        }
+        self.description_text = ""
+        
+        # 測試類別變數 (只能選一個)
+        self.test_category_vars = {
+            'FUNCTION': tk.BooleanVar(),
+            'MB': tk.BooleanVar(),
+            '原始的指令': tk.BooleanVar()
+        }
+        
+        # 預設選擇FUNCTION
+        self.test_category_vars['FUNCTION'].set(True)
+        self.current_category = 'FUNCTION'
+        
+        # 串列設定變數  
+        self.baudrate_var = tk.StringVar(value="9600")
+        self.bytesize_var = tk.StringVar(value="8")
+        self.stopbits_var = tk.StringVar(value="1")
+        self.parity_var = tk.StringVar(value="None")
+        self.timeout_var = tk.StringVar(value="1.0")
 
     def load_settings(self):
         """載入設定檔"""
         try:
-            setup_file = resource_path("setup.json")
-            if os.path.exists(setup_file):
-                with open(setup_file, 'r', encoding='utf-8') as f:
-                    self.settings = json.load(f)
-            else:
-                self.settings = {}
+            setup_path = resource_path("setup.json")
+            if os.path.exists(setup_path):
+                with open(setup_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+                
+                # 載入制具控制設定
+                fixture_settings = settings.get('Fixture_Control', {})
+                
+                # 載入測試類別設定
+                self.test_category_vars['FUNCTION'].set(
+                    fixture_settings.get('Test_Category_FUNCTION', True))
+                self.test_category_vars['MB'].set(
+                    fixture_settings.get('Test_Category_MB', False))
+                self.test_category_vars['原始的指令'].set(
+                    fixture_settings.get('Test_Category_Original_Commands', False))
+                
+                # 確定當前選擇的類別
+                for category, var in self.test_category_vars.items():
+                    if var.get():
+                        self.current_category = category
+                        break
+                
+                # 載入串列設定
+                serial_settings = fixture_settings.get('Serial_Settings', {})
+                self.baudrate_var.set(serial_settings.get('Baudrate', '9600'))
+                self.bytesize_var.set(serial_settings.get('Bytesize', '8'))
+                self.stopbits_var.set(serial_settings.get('Stopbits', '1'))
+                self.parity_var.set(serial_settings.get('Parity', 'None'))
+                self.timeout_var.set(serial_settings.get('Timeout', '1.0'))
+                
+                # 載入字體大小設定
+                self.font_size = int(settings.get('UIFontSize', 11))
+                
         except Exception as e:
-            print(f"載入設定檔失敗: {e}")
-            self.settings = {}
-        
-        # 取得制具控制設定
-        self.fixture_settings = self.settings.get("Fixture_Control", {})
-        self.font_size = int(self.fixture_settings.get("Fixture_Font_Size", 12))
-        
-        # 取得串列埠設定
-        self.serial_settings = self.fixture_settings.get("Serial_Settings", {})
-        self.baudrate = int(self.serial_settings.get("Baudrate", "9600"))
-        self.bytesize = int(self.serial_settings.get("Bytesize", "8"))
-        self.stopbits = int(self.serial_settings.get("Stopbits", "1"))
-        self.parity = self.serial_settings.get("Parity", "None")
-        self.timeout = float(self.serial_settings.get("Timeout", "1.0"))
+            print(f"載入設定時發生錯誤: {e}")
+            self.font_size = 11
 
-    def load_command_file(self):
+    def load_commands(self):
         """載入指令檔案"""
         try:
             command_file = resource_path("FIXTURE/Fixture_Command.txt")
             if not os.path.exists(command_file):
                 messagebox.showerror("錯誤", f"找不到指令檔案: {command_file}")
                 return
-            
+                
             with open(command_file, 'r', encoding='utf-8') as f:
-                content = f.read()
+                content = f.read().strip()
             
-            # 解析檔案內容
-            self.command_data = {}
+            # 解析說明文字
+            lines = content.split('\n')
+            for line in lines:
+                if line.startswith('說明文='):
+                    self.description_text = line[3:].strip()  # 移除 '說明文=' 
+                    break
+                    
+            # 解析各個區段
+            sections = content.split('\n\n')
             current_section = None
             
-            for line in content.split('\n'):
-                line = line.strip()
-                if not line:
+            for section in sections:
+                lines = section.strip().split('\n')
+                if not lines:
                     continue
-                
-                # 檢查是否為區段標題
-                if line.endswith(':'):
-                    current_section = line[:-1]
-                    self.command_data[current_section] = []
-                elif current_section and ' - ' in line:
-                    # 解析指令行 (格式: "F - 給電")
-                    parts = line.split(' - ', 1)
-                    if len(parts) == 2:
-                        code = parts[0].strip()
-                        description = parts[1].strip()
-                        self.command_data[current_section].append({
-                            'code': code,
-                            'description': description,
-                            'display': f"{code} - {description}"
-                        })
-            
-            print(f"已載入指令資料: {list(self.command_data.keys())}")
-            
+                    
+                if lines[0].endswith(':'):
+                    current_section = lines[0][:-1]  # 移除冒號
+                    if current_section in self.commands:
+                        # 解析指令行
+                        for line in lines[1:]:
+                            if ' - ' in line and line.strip():
+                                code, desc = line.split(' - ', 1)
+                                self.commands[current_section].append({
+                                    'code': code.strip(),
+                                    'description': desc.strip()
+                                })
+                                
         except Exception as e:
-            print(f"載入指令檔案失敗: {e}")
-            messagebox.showerror("錯誤", f"載入指令檔案失敗: {e}")
+            messagebox.showerror("錯誤", f"載入指令檔案時發生錯誤: {e}")
 
-    def create_gui(self):
-        """建立 GUI 介面"""
+    def create_interface(self):
+        """建立使用者界面"""
         # 主框架
-        main_frame = ttk.Frame(self.root, padding="10")
-        main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        main_frame = ttk.Frame(self.root)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
-        # 配置網格權重
-        self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(0, weight=1)
-        main_frame.columnconfigure(1, weight=1)
+        # 說明區域 (置頂)
+        self.create_description_area(main_frame)
         
-        # ===== 說明區域 =====
-        desc_frame = ttk.LabelFrame(main_frame, text="制具控制說明", padding="10")
-        desc_frame.grid(row=0, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
+        # 控制區域 (整合測試類別選擇與指令操作)
+        self.create_control_area(main_frame)
         
-        desc_text = """本頁為制具控制區，目前僅支援控制 XX 廠商的自動化測試制具，請依功能選擇控制按鈕。
-選擇測試類別後，可從下拉選單選擇指令，按執行按鈕送出對應代碼至 COM 埠。"""
+        # 串列參數顯示區域
+        self.create_serial_info_area(main_frame)
         
-        desc_label = tk.Label(desc_frame, text=desc_text, wraplength=750, 
-                             justify=tk.LEFT, font=("Arial", self.font_size))
-        desc_label.pack(anchor=tk.W)
+        # 執行結果區域  
+        self.create_result_area(main_frame)
+
+    def create_description_area(self, parent):
+        """建立說明區域"""
+        desc_frame = ttk.LabelFrame(parent, text="制具說明", padding="5")
+        desc_frame.pack(fill=tk.X, pady=(0, 10))
         
-        # ===== COM 埠設定區域 =====
-        com_frame = ttk.LabelFrame(main_frame, text="COM 埠設定", padding="10")
-        com_frame.grid(row=1, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
+        # 說明文字標籤 (不可編輯)
+        self.desc_label = tk.Label(
+            desc_frame, 
+            text=self.description_text if self.description_text else "載入說明文字中...",
+            font=("微軟正黑體", self.font_size),
+            justify=tk.LEFT,
+            anchor='w',
+            wraplength=750,
+            bg='#f8f9fa',
+            relief=tk.SUNKEN,
+            bd=1,
+            padx=10,
+            pady=5
+        )
+        self.desc_label.pack(fill=tk.X)
+
+    def create_control_area(self, parent):
+        """建立控制區域 (整合測試類別與指令選擇)"""
+        control_frame = ttk.LabelFrame(parent, text="指令控制", padding="10")
+        control_frame.pack(fill=tk.X, pady=(0, 10))
         
-        # COM 埠選擇
-        tk.Label(com_frame, text="COM 埠:", font=("Arial", self.font_size)).grid(row=0, column=0, padx=(0, 10), sticky=tk.W)
-        self.com_port_var = tk.StringVar()
-        self.com_port_combo = ttk.Combobox(com_frame, textvariable=self.com_port_var, 
-                                          font=("Arial", self.font_size), width=15)
-        self.com_port_combo.grid(row=0, column=1, padx=(0, 10), sticky=tk.W)
+        # 第一行：測試類別選擇
+        category_frame = ttk.Frame(control_frame)
+        category_frame.pack(fill=tk.X, pady=(0, 10))
         
-        # 重新整理按鈕
-        refresh_btn = tk.Button(com_frame, text="重新整理", font=("Arial", self.font_size),
-                               command=self.refresh_com_ports, bg="#4CAF50", fg="white",
-                               width=10, height=1)
-        refresh_btn.grid(row=0, column=2, padx=(0, 10))
-        self.tooltip_manager.add_tooltip(refresh_btn, "重新取得可用的 COM 埠")
+        tk.Label(category_frame, text="測試類別:", font=("微軟正黑體", self.font_size)).pack(side=tk.LEFT)
         
-        # 串列埠設定顯示
-        tk.Label(com_frame, text="串列參數:", font=("Arial", self.font_size)).grid(row=1, column=0, padx=(0, 10), sticky=tk.W)
-        serial_params_text = f"波特率:{self.baudrate} | 資料位元:{self.bytesize} | 停止位元:{self.stopbits} | 奇偶校驗:{self.parity} | 超時:{self.timeout}s"
-        serial_params_label = tk.Label(com_frame, text=serial_params_text, font=("Arial", self.font_size - 1),
-                                      fg="blue", wraplength=500, justify=tk.LEFT)
-        serial_params_label.grid(row=1, column=1, columnspan=2, padx=(0, 10), sticky=tk.W)
+        # 建立類別勾選框 (具有單選邏輯)
+        for i, (category, var) in enumerate(self.test_category_vars.items()):
+            checkbox = ttk.Checkbutton(
+                category_frame, 
+                text=category,
+                variable=var,
+                command=lambda cat=category: self.on_category_changed(cat)
+            )
+            checkbox.pack(side=tk.LEFT, padx=(10, 0))
         
-        # ===== 測試類別選擇區域 =====
-        category_frame = ttk.LabelFrame(main_frame, text="測試類別選擇", padding="10")
-        category_frame.grid(row=2, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
+        # 第二行：指令選擇與執行
+        command_frame = ttk.Frame(control_frame)
+        command_frame.pack(fill=tk.X, pady=(0, 10))
         
-        # 建立測試類別選項
-        self.category_vars = {}
-        categories = list(self.command_data.keys())
+        tk.Label(command_frame, text="選擇指令:", font=("微軟正黑體", self.font_size)).pack(side=tk.LEFT)
         
-        for i, category in enumerate(categories):
-            var = tk.BooleanVar()
-            checkbox = tk.Checkbutton(category_frame, text=category, variable=var,
-                                    font=("Arial", self.font_size),
-                                    command=self.on_category_changed)
-            checkbox.grid(row=0, column=i, padx=(0, 20), sticky=tk.W)
-            self.category_vars[category] = var
-            
-            # 預設選擇 FUNCTION
-            if category == "FUNCTION":
-                var.set(True)
+        # 指令選擇下拉選單 (約20字元寬度)
+        self.command_combobox = ttk.Combobox(
+            command_frame, 
+            state="readonly",
+            width=20
+        )
+        self.command_combobox.pack(side=tk.LEFT, padx=(10, 5))
+        self.command_combobox.bind('<<ComboboxSelected>>', self.on_command_selected)
         
-        # ===== 指令選擇區域 =====
-        command_frame = ttk.LabelFrame(main_frame, text="指令選擇與執行", padding="10")
-        command_frame.grid(row=3, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
-        command_frame.columnconfigure(1, weight=1)
+        # 執行指令按鈕 (緊接著Combobox)
+        self.execute_btn = ttk.Button(
+            command_frame,
+            text="執行指令",
+            command=self.on_execute_command,
+            style="Accent.TButton"
+        )
+        self.execute_btn.pack(side=tk.LEFT, padx=(5, 0))
         
-        # 指令選擇下拉選單
-        tk.Label(command_frame, text="選擇指令:", font=("Arial", self.font_size)).grid(row=0, column=0, padx=(0, 10), sticky=tk.W)
-        self.command_var = tk.StringVar()
-        self.command_combo = ttk.Combobox(command_frame, textvariable=self.command_var,
-                                         font=("Arial", self.font_size), width=40, state="readonly")
-        self.command_combo.grid(row=0, column=1, padx=(0, 10), sticky=(tk.W, tk.E))
-        self.command_combo.bind("<<ComboboxSelected>>", self.on_command_selected)
+        # 第三行：送出指令顯示與清除
+        output_frame = ttk.Frame(control_frame)
+        output_frame.pack(fill=tk.X)
         
-        # 執行按鈕
-        execute_btn = tk.Button(command_frame, text="執行指令", font=("Arial", self.font_size + 2),
-                               command=self.execute_command, bg="#2196F3", fg="white",
-                               width=12, height=2, relief=tk.RAISED, bd=2)
-        execute_btn.grid(row=0, column=2, padx=(10, 0))
-        self.tooltip_manager.add_tooltip(execute_btn, "執行所選的制具控制指令")
+        tk.Label(output_frame, text="送出指令:", font=("微軟正黑體", self.font_size)).pack(side=tk.LEFT)
         
-        # ===== 送出指令顯示區域 =====
-        output_frame = ttk.LabelFrame(main_frame, text="送出指令顯示", padding="10")
-        output_frame.grid(row=4, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=(0, 10))
-        output_frame.columnconfigure(1, weight=1)
-        
-        tk.Label(output_frame, text="送出指令:", font=("Arial", self.font_size)).grid(row=0, column=0, padx=(0, 10), sticky=tk.W)
+        # 送出指令顯示欄位 (約20字元寬度)
         self.sent_command_var = tk.StringVar()
-        sent_command_entry = tk.Entry(output_frame, textvariable=self.sent_command_var,
-                                     font=("Arial", self.font_size), state="readonly",
-                                     width=20, bg="#f0f0f0")
-        sent_command_entry.grid(row=0, column=1, padx=(0, 10), sticky=(tk.W, tk.E))
+        self.sent_command_entry = ttk.Entry(
+            output_frame,
+            textvariable=self.sent_command_var,
+            state="readonly",
+            width=20
+        )
+        self.sent_command_entry.pack(side=tk.LEFT, padx=(10, 5))
         
-        # 清除按鈕
-        clear_btn = tk.Button(output_frame, text="清除", font=("Arial", self.font_size),
-                             command=self.clear_sent_command, bg="#FF5722", fg="white",
-                             width=8, height=1)
-        clear_btn.grid(row=0, column=2, padx=(10, 0))
-        self.tooltip_manager.add_tooltip(clear_btn, "清除送出指令顯示內容")
+        # 清除結果按鈕 (緊接著Entry)
+        self.clear_btn = ttk.Button(
+            output_frame,
+            text="清除結果",
+            command=self.on_clear_results
+        )
+        self.clear_btn.pack(side=tk.LEFT, padx=(5, 0))
         
-        # ===== 執行結果顯示區域 =====
-        result_frame = ttk.LabelFrame(main_frame, text="執行結果", padding="10")
-        result_frame.grid(row=5, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S), pady=(0, 10))
-        result_frame.columnconfigure(0, weight=1)
-        result_frame.rowconfigure(0, weight=1)
-        main_frame.rowconfigure(5, weight=1)
-        
-        # 結果顯示文字區域
-        self.result_text = tk.Text(result_frame, height=8, width=80,
-                                  font=("Consolas", self.font_size - 1),
-                                  wrap=tk.WORD, bg="#f8f8f8")
-        
-        # 捲軸
-        scrollbar = ttk.Scrollbar(result_frame, orient=tk.VERTICAL, command=self.result_text.yview)
-        self.result_text.configure(yscrollcommand=scrollbar.set)
-        
-        self.result_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-        scrollbar.grid(row=0, column=1, sticky=(tk.N, tk.S))
-        
-        # ===== 字體調整區域 =====
-        font_frame = ttk.Frame(main_frame)
-        font_frame.grid(row=6, column=0, columnspan=2, pady=(10, 0), sticky=tk.W)
-        
-        tk.Label(font_frame, text="字體大小:", font=("Arial", self.font_size)).pack(side=tk.LEFT, padx=(0, 10))
-        
-        font_minus_btn = tk.Button(font_frame, text="-", font=("Arial", self.font_size),
-                                  command=self.decrease_font_size, width=3, height=1)
-        font_minus_btn.pack(side=tk.LEFT, padx=(0, 5))
-        self.tooltip_manager.add_tooltip(font_minus_btn, "減小字體大小")
-        
-        font_plus_btn = tk.Button(font_frame, text="+", font=("Arial", self.font_size),
-                                 command=self.increase_font_size, width=3, height=1)
-        font_plus_btn.pack(side=tk.LEFT, padx=(5, 0))
-        self.tooltip_manager.add_tooltip(font_plus_btn, "增大字體大小")
-        
-        # 初始化指令選單
+        # 更新指令列表
         self.update_command_list()
 
-    def reload_settings(self):
-        """重新載入設定"""
-        try:
-            self.load_settings()
-            self.add_result_message("串列埠設定已重新載入")
-            
-            # 更新串列埠參數顯示
-            self.update_serial_params_display()
-            
-        except Exception as e:
-            self.add_result_message(f"重新載入設定失敗: {e}", "error")
-    
-    def update_serial_params_display(self):
-        """更新串列埠參數顯示"""
-        try:
-            # 如果存在串列參數標籤，則更新它
-            for child in self.root.winfo_children():
-                if hasattr(child, 'winfo_children'):
-                    for widget in child.winfo_children():
-                        if hasattr(widget, 'cget') and 'serial_params_label' in str(widget):
-                            serial_params_text = f"波特率:{self.baudrate} | 資料位元:{self.bytesize} | 停止位元:{self.stopbits} | 奇偶校驗:{self.parity} | 超時:{self.timeout}s"
-                            widget.config(text=serial_params_text)
-                            break
-        except Exception as e:
-            print(f"更新串列參數顯示失敗: {e}")
-
-    def refresh_com_ports(self):
-        """重新整理 COM 埠列表"""
-        try:
-            self.available_ports = [port.device for port in serial.tools.list_ports.comports()]
-            self.com_port_combo['values'] = self.available_ports
-            
-            # 設定預設選擇
-            if self.available_ports:
-                current_port = self.fixture_settings.get("Fixture_COM_Port", "")
-                if current_port in self.available_ports:
-                    self.com_port_var.set(current_port)
-                else:
-                    self.com_port_var.set(self.available_ports[0])
-            else:
-                self.com_port_var.set("")
-            
-            self.add_result_message(f"已更新 COM 埠列表: {', '.join(self.available_ports) if self.available_ports else '無可用埠'}")
-            
-        except Exception as e:
-            self.add_result_message(f"更新 COM 埠列表失敗: {e}", "error")
-
-    def on_category_changed(self):
-        """測試類別改變時的處理"""
-        # 確保只能選擇一個類別
-        selected_categories = [cat for cat, var in self.category_vars.items() if var.get()]
+    def create_serial_info_area(self, parent):
+        """建立串列參數顯示區域"""
+        serial_frame = ttk.LabelFrame(parent, text="串列參數", padding="5")
+        serial_frame.pack(fill=tk.X, pady=(0, 10))
         
-        if len(selected_categories) > 1:
-            # 如果選擇了多個，只保留最後選擇的
-            for cat, var in self.category_vars.items():
-                if cat != selected_categories[-1]:
-                    var.set(False)
+        # 串列參數顯示
+        self.serial_info_label = tk.Label(
+            serial_frame,
+            text="",
+            font=("微軟正黑體", self.font_size),
+            justify=tk.LEFT,
+            anchor='w'
+        )
+        self.serial_info_label.pack(fill=tk.X)
         
+        self.update_serial_info()
+
+    def create_result_area(self, parent):
+        """建立執行結果區域"""
+        result_frame = ttk.LabelFrame(parent, text="執行結果", padding="5")
+        result_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # 建立文字框架和滾動條
+        text_frame = ttk.Frame(result_frame)
+        text_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # 結果顯示文字方塊
+        self.result_text = tk.Text(
+            text_frame,
+            height=10,
+            font=("Consolas", self.font_size),
+            wrap=tk.WORD
+        )
+        
+        # 垂直滾動條
+        v_scrollbar = ttk.Scrollbar(text_frame, orient=tk.VERTICAL, command=self.result_text.yview)
+        self.result_text.configure(yscrollcommand=v_scrollbar.set)
+        
+        # 包裝
+        self.result_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        v_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+    def on_category_changed(self, selected_category):
+        """處理測試類別變更 (單選邏輯)"""
+        # 取消其他類別的勾選
+        for category, var in self.test_category_vars.items():
+            if category != selected_category:
+                var.set(False)
+        
+        # 確保至少有一個被選中
+        if not self.test_category_vars[selected_category].get():
+            # 如果用戶試圖取消當前選擇，重新勾選
+            self.test_category_vars[selected_category].set(True)
+        
+        self.current_category = selected_category
         self.update_command_list()
+        self.save_settings()
 
     def update_command_list(self):
-        """更新指令選單"""
-        try:
-            # 取得選擇的測試類別
-            selected_category = None
-            for cat, var in self.category_vars.items():
-                if var.get():
-                    selected_category = cat
-                    break
+        """更新指令列表"""
+        if self.current_category in self.commands:
+            command_list = []
+            for cmd in self.commands[self.current_category]:
+                command_list.append(f"{cmd['code']} - {cmd['description']}")
+            self.command_combobox['values'] = command_list
             
-            if selected_category and selected_category in self.command_data:
-                commands = self.command_data[selected_category]
-                command_list = [cmd['display'] for cmd in commands]
-                self.command_combo['values'] = command_list
-                
-                # 清除當前選擇
-                self.command_var.set("")
-                self.current_selected_command = ""
-                
-                self.add_result_message(f"已載入 {selected_category} 類別，共 {len(command_list)} 個指令")
-            else:
-                self.command_combo['values'] = []
-                self.command_var.set("")
-                self.current_selected_command = ""
-                
-        except Exception as e:
-            self.add_result_message(f"更新指令列表失敗: {e}", "error")
+            # 清除當前選擇
+            self.command_combobox.set('')
 
-    def on_command_selected(self, event):
-        """指令選擇時的處理"""
-        try:
-            selected_display = self.command_var.get()
-            if not selected_display:
-                return
-            
-            # 找到對應的指令代碼
-            selected_category = None
-            for cat, var in self.category_vars.items():
-                if var.get():
-                    selected_category = cat
-                    break
-            
-            if selected_category and selected_category in self.command_data:
-                for cmd in self.command_data[selected_category]:
-                    if cmd['display'] == selected_display:
-                        self.current_selected_command = cmd['code']
-                        self.add_result_message(f"已選擇指令: {selected_display}")
-                        break
-                        
-        except Exception as e:
-            self.add_result_message(f"選擇指令失敗: {e}", "error")
+    def on_command_selected(self, event=None):
+        """處理指令選擇"""
+        selection = self.command_combobox.get()
+        if selection:
+            # 提取指令代碼
+            command_code = selection.split(' - ')[0]
+            self.log_message(f"已選擇: {selection}")
 
-    def execute_command(self):
+    def on_execute_command(self):
         """執行選擇的指令"""
-        try:
-            if not self.current_selected_command:
-                messagebox.showwarning("警告", "請先選擇要執行的指令")
-                return
+        selection = self.command_combobox.get()
+        if not selection:
+            messagebox.showwarning("警告", "請先選擇一個指令")
+            return
             
-            if not self.com_port_var.get():
-                messagebox.showwarning("警告", "請先選擇 COM 埠")
-                return
-            
-            # 顯示送出的指令
-            self.sent_command_var.set(self.current_selected_command)
-            
-            # 建立串列連接並送出指令
-            success = self.send_serial_command(self.current_selected_command)
-            
-            if success:
-                self.add_result_message(f"✓ 已送出指令: {self.current_selected_command}", "success")
-            else:
-                self.add_result_message(f"✗ 送出指令失敗: {self.current_selected_command}", "error")
-                
-        except Exception as e:
-            self.add_result_message(f"執行指令時發生錯誤: {e}", "error")
+        # 提取指令代碼 (只送單一字元)
+        command_code = selection.split(' - ')[0]
+        
+        # 顯示送出的指令
+        self.sent_command_var.set(command_code)
+        
+        # 執行串列指令
+        result = self.send_serial_command(command_code)
+        
+        if result:
+            self.log_message(f"指令 '{command_code}' 執行成功")
+            self.log_message(f"回應: {result}")
+        else:
+            self.log_message(f"指令 '{command_code}' 執行失敗")
+
+    def on_clear_results(self):
+        """清除執行結果"""
+        self.result_text.delete(1.0, tk.END)
+        self.log_message("執行結果已清除")
 
     def send_serial_command(self, command):
-        """透過串列埠送出指令"""
+        """發送串列指令"""
         try:
-            port = self.com_port_var.get()
-            if not port:
-                return False
-            
-            # 處理奇偶校驗設定
+            # 獲取串列參數
             parity_map = {
-                "None": serial.PARITY_NONE,
-                "Even": serial.PARITY_EVEN,
-                "Odd": serial.PARITY_ODD,
-                "Mark": serial.PARITY_MARK,
-                "Space": serial.PARITY_SPACE
+                'None': serial.PARITY_NONE,
+                'Even': serial.PARITY_EVEN, 
+                'Odd': serial.PARITY_ODD,
+                'Mark': serial.PARITY_MARK,
+                'Space': serial.PARITY_SPACE
             }
-            parity_setting = parity_map.get(self.parity, serial.PARITY_NONE)
             
-            # 建立串列連接，使用設定檔中的參數
-            self.add_result_message(f"串列參數: 波特率={self.baudrate}, 資料位元={self.bytesize}, 停止位元={self.stopbits}, 奇偶校驗={self.parity}, 超時={self.timeout}秒")
+            # 建立串列連接
+            self.serial_connection = serial.Serial(
+                port='COM5',  # 這應該從設定中讀取
+                baudrate=int(self.baudrate_var.get()),
+                bytesize=int(self.bytesize_var.get()),
+                stopbits=float(self.stopbits_var.get()),
+                parity=parity_map.get(self.parity_var.get(), serial.PARITY_NONE),
+                timeout=float(self.timeout_var.get())
+            )
             
-            with serial.Serial(
-                port=port,
-                baudrate=self.baudrate,
-                bytesize=self.bytesize,
-                stopbits=self.stopbits,
-                parity=parity_setting,
-                timeout=self.timeout
-            ) as ser:
-                # 送出指令
-                ser.write(command.encode('utf-8'))
-                time.sleep(0.1)
-                
-                # 嘗試讀取回應
-                response = ser.read(100)
-                if response:
-                    self.add_result_message(f"收到回應: {response.decode('utf-8', errors='ignore')}")
-                
-                return True
-                
-        except Exception as e:
-            self.add_result_message(f"串列通訊錯誤: {e}", "error")
-            return False
-
-    def clear_sent_command(self):
-        """清除送出指令顯示"""
-        self.sent_command_var.set("")
-        self.add_result_message("已清除送出指令顯示")
-
-    def add_result_message(self, message, msg_type="info"):
-        """新增結果訊息"""
-        try:
-            timestamp = time.strftime("%H:%M:%S")
+            # 發送指令
+            command_bytes = command.encode('utf-8')
+            self.serial_connection.write(command_bytes)
             
-            if msg_type == "success":
-                formatted_msg = f"[{timestamp}] ✓ {message}\n"
-            elif msg_type == "error":
-                formatted_msg = f"[{timestamp}] ✗ {message}\n"
-            else:
-                formatted_msg = f"[{timestamp}] {message}\n"
+            # 等待回應
+            time.sleep(0.1)
             
-            self.result_text.insert(tk.END, formatted_msg)
-            self.result_text.see(tk.END)
+            # 讀取回應
+            response = ""
+            if self.serial_connection.in_waiting > 0:
+                response = self.serial_connection.read(self.serial_connection.in_waiting).decode('utf-8', errors='ignore')
+            
+            # 關閉連接
+            self.serial_connection.close()
+            self.serial_connection = None
+            
+            return response.strip() if response else "指令已發送 (無回應)"
             
         except Exception as e:
-            print(f"新增結果訊息失敗: {e}")
+            if self.serial_connection:
+                try:
+                    self.serial_connection.close()
+                except:
+                    pass
+                self.serial_connection = None
+            
+            error_msg = f"串列通訊錯誤: {e}"
+            self.log_message(error_msg)
+            return None
 
-    def increase_font_size(self):
-        """增大字體"""
-        self.font_size = min(self.font_size + 1, 20)
-        self.update_font_size()
+    def update_serial_info(self):
+        """更新串列參數顯示"""
+        info_text = (f"串列設定: COM5, {self.baudrate_var.get()} baud, "
+                    f"{self.bytesize_var.get()} bits, {self.stopbits_var.get()} stop, "
+                    f"{self.parity_var.get()} parity, {self.timeout_var.get()}s timeout")
+        self.serial_info_label.config(text=info_text)
 
-    def decrease_font_size(self):
-        """減小字體"""
-        self.font_size = max(self.font_size - 1, 8)
-        self.update_font_size()
-
-    def update_font_size(self):
-        """更新所有元件的字體大小"""
-        try:
-            # 這裡可以加入字體更新邏輯
-            self.add_result_message(f"字體大小已調整為: {self.font_size}")
-        except Exception as e:
-            print(f"更新字體大小失敗: {e}")
-
-class FixtureFrame(tk.Frame):
-    """兼容主程式的制具控制框架"""
-    def __init__(self, parent):
-        super().__init__(parent)
+    def log_message(self, message):
+        """記錄訊息到結果區域"""
+        timestamp = time.strftime("%H:%M:%S")
+        log_entry = f"[{timestamp}] {message}\n"
         
-        # 在這個框架中嵌入我們的制具控制視窗
+        self.result_text.insert(tk.END, log_entry)
+        self.result_text.see(tk.END)
+
+    def save_settings(self):
+        """儲存設定"""
+        try:
+            setup_path = resource_path("setup.json")
+            settings = {}
+            
+            # 載入現有設定
+            if os.path.exists(setup_path):
+                with open(setup_path, 'r', encoding='utf-8') as f:
+                    settings = json.load(f)
+            
+            # 更新制具控制設定
+            if 'Fixture_Control' not in settings:
+                settings['Fixture_Control'] = {}
+                
+            fixture_settings = settings['Fixture_Control']
+            
+            # 儲存測試類別設定
+            fixture_settings['Test_Category_FUNCTION'] = self.test_category_vars['FUNCTION'].get()
+            fixture_settings['Test_Category_MB'] = self.test_category_vars['MB'].get()
+            fixture_settings['Test_Category_Original_Commands'] = self.test_category_vars['原始的指令'].get()
+            
+            # 儲存串列設定
+            if 'Serial_Settings' not in fixture_settings:
+                fixture_settings['Serial_Settings'] = {}
+                
+            serial_settings = fixture_settings['Serial_Settings']
+            serial_settings['Baudrate'] = self.baudrate_var.get()
+            serial_settings['Bytesize'] = self.bytesize_var.get()
+            serial_settings['Stopbits'] = self.stopbits_var.get()
+            serial_settings['Parity'] = self.parity_var.get()
+            serial_settings['Timeout'] = self.timeout_var.get()
+            
+            # 寫入檔案
+            with open(setup_path, 'w', encoding='utf-8') as f:
+                json.dump(settings, f, ensure_ascii=False, indent=2)
+                
+        except Exception as e:
+            print(f"儲存設定時發生錯誤: {e}")
+
+    def setup_tooltips(self):
+        """設定工具提示"""
+        if not self.tooltip_manager:
+            return
+            
+        tooltips = {
+            self.command_combobox: "選擇要執行的制具指令",
+            self.execute_btn: "執行選擇的指令",
+            self.sent_command_entry: "顯示剛剛發送的指令代碼", 
+            self.clear_btn: "清除執行結果區域的所有內容"
+        }
+        
+        for widget, text in tooltips.items():
+            self.tooltip_manager.add_tooltip(widget, text)
+
+# 為主程式相容性建立 FixtureFrame 類別
+class FixtureFrame(ttk.Frame):
+    def __init__(self, parent, **kwargs):
+        super().__init__(parent, **kwargs)
+        
+        # 建立制具控制視窗
         self.fixture_window = FixtureControlWindow(self)
-        
-        # 初始化一些變數以兼容主程式
-        self.com_port_var = self.fixture_window.com_port_var
-        self.command_var = self.fixture_window.command_var
-        self.category_vars = self.fixture_window.category_vars
-        self._fixture_font_size = self.fixture_window.font_size
-        
-        # 移除獨立視窗的標題和幾何設定
-        self.fixture_window.root = parent  # 重設父容器
-        
-    def refresh_ports(self):
-        """重新整理 COM 埠（兼容主程式）"""
-        if hasattr(self.fixture_window, 'refresh_com_ports'):
-            self.fixture_window.refresh_com_ports()
-        
-        # 重新載入串列埠設定
-        self.fixture_window.load_settings()
-    
-    def get_settings(self):
-        """取得設定（兼容主程式）"""
-        data = {}
-        data['COM'] = self.com_port_var.get()
-        data['CMD'] = self.command_var.get()
-        for cat, var in self.category_vars.items():
-            data[cat] = var.get()
-        data['FixtureFontSize'] = str(self._fixture_font_size)
-        return data
-    
-    def change_fixture_font(self, delta):
-        """改變字體大小（兼容主程式）"""
-        if delta == 0:
-            # 只套用當前大小
-            self.fixture_window.update_font_size()
-        else:
-            # 增減字體大小
-            if delta > 0:
-                self.fixture_window.increase_font_size()
-            else:
-                self.fixture_window.decrease_font_size()
 
-if __name__ == "__main__":
+def main():
+    """主程式 - 獨立測試用"""
     root = tk.Tk()
     app = FixtureControlWindow(root)
     root.mainloop()
+
+if __name__ == "__main__":
+    main()
 

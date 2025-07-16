@@ -115,7 +115,7 @@ class SettingsUI:
         self.available_end_strings_var = tk.StringVar()
         self.available_end_strings_entry = ttk.Entry(dut_frame, textvariable=self.available_end_strings_var, width=30)
         self.available_end_strings_entry.grid(row=4, column=1, sticky='w', padx=5, pady=5)
-        ttk.Label(dut_frame, text="(以逗號分隔多個值)", style="TLabel", font=('Microsoft JhengHei UI', 8)).grid(row=4, column=2, sticky='w')
+        tk.Label(dut_frame, text="(以逗號分隔多個值)", font=('Microsoft JhengHei UI', 8)).grid(row=4, column=2, sticky='w')
         
         # 建立治具控制設定區域
         fixture_frame = ttk.LabelFrame(main_frame, text="治具控制設定", padding=10, style="TLabelframe")

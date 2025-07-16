@@ -135,24 +135,9 @@
         "timestamp": "16:24:03",
         "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱",
         "type": "success"
-      },
-      {
-        "timestamp": "16:55:36",
-        "message": "VALO360 指令通 已啟動",
-        "type": "info"
-      },
-      {
-        "timestamp": "16:55:36",
-        "message": "MU310 指令通_test 已啟動 (版本：VV1.5.0.5)",
-        "type": "success"
-      },
-      {
-        "timestamp": "16:55:38",
-        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
-        "type": "success"
       }
     ],
-    "last_updated": "2025-07-16T16:55:38.164687"
+    "last_updated": "2025-07-16T16:24:03.595848"
   },
   "DUT_Control": {
     "Serial_COM_Port": "COM5",

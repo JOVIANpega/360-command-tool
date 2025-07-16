@@ -222,7 +222,7 @@ class SettingsTab(ttk.Frame):
         fixture_row += 1
         
         # 測試類別
-        ttk.Label(fixture_frame, text="測試類別:", font=('Microsoft JhengHei UI', 10, 'bold')).grid(row=fixture_row, column=0, columnspan=2, sticky="w", pady=(10,4))
+        tk.Label(fixture_frame, text="測試類別:", font=('Microsoft JhengHei UI', 10, 'bold')).grid(row=fixture_row, column=0, columnspan=2, sticky="w", pady=(10,4))
         fixture_row += 1
         
         self.vars["Fixture_Test_Category_FUNCTION"] = tk.BooleanVar(value=fixture_settings.get("Test_Category_FUNCTION", True))
@@ -238,7 +238,7 @@ class SettingsTab(ttk.Frame):
         fixture_row += 1
         
         # 串列埠設定
-        ttk.Label(fixture_frame, text="串列埠設定:", font=('Microsoft JhengHei UI', 10, 'bold')).grid(row=fixture_row, column=0, columnspan=2, sticky="w", pady=(10,4))
+        tk.Label(fixture_frame, text="串列埠設定:", font=('Microsoft JhengHei UI', 10, 'bold')).grid(row=fixture_row, column=0, columnspan=2, sticky="w", pady=(10,4))
         fixture_row += 1
         
         # 取得串列埠設定

@@ -1,4 +1,4 @@
-An unexpected error occurred: ToolTipManager.__init__() takes 1 positional argument but 2 were given
+An unexpected error occurred: unknown option "-font"
 Traceback (most recent call last):
   File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\main.py", line 117, in <module>
     app = TabManager(root, highlight_keywords=highlight_keywords)
@@ -6,8 +6,18 @@ Traceback (most recent call last):
     self.init_fixture_tab()
   File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\ui_parts\ui_main.py", line 1035, in init_fixture_tab
     self.fixture_ui = FixtureFrame(self.fixture_frame)
-  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\FIXTURE\fixture13.py", line 460, in __init__
+  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\FIXTURE\fixture13.py", line 532, in __init__
     self.fixture_window = FixtureControlWindow(self)
-  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\FIXTURE\fixture13.py", line 64, in __init__
-    self.tooltip_manager = ToolTipManager(self.root)
-TypeError: ToolTipManager.__init__() takes 1 positional argument but 2 were given
+  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\FIXTURE\fixture13.py", line 65, in __init__
+    self.create_interface()
+  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\FIXTURE\fixture13.py", line 196, in create_interface
+    self.create_control_area(main_frame)
+  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\FIXTURE\fixture13.py", line 289, in create_control_area
+    self.clear_btn = ttk.Button(
+  File "C:\Users\pega_user\AppData\Local\Programs\Python\Python310\lib\tkinter\ttk.py", line 607, in __init__
+    Widget.__init__(self, master, "ttk::button", kw)
+  File "C:\Users\pega_user\AppData\Local\Programs\Python\Python310\lib\tkinter\ttk.py", line 552, in __init__
+    tkinter.Widget.__init__(self, master, widgetname, kw=kw)
+  File "C:\Users\pega_user\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 2601, in __init__
+    self.tk.call(
+_tkinter.TclError: unknown option "-font"
