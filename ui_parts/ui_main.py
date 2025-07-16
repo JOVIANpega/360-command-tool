@@ -672,14 +672,19 @@ class TabManager:
             import traceback
             traceback.print_exc()
 
-    def update_all_settings(self):
+    def update_all_settings(self, settings_dict=None):
         """更新所有設定，確保雙向同步"""
         try:
             print("[DEBUG] 開始更新所有設定...")
             
-            # 重新載入最新設定
-            from config_core import load_setup
-            latest_setup = load_setup()
+            # 如果有傳入設定字典，直接使用；否則重新載入
+            if settings_dict:
+                latest_setup = settings_dict
+                print("[DEBUG] 使用傳入的設定字典")
+            else:
+                from config_core import load_setup
+                latest_setup = load_setup()
+                print("[DEBUG] 重新載入設定檔")
             
             # 更新DUT設定
             self.update_dut_settings()
@@ -718,39 +723,67 @@ class TabManager:
         """同步字體設定"""
         try:
             dut_settings = setup.get('DUT_Control', {})
+            fixture_settings = setup.get('Fixture_Control', {})
             
             # 同步各種字體設定
-            ui_font_size = dut_settings.get('UI_Font_Size', '14')
+            ui_font_size = dut_settings.get('UI_Font_Size', '13')
             content_font_size = dut_settings.get('Content_Font_Size', '11')
-            notification_font_size = dut_settings.get('Notification_Font_Size', '14')
+            notification_font_size = dut_settings.get('Notification_Font_Size', '10')
+            fixture_font_size = fixture_settings.get('Fixture_Font_Size', '11')
             
-            print(f"[DEBUG] 字體設定同步 - UI:{ui_font_size}, 內容:{content_font_size}, 通知:{notification_font_size}")
+            print(f"[DEBUG] 字體設定同步 - UI:{ui_font_size}, 內容:{content_font_size}, 通知:{notification_font_size}, 治具:{fixture_font_size}")
             
             # 更新DUT UI的字體設定
             if hasattr(self, 'dut_ui') and hasattr(self.dut_ui, 'components'):
+                components = self.dut_ui.components
+                
+                # 更新字體大小變數
+                if hasattr(components, 'font_size_var'):
+                    components.font_size_var.set(ui_font_size)
+                if hasattr(components, 'content_font_size_var'):
+                    components.content_font_size_var.set(content_font_size)
+                
                 # 更新通知字體大小
-                if hasattr(self.dut_ui.components, 'notification_font_size'):
-                    self.dut_ui.components.notification_font_size = int(notification_font_size)
+                if hasattr(components, 'notification_font_size'):
+                    components.notification_font_size = int(notification_font_size)
                 
                 # 更新標籤字體
-                if hasattr(self.dut_ui.components, 'label_countdown'):
-                    self.dut_ui.components.label_countdown.config(
+                if hasattr(components, 'label_countdown'):
+                    components.label_countdown.config(
                         font=('Microsoft JhengHei UI', int(notification_font_size), 'bold')
                     )
+                
+                # 觸發字體更新
+                try:
+                    components.update_ui_fonts(int(ui_font_size))
+                    components.update_content_fonts(int(content_font_size))
+                except Exception as e:
+                    print(f"[WARNING] 更新 DUT UI 字體時發生錯誤: {e}")
+            
+            # 更新治具控制頁面的字體設定
+            if hasattr(self, 'fixture_ui') and hasattr(self.fixture_ui, 'update_font_size'):
+                try:
+                    self.fixture_ui.update_font_size(int(fixture_font_size))
+                    print(f"[DEBUG] 已更新治具控制頁面字體大小為: {fixture_font_size}")
+                except Exception as e:
+                    print(f"[WARNING] 更新治具字體時發生錯誤: {e}")
             
             # 同步系統字體設定到全域通知管理器
             if hasattr(self, 'notification_manager'):
                 system_settings = setup.get('System', {})
-                global_font_size = system_settings.get('Notification_Font_Size', 12)
+                global_font_size = system_settings.get('Notification_Font_Size', notification_font_size)
                 if hasattr(self.notification_manager, 'notification_text'):
-                    current_font = self.notification_manager.notification_text.cget("font")
-                    if isinstance(current_font, tuple):
-                        family, size, style = current_font
-                    else:
-                        family, size, style = 'Microsoft JhengHei UI', 12, 'bold'
-                    
-                    new_font = (family, int(global_font_size), style)
-                    self.notification_manager.notification_text.config(font=new_font)
+                    try:
+                        current_font = self.notification_manager.notification_text.cget("font")
+                        if isinstance(current_font, tuple):
+                            family, size, style = current_font
+                        else:
+                            family, size, style = 'Microsoft JhengHei UI', 12, 'bold'
+                        
+                        new_font = (family, int(global_font_size), style)
+                        self.notification_manager.notification_text.config(font=new_font)
+                    except Exception as e:
+                        print(f"[WARNING] 更新通知管理器字體時發生錯誤: {e}")
                     
         except Exception as e:
             print(f"[ERROR] 同步字體設定時發生錯誤：{e}")

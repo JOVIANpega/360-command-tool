@@ -1,0 +1,511 @@
+{
+  "version": "1.4.8",
+  "notification_messages": {
+    "app_started": "VALO360 指令通 已啟動",
+    "settings_updated": "設定已更新！",
+    "cmd_reloaded": "• 指令檔案已重新載入",
+    "com_updated": "• COM口設定已更新",
+    "end_string_updated": "• 結束字串設定已更新",
+    "ip_updated": "• IP地址設定已更新",
+    "timeout_updated": "• 超時設定已更新",
+    "connected": "已連接到 {0}",
+    "disconnected": "連接已關閉",
+    "cmd_done": "指令執行完成",
+    "ports_found": "找到 {0} 個 COM 口",
+    "no_ports": "未找到可用的 COM 口",
+    "output_cleared": "已清空輸出區域",
+    "backup_success": "已備份輸出內容至: {0}",
+    "backup_failed": "備份失敗: {0}",
+    "normal_mode": "已返回正常模式",
+    "system_ready": "系統已就緒",
+    "text_copied": "已複製選中文字",
+    "no_text_selected": "未選中任何文字",
+    "all_text_selected": "已全選文字",
+    "font_size_changed": "字體大小已調整為: {0}",
+    "notification_font_size": "通知字體大小: {0}",
+    "auto_exec_enabled": "自動執行設定已啟用",
+    "auto_exec_disabled": "自動執行設定已停用",
+    "save_failed": "保存設定失敗: {0}",
+    "cmd_selected": "已選擇: {0}",
+    "delay_cmd": "延遲指令: {0}秒",
+    "show_msg": "顯示訊息: {0}",
+    "system_status": "COM口: {0} | 分類: {1} ({2}個指令) | 超時: {3}秒",
+    "history": [
+      {
+        "timestamp": "15:21:10",
+        "message": "找到 3 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:24:14",
+        "message": "找到 3 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:24:14",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:24:15",
+        "message": "MU310 指令通_test 已啟動 (版本：V1.4.8)",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:24:17",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:24:19",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:24:22",
+        "message": "COM口: COM3 | 分類: 全部指令 (18個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:14:08",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:14:08",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:14:08",
+        "message": "MU310 指令通_test 已啟動 (版本：V1.4.8)",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:14:10",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:14:12",
+        "message": "已連接到 COM5",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:14:13",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:14:13",
+        "message": "連接已關閉",
+        "type": "error"
+      },
+      {
+        "timestamp": "15:14:15",
+        "message": "COM口: COM5 | 分類: 全部指令 (18個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:14:16",
+        "message": "已選擇: Login",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:14:22",
+        "message": "COM口: COM5 | 分類: 全部指令 (18個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:14:32",
+        "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:14:45",
+        "message": "設定已更新！\n• 指令檔案已重新載入\n• COM口設定已更新\n• 結束字串設定已更新\n• IP地址設定已更新\n• 超時設定已更新",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:14:45",
+        "message": "標籤頁名稱已同步更新",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:14:45",
+        "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:14:45",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:14:48",
+        "message": "已選擇: 13. 檢查藍牙 Check BT",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:14:49",
+        "message": "已連接到 COM5",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:14:56",
+        "message": "連接已關閉",
+        "type": "error"
+      },
+      {
+        "timestamp": "15:14:59",
+        "message": "已顯示使用說明，按「清空回應」按鈕可返回",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:15:00",
+        "message": "已返回正常模式",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:15:01",
+        "message": "已顯示使用說明，按「清空回應」按鈕可返回",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:15:02",
+        "message": "已返回正常模式",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:18:54",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:18:54",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:18:54",
+        "message": "MU310 指令通_test 已啟動 (版本：V1.4.8)",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:18:56",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:18:59",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:19:01",
+        "message": "COM口: COM5 | 分類: 全部指令 (7個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:19:08",
+        "message": "COM口: COM5 | 分類: 全部指令 (7個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:19:18",
+        "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:20:45",
+        "message": "已連接到 COM5",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:20:47",
+        "message": "連接已關閉",
+        "type": "error"
+      },
+      {
+        "timestamp": "15:24:17",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:24:17",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:24:17",
+        "message": "MU310 指令通_test 已啟動 (版本：V1.4.8)",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:24:19",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:24:22",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:24:24",
+        "message": "COM口: COM5 | 分類: 全部指令 (7個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:29:34",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:29:34",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:29:35",
+        "message": "MU310 指令通_test 已啟動 (版本：V1.4.8)",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:29:37",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:29:40",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:29:41",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:29:42",
+        "message": "COM口: COM5 | 分類: 整機 (2個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:29:45",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:29:49",
+        "message": "COM口: COM5 | 分類: 整機 (2個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:29:59",
+        "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:42:44",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:42:44",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:42:44",
+        "message": "MU310 指令通_test 已啟動 (版本：V1.4.8)",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:42:46",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:45:40",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:45:40",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:45:40",
+        "message": "MU310 指令通_test 已啟動 (版本：V1.4.8)",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:45:42",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:45:44",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:45:47",
+        "message": "COM口: COM5 | 分類: 全部指令 (7個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:45:53",
+        "message": "COM口: COM5 | 分類: 全部指令 (7個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:46:03",
+        "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:46:21",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:46:21",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:46:21",
+        "message": "MU310 指令通_test 已啟動 (版本：V1.4.8)",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:46:23",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:46:26",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:46:28",
+        "message": "COM口: COM5 | 分類: 全部指令 (7個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "16:10:21",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "16:10:21",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "16:10:21",
+        "message": "MU310 指令通_test 已啟動 (版本：V1.4.8)",
+        "type": "success"
+      },
+      {
+        "timestamp": "16:10:23",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "16:10:26",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "17:07:23",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "17:07:23",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "17:07:23",
+        "message": "MU310 指令通_test 已啟動 (版本：V1.4.8)",
+        "type": "success"
+      },
+      {
+        "timestamp": "17:07:25",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "17:07:28",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "17:07:30",
+        "message": "已顯示使用說明，按「清空回應」按鈕可返回",
+        "type": "info"
+      },
+      {
+        "timestamp": "17:07:30",
+        "message": "COM口: COM5 | 分類: 全部指令 (7個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "17:07:31",
+        "message": "已顯示使用說明，按「清空回應」按鈕可返回",
+        "type": "info"
+      }
+    ],
+    "last_updated": "2025-07-16T17:07:31.388598"
+  },
+  "DUT_Control": {
+    "Serial_COM_Port": "COM5",
+    "Command_Timeout_Seconds": "30",
+    "Command_End_String": "root",
+    "UI_Font_Size": "13",
+    "Content_Font_Size": "12",
+    "Window_Title": "MU310 指令通_test",
+    "Available_End_Strings": [
+      "root"
+    ],
+    "Default_IP_Address": "127.0.0.1",
+    "Window_Width": "1536",
+    "Window_Height": "793",
+    "Last_Selected_Command_Section": "全部指令",
+    "Pane_Sash_Position": "528",
+    "Auto_Execute": false,
+    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/程式代碼/Command_TABLE/command - test.txt",
+    "Notification_Font_Size": "10",
+    "Section_Titles": [
+      "全部指令",
+      "MB指令2",
+      "整機"
+    ],
+    "IP_History": []
+  },
+  "Fixture_Control": {
+    "Fixture_COM_Port": "COM5",
+    "Current_Command": "",
+    "Test_Category_FUNCTION": false,
+    "Test_Category_MB": true,
+    "Test_Category_Original_Commands": false,
+    "Fixture_Font_Size": "11"
+  },
+  "Window_Title": "MU310 指令通_test",
+  "Window_Width": "1536",
+  "Window_Height": "793",
+  "ContentFontSize": "12",
+  "UIFontSize": "13",
+  "tab_names": {
+    "tab0": "DUT 控制",
+    "tab1": "治具控制",
+    "tab2": "DOS",
+    "tab3": "設定"
+  }
+}

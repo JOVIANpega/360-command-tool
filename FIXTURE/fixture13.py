@@ -18,6 +18,7 @@ try:
     from config_utils import resource_path
     # 導入 ToolTip 管理器
     from ui_parts.tooltip import ToolTipManager
+    from config_core import load_setup, save_setup
 except ImportError as e:
     print(f"導入模組失敗: {e}")
     print(f"當前路徑: {sys.path}")
@@ -42,6 +43,25 @@ except ImportError as e:
         
         def add_tooltip(self, widget, text):
             pass
+
+    # 備用的設定載入/儲存函數
+    def load_setup():
+        try:
+            setup_path = resource_path("setup.json")
+            if os.path.exists(setup_path):
+                with open(setup_path, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+        except Exception as e:
+            print(f"載入設定失敗: {e}")
+        return {}
+    
+    def save_setup(setup):
+        try:
+            setup_path = resource_path("setup.json")
+            with open(setup_path, 'w', encoding='utf-8') as f:
+                json.dump(setup, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"儲存設定失敗: {e}")
 
 class FixtureControlWindow:
     def __init__(self, root):
@@ -94,6 +114,9 @@ class FixtureControlWindow:
         self.test_category_vars['FUNCTION'].set(True)
         self.current_category = 'FUNCTION'
         
+        # COM Port 變數
+        self.com_port_var = tk.StringVar(value="COM5")
+        
         # 串列設定變數  
         self.baudrate_var = tk.StringVar(value="9600")
         self.bytesize_var = tk.StringVar(value="8")
@@ -104,39 +127,39 @@ class FixtureControlWindow:
     def load_settings(self):
         """載入設定檔"""
         try:
-            setup_path = resource_path("setup.json")
-            if os.path.exists(setup_path):
-                with open(setup_path, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
-                
-                # 載入制具控制設定
-                fixture_settings = settings.get('Fixture_Control', {})
-                
-                # 載入測試類別設定
-                self.test_category_vars['FUNCTION'].set(
-                    fixture_settings.get('Test_Category_FUNCTION', True))
-                self.test_category_vars['MB'].set(
-                    fixture_settings.get('Test_Category_MB', False))
-                self.test_category_vars['原始的指令'].set(
-                    fixture_settings.get('Test_Category_Original_Commands', False))
-                
-                # 確定當前選擇的類別
-                for category, var in self.test_category_vars.items():
-                    if var.get():
-                        self.current_category = category
-                        break
-                
-                # 載入串列設定
-                serial_settings = fixture_settings.get('Serial_Settings', {})
-                self.baudrate_var.set(serial_settings.get('Baudrate', '9600'))
-                self.bytesize_var.set(serial_settings.get('Bytesize', '8'))
-                self.stopbits_var.set(serial_settings.get('Stopbits', '1'))
-                self.parity_var.set(serial_settings.get('Parity', 'None'))
-                self.timeout_var.set(serial_settings.get('Timeout', '1.0'))
-                
-                # 載入字體大小設定
-                self.font_size = int(settings.get('UIFontSize', 11))
-                
+            settings = load_setup()
+            
+            # 載入制具控制設定
+            fixture_settings = settings.get('Fixture_Control', {})
+            
+            # 載入 COM Port 設定
+            self.com_port_var.set(fixture_settings.get('Fixture_COM_Port', 'COM5'))
+            
+            # 載入測試類別設定
+            self.test_category_vars['FUNCTION'].set(
+                fixture_settings.get('Test_Category_FUNCTION', True))
+            self.test_category_vars['MB'].set(
+                fixture_settings.get('Test_Category_MB', False))
+            self.test_category_vars['原始的指令'].set(
+                fixture_settings.get('Test_Category_Original_Commands', False))
+            
+            # 確定當前選擇的類別
+            for category, var in self.test_category_vars.items():
+                if var.get():
+                    self.current_category = category
+                    break
+            
+            # 載入串列設定
+            serial_settings = fixture_settings.get('Serial_Settings', {})
+            self.baudrate_var.set(serial_settings.get('Baudrate', '9600'))
+            self.bytesize_var.set(serial_settings.get('Bytesize', '8'))
+            self.stopbits_var.set(serial_settings.get('Stopbits', '1'))
+            self.parity_var.set(serial_settings.get('Parity', 'None'))
+            self.timeout_var.set(serial_settings.get('Timeout', '1.0'))
+            
+            # 載入字體大小設定 (從主設定中讀取)
+            self.font_size = int(settings.get('UIFontSize', 11))
+            
         except Exception as e:
             print(f"載入設定時發生錯誤: {e}")
             self.font_size = 11
@@ -243,10 +266,26 @@ class FixtureControlWindow:
             )
             checkbox.pack(side=tk.LEFT, padx=(10, 0))
         
-        # 第二行：指令選擇與執行
+        # 第二行：COM Port 與指令選擇
         command_frame = ttk.Frame(control_frame)
         command_frame.pack(fill=tk.X, pady=(0, 10))
         
+        # COM Port 選擇
+        tk.Label(command_frame, text="COM埠:", font=("微軟正黑體", self.font_size)).pack(side=tk.LEFT)
+        
+        # 取得可用的 COM 埠
+        available_ports = self.get_available_com_ports()
+        self.com_combobox = ttk.Combobox(
+            command_frame,
+            textvariable=self.com_port_var,
+            values=available_ports,
+            state="readonly",
+            width=10
+        )
+        self.com_combobox.pack(side=tk.LEFT, padx=(10, 20))
+        self.com_combobox.bind('<<ComboboxSelected>>', self.on_com_port_changed)
+        
+        # 指令選擇
         tk.Label(command_frame, text="選擇指令:", font=("微軟正黑體", self.font_size)).pack(side=tk.LEFT)
         
         # 指令選擇下拉選單 (約20字元寬度)
@@ -293,6 +332,25 @@ class FixtureControlWindow:
         
         # 更新指令列表
         self.update_command_list()
+
+    def get_available_com_ports(self):
+        """取得可用的 COM 埠列表"""
+        try:
+            ports = [port.device for port in serial.tools.list_ports.comports()]
+            return ports if ports else ['COM5']  # 預設提供 COM5 作為選項
+        except Exception as e:
+            print(f"取得 COM 埠時發生錯誤: {e}")
+            return ['COM5']
+
+    def on_com_port_changed(self, event=None):
+        """當 COM 埠變更時儲存設定"""
+        try:
+            selected_com = self.com_port_var.get()
+            self.save_settings()
+            self.update_serial_info()
+            self.log_message(f"COM埠已變更為: {selected_com}")
+        except Exception as e:
+            print(f"變更 COM 埠時發生錯誤: {e}")
 
     def create_serial_info_area(self, parent):
         """建立串列參數顯示區域"""
@@ -410,9 +468,10 @@ class FixtureControlWindow:
                 'Space': serial.PARITY_SPACE
             }
             
-            # 建立串列連接
+            # 建立串列連接 (使用選擇的 COM 埠)
+            com_port = self.com_port_var.get()
             self.serial_connection = serial.Serial(
-                port='COM5',  # 這應該從設定中讀取
+                port=com_port,
                 baudrate=int(self.baudrate_var.get()),
                 bytesize=int(self.bytesize_var.get()),
                 stopbits=float(self.stopbits_var.get()),
@@ -452,7 +511,8 @@ class FixtureControlWindow:
 
     def update_serial_info(self):
         """更新串列參數顯示"""
-        info_text = (f"串列設定: COM5, {self.baudrate_var.get()} baud, "
+        com_port = self.com_port_var.get()
+        info_text = (f"串列設定: {com_port}, {self.baudrate_var.get()} baud, "
                     f"{self.bytesize_var.get()} bits, {self.stopbits_var.get()} stop, "
                     f"{self.parity_var.get()} parity, {self.timeout_var.get()}s timeout")
         self.serial_info_label.config(text=info_text)
@@ -468,19 +528,16 @@ class FixtureControlWindow:
     def save_settings(self):
         """儲存設定"""
         try:
-            setup_path = resource_path("setup.json")
-            settings = {}
-            
-            # 載入現有設定
-            if os.path.exists(setup_path):
-                with open(setup_path, 'r', encoding='utf-8') as f:
-                    settings = json.load(f)
+            settings = load_setup()
             
             # 更新制具控制設定
             if 'Fixture_Control' not in settings:
                 settings['Fixture_Control'] = {}
                 
             fixture_settings = settings['Fixture_Control']
+            
+            # 儲存 COM Port 設定
+            fixture_settings['Fixture_COM_Port'] = self.com_port_var.get()
             
             # 儲存測試類別設定
             fixture_settings['Test_Category_FUNCTION'] = self.test_category_vars['FUNCTION'].get()
@@ -498,12 +555,52 @@ class FixtureControlWindow:
             serial_settings['Parity'] = self.parity_var.get()
             serial_settings['Timeout'] = self.timeout_var.get()
             
-            # 寫入檔案
-            with open(setup_path, 'w', encoding='utf-8') as f:
-                json.dump(settings, f, ensure_ascii=False, indent=2)
+            # 儲存設定
+            save_setup(settings)
                 
         except Exception as e:
             print(f"儲存設定時發生錯誤: {e}")
+
+    def update_font_size(self, new_font_size):
+        """更新字體大小 (由外部調用)"""
+        try:
+            self.font_size = int(new_font_size)
+            
+            # 更新所有 UI 元件的字體
+            if hasattr(self, 'desc_label'):
+                self.desc_label.config(font=("微軟正黑體", self.font_size))
+            
+            # 更新所有標籤的字體
+            self.update_widget_fonts(self.root)
+            
+            # 更新結果文字區域的字體
+            if hasattr(self, 'result_text'):
+                self.result_text.config(font=("Consolas", self.font_size))
+            
+            # 更新串列資訊標籤
+            if hasattr(self, 'serial_info_label'):
+                self.serial_info_label.config(font=("微軟正黑體", self.font_size))
+                
+        except Exception as e:
+            print(f"更新字體大小時發生錯誤: {e}")
+
+    def update_widget_fonts(self, widget):
+        """遞迴更新所有 widget 的字體"""
+        try:
+            # 針對特定類型的 widget 更新字體
+            if isinstance(widget, tk.Label):
+                widget.config(font=("微軟正黑體", self.font_size))
+            elif isinstance(widget, (tk.Button, ttk.Button)):
+                try:
+                    widget.config(font=("微軟正黑體", self.font_size))
+                except:
+                    pass  # ttk 按鈕可能不支援 font 參數
+            
+            # 遞迴處理子 widget
+            for child in widget.winfo_children():
+                self.update_widget_fonts(child)
+        except Exception as e:
+            pass  # 忽略字體更新錯誤
 
     def setup_tooltips(self):
         """設定工具提示"""
@@ -511,6 +608,7 @@ class FixtureControlWindow:
             return
             
         tooltips = {
+            self.com_combobox: "選擇制具連接的 COM 埠",
             self.command_combobox: "選擇要執行的制具指令",
             self.execute_btn: "執行選擇的指令",
             self.sent_command_entry: "顯示剛剛發送的指令代碼", 
@@ -518,7 +616,26 @@ class FixtureControlWindow:
         }
         
         for widget, text in tooltips.items():
-            self.tooltip_manager.add_tooltip(widget, text)
+            if hasattr(self, widget.__class__.__name__.lower()) and widget:
+                self.tooltip_manager.add_tooltip(widget, text)
+
+    def refresh_ports(self):
+        """刷新 COM 埠列表 (由外部調用)"""
+        try:
+            available_ports = self.get_available_com_ports()
+            if hasattr(self, 'com_combobox'):
+                current_selection = self.com_port_var.get()
+                self.com_combobox['values'] = available_ports
+                
+                # 如果目前選擇的埠仍然可用，保持選擇
+                if current_selection in available_ports:
+                    self.com_combobox.set(current_selection)
+                elif available_ports:
+                    self.com_combobox.set(available_ports[0])
+                    self.com_port_var.set(available_ports[0])
+                    self.save_settings()
+        except Exception as e:
+            print(f"刷新 COM 埠時發生錯誤: {e}")
 
 # 為主程式相容性建立 FixtureFrame 類別
 class FixtureFrame(ttk.Frame):
@@ -527,6 +644,16 @@ class FixtureFrame(ttk.Frame):
         
         # 建立制具控制視窗
         self.fixture_window = FixtureControlWindow(self)
+    
+    def update_font_size(self, new_font_size):
+        """更新字體大小的外部介面"""
+        if hasattr(self, 'fixture_window'):
+            self.fixture_window.update_font_size(new_font_size)
+    
+    def refresh_ports(self):
+        """刷新 COM 埠的外部介面"""
+        if hasattr(self, 'fixture_window'):
+            self.fixture_window.refresh_ports()
 
 def main():
     """主程式 - 獨立測試用"""

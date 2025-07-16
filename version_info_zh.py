@@ -13,9 +13,9 @@ import sys
 import datetime
 
 version_info = {
-    'version': '1.5.0.7',
-    'file_version': (1, 5, 0, 7),
-    'product_version': (1, 5, 0, 7),
+    'version': '1.5.0.8',
+    'file_version': (1, 5, 0, 8),
+    'product_version': (1, 5, 0, 8),
     'company_name': 'VALO360指令通',
     'file_description': 'VALO360指令通 - 序列埠通訊工具',
     'internal_name': 'VALO360指令通',
@@ -27,6 +27,13 @@ version_info = {
 
 # 版本更新記錄
 version_history = """
+v1.5.0.8 (2025-07-16)
+----------------------
+• 系統設定頁面優化：
+  - 指令檔案路徑欄位寬度調整為150字元，支援更長的檔案路徑顯示
+  - 儲存按鈕尺寸加大（width=15）並移至頁面上方，提升可見性與操作便利性
+  - 改善設定頁面整體佈局與使用者體驗
+
 v1.5.0.7 (2025-07-16)
 ===================
 ✅ 制具控制頁面UI優化與功能整合
