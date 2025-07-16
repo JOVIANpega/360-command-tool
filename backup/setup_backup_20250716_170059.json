@@ -32,112 +32,107 @@
     "system_status": "COM口: {0} | 分類: {1} ({2}個指令) | 超時: {3}秒",
     "history": [
       {
-        "timestamp": "15:40:54",
-        "message": "COM口: COM5 | 分類: 全部指令 (7個指令) | 超時: 30秒",
-        "type": "info"
-      },
-      {
-        "timestamp": "16:16:21",
-        "message": "VALO360 指令通 已啟動",
-        "type": "info"
-      },
-      {
-        "timestamp": "16:16:21",
-        "message": "MU310 指令通_test 已啟動 (版本：VV1.5.0.5)",
-        "type": "success"
-      },
-      {
-        "timestamp": "16:16:23",
+        "timestamp": "16:59:24",
         "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
         "type": "success"
       },
       {
-        "timestamp": "16:16:26",
+        "timestamp": "16:59:27",
         "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
         "type": "success"
       },
       {
-        "timestamp": "16:16:28",
+        "timestamp": "16:59:29",
         "message": "COM口: COM5 | 分類: 全部指令 (7個指令) | 超時: 30秒",
         "type": "info"
       },
       {
-        "timestamp": "16:16:35",
+        "timestamp": "16:59:36",
         "message": "COM口: COM5 | 分類: 全部指令 (7個指令) | 超時: 30秒",
         "type": "info"
       },
       {
-        "timestamp": "16:16:45",
+        "timestamp": "16:59:41",
+        "message": "已選擇: 13. 檢查藍牙 Check BT",
+        "type": "info"
+      },
+      {
+        "timestamp": "16:59:41",
+        "message": "已連接到 COM5",
+        "type": "success"
+      },
+      {
+        "timestamp": "16:59:42",
+        "message": "連接已關閉",
+        "type": "error"
+      },
+      {
+        "timestamp": "16:59:45",
+        "message": "已連接到 COM5",
+        "type": "success"
+      },
+      {
+        "timestamp": "16:59:46",
         "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
         "type": "info"
       },
       {
-        "timestamp": "16:18:12",
-        "message": "VALO360 指令通 已啟動",
-        "type": "info"
+        "timestamp": "16:59:52",
+        "message": "連接已關閉",
+        "type": "error"
       },
       {
-        "timestamp": "16:18:12",
-        "message": "MU310 指令通_test 已啟動 (版本：VV1.5.0.5)",
+        "timestamp": "16:59:55",
+        "message": "已連接到 COM5",
         "type": "success"
       },
       {
-        "timestamp": "16:18:14",
-        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "timestamp": "16:59:57",
+        "message": "連接已關閉",
+        "type": "error"
+      },
+      {
+        "timestamp": "17:00:04",
+        "message": "已選擇: 16. 檢查LED燈狀態 Check LED",
+        "type": "info"
+      },
+      {
+        "timestamp": "17:00:04",
+        "message": "顯示訊息: 確認LED綠燈橘燈熄滅，三種狀態...|diag -s led g off|diag -s led o off|diag -s led g on|diag -s led o on",
         "type": "success"
       },
       {
-        "timestamp": "16:18:17",
-        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "timestamp": "17:00:04",
+        "message": "已連接到 COM5",
         "type": "success"
       },
       {
-        "timestamp": "16:18:19",
-        "message": "COM口: COM5 | 分類: 全部指令 (7個指令) | 超時: 30秒",
-        "type": "info"
+        "timestamp": "17:00:11",
+        "message": "連接已關閉",
+        "type": "error"
       },
       {
-        "timestamp": "16:18:26",
-        "message": "COM口: COM5 | 分類: 全部指令 (7個指令) | 超時: 30秒",
-        "type": "info"
+        "timestamp": "17:00:16",
+        "message": "已連接到 COM5",
+        "type": "success"
       },
       {
-        "timestamp": "16:18:36",
-        "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
-        "type": "info"
+        "timestamp": "17:00:24",
+        "message": "連接已關閉",
+        "type": "error"
       },
       {
-        "timestamp": "16:23:55",
+        "timestamp": "17:00:59",
         "message": "設定已更新！\n• 指令檔案已重新載入\n• COM口設定已更新\n• 結束字串設定已更新\n• IP地址設定已更新\n• 超時設定已更新",
         "type": "success"
       },
       {
-        "timestamp": "16:23:55",
+        "timestamp": "17:00:59",
         "message": "標籤頁名稱已同步更新",
-        "type": "success"
-      },
-      {
-        "timestamp": "16:23:55",
-        "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱",
-        "type": "success"
-      },
-      {
-        "timestamp": "16:24:03",
-        "message": "設定已更新！\n• 指令檔案已重新載入\n• COM口設定已更新\n• 結束字串設定已更新\n• IP地址設定已更新\n• 超時設定已更新",
-        "type": "success"
-      },
-      {
-        "timestamp": "16:24:03",
-        "message": "標籤頁名稱已同步更新",
-        "type": "success"
-      },
-      {
-        "timestamp": "16:24:03",
-        "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱",
         "type": "success"
       }
     ],
-    "last_updated": "2025-07-16T16:24:03.595848"
+    "last_updated": "2025-07-16T17:00:59.637724"
   },
   "DUT_Control": {
     "Serial_COM_Port": "COM5",
@@ -171,9 +166,9 @@
   "Fixture_Control": {
     "Fixture_COM_Port": "COM5",
     "Current_Command": "",
-    "Test_Category_FUNCTION": false,
+    "Test_Category_FUNCTION": true,
     "Test_Category_MB": false,
-    "Test_Category_Original_Commands": true,
+    "Test_Category_Original_Commands": false,
     "Fixture_Font_Size": "11",
     "Serial_Settings": {
       "Baudrate": "9600",
