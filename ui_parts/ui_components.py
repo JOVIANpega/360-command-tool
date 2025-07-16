@@ -12,6 +12,7 @@ from ui_parts.ui_components_base import UIComponentsBase
 from ui_parts.ui_components_input import UIComponentsInput
 from ui_parts.ui_components_output import UIComponentsOutput
 from ui_parts.ui_components_settings import UIComponentsSettings
+from ui_parts.tooltip import ToolTipManager
 from config_utils import get_notification_text, get_app_version
 
 
@@ -36,10 +37,17 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         super().__init__(parent)
         self.root = root
         self.handlers = handlers
+        self.current_left_row = 0
         
         # 獲取全域通知管理器的引用
         self.global_notification_manager = None
         # 會在init_dut_tab中被設定
+        
+        # 初始化 ToolTip 管理器
+        self.tooltip_manager = ToolTipManager()
+        # 從設定中讀取 ToolTip 啟用狀態，預設為啟用
+        tooltip_enabled = self.parent.setup.get("UI_Settings", {}).get("ToolTip_Enabled", True)
+        self.tooltip_manager.set_all_enabled(tooltip_enabled)
         
         # 初始化各個元件
         self.init_com_components()
@@ -49,19 +57,13 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.init_output_components()
         self.init_progress_components()
         
+        # 為所有按鈕添加 ToolTip 提示
+        self.init_tooltips()
+        
         # 強化 left_panel 內所有 Entry/Combobox 的 <Return> 綁定
         for widget in [self.combobox_cmd, self.entry_timeout, self.combobox_end, self.entry_ip, self.combobox_com]:
             widget.bind('<Return>', lambda e: self.parent.handlers.on_execute())
             
-        # 將執行按鈕移回 left_panel 最下方，並用 grid 固定
-        self.init_exec_button_left_panel()
-        # 統一所有 left_panel 內 tk.Button hover 為藍底白字
-        for widget in self.left_panel.winfo_children():
-            for child in widget.winfo_children():
-                if isinstance(child, tk.Button):
-                    child.bind("<Enter>", lambda e, b=child: b.config(bg="#2196f3", fg="white"))
-                    child.bind("<Leave>", lambda e, b=child: b.config(bg="white", fg="black"))
-        
         # 恢復 PanedWindow 分割位置（延遲執行，確保視窗已完全載入）
         self.parent.root.after(200, self.restore_pane_position)
         
@@ -149,19 +151,10 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.section_var = tk.StringVar()
         
         # 從 command.txt 動態讀取分類
-        self.sections = []  # 移除預設的 '全部指令'
+        self.sections = []
         try:
-            # 從設定中獲取指令檔案路徑
             command_file_path = self.parent.setup.get("DUT_Control", {}).get("Command_File_Path", "")
-            print(f"[DEBUG] init_cmd_components: 從設定中讀取指令檔案路徑: {command_file_path}")
-            
-            if command_file_path and os.path.exists(command_file_path):
-                command_file = command_file_path
-                print(f"[DEBUG] init_cmd_components: 使用設定中的指令檔案: {command_file}")
-            else:
-                command_file = COMMAND_FILE
-                print(f"[DEBUG] init_cmd_components: 使用預設指令檔案: {command_file}")
-                
+            command_file = command_file_path if command_file_path and os.path.exists(command_file_path) else COMMAND_FILE
             with open(command_file, 'r', encoding='utf-8') as f:
                 for line in f:
                     line = line.strip()
@@ -169,84 +162,70 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                         section_name = line.strip('=')
                         if section_name and section_name not in self.sections:
                             self.sections.append(section_name)
-                            print(f"[DEBUG] init_cmd_components: 找到區段: {section_name}")
         except Exception as e:
             print(f"[ERROR] 讀取分類時發生錯誤: {e}")
-            import traceback
-            traceback.print_exc()
             
-        # 如果沒有讀取到任何分類，添加一個預設分類
         if not self.sections:
             self.sections = ['全部指令']
-            print("[DEBUG] init_cmd_components: 未找到區段，使用預設區段: ['全部指令']")
-        else:
-            print(f"[DEBUG] init_cmd_components: 找到 {len(self.sections)} 個區段: {self.sections}")
-            
-        # 設定預設選中的分類
+        
         if self.sections:
             self.section_var.set(self.sections[0])
-            print(f"[DEBUG] init_cmd_components: 設定預設選中的分類: {self.sections[0]}")
         
-        # 限制每行最多顯示4個按鈕
         max_buttons_per_row = 4
         self.section_radiobuttons = []
         
         for i, sec in enumerate(self.sections):
-            # 計算行和列位置
-            row = i // max_buttons_per_row
-            col = i % max_buttons_per_row
-            
+            row, col = i // max_buttons_per_row, i % max_buttons_per_row
             rb = tk.Radiobutton(
                 self.section_frame, text=sec, variable=self.section_var, value=sec, 
-                command=self.update_cmd_list,
-                bg='#d9d9d9', fg='black', selectcolor='#d9d9d9', 
-                activebackground='#2196f3', activeforeground='white',
-                indicatoron=0, relief='flat', borderwidth=1, width=8, height=1,
-                font=('Microsoft JhengHei UI', int(self.parent.setup.get('UI_Font_Size', '12')))
+                command=self.update_cmd_list, bg='#d9d9d9', fg='black', selectcolor='#d9d9d9', 
+                activebackground='#2196f3', activeforeground='white', indicatoron=0, relief='flat', 
+                borderwidth=1, width=8, height=1, font=('Microsoft JhengHei UI', int(self.parent.setup.get('UI_Font_Size', '12')))
             )
             rb.grid(row=row, column=col, padx=1, pady=1, sticky='ew')
             rb.bind("<Enter>", lambda e, b=rb: b.config(bg="#2196f3", fg='white'))
             rb.bind("<Leave>", lambda e, b=rb: self.update_radio_bg())
             self.section_radiobuttons.append(rb)
-            
-            # 設置列的權重，使按鈕平均分配空間
             self.section_frame.columnconfigure(col, weight=1)
         
         self.update_radio_bg()
 
-        # 添加說明文字（減少高度）
-        self.section_description = ttk.Label(
-            self.section_frame, 
-            text=self.get_section_description(self.section_var.get()),
-            style="TLabel",
-            wraplength=300
-        )
-        # 將說明文字放在按鈕下方的新行
+        self.section_description = ttk.Label(self.section_frame, text=self.get_section_description(self.section_var.get()), style="TLabel", wraplength=300)
         last_row = (len(self.sections) - 1) // max_buttons_per_row + 1
         self.section_description.grid(row=last_row, column=0, columnspan=max_buttons_per_row, pady=2, sticky='w')
         
         cmd_frame = ttk.Frame(self.left_panel, style="TFrame")
-        cmd_frame.grid(row=2, column=0, sticky='ew', pady=3)  # 減少間距
+        cmd_frame.grid(row=2, column=0, sticky='ew', pady=3)
         cmd_frame.columnconfigure(1, weight=1)
+        
         self.label_cmd = ttk.Label(cmd_frame, text='指令:', style="TLabel")
         self.label_cmd.grid(row=0, column=0, sticky='w')
         
-        # 改進下拉選單的樣式設置
         font_size = int(self.parent.setup.get('UI_Font_Size', '12'))
         style = ttk.Style()
         style.configure('Custom.TCombobox', font=('Microsoft JhengHei UI', font_size))
         
         self.combobox_cmd = ttk.Combobox(cmd_frame, state='readonly', width=25, style='Custom.TCombobox')
         self.combobox_cmd.grid(row=0, column=1, padx=5, sticky='ew')
-        
-        # 設置combobox樣式與事件綁定
         self.combobox_cmd.bind("<<ComboboxSelected>>", lambda e: self.on_cmd_selected())
-        
-        # 初始化顏色映射字典
-        self.cmd_colors = {}
-        
-        # 添加打開下拉列表時的回調，用於限制高度
         self.combobox_cmd.bind("<<ComboboxOpened>>", self.limit_dropdown_height)
+
+        self.btn_execute = tk.Button(
+            cmd_frame, text='執行指令', font=('Microsoft JhengHei UI', 14, 'bold'),
+            bg='#4CAF50', fg='white', relief='raised', borderwidth=2, cursor="hand2",
+            command=self.parent.handlers.on_execute, width=14, height=2
+        )
+        self.btn_execute.grid(row=0, column=2, sticky='e', padx=(5, 0))
+        self.btn_execute.bind("<Enter>", self.on_enter_exec)
+        self.btn_execute.bind("<Leave>", self.on_leave_exec)
+
+        self.combobox_cmd.bind('<Return>', lambda event: self.parent.handlers.on_execute())
+
+    def on_enter_exec(self, event):
+        self.btn_execute.config(bg='#2196F3')
+
+    def on_leave_exec(self, event):
+        self.btn_execute.config(bg='#4CAF50')
 
     def get_section_description(self, section):
         # 預設描述
@@ -258,13 +237,11 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             '出貨指令': '用於出貨測試的指令集'
         }
         
-        # 如果有預設描述，則使用預設描述
         if section in default_descriptions:
             return default_descriptions[section]
         
-        # 否則生成一個通用描述
         return f'用於{section}的指令集'
-
+        
     def init_ping_components(self):
         print('[DEBUG] handlers in init_ping_components:', self.parent.handlers)
         ping_frame = ttk.LabelFrame(self.left_panel, text='Ping 檢查', padding=5, style="TLabelframe")
@@ -473,35 +450,8 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             raise
 
     def init_exec_button_left_panel(self):
-        # 執行指令大圓角按鈕（預設灰色，hover 綠色），用 grid 固定在 left_panel 最下方
-
-        # 使用 Frame 來放置下拉選單和按鈕
-        exec_frame = ttk.Frame(self.left_panel)
-        exec_frame.grid(row=6, column=0, sticky='ew', padx=5, pady=10)
-        exec_frame.columnconfigure(0, weight=1)  # 設置第 0 欄可拉伸
-
-        # 建立執行按鈕 
-        self.btn_execute = tk.Button(
-            exec_frame,
-            text='執行指令',
-            font=('Microsoft JhengHei UI', 16, 'bold'),
-            bg='#808080',
-            fg='white',
-            relief='raised',
-            borderwidth=2,
-            command=self.parent.handlers.on_execute,
-            width=15,
-            height=2
-        )
-        self.btn_execute.grid(row=0, column=0, sticky='ew', padx=5)
-        self.btn_execute.bind('<Enter>', lambda event: self.btn_execute.config(bg='green'))
-        self.btn_execute.bind('<Leave>', lambda event: self.btn_execute.config(bg='#808080'))
-
-        # === 移除舊的通知區域功能 ===
-        # 原本的通知區域已被全域通知管理器取代，不再需要
-        
-        # 讓 left_panel 最下方 row 有 weight，確保按鈕永遠可見
-        self.left_panel.grid_rowconfigure(999, weight=0)  # 改為 weight=0，避免執行按鈕佔用太多空間
+        # This method is now empty as the button has been moved.
+        pass
 
     def init_progress_components(self):
         """初始化進度條組件"""
@@ -1382,3 +1332,61 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             
         except Exception as e:
             print(f"[ERROR] 自動保存IP記錄時發生錯誤: {e}")
+
+    def init_tooltips(self):
+        """為所有按鈕添加 ToolTip 提示說明"""
+        try:
+            # 執行指令按鈕
+            if hasattr(self, 'btn_execute'):
+                self.tooltip_manager.add_tooltip(self.btn_execute, "執行所選指令區塊的命令序列")
+            
+            # 清空回應按鈕
+            if hasattr(self, 'btn_clear'):
+                self.tooltip_manager.add_tooltip(self.btn_clear, "清除下方的執行結果顯示區域")
+            
+            # 備份Log按鈕
+            if hasattr(self, 'btn_backup'):
+                self.tooltip_manager.add_tooltip(self.btn_backup, "將執行記錄匯出為備份檔案")
+            
+            # 使用說明按鈕
+            if hasattr(self, 'btn_guide'):
+                self.tooltip_manager.add_tooltip(self.btn_guide, "開啟說明文件或說明視窗")
+            
+            # 刷新按鈕
+            if hasattr(self, 'btn_refresh'):
+                self.tooltip_manager.add_tooltip(self.btn_refresh, "重新取得可用的 COM 埠")
+            
+            # Ping按鈕
+            if hasattr(self, 'btn_ping'):
+                self.tooltip_manager.add_tooltip(self.btn_ping, "執行與指定 IP 的 Ping 檢查")
+            
+            # 保存IP按鈕
+            if hasattr(self, 'btn_save_ip'):
+                self.tooltip_manager.add_tooltip(self.btn_save_ip, "將當前 IP 地址保存到記錄")
+            
+            # 清除IP記錄按鈕
+            if hasattr(self, 'btn_clear_ip'):
+                self.tooltip_manager.add_tooltip(self.btn_clear_ip, "清除所有已保存的 IP 記錄")
+            
+            # 字體調整按鈕
+            if hasattr(self, 'btn_ui_font_minus'):
+                self.tooltip_manager.add_tooltip(self.btn_ui_font_minus, "減小介面字體大小")
+            
+            if hasattr(self, 'btn_ui_font_plus'):
+                self.tooltip_manager.add_tooltip(self.btn_ui_font_plus, "增大介面字體大小")
+            
+            if hasattr(self, 'btn_content_font_minus'):
+                self.tooltip_manager.add_tooltip(self.btn_content_font_minus, "減小內容字體大小")
+            
+            if hasattr(self, 'btn_content_font_plus'):
+                self.tooltip_manager.add_tooltip(self.btn_content_font_plus, "增大內容字體大小")
+            
+            print("[INFO] ToolTip 提示已初始化完成")
+            
+        except Exception as e:
+            print(f"[ERROR] 初始化 ToolTip 時發生錯誤: {e}")
+
+    def set_tooltips_enabled(self, enabled):
+        """設定 ToolTip 的啟用狀態"""
+        if hasattr(self, 'tooltip_manager'):
+            self.tooltip_manager.set_all_enabled(enabled)

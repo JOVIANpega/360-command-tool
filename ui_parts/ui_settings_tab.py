@@ -3,6 +3,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import os
 from config_core import load_setup, save_setup
+from ui_parts.tooltip import ToolTipManager
 import json
 
 class SettingsTab(ttk.Frame):
@@ -15,8 +16,15 @@ class SettingsTab(ttk.Frame):
         self.vars = {}
         self.sections_preview = []  # 存儲從指令檔案中讀取的區段標題
 
+        # 初始化 ToolTip 管理器
+        self.tooltip_manager = ToolTipManager()
+        # 從設定中讀取 ToolTip 啟用狀態
+        tooltip_enabled = self.setup_data.get("UI_Settings", {}).get("ToolTip_Enabled", True)
+        self.tooltip_manager.set_all_enabled(tooltip_enabled)
+
         self.create_widgets()
         self.load_settings()
+        self.init_tooltips()
 
     def create_widgets(self):
         # 創建主容器，不使用Canvas滾動，直接使用緊湊佈局
@@ -44,14 +52,17 @@ class SettingsTab(ttk.Frame):
         font_spinbox.grid(row=0, column=1, sticky="w", padx=5)
         font_spinbox.bind('<Return>', lambda e: self.apply_font_size())
         
-        ttk.Button(font_control_frame, text="套用字體", command=self.apply_font_size).grid(row=0, column=2, padx=5)
+        self.apply_font_button = ttk.Button(font_control_frame, text="套用字體", command=self.apply_font_size)
+        self.apply_font_button.grid(row=0, column=2, padx=5)
         
         # 儲存按鈕
         save_frame = ttk.Frame(control_frame)
         save_frame.pack(side=tk.RIGHT)
         
-        ttk.Button(save_frame, text="儲存設定", command=self.save_settings, style="Accent.TButton").pack(side=tk.RIGHT, padx=5)
-        ttk.Button(save_frame, text="重新載入", command=self.reload_settings).pack(side=tk.RIGHT, padx=5)
+        self.save_button = ttk.Button(save_frame, text="儲存設定", command=self.save_settings, style="Accent.TButton")
+        self.save_button.pack(side=tk.RIGHT, padx=5)
+        self.reload_button = ttk.Button(save_frame, text="重新載入", command=self.reload_settings)
+        self.reload_button.pack(side=tk.RIGHT, padx=5)
         
         # --- 第一排：應用程式基本設定 + 標籤頁名稱設定 ---
         # 左側：應用程式基本設定
@@ -169,6 +180,15 @@ class SettingsTab(ttk.Frame):
         ttk.Checkbutton(dut_frame, text="啟動後自動執行", variable=self.vars["DUT_Auto_Execute"]).grid(row=dut_row, column=0, columnspan=2, sticky="w", pady=4)
         dut_row += 1
         
+        # ToolTip 提示功能開關
+        ui_settings = self.setup_data.get("UI_Settings", {})
+        self.vars["UI_ToolTip_Enabled"] = tk.BooleanVar(value=ui_settings.get("ToolTip_Enabled", True))
+        self.tooltip_checkbox = ttk.Checkbutton(dut_frame, text="啟用提示說明（ToolTip）", 
+                                              variable=self.vars["UI_ToolTip_Enabled"],
+                                              command=self.on_tooltip_setting_changed)
+        self.tooltip_checkbox.grid(row=dut_row, column=0, columnspan=2, sticky="w", pady=4)
+        dut_row += 1
+        
         # 指令檔案路徑
         ttk.Label(dut_frame, text="指令檔案路徑:").grid(row=dut_row, column=0, sticky="w", pady=4)
         path_frame = ttk.Frame(dut_frame)
@@ -176,7 +196,8 @@ class SettingsTab(ttk.Frame):
         path_frame.columnconfigure(0, weight=1)
         self.vars["DUT_Command_File_Path"] = tk.StringVar(value=dut_settings.get("Command_File_Path", ""))
         ttk.Entry(path_frame, textvariable=self.vars["DUT_Command_File_Path"]).grid(row=0, column=0, sticky="ew")
-        ttk.Button(path_frame, text="瀏覽", command=lambda: self.browse_file("DUT_Command_File_Path")).grid(row=0, column=1, padx=(5,0))
+        self.browse_button = ttk.Button(path_frame, text="瀏覽", command=lambda: self.browse_file("DUT_Command_File_Path"))
+        self.browse_button.grid(row=0, column=1, padx=(5,0))
         dut_row += 1
         
         # 右側：治具控制設定
@@ -299,6 +320,12 @@ class SettingsTab(ttk.Frame):
         current_setup["Fixture_Control"]["Test_Category_MB"] = self.vars["Fixture_Test_Category_MB"].get()
         current_setup["Fixture_Control"]["Test_Category_Original_Commands"] = self.vars["Fixture_Test_Category_Original_Commands"].get()
         
+        # 更新UI_Settings設定
+        if "UI_Settings" not in current_setup:
+            current_setup["UI_Settings"] = {}
+        
+        current_setup["UI_Settings"]["ToolTip_Enabled"] = self.vars["UI_ToolTip_Enabled"].get()
+        
         return current_setup
 
     def load_settings(self):
@@ -368,6 +395,55 @@ class SettingsTab(ttk.Frame):
             import traceback
             traceback.print_exc()
             messagebox.showerror("錯誤", f"儲存設定失敗：{str(e)}")
+
+    def on_tooltip_setting_changed(self):
+        """當 ToolTip 設定改變時的處理"""
+        try:
+            tooltip_enabled = self.vars["UI_ToolTip_Enabled"].get()
+            
+            # 立即更新當前設定頁面的 ToolTip 狀態
+            self.set_tooltips_enabled(tooltip_enabled)
+            
+            # 立即更新 DUT 頁面的 ToolTip 狀態
+            # 需要通過回調函數通知主程式更新 ToolTip 狀態
+            if hasattr(self, 'parent') and hasattr(self.parent, 'tab_manager'):
+                tab_manager = self.parent.tab_manager
+                if hasattr(tab_manager, 'dut_ui') and hasattr(tab_manager.dut_ui, 'components'):
+                    tab_manager.dut_ui.components.set_tooltips_enabled(tooltip_enabled)
+            
+            print(f"[INFO] ToolTip 功能已{'啟用' if tooltip_enabled else '停用'}")
+            
+        except Exception as e:
+            print(f"[ERROR] 更新 ToolTip 設定時發生錯誤: {e}")
+
+    def init_tooltips(self):
+        """為設定頁面的按鈕添加 ToolTip 提示說明"""
+        try:
+            # 儲存設定按鈕
+            if hasattr(self, 'save_button'):
+                self.tooltip_manager.add_tooltip(self.save_button, "將目前設定儲存到 setup.json")
+            
+            # 重新載入按鈕
+            if hasattr(self, 'reload_button'):
+                self.tooltip_manager.add_tooltip(self.reload_button, "重新載入設定檔案中的設定值")
+            
+            # 套用字體按鈕
+            if hasattr(self, 'apply_font_button'):
+                self.tooltip_manager.add_tooltip(self.apply_font_button, "將字體大小套用到設定頁面")
+            
+            # 瀏覽檔案按鈕
+            if hasattr(self, 'browse_button'):
+                self.tooltip_manager.add_tooltip(self.browse_button, "選擇 command.txt 指令檔案")
+            
+            print("[INFO] 設定頁面 ToolTip 提示已初始化完成")
+            
+        except Exception as e:
+            print(f"[ERROR] 初始化設定頁面 ToolTip 時發生錯誤: {e}")
+
+    def set_tooltips_enabled(self, enabled):
+        """設定 ToolTip 的啟用狀態"""
+        if hasattr(self, 'tooltip_manager'):
+            self.tooltip_manager.set_all_enabled(enabled)
 
     def activate(self):
         """當設定頁被選中時調用"""
