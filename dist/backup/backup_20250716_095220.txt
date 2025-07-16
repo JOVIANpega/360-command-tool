@@ -1,0 +1,586 @@
+
+=== 執行指令: 1. 讀取出貨SN版本 Read version ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[錯誤] could not open port 'COM5': PermissionError(13, '存取被拒。', None, 5)
+
+=== 執行指令: 1. 讀取出貨SN版本 Read version ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] pegacmd version
+pegacmd version
+[04-24_08:13:54:504] requestRegistrationState2 MCC: 0, MNC: 0, PS: Detached, DataCap: UNKNOW
+0.5.8.42.1_fd35aa5
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[已中止執行]
+
+=== 執行指令: 1. 讀取出貨SN版本 Read version ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] pegacmd version
+pegacmd version
+0.5.8.42.1_fd35aa5
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[發送] cat /usr/lib/firmware/fw_imagetype
+cat /usr/lib/firmware/fw_imagetype
+development
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[發送] pegacmd version
+pegacmd version
+0.5.8.42.1_fd35aa5
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 2. 檢查IVKEY Get IVKey ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] diag -g ivLic FD
+diag -g ivLic FD
+
+diag: Intell-Vision FD.lic ZE0oe<11G@@@001fY0CoYobgZKnY
+diag: The FD license key is corrected!
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[發送] diag -g ivLic LPR
+diag -g ivLic LPR
+
+diag: Intell-Vision LPR.lic Jd8Cm8Iou@@@88INH84CHCtOJ6fH
+HDAL: Version: v3.400.0
+HERR: [COMMON][hd_common_init():476]: [1;31minit fail? -1
+[0mcommon fail=-10, @3875
+diag: Error, the LPR license key is not corrected!
+diag: command of getting ivLic LPR was failed!
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 10. 檢查出貨韌體 Check shipping FW ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] cat /us/lib/firmware/fw_imagetype
+cat /us/lib/firmware/fw_imagetype
+cat: can't open '/us/lib/firmware/fw_imagetype': No such file or directory
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[發送] pegacmd version
+pegacmd version
+0.5.8.42.1_fd35aa5
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 3. 取得SD卡狀態 Get SD state ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] diag -g status sd
+diag -g status sd
+removed
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 5. 取得MAC位址 Get MAC ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] diag -g mac eth
+diag -g mac eth
+eth0: 58:07:F8:F4:62:BE
+diag: eth mac 58:07:F8:F4:62:BE
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[發送] diag -g mac wifi
+diag -g mac wifi
+wlan0: C0:F5:35:9D:B5:2E
+diag: invalid command "mac"
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 10. 檢查藍牙 Check BT ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] bt_init
+bt_init
+{[9][]}
+killall: brcm_patchram_plus: no process killed
+gpio 201 = 0
+gpio 201 = 1
+BT reinit
+[04-24_08:15:46:874] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+{[1][]}
+{[2][]}
+{[3][]}
+{[4][]}
+{[5][]}
+[04-24_08:15:51:887] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+{[6][]}
+{[7][]}
+{[8][]}
+
+[警告] 命令 "bt_init" 等待響應超過 10 秒，繼續執行下一步
+
+[系統] 所有命令已發送，等待最終回應...
+{[9][]}
+gpio 201 = 0
+gpio 201 = 1
+BT reinit
+[04-24_08:15:56:903] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+{[1][]}
+{[2][]}
+{[3][]}
+{[4][]}
+Done setting line discpline
+{[5][Done setting line discpline]}
+BT init succeeds
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ bluetooth
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 10. 檢查藍牙 Check BT ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] bt_init
+bt_init
+{[9][]}
+gpio 201 = 0
+[  251.793552] Bluetooth: hci0: sending frame failed (-49)
+bluetoothd[1048]: Endpoint unregistered: sender=:1.1 path=/org/bluez/hci0/A2DP/SBC/source/1
+bluetoothd[1048]: Endpoint unregistered: sender=:1.1 path=/org/bluez/hci0/A2DP/SBC/sink/2
+bluetoothd[1048]: Endpoint unregistered: sender=:1.1 path=/org/bluez/hci0/A2DP/SBC/source/2
+bluetoothd[1048]: Endpoint unregistered: sender=:1.1 path=/org/bluez/hci0/A2DP/SBC/sink/1
+gpio 201 = 1
+BT reinit
+{[1][]}
+{[2][]}
+[04-24_08:16:06:934] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+{[3][]}
+{[4][]}
+Done setting line discpline
+{[5][Done setting line discpline]}
+BT init succeeds
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 5. 取得WIFI序號 Get WIFI SN ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] wpa_cli status
+wpa_cli status
+Selected interface 'wlan0'
+wpa_state=INTERFACE_DISABLED
+p2p_device_address=c2:f5:35:9d:b5:2e
+address=c0:f5:35:9d:b5:2e
+uuid=4aad8b24-5707-5c10-88f7-07c0c099d664
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 6. 取得電池資訊 Get Battery info ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] echo 0 > /sys/bus/i2c/devices/14-0055/charger_monitor_perc
+echo 0 > /sys/bus/i2c/devices/14-0055/cha
+rger_monitor_perc
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 6. 取得電池資訊 Get Battery info ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root6
+
+[發送] echo 0 > /sys/bus/i2c/devices/14-0055/charger_monitor_perc
+echo 0 > /sys/bus/i2c/devices/14-0055/cha
+rger_monitor_perc
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ [04-24_08:16:32:270] requestRegistrationState2 MCC: 0, MNC: 0, PS: Detached, DataCap: UNKNOW
+[04-24_08:16:32:727] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+[04-24_08:16:32:733] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+[04-24_08:16:32:738] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+[04-24_08:16:37:290] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+Error deleting file (SD card is not mounted.)
+: No such file or directory
+
+[警告] 命令 "echo 0 > /sys/bus/i2c/devices/14-0055/charger_monitor_perc" 等待響應超過 10 秒，繼續執行下一步
+
+[系統] 所有命令已發送，等待最終回應...
+[04-24_08:16:42:301] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+[04-24_08:16:47:311] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+
+[已中止執行]
+
+=== 執行指令: 7. 取得電池百分比 Get Battery percent ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root6
+
+[發送] diag -g bat percent
+diag -g bat percent
+47
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ [04-24_08:16:57:343] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+
+[已中止執行]
+
+=== 執行指令: 9. 檢查乙太網路速度 Check ETH Speed ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root6
+
+[發送] diag -g status eth0
+diag -g status eth0
+link: up
+duplex: full
+speed: 1000
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ [04-24_08:17:02:353] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+[04-24_08:17:07:362] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+[04-24_08:17:07:362] requestSetOperatingMode(1)
+[04-24_08:17:07:365] requestSetOperatingMode(0)
+
+[已中止執行]
+[04-24_08:17:07:682] requestRegistrationState2 MCC: 0, MNC: 0, PS: Detached, Data
+=== 執行指令: 3. 取得Microchip序號 Get Microchip SN ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root6
+
+[發送] cryptoauth_test sernum
+cryptoauth_test sernum
+
+[  316.765843] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  316.772073] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+[  316.796059] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  316.812103] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+serial number:
+01 23 08 E1 3F F5 A1 91 01
+
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ [04-24_08:17:12:697] requestRegistrationState2 MCC: 0, MNC: 0, PS: Detached, DataCap: UNKNOW
+
+[已中止執行]
+
+[已中止執行]
+
+=== 執行指令: 3. 取得Microchip序號 Get Microchip SN ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] cryptoauth_test sernum
+cryptoauth_test sernum
+
+[  323.386754] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  323.394423] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+[  323.426346] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  323.432506] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+serial number:
+01 23 08 E1 3F F5 A1 91 01
+
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[發送] diag -g status emmc
+diag -g status emmc
+name: MMC128
+manfid: 0x000032
+oemid: 0x0101
+serial: 0x0106682c
+date: 11/2024
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 21. 執行私鑰 DO Private Key ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] diag -s privKey key
+diag -s privKey key
+[  340.273558] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  340.292492] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+[  340.317713] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  340.327241] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+[  340.351907] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  340.358143] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+[  340.374000] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  340.380201] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+New come 1, drop olds => base_time 354530306 video_frame_time 354563619
+[  340.404616] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  340.410981] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+[  340.423535] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  340.429592] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+[04-24_08:17:32:770] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+New come 0, drop olds => base_time 354630304 video_frame_time 35[  340.472453] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+4652847
+[  340.485594] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+[  340.521488] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+New come 1, drop olds => base_time 354680301 video_frame_time 35[  340.528146] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+4707282
+New come 3, drop olds => base_time 354707282 video_frame_time 354730380
+[  340.561865] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  340.567975] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+[  340.583041] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  340.589137] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+[  340.611842] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  340.617975] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+
+diag: the private key already written to ATECC608
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[發送] diag -g privKey key
+diag -g privKey key
+[  341.942972] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  341.949164] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+[  341.999237] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  342.012568] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+New come 1, drop olds => base_time 356163664 video_frame_time 356197089
+[  342.046022] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  342.052265] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+[  342.076825] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  342.083198] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+[  342.116189] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  342.122561] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+
+diag: OK, the private key is corrected.
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 27. 讀取版本 Read version ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] pegacmd version
+pegacmd version
+0.5.8.42.1_fd35aa5
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[系統] 延遲 5 秒...
+剩餘 4 秒...剩餘 3 秒...剩餘 2 秒...剩餘 1 秒...剩餘 0 秒...
+[系統] 延遲結束
+
+[系統] 所有命令已發送，等待最終回應...
+[04-24_08:17:52:825] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+[04-24_08:17:57:845] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+[04-24_08:17:57:846] requestSetOperatingMode(1)
+[04-24_08:17:57:850] requestSetOperatingMode(0)
+
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 16. 檢查LED燈狀態 Check LED ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[系統] 顯示訊息: 確認LED綠燈橘燈熄滅，三種狀態
+
+[系統] 訊息已確認
+
+[發送] diag -s led g off
+[04-24_08:18:10:168] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+[04-24_08:18:10:173] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+[04-24_08:18:10:178] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+[04-24_08:18:13:275] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+diag -s led g off
+diag: set status led g off done
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[發送] diag -s led o off
+diag -s led o off
+diag: set status led o off done
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[發送] diag -s led g on
+diag -s led g on
+diag: set status led g on done
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[發送] diag -s led o on
+[04-24_08:18:18:293] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+diag -s led o on
+diag: set status led o on done
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 14. 檢查LEN溫度 Check LEN sensor溫度 ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] diag -g temp s1
+diag -g temp s1
+28
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[發送] diag -g temp s2
+diag -g temp s2
+28
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[發送] diag -g temp s3
+diag -g temp s3
+28
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[發送] diag -g temp s0
+[04-24_08:18:33:324] requestRegistrationState2 MCC: 466, MNC: 92, PS: Detached, DataCap: UNKNOW
+diag -g temp s0
+28
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 15. 檢查5G模組 Check 5G Module ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] lspci
+lspci
+0000:00:00.0 Class 0604: Device 1e09:0006 (rev 01)
+0000:01:00.0 Class 0280: Device 14e4:449d (rev 02)
+0001:10:00.0 Class 0604: Device 1e09:0006 (rev 01)
+0001:11:00.0 Class ff00: Device 17cb:0308
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[發送] test5g at+egmr=0,5
+test5g at+egmr=0,5
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[發送] test5g at+simcomati
+at+egmr=0,5
++EGMR:"MP06250730B02DB"
+OK
+test5g at+simcomati
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[系統] 所有命令已發送，等待最終回應...
+at+simcomati
+Manufacturer: SIMCOM INCORPORATED
+Model: SIMCOM_SIM8380G-M2
+Revision: 22131B02X62M44A-M2_PCIE_CUS_HS
+IMEI: 863137060034259
+OK
+
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 5. 設定喇叭音量30% Do Speaker volume30% ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] diag -s audio volume 30
+diag -s audio volume 30
+Simple mixer control 'Amp Output Level',0
+  Capabilities: volume volume-joined
+  Playback channels: Mono
+  Capture channels: Mono
+  Limits: 0 - 28
+  Mono: 3 [11%]
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 20. 檢查喇叭1_pop音效 check speaker1_pop ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] aplay -Dhw:0,1 /usr/share/manufacturing/pop-sound.wav
+aplay -Dhw:0,1 /usr/share/manufacturing/p
+op-sound.wav
+[04-24_08:19:08:783] requestRegistrationState2 MCC: 466, MNC: 97, PS: Detached, DataCap: UNKNOW
+Playing WAVE '/usr/share/manufacturing/pop-sound.wav' : Signed 16 bit Little Endian, Rate 48000 Hz, Mono
+
+=== 開始 Ping 192.168.11.143 ===
+
+Ping 192.168.11.143 (使用 32 位元組的資料):
+[04-24_08:19:13:795] requestRegistrationState2 MCC: 466, MNC: 97, PS: Detached, DataCap: UNKNOW
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[結束] 收到指定結束字串 root
+要求等候逾時。
+回覆自 192.168.11.3: 目的地主機無法連線。
+要求等候逾時。
+回覆自 192.168.11.3: 目的地主機無法連線。
+
+192.168.11.143 的 Ping 統計資料:
+    封包: 已傳送 = 4，已收到 = 2, 已遺失 = 2 (50% 遺失)，
+
+Ping 成功！
+
+=== 執行指令: 18. 設定固定IP Set static IP ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] ifconfig eth0 192.168.11.143
+ifconfig eth0 192.168.11.143
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[發送] ifconfig
+[  448.365362] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  448.371588] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+[  448.397675] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  448.411323] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+[  448.457919] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  448.464405] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+[  448.508666] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  448.515702] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+[  448.566163] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  448.591593] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+media_signal_handler: 2002
+do_recording_split_now
+ifconfig
+eth0      Link encap:Ethernet  HWaddr 58:07:F8:F4:62:BE  
+          inet addr:192.168.11.143  Bcast:192.168.11.255  Mask:255.255.255.0
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:56 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:56 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:7259 (7.0 KiB)  TX bytes:17166 (16.7 KiB)
+          Interrupt:36 
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:65536  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 18. 設定固定IP Set static IP ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] ifconfig eth0 192.168.11.143
+ifconfig eth0 192.168.11.143
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-WE251300008:/root$ 
+[發送] ifconfig
+[04-24_08:19:23:823] requestRegistrationState2 MCC: 466, MNC: 97, PS: Detached, DataCap: UNKNOW
+ifconfig
+eth0      Link encap:Ethernet  HWaddr 58:07:F8:F4:62:BE  
+          inet addr:192.168.11.143  Bcast:192.168.11.255  Mask:255.255.255.0
+          UP BROADCAST RUNNING MULTICAST  MTU:1500  Metric:1
+          RX packets:56 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:65 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:7259 (7.0 KiB)  TX bytes:19701 (19.2 KiB)
+          Interrupt:36 
+
+lo        Link encap:Local Loopback  
+          inet addr:127.0.0.1  Mask:255.0.0.0
+          inet6 addr: ::1/128 Scope:Host
+          UP LOOPBACK RUNNING  MTU:65536  Metric:1
+          RX packets:0 errors:0 dropped:0 overruns:0 frame:0
+          TX packets:0 errors:0 dropped:0 overruns:0 carrier:0
+          collisions:0 txqueuelen:1000 
+          RX bytes:0 (0.0 B)  TX bytes:0 (0.0 B)
+
+root@NOKIA360Camera-WE251300008:/root$ 
+root@NOKIA360Camera-
+[結束] 收到指定結束字串 root
+
+=== 開始 Ping 192.168.11.143 ===
+
+Ping 192.168.11.143 (使用 32 位元組的資料):
+回覆自 192.168.11.143: 位元組=32 時間=4ms TTL=64
+回覆自 192.168.11.143: 位元組=32 時間=2ms TTL=64
+回覆自 192.168.11.143: 位元組=32 時間=2ms TTL=64
+回覆自 192.168.11.143: 位元組=32 時間=3ms TTL=64
+
+192.168.11.143 的 Ping 統計資料:
+    封包: 已傳送 = 4，已收到 = 4, 已遺失 = 0 (0% 遺失)，
+大約的來回時間 (毫秒):
+    最小值 = 2ms，最大值 = 4ms，平均 = 2ms
+
+Ping 成功！
+

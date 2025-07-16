@@ -1,0 +1,663 @@
+
+=== VALO360 指令通使用說明 ===
+
+
+=== VALO360 指令通使用說明 ===
+
+
+=== VALO360 指令通使用說明 ===
+
+
+=== 執行指令: 0. I LOVE JOVIAN ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[系統] 顯示訊息: TEST
+
+[系統] 訊息已確認
+
+[系統] 延遲 3 秒...
+剩餘 2 秒...剩餘 1 秒...剩餘 0 秒...
+[系統] 延遲結束
+
+[系統] 所有命令已發送，等待最終回應...
+NE188>TLZMA
+
+UNZOK!ini ver[0x31230912, 0x41230912]
+zq_trim[12, 13]
+ddr_speed [4266 4266]
+CPU1400 DONE
+>S
+tRFC 190ns
+ddr0 4096MB
+S
+tRFC 190ns
+ddr1 4096MB
+RPA
+ddr init done
+
+UNZOK!
+Loader Start ...
+LD_VER 01.05.07
+
+### PEGA_VER [ 1.0.0.0-secure ]
+
+692_LPDDR4_MIN_2133MHz 05/28/2025 07:02:50
+
+[8bit]
+SD identify fail
+card open fail
+eMMC 1.8V setting
+EMMC: 8 bits
+FW config 0x0
+BOOT USER 0x0
+BOOT WP 0x0
+Erase Grp Size 1
+WP Grp Size 16
+EMMC
+RR
+@@@ uenv1:[0], uenv2:[0], select: fota_group [0] (0/1)
+
+[cfg] ---------------------------------
+[cfg] efuse status
+[cfg]	 IS_SECURE()             = 0
+[cfg]	 is_signature_rsa()      = 0
+[cfg]	 is_signature_rsa_chk()  = 0
+[cfg]	 is_1st_key_programmed() = 0
+[cfg]	 is_2nd_key_programmed() = 0
+[cfg]	 is_3rd_key_programmed() = 0
+[cfg] SECURE_DECRYPT_UBOOT       = 1
+[cfg] SECURE_DECRYPT_BL31        = 1
+[cfg] SECURE_SIGNATURE_BY_AES    = 0
+[cfg] ---------------------------------
+
+@@@ load [fdt]: fota_group [0]
+RRtmp_addr 0x08000000
+LdCtrl2 0x00000008
+
+@@@ load [atf]: fota_group [0]
+l_bl31
+[bl31-chk] --- bl_load_bl31_from_flash ---
+[bl31-chk] EmbType         = 18 
+[bl31-chk] PartitionOffset = 0x420000
+[bl31-chk] PartitionSize   = 0x100000
+[bl31-chk] --------------------------------
+RRbl31_addr 0x01F00000
+bl31_size 0x00009088
+
+@@@ load [uboot]: fota_group [0]
+l_uboot
+[u-chk] --- bl_load_uboot_from_flash ---
+[u-chk] EmbType         = 5 
+[u-chk] PartitionOffset = 0x520000
+[u-chk] PartitionSize   = 0x1000000
+[u-chk] --------------------------------
+Ruboot_addr 0x7E000000
+Ruboot_size 0x0007DE88
+core_cnt= 0x00000004
+smp(bl31)
+fdt 0x00100000
+shm 0x00A00000
+        core2_jump 0xF1211530
+  code2JumpCodelen 0x00000010
+      core2_entry2 0x00010000
+       core2_entry 0xF1211540
+ code2EntryCodelen 0x00000188
+      core2_entry2 0x00010000
+bl_core2_reset
+64core2_jump_program 0x01006A3C
+64code2JumpCodelen 0x00000228
+warm reset core0
+jump_entry 0x01F00000
+ARC64**4*231###NOTICE:  BL31: v2.2(release):V0.5.15.51.0-13-g3c148ef252-dirty
+NOTICE:  BL31: Built : 18:05:16, Jun 27 2025
+NOTICE:  BL31: Found DTB
+NOTICE:  TZASC config:
+NOTICE:  	0x00100000@0x01f00000 	(RW/N)	Ree
+NOTICE:  arb_enable_wp level 0
+NOTICE:  arb_enable_wp level 2
+INFO:    ARM GICv2 driver initialized
+INFO:    BL31: Platform setup done
+INFO:    BL31: Initializing runtime services
+INFO:    BL31: Preparing for EL3 exit to normal world
+INFO:    Entry point address = 0x7e000000
+INFO:    SPSR = 0x3c9
+
+
+U-Boot 2021.10 (Jun 27 2025 - 18:05:49 +0800)
+
+CPU:   Novatek NT @ 1399 MHz
+DRAM:  nvt_print_dram_setting: dram[0x0 - 0x80000000]
+nvt_print_dram_setting: core2entry1[0x0 - 0x10000]
+nvt_print_dram_setting: core2entry2[0x10000 - 0x10000]
+nvt_print_dram_setting: fdt[0x100000 - 0x100000]
+nvt_print_dram_setting: shmem[0xa00000 - 0x100000]
+nvt_print_dram_setting: loader[0x1000000 - 0x100000]
+nvt_print_dram_setting: shmem_amp[0x0 - 0x0]
+nvt_print_dram_setting: atf[0x1f00000 - 0x100000]
+nvt_print_dram_setting: teeos[0x0 - 0x0]
+nvt_print_dram_setting: nsmem[0x0 - 0x0]
+nvt_print_dram_setting: linuxtmp[0x2000000 - 0x72f00000]
+nvt_print_dram_setting: uboot[0x7e000000 - 0x2000000]
+nvt_print_dram_setting: rtos[0x0 - 0x0]
+nvt_print_dram_setting: bridge[0x0 - 0x0]
+nvt_print_dram_setting: memory[0x0 - 0x60000000]
+nvt_print_dram_setting: all_in_one[0x3c700000 - 0x40000000]
+nvt_print_dram_setting: kernel_img[0x7c700000 - 0x1900000]
+nvt_print_dram_setting: dsp[0x0 - 0x0]
+nvt_print_dram_setting: rtos_s0[0x0 - 0x0]
+nvt_print_dram_setting: rtos_s1[0x0 - 0x0]
+nvt_print_dram_setting: rtos_s2[0x0 - 0x0]
+nvt_print_dram_setting: logo-fb[0x0 - 0x0]
+nvt_print_dram_setting: logo2-fb[0x0 - 0x0]
+2 GiB
+Relocation to 0x7ff68000, Offset is 0x01f68000 sp at 7f9c5210
+nvt_shminfo_init: [33m The fdt buffer addr: 0x7fc67440[0m
+otp_init[1.00.003]
+otp_timing_reg= 0x8f2620
+Read core power trim = 0x00000000
+Read cpu over = 0x1
+remap_data 8
+get_pwr_id: get null pwr id
+use default pwm
+pwr idx: 12
+pwmII_pinmux = 0x1000000
+pwm_id(12) pwm_pinmux(0x1000000)
+pclk_freq(30000000) div(3)
+MMC:   SDIO0: sdio pinmux(0x701)
+SDIO1: sdio pinmux(0x701)
+SDIO2: sdio pinmux(0x701)
+V0.00.007_NVT_MMC0: 0, V0.00.007_NVT_MMC1: 1, V0.00.007_NVT_MMC2: 2
+Loading Environment from nowhere... OK
+pcie_nvt_of_to_plat: ver 1.00.03
+pcie_nvt_of_to_plat: max link gen 1
+nvt_pcie_phy_probe: ver 1.00.01
+PCIe RINT Trim data read success addr[0x30] = 0x0034
+PCIe lane0 ODT Trim data read success addr[0x31] = 0x04c9
+PCIe lane1 ODT Trim data read success addr[0x32] = 0x04c9
+PCIE-0: Link down
+pcie_nvt_of_to_plat: ver 1.00.03
+pcie_nvt_of_to_plat: max link gen 1
+PCIE-1: Link down
+[33m misc_init_r: [0m[33mFirmware name: VALO360.bin VALO36T.bin VALO360.fdt.bin [0m 
+[33m misc_init_r: [0mboot time: 7670318(us) 
+switch to partitions #0, OK
+mmc2(part 0) is current device
+nvt_emmc_set_bootbus: Set EMMC boot bus to 8-bit mode
+Set to BOOT_BUS_WIDTH = 0x2, RESET = 0x0, BOOT_MODE = 0x0
+nvt_detect_fw_tbin: Boot from flash or emmc
+[33mNo need to update (VALO360.bin) [0m
+[31m nvt_getfdt_emb_part_info: [0mSkip this partition node: partition_fdt.restore 
+
+MMC read: dev # 2, block # 8192, count 1 ... 1 blocks read: OK
+
+MMC read: dev # 2, block # 8320, count 1 ... 1 blocks read: OK
+@ FOTA group 0
+@ FDT from emmc, addr 40000, fota type 2
+
+MMC read: dev # 2, block # 512, count 1 ... 1 blocks read: OK
+nvt_fdt_init: nvt_fdt_init: cmd:mmc read 0x7fca42c0 0x200 0x1
+
+MMC read: dev # 2, block # 512, count 470 ... 470 blocks read: OK
+[33m misc_init_r: [0mboot time: 10116266(us) 
+DTS find cpu freq clock 1400MHz
+Set CPU clk 1400MHz
+DTS find apb freq clock 120MHz
+GPIO version: 1.0.01
+[33m misc_init_r: [0mboot time: 11149967(us) 
+Net:   eqos_probe 1.0.0.8
+DTS eth0@2,f04a0000 found
+eqos_initialize 0x2f04a0000
+eth_parse_phy_intf: get IO MEM 0x2f04a0000
+eth_parse_phy_intf: ref-clk-out 0
+eth_parse_phy_intf: pinmux detect RGMII 0x101
+eth0: eth0@2,f04a0000eqos_probe 1.0.0.8
+DTS eth1@2,f04b0000 found
+eqos_initialize 0x2f04b0000
+eth_parse_phy_intf: get IO MEM 0x2f04b0000
+eth_parse_phy_intf: ref-clk-out 0
+eth_parse_phy_intf: pinmux detect emb phy 0x101
+eth_parse_phy_intf: don't have sup embd. return 
+
+Error: eth1@2,f04b0000 address not set.
+
+[33m do_nvt_boot_cmd: [0mboot time: 11370549(us)
+NVT firmware boot.....
+
+MMC read: dev # 2, block # 8192, count 1 ... 1 blocks read: OK
+
+MMC read: dev # 2, block # 8320, count 1 ... 1 blocks read: OK
+@ FOTA group 0
+nvt_detect_fw_tbin: Boot from flash or emmc
+
+MMC read: dev # 2, block # 43264, count 2 ... 2 blocks read: OK
+
+MMC read: dev # 2, block # 43264, count 7246 ... 7246 blocks read: OK
+nvt_detect_fw_tbin: Boot from flash or emmc
+
+MMC read: dev # 2, block # 8192, count 1 ... 1 blocks read: OK
+
+MMC read: dev # 2, block # 8320, count 1 ... 1 blocks read: OK
+@ FOTA group 0
+nvt_boot_rootfs_bin_auto: ramdisk_partition_addr: 0x5520000
+
+MMC read: dev # 2, block # 174336, count 2 ... 2 blocks read: OK
+nvt_boot_rootfs_bin_auto: ramdisk_addr:0x5cf00000
+nvt_boot_rootfs_bin_auto: ramdisk_size:0x30f0000
+
+MMC read: dev # 2, block # 174336, count 100224 ... 
+[結束] 收到指定結束字串 root
+
+=== 開始 Ping 192.168.11.143 ===
+
+Ping 192.168.11.143 (使用 32 位元組的資料):
+回覆自 192.168.11.143: 位元組=32 時間=3ms TTL=64
+回覆自 192.168.11.143: 位元組=32 時間=1ms TTL=64
+回覆自 192.168.11.143: 位元組=32 時間=2ms TTL=64
+回覆自 192.168.11.143: 位元組=32 時間=1ms TTL=64
+
+192.168.11.143 的 Ping 統計資料:
+    封包: 已傳送 = 4，已收到 = 4, 已遺失 = 0 (0% 遺失)，
+大約的來回時間 (毫秒):
+    最小值 = 1ms，最大值 = 3ms，平均 = 1ms
+
+Ping 成功！
+
+=== 開始 Ping 192.168.11.3 ===
+
+Ping 192.168.11.3 (使用 32 位元組的資料):
+回覆自 192.168.11.3: 位元組=32 時間<1ms TTL=128
+回覆自 192.168.11.3: 位元組=32 時間<1ms TTL=128
+回覆自 192.168.11.3: 位元組=32 時間<1ms TTL=128
+回覆自 192.168.11.3: 位元組=32 時間<1ms TTL=128
+
+192.168.11.3 的 Ping 統計資料:
+    封包: 已傳送 = 4，已收到 = 4, 已遺失 = 0 (0% 遺失)，
+大約的來回時間 (毫秒):
+    最小值 = 0ms，最大值 = 0ms，平均 = 0ms
+
+Ping 成功！
+
+=== 開始 Ping 127.0.0.1 ===
+
+Ping 127.0.0.1 (使用 32 位元組的資料):
+回覆自 127.0.0.1: 位元組=32 時間<1ms TTL=128
+回覆自 127.0.0.1: 位元組=32 時間<1ms TTL=128
+回覆自 127.0.0.1: 位元組=32 時間<1ms TTL=128
+回覆自 127.0.0.1: 位元組=32 時間<1ms TTL=128
+
+127.0.0.1 的 Ping 統計資料:
+    封包: 已傳送 = 4，已收到 = 4, 已遺失 = 0 (0% 遺失)，
+大約的來回時間 (毫秒):
+    最小值 = 0ms，最大值 = 0ms，平均 = 0ms
+
+Ping 成功！
+
+=== 執行指令: 2. 檢查IVKEY Get IVKey ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] diag -g ivLic FD
+diag -g ivLic FD
+
+diag: Intell-Vision FD.lic w6B0g<1mL@@@BB1FvBu0v0ytwkvv
+diag: The FD license key is corrected!
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ 
+[發送] diag -g ivLic LPR
+diag -g ivLic LPR
+
+diag: Intell-Vision LPR.lic fn0vQ8eLM@@@00eK504v5vJ3fB55
+HDAL: Version: v3.400.0
+HERR: [COMMON][hd_common_init():403]: [1;31mhd_common is not uninit?
+[0mvendor_ai version = 01.20.240612.00
+kflow_ai  version = 01.15.240506.00
+kdrv_ai   version = 01.04.240514.00
+Loading Model file ivfdnvt.bin
+
+
+net_path(0) set net_mem_cfg: model-file(ivfdnvt.bin), binsize=467216
+vendor_ai version = 01.20.240612.00
+kflow_ai  version = 01.15.240506.00
+kdrv_ai   version = 01.04.240514.00
+load model(ivfdnvt.bin) ok, read_size 467216
+diag: The LPR license key is corrected!
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ 
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 4. 取得Microchip序號 Get Microchip SN ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] cryptoauth_test sernum
+cryptoauth_test sernum
+
+[  107.361342] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  107.367398] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+[  107.395627] nvt_i2c 2f014f000.i2c: i2c_nvtim_xfer_msg(773) NACK!
+[  107.401660] nvt_i2c 2f014f000.i2c: i2c_nvtim_rst_module: staus 0x10000000
+serial number:
+01 23 27 F9 3B 41 63 B4 01
+
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ 
+[發送] diag -g status emmc
+diag -g status emmc
+name: MMC128
+manfid: 0x000032
+oemid: 0x0101
+serial: 0x01066818
+date: 11/2024
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ 
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 1. 讀取出貨SN版本 Read version ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+[發送] pegacmd version
+pegacmd version
+0.5.16.52.0_9cb5411
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ 
+[發送] cat /usr/lib/firmware/fw_imagetype
+cat /usr/lib/firmware/fw_imagetype
+manufacturing
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ 
+[發送] pegacmd version
+pegacmd version
+0.5.16.52.0_9cb5411
+root@NOKIA360Camera-WE251400006:/root$ 
+root@NOKIA360Camera-WE251400006:/root$ 
+[結束] 收到指定結束字串 root
+VALO360 指令通 使用說明
+
+【操作區塊說明】
+1. 控制面板
+   - COM口：選擇連接的序列埠，點「刷新」可重新偵測。
+ 
+2. 指令分類
+   - 分類按鈕會根據 command.txt 中的 ==分類名稱== 標記自動生成。
+   - 點選不同分類按鈕可切換不同指令集。
+   - 下拉選單自動顯示該分類第一個指令，選項完整顯示編號與名稱。
+
+3. 指令下拉選單
+   - 選擇要發送的指令，內容會隨字體大小同步放大縮小。
+
+4. Ping 檢查
+   - 輸入 IP 地址，點「Ping」可測試DUT網路連線。
+   - Ping 進行中可再次點擊「中止PING」終止測試。
+   - 結果即時顯示於右側回應區，成功為綠色，失敗為紅色。
+
+5. 設定
+   - 結束字串：自訂指令回應結束判斷字串。預設結束字串＝ROOT
+   - 超時：設定指令等待回應的秒數。
+   - 字體大小設定：可用滑桿或「＋」「－」按鈕調整介面與內容字體大小，右側即時顯示數值。
+
+6. 按鈕區域
+   - 清空回應：清除右側所有回應內容。
+   - 備份Log：將回應內容備份為文字檔，存於 backup 資料夾。
+   - 使用說明：開啟本說明文件。
+
+
+【快捷鍵】
+- Enter：快速執行指令
+
+【指令說明】
+1. 全部指令：包含所有可用的測試與設定指令。
+2. 其他分類：根據 command.txt 中定義的分類標記自動生成。
+
+【補充說明】
+- 指令格式：指令名稱 = 指令內容|指令內容|指令內容
+- 指令之間會自動間隔1秒。
+- 特殊指令說明：
+  * SHOW: 顯示提示訊息，格式為 SHOW:訊息內容
+  * DELAY: 設定延遲時間，格式為 DELAY:秒數
+
+【分類與指令管理】
+- command.txt 文件格式說明：
+  * 使用 ==分類名稱== 格式定義指令分類
+  * 分類下方列出該分類的指令，格式為：指令名稱 = 指令內容
+  * 例如：
+    ==全部指令==
+    1. 測試指令 = cmd1|cmd2|cmd3
+    ==自定義分類==
+    1. 自定義指令 = cmd1|cmd2|cmd3
+- 修改 command.txt 後重啟程式，分類按鈕會自動更新。
+- 「全部指令」分類會自動包含所有其他分類的指令。
+
+【其他功能】
+- user_guide.txt 可隨時更新，不需重新執行程式。
+- 程式會自動保存最後使用的分類、指令和設定。
+
+
+【治具控制分頁介紹】
+7. 分頁切換
+   - DUT控制：主要的設備測試控制分頁
+   - 治具控制：專門用於治具設備的控制分頁
+   
+8. 治具操作區域
+   - 治具操作區：顯示治具相關的操作提示和狀態資訊
+   - 黃色提示框：提供治具使用的重要提醒和操作指引
+   
+9. 治具測試類別選擇
+   - FUNCTION：功能測試相關的治具指令
+   - MB：主板測試相關的治具指令  
+   - 原始的指令：基本的治具控制指令
+   - 可複選多個類別進行組合測試
+   
+10. 治具串口設定
+    - 選擇或輸入治具串口：選擇治具連接的COM口（如COM5）
+    - 刷新按鈕：重新偵測可用的COM口
+    - Fixture Com port顯示：即時顯示當前選定的治具COM口
+    
+11. 治具指令控制
+    - 選擇指令下拉選單：選擇要發送給治具的指令
+    - 發送治具控制指令按鈕：執行選定的治具指令
+    - 支援與DUT同時進行雙向測試操作
+
+12. 治具控制特色
+    - 獨立於DUT控制：治具和DUT可使用不同COM口同時操作
+    - 專用指令集：針對治具設備優化的指令分類
+    - 即時狀態顯示：清楚顯示治具連接狀態和操作結果
+    - 整合測試支援：可配合DUT進行完整的系統測試
+
+
+
+VALO360 指令通_V2.1  created by Jovian
+
+按 [清空回應] 按鈕可返回正常模式。
+VALO360 指令通 使用說明
+
+【操作區塊說明】
+1. 控制面板
+   - COM口：選擇連接的序列埠，點「刷新」可重新偵測。
+ 
+2. 指令分類
+   - 分類按鈕會根據 command.txt 中的 ==分類名稱== 標記自動生成。
+   - 點選不同分類按鈕可切換不同指令集。
+   - 下拉選單自動顯示該分類第一個指令，選項完整顯示編號與名稱。
+
+3. 指令下拉選單
+   - 選擇要發送的指令，內容會隨字體大小同步放大縮小。
+
+4. Ping 檢查
+   - 輸入 IP 地址，點「Ping」可測試DUT網路連線。
+   - Ping 進行中可再次點擊「中止PING」終止測試。
+   - 結果即時顯示於右側回應區，成功為綠色，失敗為紅色。
+
+5. 設定
+   - 結束字串：自訂指令回應結束判斷字串。預設結束字串＝ROOT
+   - 超時：設定指令等待回應的秒數。
+   - 字體大小設定：可用滑桿或「＋」「－」按鈕調整介面與內容字體大小，右側即時顯示數值。
+
+6. 按鈕區域
+   - 清空回應：清除右側所有回應內容。
+   - 備份Log：將回應內容備份為文字檔，存於 backup 資料夾。
+   - 使用說明：開啟本說明文件。
+
+
+【快捷鍵】
+- Enter：快速執行指令
+
+【指令說明】
+1. 全部指令：包含所有可用的測試與設定指令。
+2. 其他分類：根據 command.txt 中定義的分類標記自動生成。
+
+【補充說明】
+- 指令格式：指令名稱 = 指令內容|指令內容|指令內容
+- 指令之間會自動間隔1秒。
+- 特殊指令說明：
+  * SHOW: 顯示提示訊息，格式為 SHOW:訊息內容
+  * DELAY: 設定延遲時間，格式為 DELAY:秒數
+
+【分類與指令管理】
+- command.txt 文件格式說明：
+  * 使用 ==分類名稱== 格式定義指令分類
+  * 分類下方列出該分類的指令，格式為：指令名稱 = 指令內容
+  * 例如：
+    ==全部指令==
+    1. 測試指令 = cmd1|cmd2|cmd3
+    ==自定義分類==
+    1. 自定義指令 = cmd1|cmd2|cmd3
+- 修改 command.txt 後重啟程式，分類按鈕會自動更新。
+- 「全部指令」分類會自動包含所有其他分類的指令。
+
+【其他功能】
+- user_guide.txt 可隨時更新，不需重新執行程式。
+- 程式會自動保存最後使用的分類、指令和設定。
+
+
+【治具控制分頁介紹】
+7. 分頁切換
+   - DUT控制：主要的設備測試控制分頁
+   - 治具控制：專門用於治具設備的控制分頁
+   
+8. 治具操作區域
+   - 治具操作區：顯示治具相關的操作提示和狀態資訊
+   - 黃色提示框：提供治具使用的重要提醒和操作指引
+   
+9. 治具測試類別選擇
+   - FUNCTION：功能測試相關的治具指令
+   - MB：主板測試相關的治具指令  
+   - 原始的指令：基本的治具控制指令
+   - 可複選多個類別進行組合測試
+   
+10. 治具串口設定
+    - 選擇或輸入治具串口：選擇治具連接的COM口（如COM5）
+    - 刷新按鈕：重新偵測可用的COM口
+    - Fixture Com port顯示：即時顯示當前選定的治具COM口
+    
+11. 治具指令控制
+    - 選擇指令下拉選單：選擇要發送給治具的指令
+    - 發送治具控制指令按鈕：執行選定的治具指令
+    - 支援與DUT同時進行雙向測試操作
+
+12. 治具控制特色
+    - 獨立於DUT控制：治具和DUT可使用不同COM口同時操作
+    - 專用指令集：針對治具設備優化的指令分類
+    - 即時狀態顯示：清楚顯示治具連接狀態和操作結果
+    - 整合測試支援：可配合DUT進行完整的系統測試
+
+
+
+VALO360 指令通_V2.1  created by Jovian
+
+按 [清空回應] 按鈕可返回正常模式。
+VALO360 指令通 使用說明
+
+【操作區塊說明】
+1. 控制面板
+   - COM口：選擇連接的序列埠，點「刷新」可重新偵測。
+ 
+2. 指令分類
+   - 分類按鈕會根據 command.txt 中的 ==分類名稱== 標記自動生成。
+   - 點選不同分類按鈕可切換不同指令集。
+   - 下拉選單自動顯示該分類第一個指令，選項完整顯示編號與名稱。
+
+3. 指令下拉選單
+   - 選擇要發送的指令，內容會隨字體大小同步放大縮小。
+
+4. Ping 檢查
+   - 輸入 IP 地址，點「Ping」可測試DUT網路連線。
+   - Ping 進行中可再次點擊「中止PING」終止測試。
+   - 結果即時顯示於右側回應區，成功為綠色，失敗為紅色。
+
+5. 設定
+   - 結束字串：自訂指令回應結束判斷字串。預設結束字串＝ROOT
+   - 超時：設定指令等待回應的秒數。
+   - 字體大小設定：可用滑桿或「＋」「－」按鈕調整介面與內容字體大小，右側即時顯示數值。
+
+6. 按鈕區域
+   - 清空回應：清除右側所有回應內容。
+   - 備份Log：將回應內容備份為文字檔，存於 backup 資料夾。
+   - 使用說明：開啟本說明文件。
+
+
+【快捷鍵】
+- Enter：快速執行指令
+
+【指令說明】
+1. 全部指令：包含所有可用的測試與設定指令。
+2. 其他分類：根據 command.txt 中定義的分類標記自動生成。
+
+【補充說明】
+- 指令格式：指令名稱 = 指令內容|指令內容|指令內容
+- 指令之間會自動間隔1秒。
+- 特殊指令說明：
+  * SHOW: 顯示提示訊息，格式為 SHOW:訊息內容
+  * DELAY: 設定延遲時間，格式為 DELAY:秒數
+
+【分類與指令管理】
+- command.txt 文件格式說明：
+  * 使用 ==分類名稱== 格式定義指令分類
+  * 分類下方列出該分類的指令，格式為：指令名稱 = 指令內容
+  * 例如：
+    ==全部指令==
+    1. 測試指令 = cmd1|cmd2|cmd3
+    ==自定義分類==
+    1. 自定義指令 = cmd1|cmd2|cmd3
+- 修改 command.txt 後重啟程式，分類按鈕會自動更新。
+- 「全部指令」分類會自動包含所有其他分類的指令。
+
+【其他功能】
+- user_guide.txt 可隨時更新，不需重新執行程式。
+- 程式會自動保存最後使用的分類、指令和設定。
+
+
+【治具控制分頁介紹】
+7. 分頁切換
+   - DUT控制：主要的設備測試控制分頁
+   - 治具控制：專門用於治具設備的控制分頁
+   
+8. 治具操作區域
+   - 治具操作區：顯示治具相關的操作提示和狀態資訊
+   - 黃色提示框：提供治具使用的重要提醒和操作指引
+   
+9. 治具測試類別選擇
+   - FUNCTION：功能測試相關的治具指令
+   - MB：主板測試相關的治具指令  
+   - 原始的指令：基本的治具控制指令
+   - 可複選多個類別進行組合測試
+   
+10. 治具串口設定
+    - 選擇或輸入治具串口：選擇治具連接的COM口（如COM5）
+    - 刷新按鈕：重新偵測可用的COM口
+    - Fixture Com port顯示：即時顯示當前選定的治具COM口
+    
+11. 治具指令控制
+    - 選擇指令下拉選單：選擇要發送給治具的指令
+    - 發送治具控制指令按鈕：執行選定的治具指令
+    - 支援與DUT同時進行雙向測試操作
+
+12. 治具控制特色
+    - 獨立於DUT控制：治具和DUT可使用不同COM口同時操作
+    - 專用指令集：針對治具設備優化的指令分類
+    - 即時狀態顯示：清楚顯示治具連接狀態和操作結果
+    - 整合測試支援：可配合DUT進行完整的系統測試
+
+
+
+VALO360 指令通_V2.1  created by Jovian
+
+按 [清空回應] 按鈕可返回正常模式。
+

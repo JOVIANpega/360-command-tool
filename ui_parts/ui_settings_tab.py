@@ -235,6 +235,52 @@ class SettingsTab(ttk.Frame):
         
         self.vars["Fixture_Test_Category_Original_Commands"] = tk.BooleanVar(value=fixture_settings.get("Test_Category_Original_Commands", True))
         ttk.Checkbutton(fixture_frame, text="原始指令測試", variable=self.vars["Fixture_Test_Category_Original_Commands"]).grid(row=fixture_row, column=0, columnspan=2, sticky="w", pady=4)
+        fixture_row += 1
+        
+        # 串列埠設定
+        ttk.Label(fixture_frame, text="串列埠設定:", font=('Microsoft JhengHei UI', 10, 'bold')).grid(row=fixture_row, column=0, columnspan=2, sticky="w", pady=(10,4))
+        fixture_row += 1
+        
+        # 取得串列埠設定
+        serial_settings = fixture_settings.get("Serial_Settings", {})
+        
+        # 波特率
+        ttk.Label(fixture_frame, text="波特率:").grid(row=fixture_row, column=0, sticky="w", pady=4)
+        self.vars["Fixture_Serial_Baudrate"] = tk.StringVar(value=serial_settings.get("Baudrate", "9600"))
+        baudrate_combo = ttk.Combobox(fixture_frame, textvariable=self.vars["Fixture_Serial_Baudrate"], 
+                                     values=["1200", "2400", "4800", "9600", "19200", "38400", "57600", "115200"], 
+                                     width=22, state="readonly")
+        baudrate_combo.grid(row=fixture_row, column=1, sticky="ew", padx=(10, 0), pady=4)
+        fixture_row += 1
+        
+        # 資料位元
+        ttk.Label(fixture_frame, text="資料位元:").grid(row=fixture_row, column=0, sticky="w", pady=4)
+        self.vars["Fixture_Serial_Bytesize"] = tk.StringVar(value=serial_settings.get("Bytesize", "8"))
+        bytesize_combo = ttk.Combobox(fixture_frame, textvariable=self.vars["Fixture_Serial_Bytesize"], 
+                                     values=["5", "6", "7", "8"], width=22, state="readonly")
+        bytesize_combo.grid(row=fixture_row, column=1, sticky="ew", padx=(10, 0), pady=4)
+        fixture_row += 1
+        
+        # 停止位元
+        ttk.Label(fixture_frame, text="停止位元:").grid(row=fixture_row, column=0, sticky="w", pady=4)
+        self.vars["Fixture_Serial_Stopbits"] = tk.StringVar(value=serial_settings.get("Stopbits", "1"))
+        stopbits_combo = ttk.Combobox(fixture_frame, textvariable=self.vars["Fixture_Serial_Stopbits"], 
+                                     values=["1", "1.5", "2"], width=22, state="readonly")
+        stopbits_combo.grid(row=fixture_row, column=1, sticky="ew", padx=(10, 0), pady=4)
+        fixture_row += 1
+        
+        # 奇偶校驗
+        ttk.Label(fixture_frame, text="奇偶校驗:").grid(row=fixture_row, column=0, sticky="w", pady=4)
+        self.vars["Fixture_Serial_Parity"] = tk.StringVar(value=serial_settings.get("Parity", "None"))
+        parity_combo = ttk.Combobox(fixture_frame, textvariable=self.vars["Fixture_Serial_Parity"], 
+                                   values=["None", "Even", "Odd", "Mark", "Space"], width=22, state="readonly")
+        parity_combo.grid(row=fixture_row, column=1, sticky="ew", padx=(10, 0), pady=4)
+        fixture_row += 1
+        
+        # 超時時間
+        ttk.Label(fixture_frame, text="超時時間(秒):").grid(row=fixture_row, column=0, sticky="w", pady=4)
+        self.vars["Fixture_Serial_Timeout"] = tk.StringVar(value=serial_settings.get("Timeout", "1.0"))
+        ttk.Entry(fixture_frame, textvariable=self.vars["Fixture_Serial_Timeout"], width=25).grid(row=fixture_row, column=1, sticky="ew", padx=(10, 0), pady=4)
 
     def apply_font_size(self):
         """套用字體大小到所有控件"""
@@ -320,6 +366,16 @@ class SettingsTab(ttk.Frame):
         current_setup["Fixture_Control"]["Test_Category_MB"] = self.vars["Fixture_Test_Category_MB"].get()
         current_setup["Fixture_Control"]["Test_Category_Original_Commands"] = self.vars["Fixture_Test_Category_Original_Commands"].get()
         
+        # 更新串列埠設定
+        if "Serial_Settings" not in current_setup["Fixture_Control"]:
+            current_setup["Fixture_Control"]["Serial_Settings"] = {}
+        
+        current_setup["Fixture_Control"]["Serial_Settings"]["Baudrate"] = self.vars["Fixture_Serial_Baudrate"].get()
+        current_setup["Fixture_Control"]["Serial_Settings"]["Bytesize"] = self.vars["Fixture_Serial_Bytesize"].get()
+        current_setup["Fixture_Control"]["Serial_Settings"]["Stopbits"] = self.vars["Fixture_Serial_Stopbits"].get()
+        current_setup["Fixture_Control"]["Serial_Settings"]["Parity"] = self.vars["Fixture_Serial_Parity"].get()
+        current_setup["Fixture_Control"]["Serial_Settings"]["Timeout"] = self.vars["Fixture_Serial_Timeout"].get()
+        
         # 更新UI_Settings設定
         if "UI_Settings" not in current_setup:
             current_setup["UI_Settings"] = {}
@@ -359,6 +415,12 @@ class SettingsTab(ttk.Frame):
                     key = var_name.replace("DUT_", "")
                     dut_settings = self.setup_data.get('DUT_Control', {})
                     var.set(dut_settings.get(key, ""))
+                elif var_name.startswith("Fixture_Serial_"):
+                    # 處理串列埠設定
+                    key = var_name.replace("Fixture_Serial_", "")
+                    fixture_settings = self.setup_data.get('Fixture_Control', {})
+                    serial_settings = fixture_settings.get('Serial_Settings', {})
+                    var.set(serial_settings.get(key, ""))
                 elif var_name.startswith("Fixture_"):
                     key = var_name.replace("Fixture_", "")
                     fixture_settings = self.setup_data.get('Fixture_Control', {})

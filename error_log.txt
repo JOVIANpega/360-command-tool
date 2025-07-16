@@ -1,15 +1,13 @@
-An unexpected error occurred: 'UIComponents' object has no attribute 'current_left_row'
+An unexpected error occurred: ToolTipManager.__init__() takes 1 positional argument but 2 were given
 Traceback (most recent call last):
   File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\main.py", line 117, in <module>
     app = TabManager(root, highlight_keywords=highlight_keywords)
-  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\ui_parts\ui_main.py", line 281, in __init__
-    self.init_dut_tab()
-  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\ui_parts\ui_main.py", line 1003, in init_dut_tab
-    self.dut_ui = SerialUI(self.dut_frame, self.root, self.highlight_keywords)
-  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\ui_parts\ui_main.py", line 1529, in __init__
-    self.components = UIComponents(self, self.handlers, self.root)
-  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\ui_parts\ui_components.py", line 57, in __init__
-    self.init_exec_button_left_panel()
-  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\ui_parts\ui_components.py", line 453, in init_exec_button_left_panel
-    exec_frame.grid(row=self.current_left_row, column=0, sticky='ew', padx=5, pady=10)
-AttributeError: 'UIComponents' object has no attribute 'current_left_row'
+  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\ui_parts\ui_main.py", line 284, in __init__
+    self.init_fixture_tab()
+  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\ui_parts\ui_main.py", line 1035, in init_fixture_tab
+    self.fixture_ui = FixtureFrame(self.fixture_frame)
+  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\FIXTURE\fixture13.py", line 460, in __init__
+    self.fixture_window = FixtureControlWindow(self)
+  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\程式代碼\FIXTURE\fixture13.py", line 64, in __init__
+    self.tooltip_manager = ToolTipManager(self.root)
+TypeError: ToolTipManager.__init__() takes 1 positional argument but 2 were given
