@@ -121,7 +121,11 @@ class SettingsTab(ttk.Frame):
         self.vars["DUT_Default_IP_Address"] = tk.StringVar(value=dut_settings.get("Default_IP_Address", "192.168.11.143"))
         ttk.Entry(dut_frame, textvariable=self.vars["DUT_Default_IP_Address"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
         dut_row += 1
-        
+
+        self.vars["DUT_Pane_Sash_Position"] = tk.StringVar(value=dut_settings.get("Pane_Sash_Position", "633"))
+        self.vars["DUT_Auto_Execute"] = tk.BooleanVar(value=dut_settings.get("Auto_Execute", False))
+        self.vars["UI_ToolTip_Enabled"] = tk.BooleanVar(value=self.setup_data.get('UI_Settings', {}).get("ToolTip_Enabled", True))
+
         # 字體設定 - 水平排版，並加入即時更新功能
         font_frame = ttk.Frame(dut_frame)
         font_frame.grid(row=dut_row, column=0, columnspan=2, sticky="ew", pady=4)
@@ -133,7 +137,7 @@ class SettingsTab(ttk.Frame):
         self.vars["DUT_UI_Font_Size"] = tk.StringVar(value=dut_settings.get("UI_Font_Size", "13"))
         self.ui_font_spinbox = ttk.Spinbox(font_frame, textvariable=self.vars["DUT_UI_Font_Size"], 
                                           from_=8, to=24, width=8, command=self.on_ui_font_changed)
-        self.ui_font_spinbox.grid(row=0, column=1, sticky="w", padx=(5, 10))
+        self.ui_font_spinbox.grid(row=0, column=1, sticky="ew", padx=(5, 10))
         self.ui_font_spinbox.bind('<Return>', self.on_ui_font_changed)
         self.ui_font_spinbox.bind('<FocusOut>', self.on_ui_font_changed)
         
@@ -141,13 +145,13 @@ class SettingsTab(ttk.Frame):
         self.vars["DUT_Content_Font_Size"] = tk.StringVar(value=dut_settings.get("Content_Font_Size", "11"))
         self.content_font_spinbox = ttk.Spinbox(font_frame, textvariable=self.vars["DUT_Content_Font_Size"], 
                                                from_=8, to=24, width=8, command=self.on_content_font_changed)
-        self.content_font_spinbox.grid(row=0, column=3, sticky="w", padx=(5, 0))
+        self.content_font_spinbox.grid(row=0, column=3, sticky="ew", padx=(5, 0))
         self.content_font_spinbox.bind('<Return>', self.on_content_font_changed)
         self.content_font_spinbox.bind('<FocusOut>', self.on_content_font_changed)
         dut_row += 1
-        # 儲存設定按鈕 - 移到內容字體Spinbox正下方
+        # 儲存設定按鈕 - 靠右對齊內容字體下方
         button_container = ttk.Frame(font_frame)
-        button_container.grid(row=1, column=0, columnspan=4, sticky="w", pady=(10, 4))
+        button_container.grid(row=1, column=3, sticky="e", pady=(10, 4))
         self.save_button = tk.Button(
             button_container, 
             text="儲存\n設定", 
@@ -161,7 +165,7 @@ class SettingsTab(ttk.Frame):
             width=10,
             height=3
         )
-        self.save_button.pack(side=tk.LEFT)
+        self.save_button.pack(side=tk.RIGHT)
         self.save_button.bind("<Enter>", lambda e: self.save_button.config(bg='#45a049'))
         self.save_button.bind("<Leave>", lambda e: self.save_button.config(bg='#4CAF50'))
         dut_row += 1
@@ -387,7 +391,6 @@ class SettingsTab(ttk.Frame):
         current_setup["DUT_Control"]["Default_IP_Address"] = self.vars["DUT_Default_IP_Address"].get()
         current_setup["DUT_Control"]["UI_Font_Size"] = self.vars["DUT_UI_Font_Size"].get()
         current_setup["DUT_Control"]["Content_Font_Size"] = self.vars["DUT_Content_Font_Size"].get()
-        current_setup["DUT_Control"]["Notification_Font_Size"] = self.vars["DUT_Notification_Font_Size"].get()
         current_setup["DUT_Control"]["Pane_Sash_Position"] = self.vars["DUT_Pane_Sash_Position"].get()
         current_setup["DUT_Control"]["Auto_Execute"] = self.vars["DUT_Auto_Execute"].get()
         current_setup["DUT_Control"]["Command_File_Path"] = self.vars["DUT_Command_File_Path"].get()
@@ -412,21 +415,20 @@ class SettingsTab(ttk.Frame):
 
     def save_settings(self):
         """儲存設定到 setup.json"""
+        import traceback
         try:
             # 生成設定字典
             settings_dict = self.generate_settings_dict()
-            
             # 保存設定
             save_setup(settings_dict)
-            
             # 調用回調函數通知其他組件設定已更新
             if self.on_save_callback:
                 self.on_save_callback()
-            
             # 顯示成功訊息
             messagebox.showinfo("成功", "設定已儲存")
-            
         except Exception as e:
+            print(f"[錯誤] 儲存設定失敗: {e}")
+            traceback.print_exc()
             messagebox.showerror("錯誤", f"儲存設定時發生錯誤: {e}")
 
     def on_tooltip_setting_changed(self):
@@ -513,7 +515,6 @@ class SettingsTab(ttk.Frame):
             self.vars["DUT_Default_IP_Address"].set(dut_settings.get("Default_IP_Address", "192.168.11.143"))
             self.vars["DUT_UI_Font_Size"].set(dut_settings.get("UI_Font_Size", "13"))
             self.vars["DUT_Content_Font_Size"].set(dut_settings.get("Content_Font_Size", "11"))
-            self.vars["DUT_Notification_Font_Size"].set(dut_settings.get("Notification_Font_Size", "10"))
             self.vars["DUT_Pane_Sash_Position"].set(dut_settings.get("Pane_Sash_Position", "633"))
             self.vars["DUT_Auto_Execute"].set(dut_settings.get("Auto_Execute", False))
             self.vars["DUT_Command_File_Path"].set(dut_settings.get("Command_File_Path", ""))

@@ -13,9 +13,9 @@ import sys
 import datetime
 
 version_info = {
-    'version': '1.5.0.9',
-    'file_version': (1, 5, 0, 9),
-    'product_version': (1, 5, 0, 9),
+    'version': '1.6.0.0',
+    'file_version': (1, 6, 0, 0),
+    'product_version': (1, 6, 0, 0),
     'company_name': 'VALO360指令通',
     'file_description': 'VALO360指令通 - 序列埠通訊工具',
     'internal_name': 'VALO360指令通',
@@ -27,6 +27,15 @@ version_info = {
 
 # 版本更新記錄
 version_history = """
+v1.6.0.0 (2025-07-18)
+----------------------
+• 設定儲存功能修復與穩定性提升：
+  - 解決因 config 與 config_core 模組衝突導致的儲存失敗問題。
+  - 修正重複銷毀視窗造成的 TclError。
+  - 移除重複與無效的程式碼，提升穩定性。
+• 使用者介面優化：
+  - 簡化設定頁面，移除多餘的設定項目。
+
 v1.5.0.9 (2025-07-17)
 ----------------------
 • 設定檔案系統優化與GUI結構重新設計：

@@ -55,7 +55,7 @@ except ImportError as e:
             print(f"載入設定失敗: {e}")
         return {}
     
-    def save_setup(setup):
+    def local_save_setup(setup):
         try:
             setup_path = resource_path("setup.json")
             with open(setup_path, 'w', encoding='utf-8') as f:
@@ -737,6 +737,7 @@ class FixtureControlWindow:
             serial_settings['Timeout'] = self.timeout_var.get()
             
             # 儲存設定
+            from config_core import save_setup
             save_setup(settings)
                 
         except Exception as e:

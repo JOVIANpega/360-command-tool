@@ -155,9 +155,31 @@ if __name__ == "__main__":
 
         root.geometry(f"{width}x{height}")
         
+        # 新增：視窗大小變動時即時寫回 setup.json
+        def on_resize(event):
+            try:
+                import json
+                from config_core import load_setup, save_setup
+                setup = load_setup()
+                setup["Window_Width"] = str(root.winfo_width())
+                setup["Window_Height"] = str(root.winfo_height())
+                if "DUT_Control" not in setup:
+                    setup["DUT_Control"] = {}
+                setup["DUT_Control"]["Window_Width"] = str(root.winfo_width())
+                setup["DUT_Control"]["Window_Height"] = str(root.winfo_height())
+                save_setup(setup)
+            except Exception as e:
+                print(f"[錯誤] 即時寫回視窗大小失敗: {e}")
+        root.bind('<Configure>', on_resize)
+
+        
+
         # 讀取標籤頁名稱並立即更新
+
         if hasattr(app, 'update_tab_names'):
+
             print(f"[DEBUG] 程式啟動時更新標籤頁名稱")
+
             app.update_tab_names()
 
         

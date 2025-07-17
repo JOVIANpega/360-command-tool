@@ -21,13 +21,6 @@ current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(current_dir)
 
 
-# 導入拆分後的組件類別
-from ui_parts.ui_components_base import UIComponentsBase
-from ui_parts.ui_components_input import UIComponentsInput
-from ui_parts.ui_components_output import UIComponentsOutput
-from ui_parts.ui_components_settings import UIComponentsSettings
-
-
 from config_core import list_com_ports, save_setup, GUIDE_FILE, COMMAND_FILE
 
 
@@ -85,45 +78,29 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
 
     def init_com_components(self):
         com_frame = ttk.Frame(self.left_panel, style="TFrame")
-        com_frame.grid(row=0, column=0, sticky='ew', pady=3)  # 減少間距
-        com_frame.columnconfigure(0, weight=0)  # 標籤不需要擴展
-        com_frame.columnconfigure(1, weight=1)  # 下拉選單擴展
-        com_frame.columnconfigure(2, weight=0)  # 按鈕不需要擴展
-        com_frame.columnconfigure(3, weight=0)  # LED不需要擴展
-        
+        com_frame.grid(row=0, column=0, sticky='ew', pady=3)
+        com_frame.columnconfigure(0, weight=0)
+        com_frame.columnconfigure(1, weight=1)
+        com_frame.columnconfigure(2, weight=0)
+        com_frame.columnconfigure(3, weight=0)
         self.label_com = ttk.Label(com_frame, text='COM口:', style="TLabel")
         self.label_com.grid(row=0, column=0, sticky='w')
-        
-        # 獲取可用的 COM 口列表
         com_values = list_com_ports()
-        
-        # 創建 COM 口下拉選單
         self.combobox_com = ttk.Combobox(com_frame, values=com_values, state='readonly', width=15)
         self.combobox_com.grid(row=0, column=1, padx=5, sticky='ew')
-        
-        # 綁定 COM 口選擇變更事件
         self.combobox_com.bind("<<ComboboxSelected>>", self.on_com_port_changed)
-        
-        # 注意：不在這裡設定預設值，由 load_initial_settings 統一處理
-        print(f"[DEBUG] init_com_components: 已創建 COM 口選單，可用 COM 口: {com_values}")
-        
-        # 確保 parent.handlers 存在
         refresh_command = None
         if hasattr(self.parent, 'handlers') and hasattr(self.parent.handlers, 'refresh_com_ports'):
             refresh_command = self.parent.handlers.refresh_com_ports
         else:
-            # 如果 handlers 不存在，提供一個臨時的空函數
             refresh_command = lambda: None
             print("[WARNING] handlers 不存在或沒有 refresh_com_ports 方法")
-        
         self.btn_refresh = tk.Button(com_frame, text='刷新', command=refresh_command,
                                    bg='#e0e0e0', fg='black', activebackground='#2196f3', activeforeground='black')
-        self.btn_refresh.grid(row=0, column=2, padx=3)  # 減少間距
-        
-        # 增大 LED 指示燈
-        self.status_canvas = tk.Canvas(com_frame, width=40, height=40, bg='white', highlightthickness=0)  # 增大尺寸
-        self.status_canvas.grid(row=0, column=3, padx=3)  # 減少間距
-        self.status_light = self.status_canvas.create_oval(5, 5, 35, 35, fill='black')  # 調整橢圓位置和大小
+        self.btn_refresh.grid(row=0, column=2, padx=3, sticky='ew')
+        self.status_canvas = tk.Canvas(com_frame, width=40, height=40, bg='white', highlightthickness=0)
+        self.status_canvas.grid(row=0, column=3, padx=3, sticky='ew')
+        self.status_light = self.status_canvas.create_oval(5, 5, 35, 35, fill='black')
         self.led_blinking = False
         
     def on_com_port_changed(self, event=None):
@@ -156,7 +133,8 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
     def init_cmd_components(self):
         self.section_frame = ttk.Frame(self.left_panel, style="TFrame")
         self.section_frame.grid(row=1, column=0, sticky='ew', pady=5)
-        self.section_frame.columnconfigure(0, weight=1)
+        for i in range(4):
+            self.section_frame.columnconfigure(i, weight=1)
         self.section_var = tk.StringVar()
         
         # 從 command.txt 動態讀取分類
