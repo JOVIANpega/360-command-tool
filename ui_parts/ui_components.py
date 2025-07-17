@@ -43,6 +43,15 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.global_notification_manager = None
         # 會在init_dut_tab中被設定
         
+        # 初始化統一設定管理器
+        try:
+            from ui_parts.shared_config import get_shared_config
+            self.shared_config = get_shared_config()
+            print("[DEBUG] UIComponents: 統一設定管理器初始化成功")
+        except ImportError as e:
+            self.shared_config = None
+            print(f"[WARNING] UIComponents: 無法載入統一設定管理器: {e}")
+        
         # 初始化 ToolTip 管理器
         self.tooltip_manager = ToolTipManager()
         # 從設定中讀取 ToolTip 啟用狀態，預設為啟用
@@ -196,7 +205,9 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         
         cmd_frame = ttk.Frame(self.left_panel, style="TFrame")
         cmd_frame.grid(row=2, column=0, sticky='ew', pady=3)
-        cmd_frame.columnconfigure(1, weight=1)
+        cmd_frame.columnconfigure(1, weight=1)  # 讓指令下拉選單擴展
+        cmd_frame.columnconfigure(2, weight=0)  # 執行指令按鈕固定大小
+        cmd_frame.columnconfigure(3, weight=0)  # 儲存設定按鈕固定大小
         
         self.label_cmd = ttk.Label(cmd_frame, text='指令:', style="TLabel")
         self.label_cmd.grid(row=0, column=0, sticky='w')
@@ -215,9 +226,19 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             bg='#4CAF50', fg='white', relief='raised', borderwidth=2, cursor="hand2",
             command=self.parent.handlers.on_execute, width=14, height=2
         )
-        self.btn_execute.grid(row=0, column=2, sticky='e', padx=(5, 0))
+        self.btn_execute.grid(row=0, column=2, sticky='e', padx=(5, 5))
         self.btn_execute.bind("<Enter>", self.on_enter_exec)
         self.btn_execute.bind("<Leave>", self.on_leave_exec)
+
+        # 儲存設定按鈕 (正方形，40x40)
+        self.btn_save_settings = tk.Button(
+            cmd_frame, text='儲存\n設定', font=('Microsoft JhengHei UI', 10, 'bold'),
+            bg='#FF9800', fg='white', relief='raised', borderwidth=2, cursor="hand2",
+            command=self.on_save_settings_click, width=5, height=2
+        )
+        self.btn_save_settings.grid(row=0, column=3, sticky='e', padx=(0, 0))
+        self.btn_save_settings.bind("<Enter>", self.on_enter_save)
+        self.btn_save_settings.bind("<Leave>", self.on_leave_save)
 
         self.combobox_cmd.bind('<Return>', lambda event: self.parent.handlers.on_execute())
 
@@ -226,6 +247,38 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
 
     def on_leave_exec(self, event):
         self.btn_execute.config(bg='#4CAF50')
+
+    def on_enter_save(self, event):
+        self.btn_save_settings.config(bg='#F57C00')
+
+    def on_leave_save(self, event):
+        self.btn_save_settings.config(bg='#FF9800')
+
+    def on_save_settings_click(self):
+        """儲存設定按鈕點擊處理"""
+        try:
+            # 導入統一設定管理器
+            from ui_parts.shared_config import get_shared_config
+            shared_config = get_shared_config()
+            
+            # 儲存所有設定
+            shared_config.save_to_setup()
+            
+            # 顯示成功訊息
+            if hasattr(self, 'show_notification'):
+                self.show_notification("所有設定已儲存至 setup.json", "success", 3000)
+            elif hasattr(self.parent, 'show_global_notification'):
+                self.parent.show_global_notification("所有設定已儲存至 setup.json", "success", 3000)
+            else:
+                print("[INFO] 所有設定已儲存至 setup.json")
+                
+        except Exception as e:
+            error_msg = f"儲存設定時發生錯誤: {e}"
+            print(f"[ERROR] {error_msg}")
+            if hasattr(self, 'show_notification'):
+                self.show_notification(error_msg, "error", 5000)
+            elif hasattr(self.parent, 'show_global_notification'):
+                self.parent.show_global_notification(error_msg, "error", 5000)
 
     def get_section_description(self, section):
         # 預設描述

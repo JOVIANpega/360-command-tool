@@ -103,26 +103,56 @@ class FixtureControlWindow:
         }
         self.description_text = ""
         
-        # 測試類別變數 (只能選一個)
-        self.test_category_vars = {
-            'FUNCTION': tk.BooleanVar(),
-            'MB': tk.BooleanVar(),
-            '原始的指令': tk.BooleanVar()
-        }
+        # 導入統一設定管理器
+        try:
+            from ui_parts.shared_config import get_shared_config
+            self.shared_config = get_shared_config()
+        except ImportError:
+            self.shared_config = None
+            print("[WARNING] 無法載入統一設定管理器，使用本地變數")
         
-        # 預設選擇FUNCTION
-        self.test_category_vars['FUNCTION'].set(True)
+        # 測試類別變數 - 如果有統一管理器則使用統一變數
+        if self.shared_config:
+            self.test_category_vars = {
+                'FUNCTION': self.shared_config.get_var('fixture_test_function'),
+                'MB': self.shared_config.get_var('fixture_test_mb'),
+                '原始的指令': self.shared_config.get_var('fixture_test_original')
+            }
+        else:
+            self.test_category_vars = {
+                'FUNCTION': tk.BooleanVar(),
+                'MB': tk.BooleanVar(),
+                '原始的指令': tk.BooleanVar()
+            }
+            # 預設選擇FUNCTION
+            self.test_category_vars['FUNCTION'].set(True)
+        
+        # 確定當前選擇的類別
         self.current_category = 'FUNCTION'
+        for category, var in self.test_category_vars.items():
+            if var.get():
+                self.current_category = category
+                break
         
-        # COM Port 變數
-        self.com_port_var = tk.StringVar(value="COM5")
+        # COM Port 變數 - 使用統一管理器的變數
+        if self.shared_config:
+            self.com_port_var = self.shared_config.get_var('fixture_com_port')
+        else:
+            self.com_port_var = tk.StringVar(value="COM5")
         
-        # 串列設定變數  
-        self.baudrate_var = tk.StringVar(value="9600")
-        self.bytesize_var = tk.StringVar(value="8")
-        self.stopbits_var = tk.StringVar(value="1")
-        self.parity_var = tk.StringVar(value="None")
-        self.timeout_var = tk.StringVar(value="1.0")
+        # 串列設定變數 - 使用統一管理器的變數
+        if self.shared_config:
+            self.baudrate_var = self.shared_config.get_var('fixture_baudrate')
+            self.bytesize_var = self.shared_config.get_var('fixture_bytesize')
+            self.stopbits_var = self.shared_config.get_var('fixture_stopbits')
+            self.parity_var = self.shared_config.get_var('fixture_parity')
+            self.timeout_var = self.shared_config.get_var('fixture_timeout')
+        else:
+            self.baudrate_var = tk.StringVar(value="9600")
+            self.bytesize_var = tk.StringVar(value="8")
+            self.stopbits_var = tk.StringVar(value="1")
+            self.parity_var = tk.StringVar(value="None")
+            self.timeout_var = tk.StringVar(value="1.0")
 
     def load_settings(self):
         """載入設定檔"""
@@ -297,6 +327,9 @@ class FixtureControlWindow:
         self.command_combobox.pack(side=tk.LEFT, padx=(10, 5))
         self.command_combobox.bind('<<ComboboxSelected>>', self.on_command_selected)
         
+        # 第三行：治具設定區塊 (從設定頁面移入)
+        self.create_fixture_settings_area(control_frame)
+        
         # 執行指令按鈕 (緊接著Combobox)
         self.execute_btn = ttk.Button(
             command_frame,
@@ -332,6 +365,154 @@ class FixtureControlWindow:
         
         # 更新指令列表
         self.update_command_list()
+
+    def create_fixture_settings_area(self, parent):
+        """建立治具設定區塊 (從設定頁面移入)"""
+        settings_frame = ttk.LabelFrame(parent, text="治具設定", padding="5")
+        settings_frame.pack(fill=tk.X, pady=(10, 0))
+        
+        # 建立左右兩欄的容器
+        content_frame = ttk.Frame(settings_frame)
+        content_frame.pack(fill=tk.X)
+        
+        # 左欄：基本設定
+        left_frame = ttk.Frame(content_frame)
+        left_frame.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=(0, 10))
+        
+        # 字體大小
+        font_frame = ttk.Frame(left_frame)
+        font_frame.pack(fill=tk.X, pady=2)
+        tk.Label(font_frame, text="字體大小:", font=("微軟正黑體", 10)).pack(side=tk.LEFT, padx=(0, 5))
+        self.fixture_font_var = tk.StringVar()
+        self.fixture_font_spinbox = ttk.Spinbox(
+            font_frame, 
+            textvariable=self.fixture_font_var,
+            from_=8, to=24, width=8,
+            command=self.on_fixture_font_changed
+        )
+        self.fixture_font_spinbox.pack(side=tk.LEFT)
+        self.fixture_font_spinbox.bind('<Return>', self.on_fixture_font_changed)
+        self.fixture_font_spinbox.bind('<FocusOut>', self.on_fixture_font_changed)
+        
+        # 右欄：串列設定
+        right_frame = ttk.Frame(content_frame)
+        right_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
+        
+        # 串列設定標題
+        tk.Label(right_frame, text="串列埠設定:", font=("微軟正黑體", 10, "bold")).pack(anchor='w', pady=(0, 5))
+        
+        # 建立2x3的網格來放置串列設定
+        serial_grid = ttk.Frame(right_frame)
+        serial_grid.pack(fill=tk.X)
+        
+        # 第一行：波特率和資料位元
+        row1_frame = ttk.Frame(serial_grid)
+        row1_frame.pack(fill=tk.X, pady=2)
+        
+        tk.Label(row1_frame, text="波特率:", font=("微軟正黑體", 9)).pack(side=tk.LEFT)
+        self.baudrate_combo = ttk.Combobox(
+            row1_frame,
+            textvariable=self.baudrate_var,
+            values=["1200", "2400", "4800", "9600", "19200", "38400", "57600", "115200"],
+            width=8, state="readonly"
+        )
+        self.baudrate_combo.pack(side=tk.LEFT, padx=(5, 15))
+        
+        tk.Label(row1_frame, text="資料位元:", font=("微軟正黑體", 9)).pack(side=tk.LEFT)
+        self.bytesize_combo = ttk.Combobox(
+            row1_frame,
+            textvariable=self.bytesize_var,
+            values=["5", "6", "7", "8"],
+            width=6, state="readonly"
+        )
+        self.bytesize_combo.pack(side=tk.LEFT, padx=(5, 0))
+        
+        # 第二行：停止位元和奇偶校驗
+        row2_frame = ttk.Frame(serial_grid)
+        row2_frame.pack(fill=tk.X, pady=2)
+        
+        tk.Label(row2_frame, text="停止位元:", font=("微軟正黑體", 9)).pack(side=tk.LEFT)
+        self.stopbits_combo = ttk.Combobox(
+            row2_frame,
+            textvariable=self.stopbits_var,
+            values=["1", "1.5", "2"],
+            width=6, state="readonly"
+        )
+        self.stopbits_combo.pack(side=tk.LEFT, padx=(5, 15))
+        
+        tk.Label(row2_frame, text="奇偶校驗:", font=("微軟正黑體", 9)).pack(side=tk.LEFT)
+        self.parity_combo = ttk.Combobox(
+            row2_frame,
+            textvariable=self.parity_var,
+            values=["None", "Even", "Odd", "Mark", "Space"],
+            width=8, state="readonly"
+        )
+        self.parity_combo.pack(side=tk.LEFT, padx=(5, 0))
+        
+        # 第三行：超時時間
+        row3_frame = ttk.Frame(serial_grid)
+        row3_frame.pack(fill=tk.X, pady=2)
+        
+        tk.Label(row3_frame, text="超時時間(秒):", font=("微軟正黑體", 9)).pack(side=tk.LEFT)
+        self.timeout_entry = ttk.Entry(
+            row3_frame,
+            textvariable=self.timeout_var,
+            width=8
+        )
+        self.timeout_entry.pack(side=tk.LEFT, padx=(5, 0))
+        
+        # 綁定變更事件
+        for combo in [self.baudrate_combo, self.bytesize_combo, self.stopbits_combo, self.parity_combo]:
+            combo.bind('<<ComboboxSelected>>', self.on_serial_setting_changed)
+        self.timeout_entry.bind('<FocusOut>', self.on_serial_setting_changed)
+        self.timeout_entry.bind('<Return>', self.on_serial_setting_changed)
+        
+        # 初始化設定值
+        self.load_settings_to_fixtures()
+
+    def load_settings_to_fixtures(self):
+        """將設定載入到治具設定區塊"""
+        try:
+            settings = load_setup()
+            fixture_settings = settings.get('Fixture_Control', {})
+            
+            # 載入字體大小
+            font_size = fixture_settings.get('Fixture_Font_Size', '11')
+            self.fixture_font_var.set(font_size)
+            
+            # 載入串列設定
+            serial_settings = fixture_settings.get('Serial_Settings', {})
+            self.baudrate_var.set(serial_settings.get('Baudrate', '9600'))
+            self.bytesize_var.set(serial_settings.get('Bytesize', '8'))
+            self.stopbits_var.set(serial_settings.get('Stopbits', '1'))
+            self.parity_var.set(serial_settings.get('Parity', 'None'))
+            self.timeout_var.set(serial_settings.get('Timeout', '1.0'))
+            
+        except Exception as e:
+            print(f"載入治具設定時發生錯誤: {e}")
+
+    def on_fixture_font_changed(self, event=None):
+        """治具字體大小變更時處理"""
+        try:
+            new_size = int(self.fixture_font_var.get())
+            if 8 <= new_size <= 24:
+                self.font_size = new_size
+                # 更新所有元件的字體
+                self.update_all_fonts(new_size)
+                # 儲存設定
+                self.save_settings()
+        except ValueError:
+            pass  # 忽略無效輸入
+    
+    def on_serial_setting_changed(self, event=None):
+        """串列設定變更時處理"""
+        self.save_settings()
+        self.update_serial_info()
+        
+    def update_all_fonts(self, font_size):
+        """更新所有字體"""
+        # 這裡可以加入更新字體的邏輯
+        pass
 
     def get_available_com_ports(self):
         """取得可用的 COM 埠列表"""

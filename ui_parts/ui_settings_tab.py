@@ -38,45 +38,59 @@ class SettingsTab(ttk.Frame):
         self.setup_tooltips()
 
     def create_widgets(self):
-        # 創建主容器，不使用Canvas滾動，直接使用緊湊佈局
-        main_container = ttk.Frame(self)
+        # 創建主容器，使用 PanedWindow 來提供可調整的左右分隔
+        main_container = ttk.PanedWindow(self, orient='horizontal')
         main_container.pack(fill='both', expand=True, padx=10, pady=10)
-        main_container.columnconfigure(0, weight=1)
-        main_container.columnconfigure(1, weight=1)
+        
+        # 左側容器
+        left_frame = ttk.Frame(main_container)
+        main_container.add(left_frame, weight=1)
+        
+        # 右側容器
+        right_frame = ttk.Frame(main_container)
+        main_container.add(right_frame, weight=1)
+        
+        # 設定分隔位置為中間
+        main_container.sashpos(0, 400)
+        
+        # 儲存按鈕區域 - 在頂部跨越兩側
+        top_frame = ttk.Frame(self)
+        top_frame.pack(fill='x', padx=10, pady=(10, 0))
+        
+        # 置右的儲存按鈕容器
+        save_frame = ttk.Frame(top_frame)
+        save_frame.pack(side=tk.RIGHT)
+        
+        # 自定義樣式的儲存按鈕 - 更大尺寸，綠底黑字，經過時變色
+        self.save_button = tk.Button(save_frame, text="儲存設定", command=self.save_settings,
+                                   font=("微軟正黑體", 12, "bold"), width=18, height=2,
+                                   bg="#4CAF50", fg="black", relief="raised", bd=2,
+                                   activebackground="#45a049", activeforeground="white",
+                                   cursor="hand2")
+        self.save_button.pack(side=tk.RIGHT, padx=5, pady=5)
+        
+        # === 左側內容 ===
+        left_container = ttk.Frame(left_frame)
+        left_container.pack(fill='both', expand=True, padx=(0, 5))
         
         current_row = 0
         
-        # 儲存按鈕區域 - 調整位置到最上方，尺寸更大
-        button_frame = ttk.Frame(main_container)
-        button_frame.grid(row=current_row, column=0, columnspan=2, sticky="ew", pady=(0, 15))
-        current_row += 1
-        
-        # 置右的儲存按鈕容器
-        save_frame = ttk.Frame(button_frame)
-        save_frame.pack(side=tk.RIGHT)
-        
-        # 更大尺寸的儲存按鈕
-        self.save_button = ttk.Button(save_frame, text="儲存設定", command=self.save_settings, 
-                                     style="Accent.TButton", width=15)
-        self.save_button.pack(side=tk.RIGHT, padx=5, pady=5)
-        
-        # --- 第一排：應用程式基本設定 + 標籤頁名稱設定 ---
-        # 左側：應用程式基本設定
-        basic_frame = ttk.LabelFrame(main_container, text="應用程式基本設定", padding=(10, 4))
-        basic_frame.grid(row=current_row, column=0, sticky="nsew", padx=(0, 5), pady=(0, 8))
+        # 應用程式基本設定
+        basic_frame = ttk.LabelFrame(left_container, text="應用程式基本設定", padding=(10, 4))
+        basic_frame.pack(fill='x', pady=(0, 8))
         basic_frame.columnconfigure(1, weight=1)
         
-        # 應用程式版本
+        # 應用程式版本 - width=20
         ttk.Label(basic_frame, text="應用程式版本:").grid(row=0, column=0, sticky="w", pady=4)
         self.vars["version"] = tk.StringVar(value=self.setup_data.get("version", "V1.5.0.2"))
-        ttk.Entry(basic_frame, textvariable=self.vars["version"], width=30).grid(row=0, column=1, sticky="ew", padx=(10, 0), pady=4)
+        ttk.Entry(basic_frame, textvariable=self.vars["version"], width=20).grid(row=0, column=1, sticky="ew", padx=(10, 0), pady=4)
         
-        # 視窗標題
+        # 視窗標題 - width=40
         ttk.Label(basic_frame, text="視窗標題:").grid(row=1, column=0, sticky="w", pady=4)
         self.vars["Window_Title"] = tk.StringVar(value=self.setup_data.get("Window_Title", "VALO360 指令通"))
-        ttk.Entry(basic_frame, textvariable=self.vars["Window_Title"], width=30).grid(row=1, column=1, sticky="ew", padx=(10, 0), pady=4)
+        ttk.Entry(basic_frame, textvariable=self.vars["Window_Title"], width=40).grid(row=1, column=1, sticky="ew", padx=(10, 0), pady=4)
         
-        # 視窗大小 - 使用水平排版
+        # 視窗大小 - 視窗寬度 width=20
         size_frame = ttk.Frame(basic_frame)
         size_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=4)
         size_frame.columnconfigure(1, weight=1)
@@ -84,61 +98,42 @@ class SettingsTab(ttk.Frame):
         
         ttk.Label(size_frame, text="視窗寬度:").grid(row=0, column=0, sticky="w")
         self.vars["Window_Width"] = tk.StringVar(value=self.setup_data.get("Window_Width", "1536"))
-        ttk.Entry(size_frame, textvariable=self.vars["Window_Width"], width=8).grid(row=0, column=1, sticky="ew", padx=(5, 10))
+        ttk.Entry(size_frame, textvariable=self.vars["Window_Width"], width=20).grid(row=0, column=1, sticky="w", padx=(5, 10))
         
         ttk.Label(size_frame, text="高度:").grid(row=0, column=2, sticky="w")
         self.vars["Window_Height"] = tk.StringVar(value=self.setup_data.get("Window_Height", "793"))
-        ttk.Entry(size_frame, textvariable=self.vars["Window_Height"], width=8).grid(row=0, column=3, sticky="ew", padx=(5, 0))
+        ttk.Entry(size_frame, textvariable=self.vars["Window_Height"], width=20).grid(row=0, column=3, sticky="w", padx=(5, 0))
         
-        # 右側：標籤頁名稱設定
-        tab_frame = ttk.LabelFrame(main_container, text="標籤頁名稱設定", padding=(10, 4))
-        tab_frame.grid(row=current_row, column=1, sticky="nsew", padx=(5, 0), pady=(0, 8))
-        tab_frame.columnconfigure(1, weight=1)
-        current_row += 1
-        
-        # 獲取當前的標籤頁名稱
-        tab_names = self.setup_data.get('tab_names', {})
-        default_tab_names = ['DUT 控制', '治具控制', '使用說明', '設定']
-        
-        # 創建標籤頁名稱輸入框
-        for i in range(4):
-            tab_key = f'tab{i}'
-            tab_name = tab_names.get(tab_key, default_tab_names[i])
-            ttk.Label(tab_frame, text=f"標籤頁 {i+1}:").grid(row=i, column=0, sticky="w", pady=4)
-            self.vars[f"tab_names_{tab_key}"] = tk.StringVar(value=tab_name)
-            ttk.Entry(tab_frame, textvariable=self.vars[f"tab_names_{tab_key}"], width=25).grid(row=i, column=1, sticky="ew", padx=(10, 0), pady=4)
-        
-        # --- 第二排：DUT 控制設定 + 治具控制設定 ---
-        # 左側：DUT 控制設定
-        dut_frame = ttk.LabelFrame(main_container, text="DUT 控制設定", padding=(10, 4))
-        dut_frame.grid(row=current_row, column=0, sticky="nsew", padx=(0, 5), pady=(0, 8))
+        # DUT 控制設定
+        dut_frame = ttk.LabelFrame(left_container, text="DUT 控制設定", padding=(10, 4))
+        dut_frame.pack(fill='both', expand=True, pady=(0, 8))
         dut_frame.columnconfigure(1, weight=1)
         
         dut_settings = self.setup_data.get('DUT_Control', {})
         dut_row = 0
         
-        # 串口設定
+        # 串口設定 - width=20
         ttk.Label(dut_frame, text="串口:").grid(row=dut_row, column=0, sticky="w", pady=4)
         self.vars["DUT_Serial_COM_Port"] = tk.StringVar(value=dut_settings.get("Serial_COM_Port", "COM5"))
-        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Serial_COM_Port"], width=25).grid(row=dut_row, column=1, sticky="ew", padx=(10, 0), pady=4)
+        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Serial_COM_Port"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
         dut_row += 1
         
-        # 指令超時
+        # 指令超時(秒) - width=20
         ttk.Label(dut_frame, text="指令超時(秒):").grid(row=dut_row, column=0, sticky="w", pady=4)
         self.vars["DUT_Command_Timeout_Seconds"] = tk.StringVar(value=dut_settings.get("Command_Timeout_Seconds", "30"))
-        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Command_Timeout_Seconds"], width=25).grid(row=dut_row, column=1, sticky="ew", padx=(10, 0), pady=4)
+        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Command_Timeout_Seconds"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
         dut_row += 1
         
-        # 指令結束字串
+        # 指令結束字串 - width=20
         ttk.Label(dut_frame, text="指令結束字串:").grid(row=dut_row, column=0, sticky="w", pady=4)
         self.vars["DUT_Command_End_String"] = tk.StringVar(value=dut_settings.get("Command_End_String", "root"))
-        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Command_End_String"], width=25).grid(row=dut_row, column=1, sticky="ew", padx=(10, 0), pady=4)
+        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Command_End_String"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
         dut_row += 1
         
-        # 預設IP地址
+        # 預設IP地址 - width=20
         ttk.Label(dut_frame, text="預設IP地址:").grid(row=dut_row, column=0, sticky="w", pady=4)
         self.vars["DUT_Default_IP_Address"] = tk.StringVar(value=dut_settings.get("Default_IP_Address", "192.168.11.143"))
-        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Default_IP_Address"], width=25).grid(row=dut_row, column=1, sticky="ew", padx=(10, 0), pady=4)
+        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Default_IP_Address"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
         dut_row += 1
         
         # 字體設定 - 水平排版，並加入即時更新功能
@@ -147,11 +142,12 @@ class SettingsTab(ttk.Frame):
         font_frame.columnconfigure(1, weight=1)
         font_frame.columnconfigure(3, weight=1)
         
+        # 介面字體 - width=20
         ttk.Label(font_frame, text="介面字體:").grid(row=0, column=0, sticky="w")
         self.vars["DUT_UI_Font_Size"] = tk.StringVar(value=dut_settings.get("UI_Font_Size", "13"))
         self.ui_font_spinbox = ttk.Spinbox(font_frame, textvariable=self.vars["DUT_UI_Font_Size"], 
-                                          from_=8, to=24, width=6, command=self.on_ui_font_changed)
-        self.ui_font_spinbox.grid(row=0, column=1, sticky="ew", padx=(5, 10))
+                                          from_=8, to=24, width=8, command=self.on_ui_font_changed)
+        self.ui_font_spinbox.grid(row=0, column=1, sticky="w", padx=(5, 10))
         # 綁定 Enter 鍵和失去焦點事件
         self.ui_font_spinbox.bind('<Return>', self.on_ui_font_changed)
         self.ui_font_spinbox.bind('<FocusOut>', self.on_ui_font_changed)
@@ -159,28 +155,28 @@ class SettingsTab(ttk.Frame):
         ttk.Label(font_frame, text="內容字體:").grid(row=0, column=2, sticky="w")
         self.vars["DUT_Content_Font_Size"] = tk.StringVar(value=dut_settings.get("Content_Font_Size", "11"))
         self.content_font_spinbox = ttk.Spinbox(font_frame, textvariable=self.vars["DUT_Content_Font_Size"], 
-                                               from_=8, to=24, width=6, command=self.on_content_font_changed)
-        self.content_font_spinbox.grid(row=0, column=3, sticky="ew", padx=(5, 0))
+                                               from_=8, to=24, width=8, command=self.on_content_font_changed)
+        self.content_font_spinbox.grid(row=0, column=3, sticky="w", padx=(5, 0))
         # 綁定 Enter 鍵和失去焦點事件
         self.content_font_spinbox.bind('<Return>', self.on_content_font_changed)
         self.content_font_spinbox.bind('<FocusOut>', self.on_content_font_changed)
         dut_row += 1
         
-        # 通知字體大小設定
+        # 通知字體大小設定 - width=20
         ttk.Label(dut_frame, text="通知字體大小:").grid(row=dut_row, column=0, sticky="w", pady=4)
         self.vars["DUT_Notification_Font_Size"] = tk.StringVar(value=dut_settings.get("Notification_Font_Size", "10"))
         self.notification_font_spinbox = ttk.Spinbox(dut_frame, textvariable=self.vars["DUT_Notification_Font_Size"], 
-                                                    from_=8, to=20, width=6, command=self.on_notification_font_changed)
+                                                    from_=8, to=20, width=20, command=self.on_notification_font_changed)
         self.notification_font_spinbox.grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
         # 綁定 Enter 鍵和失去焦點事件
         self.notification_font_spinbox.bind('<Return>', self.on_notification_font_changed)
         self.notification_font_spinbox.bind('<FocusOut>', self.on_notification_font_changed)
         dut_row += 1
         
-        # 分隔面板位置
+        # 分隔面板位置 - width=20
         ttk.Label(dut_frame, text="分隔面板位置:").grid(row=dut_row, column=0, sticky="w", pady=4)
         self.vars["DUT_Pane_Sash_Position"] = tk.StringVar(value=dut_settings.get("Pane_Sash_Position", "633"))
-        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Pane_Sash_Position"], width=25).grid(row=dut_row, column=1, sticky="ew", padx=(10, 0), pady=4)
+        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Pane_Sash_Position"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
         dut_row += 1
         
         # 自動執行設定
@@ -198,103 +194,44 @@ class SettingsTab(ttk.Frame):
         self.tooltip_checkbox.grid(row=dut_row, column=0, columnspan=2, sticky="w", pady=4)
         dut_row += 1
         
-        # 指令檔案路徑 - 設定為150字元長度
-        ttk.Label(dut_frame, text="指令檔案路徑:").grid(row=dut_row, column=0, sticky="w", pady=4)
-        path_frame = ttk.Frame(dut_frame)
-        path_frame.grid(row=dut_row, column=1, sticky="ew", padx=(10, 0), pady=4)
-        path_frame.columnconfigure(0, weight=1)
+        # 指令檔案路徑 - 改為兩行顯示
+        ttk.Label(dut_frame, text="指令檔案路徑:").grid(row=dut_row, column=0, sticky="nw", pady=4)
+        path_container = ttk.Frame(dut_frame)
+        path_container.grid(row=dut_row, column=1, sticky="ew", padx=(10, 0), pady=4)
+        path_container.columnconfigure(0, weight=1)
+        
+        # 第一行：路徑輸入框
         self.vars["DUT_Command_File_Path"] = tk.StringVar(value=dut_settings.get("Command_File_Path", ""))
-        ttk.Entry(path_frame, textvariable=self.vars["DUT_Command_File_Path"], width=150).grid(row=0, column=0, sticky="ew")
-        self.browse_button = ttk.Button(path_frame, text="瀏覽", command=lambda: self.browse_file("DUT_Command_File_Path"))
-        self.browse_button.grid(row=0, column=1, padx=(5,0))
+        path_entry = ttk.Entry(path_container, textvariable=self.vars["DUT_Command_File_Path"])
+        path_entry.grid(row=0, column=0, sticky="ew", pady=(0, 5))
+        
+        # 第二行：瀏覽按鈕
+        self.browse_button = ttk.Button(path_container, text="瀏覽檔案", command=lambda: self.browse_file("DUT_Command_File_Path"))
+        self.browse_button.grid(row=1, column=0, sticky="w")
         dut_row += 1
         
-        # 右側：治具控制設定
-        fixture_frame = ttk.LabelFrame(main_container, text="治具控制設定", padding=(10, 4))
-        fixture_frame.grid(row=current_row, column=1, sticky="nsew", padx=(5, 0), pady=(0, 8))
-        fixture_frame.columnconfigure(1, weight=1)
-        current_row += 1
+        # === 右側內容 ===
+        right_container = ttk.Frame(right_frame)
+        right_container.pack(fill='both', expand=True, padx=(5, 0))
         
-        fixture_settings = self.setup_data.get('Fixture_Control', {})
-        fixture_row = 0
+        # 標籤頁名稱設定
+        tab_frame = ttk.LabelFrame(right_container, text="標籤頁名稱設定", padding=(10, 4))
+        tab_frame.pack(fill='x', pady=(0, 8))
+        tab_frame.columnconfigure(1, weight=1)
         
-        # 治具串口
-        ttk.Label(fixture_frame, text="治具串口:").grid(row=fixture_row, column=0, sticky="w", pady=4)
-        self.vars["Fixture_COM_Port"] = tk.StringVar(value=fixture_settings.get("Fixture_COM_Port", "COM5"))
-        ttk.Entry(fixture_frame, textvariable=self.vars["Fixture_COM_Port"], width=25).grid(row=fixture_row, column=1, sticky="ew", padx=(10, 0), pady=4)
-        fixture_row += 1
+        # 獲取當前的標籤頁名稱
+        tab_names = self.setup_data.get('tab_names', {})
+        default_tab_names = ['DUT 控制', '治具控制', '使用說明', '設定']
         
-        # 治具字體大小 (與介面字體聯動)
-        ttk.Label(fixture_frame, text="治具字體大小:").grid(row=fixture_row, column=0, sticky="w", pady=4)
-        self.vars["Fixture_Font_Size"] = tk.StringVar(value=fixture_settings.get("Fixture_Font_Size", "11"))
-        self.fixture_font_spinbox = ttk.Spinbox(fixture_frame, textvariable=self.vars["Fixture_Font_Size"], 
-                                               from_=8, to=24, width=6, command=self.on_fixture_font_changed)
-        self.fixture_font_spinbox.grid(row=fixture_row, column=1, sticky="w", padx=(10, 0), pady=4)
-        # 綁定 Enter 鍵和失去焦點事件
-        self.fixture_font_spinbox.bind('<Return>', self.on_fixture_font_changed)
-        self.fixture_font_spinbox.bind('<FocusOut>', self.on_fixture_font_changed)
-        fixture_row += 1
+        # 創建標籤頁名稱輸入框 - 標籤頁1~4 width=20
+        for i in range(4):
+            tab_key = f'tab{i}'
+            tab_name = tab_names.get(tab_key, default_tab_names[i])
+            ttk.Label(tab_frame, text=f"標籤頁 {i+1}:").grid(row=i, column=0, sticky="w", pady=4)
+            self.vars[f"tab_names_{tab_key}"] = tk.StringVar(value=tab_name)
+            ttk.Entry(tab_frame, textvariable=self.vars[f"tab_names_{tab_key}"], width=20).grid(row=i, column=1, sticky="ew", padx=(10, 0), pady=4)
         
-        # 測試類別
-        tk.Label(fixture_frame, text="測試類別:", font=('Microsoft JhengHei UI', 10, 'bold')).grid(row=fixture_row, column=0, columnspan=2, sticky="w", pady=(10,4))
-        fixture_row += 1
-        
-        self.vars["Fixture_Test_Category_FUNCTION"] = tk.BooleanVar(value=fixture_settings.get("Test_Category_FUNCTION", True))
-        ttk.Checkbutton(fixture_frame, text="FUNCTION測試", variable=self.vars["Fixture_Test_Category_FUNCTION"]).grid(row=fixture_row, column=0, columnspan=2, sticky="w", pady=4)
-        fixture_row += 1
-        
-        self.vars["Fixture_Test_Category_MB"] = tk.BooleanVar(value=fixture_settings.get("Test_Category_MB", True))
-        ttk.Checkbutton(fixture_frame, text="MB測試", variable=self.vars["Fixture_Test_Category_MB"]).grid(row=fixture_row, column=0, columnspan=2, sticky="w", pady=4)
-        fixture_row += 1
-        
-        self.vars["Fixture_Test_Category_Original_Commands"] = tk.BooleanVar(value=fixture_settings.get("Test_Category_Original_Commands", True))
-        ttk.Checkbutton(fixture_frame, text="原始指令測試", variable=self.vars["Fixture_Test_Category_Original_Commands"]).grid(row=fixture_row, column=0, columnspan=2, sticky="w", pady=4)
-        fixture_row += 1
-        
-        # 串列埠設定
-        tk.Label(fixture_frame, text="串列埠設定:", font=('Microsoft JhengHei UI', 10, 'bold')).grid(row=fixture_row, column=0, columnspan=2, sticky="w", pady=(10,4))
-        fixture_row += 1
-        
-        # 取得串列埠設定
-        serial_settings = fixture_settings.get("Serial_Settings", {})
-        
-        # 波特率
-        ttk.Label(fixture_frame, text="波特率:").grid(row=fixture_row, column=0, sticky="w", pady=4)
-        self.vars["Fixture_Serial_Baudrate"] = tk.StringVar(value=serial_settings.get("Baudrate", "9600"))
-        baudrate_combo = ttk.Combobox(fixture_frame, textvariable=self.vars["Fixture_Serial_Baudrate"], 
-                                     values=["1200", "2400", "4800", "9600", "19200", "38400", "57600", "115200"], 
-                                     width=22, state="readonly")
-        baudrate_combo.grid(row=fixture_row, column=1, sticky="ew", padx=(10, 0), pady=4)
-        fixture_row += 1
-        
-        # 資料位元
-        ttk.Label(fixture_frame, text="資料位元:").grid(row=fixture_row, column=0, sticky="w", pady=4)
-        self.vars["Fixture_Serial_Bytesize"] = tk.StringVar(value=serial_settings.get("Bytesize", "8"))
-        bytesize_combo = ttk.Combobox(fixture_frame, textvariable=self.vars["Fixture_Serial_Bytesize"], 
-                                     values=["5", "6", "7", "8"], width=22, state="readonly")
-        bytesize_combo.grid(row=fixture_row, column=1, sticky="ew", padx=(10, 0), pady=4)
-        fixture_row += 1
-        
-        # 停止位元
-        ttk.Label(fixture_frame, text="停止位元:").grid(row=fixture_row, column=0, sticky="w", pady=4)
-        self.vars["Fixture_Serial_Stopbits"] = tk.StringVar(value=serial_settings.get("Stopbits", "1"))
-        stopbits_combo = ttk.Combobox(fixture_frame, textvariable=self.vars["Fixture_Serial_Stopbits"], 
-                                     values=["1", "1.5", "2"], width=22, state="readonly")
-        stopbits_combo.grid(row=fixture_row, column=1, sticky="ew", padx=(10, 0), pady=4)
-        fixture_row += 1
-        
-        # 奇偶校驗
-        ttk.Label(fixture_frame, text="奇偶校驗:").grid(row=fixture_row, column=0, sticky="w", pady=4)
-        self.vars["Fixture_Serial_Parity"] = tk.StringVar(value=serial_settings.get("Parity", "None"))
-        parity_combo = ttk.Combobox(fixture_frame, textvariable=self.vars["Fixture_Serial_Parity"], 
-                                   values=["None", "Even", "Odd", "Mark", "Space"], width=22, state="readonly")
-        parity_combo.grid(row=fixture_row, column=1, sticky="ew", padx=(10, 0), pady=4)
-        fixture_row += 1
-        
-        # 超時時間
-        ttk.Label(fixture_frame, text="超時時間(秒):").grid(row=fixture_row, column=0, sticky="w", pady=4)
-        self.vars["Fixture_Serial_Timeout"] = tk.StringVar(value=serial_settings.get("Timeout", "1.0"))
-        ttk.Entry(fixture_frame, textvariable=self.vars["Fixture_Serial_Timeout"], width=25).grid(row=fixture_row, column=1, sticky="ew", padx=(10, 0), pady=4)
+        # 注意：治具控制設定已移動至「TAB 測試治具」的指令控制區塊中
 
     def on_ui_font_changed(self, event=None):
         """介面字體大小即時更新"""
@@ -483,25 +420,10 @@ class SettingsTab(ttk.Frame):
         current_setup["DUT_Control"]["Auto_Execute"] = self.vars["DUT_Auto_Execute"].get()
         current_setup["DUT_Control"]["Command_File_Path"] = self.vars["DUT_Command_File_Path"].get()
         
-        # 更新Fixture_Control設定
+        # 注意：Fixture_Control 設定已移動至治具控制TAB中，這裡不再處理
+        # 只保留基本結構，確保不破壞現有設定
         if "Fixture_Control" not in current_setup:
             current_setup["Fixture_Control"] = {}
-            
-        current_setup["Fixture_Control"]["Fixture_COM_Port"] = self.vars["Fixture_COM_Port"].get()
-        current_setup["Fixture_Control"]["Fixture_Font_Size"] = self.vars["Fixture_Font_Size"].get()
-        current_setup["Fixture_Control"]["Test_Category_FUNCTION"] = self.vars["Fixture_Test_Category_FUNCTION"].get()
-        current_setup["Fixture_Control"]["Test_Category_MB"] = self.vars["Fixture_Test_Category_MB"].get()
-        current_setup["Fixture_Control"]["Test_Category_Original_Commands"] = self.vars["Fixture_Test_Category_Original_Commands"].get()
-        
-        # 更新串列埠設定
-        if "Serial_Settings" not in current_setup["Fixture_Control"]:
-            current_setup["Fixture_Control"]["Serial_Settings"] = {}
-        
-        current_setup["Fixture_Control"]["Serial_Settings"]["Baudrate"] = self.vars["Fixture_Serial_Baudrate"].get()
-        current_setup["Fixture_Control"]["Serial_Settings"]["Bytesize"] = self.vars["Fixture_Serial_Bytesize"].get()
-        current_setup["Fixture_Control"]["Serial_Settings"]["Stopbits"] = self.vars["Fixture_Serial_Stopbits"].get()
-        current_setup["Fixture_Control"]["Serial_Settings"]["Parity"] = self.vars["Fixture_Serial_Parity"].get()
-        current_setup["Fixture_Control"]["Serial_Settings"]["Timeout"] = self.vars["Fixture_Serial_Timeout"].get()
         
         # 更新 UI 設定
         if "UI_Settings" not in current_setup:
@@ -623,21 +545,7 @@ class SettingsTab(ttk.Frame):
             self.vars["DUT_Auto_Execute"].set(dut_settings.get("Auto_Execute", False))
             self.vars["DUT_Command_File_Path"].set(dut_settings.get("Command_File_Path", ""))
             
-            # 更新治具控制設定
-            fixture_settings = self.setup_data.get('Fixture_Control', {})
-            self.vars["Fixture_COM_Port"].set(fixture_settings.get("Fixture_COM_Port", "COM5"))
-            self.vars["Fixture_Font_Size"].set(fixture_settings.get("Fixture_Font_Size", "11"))
-            self.vars["Fixture_Test_Category_FUNCTION"].set(fixture_settings.get("Test_Category_FUNCTION", True))
-            self.vars["Fixture_Test_Category_MB"].set(fixture_settings.get("Test_Category_MB", False))
-            self.vars["Fixture_Test_Category_Original_Commands"].set(fixture_settings.get("Test_Category_Original_Commands", False))
-            
-            # 更新串列埠設定
-            serial_settings = fixture_settings.get("Serial_Settings", {})
-            self.vars["Fixture_Serial_Baudrate"].set(serial_settings.get("Baudrate", "9600"))
-            self.vars["Fixture_Serial_Bytesize"].set(serial_settings.get("Bytesize", "8"))
-            self.vars["Fixture_Serial_Stopbits"].set(serial_settings.get("Stopbits", "1"))
-            self.vars["Fixture_Serial_Parity"].set(serial_settings.get("Parity", "None"))
-            self.vars["Fixture_Serial_Timeout"].set(serial_settings.get("Timeout", "1.0"))
+            # 注意：治具控制設定已移動至治具控制TAB中，這裡不再處理
             
             # 更新 UI 設定
             ui_settings = self.setup_data.get('UI_Settings', {})

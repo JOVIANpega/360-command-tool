@@ -13,9 +13,9 @@ import sys
 import datetime
 
 version_info = {
-    'version': '1.5.0.8',
-    'file_version': (1, 5, 0, 8),
-    'product_version': (1, 5, 0, 8),
+    'version': '1.5.0.9',
+    'file_version': (1, 5, 0, 9),
+    'product_version': (1, 5, 0, 9),
     'company_name': 'VALO360指令通',
     'file_description': 'VALO360指令通 - 序列埠通訊工具',
     'internal_name': 'VALO360指令通',
@@ -27,6 +27,14 @@ version_info = {
 
 # 版本更新記錄
 version_history = """
+v1.5.0.9 (2025-07-17)
+----------------------
+• 設定檔案系統優化與GUI結構重新設計：
+  - 修復設定檔案載入錯誤，解決重複設定項目問題
+  - 建立統一設定管理系統，實現跨模組變數同步聯動
+  - 治具設定完全移動至「TAB 測試治具」，儲存按鈕重新設計
+  - 強化錯誤處理與穩定性，代碼品質全面提升
+
 v1.5.0.8 (2025-07-16)
 ----------------------
 • 系統設定頁面優化：
@@ -100,12 +108,15 @@ v1.5.0.1 (2025-07-12)
 • 新增設定檔案管理功能
 """
 
+# 定義版本號
+VERSION = version_info['version']
+
 # 生成版本資訊檔案
 with open("version_info_zh.txt", "w", encoding="utf-8") as f:
     f.write("VSVersionInfo(\n")
     f.write("  ffi=FixedFileInfo(\n")
-    f.write("    filevers=(1, 5, 0, 3),\n")
-    f.write("    prodvers=(1, 5, 0, 3),\n")
+    f.write("    filevers=(1, 5, 0, 8),\n")
+    f.write("    prodvers=(1, 5, 0, 8),\n")
     f.write("    mask=0x3f,\n")
     f.write("    flags=0x0,\n")
     f.write("    OS=0x40004,\n")
