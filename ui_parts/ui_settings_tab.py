@@ -53,21 +53,7 @@ class SettingsTab(ttk.Frame):
         # 設定分隔位置為中間
         main_container.sashpos(0, 400)
         
-        # 儲存按鈕區域 - 在頂部跨越兩側
-        top_frame = ttk.Frame(self)
-        top_frame.pack(fill='x', padx=10, pady=(10, 0))
-        
-        # 置右的儲存按鈕容器
-        save_frame = ttk.Frame(top_frame)
-        save_frame.pack(side=tk.RIGHT)
-        
-        # 自定義樣式的儲存按鈕 - 更大尺寸，綠底黑字，經過時變色
-        self.save_button = tk.Button(save_frame, text="儲存設定", command=self.save_settings,
-                                   font=("微軟正黑體", 12, "bold"), width=18, height=2,
-                                   bg="#4CAF50", fg="black", relief="raised", bd=2,
-                                   activebackground="#45a049", activeforeground="white",
-                                   cursor="hand2")
-        self.save_button.pack(side=tk.RIGHT, padx=5, pady=5)
+        # 移除儲存按鈕區域 - 因為已經移動到DUT控制區塊了
         
         # === 左側內容 ===
         left_container = ttk.Frame(left_frame)
@@ -148,7 +134,6 @@ class SettingsTab(ttk.Frame):
         self.ui_font_spinbox = ttk.Spinbox(font_frame, textvariable=self.vars["DUT_UI_Font_Size"], 
                                           from_=8, to=24, width=8, command=self.on_ui_font_changed)
         self.ui_font_spinbox.grid(row=0, column=1, sticky="w", padx=(5, 10))
-        # 綁定 Enter 鍵和失去焦點事件
         self.ui_font_spinbox.bind('<Return>', self.on_ui_font_changed)
         self.ui_font_spinbox.bind('<FocusOut>', self.on_ui_font_changed)
         
@@ -157,41 +142,28 @@ class SettingsTab(ttk.Frame):
         self.content_font_spinbox = ttk.Spinbox(font_frame, textvariable=self.vars["DUT_Content_Font_Size"], 
                                                from_=8, to=24, width=8, command=self.on_content_font_changed)
         self.content_font_spinbox.grid(row=0, column=3, sticky="w", padx=(5, 0))
-        # 綁定 Enter 鍵和失去焦點事件
         self.content_font_spinbox.bind('<Return>', self.on_content_font_changed)
         self.content_font_spinbox.bind('<FocusOut>', self.on_content_font_changed)
         dut_row += 1
-        
-        # 通知字體大小設定 - width=20
-        ttk.Label(dut_frame, text="通知字體大小:").grid(row=dut_row, column=0, sticky="w", pady=4)
-        self.vars["DUT_Notification_Font_Size"] = tk.StringVar(value=dut_settings.get("Notification_Font_Size", "10"))
-        self.notification_font_spinbox = ttk.Spinbox(dut_frame, textvariable=self.vars["DUT_Notification_Font_Size"], 
-                                                    from_=8, to=20, width=20, command=self.on_notification_font_changed)
-        self.notification_font_spinbox.grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
-        # 綁定 Enter 鍵和失去焦點事件
-        self.notification_font_spinbox.bind('<Return>', self.on_notification_font_changed)
-        self.notification_font_spinbox.bind('<FocusOut>', self.on_notification_font_changed)
-        dut_row += 1
-        
-        # 分隔面板位置 - width=20
-        ttk.Label(dut_frame, text="分隔面板位置:").grid(row=dut_row, column=0, sticky="w", pady=4)
-        self.vars["DUT_Pane_Sash_Position"] = tk.StringVar(value=dut_settings.get("Pane_Sash_Position", "633"))
-        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Pane_Sash_Position"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
-        dut_row += 1
-        
-        # 自動執行設定
-        self.vars["DUT_Auto_Execute"] = tk.BooleanVar(value=dut_settings.get("Auto_Execute", False))
-        ttk.Checkbutton(dut_frame, text="啟用自動執行", variable=self.vars["DUT_Auto_Execute"]).grid(row=dut_row, column=0, columnspan=2, sticky="w", pady=4)
-        dut_row += 1
-        
-        # ToolTip 設定
-        ui_settings = self.setup_data.get('UI_Settings', {})
-        self.vars["UI_ToolTip_Enabled"] = tk.BooleanVar(value=ui_settings.get("ToolTip_Enabled", True))
-        
-        self.tooltip_checkbox = ttk.Checkbutton(dut_frame, text="啟用提示說明（ToolTip）", 
-                                              variable=self.vars["UI_ToolTip_Enabled"],
-                                              command=self.on_tooltip_setting_changed)
-        self.tooltip_checkbox.grid(row=dut_row, column=0, columnspan=2, sticky="w", pady=4)
+        # 儲存設定按鈕 - 移到內容字體Spinbox正下方
+        button_container = ttk.Frame(font_frame)
+        button_container.grid(row=1, column=0, columnspan=4, sticky="w", pady=(10, 4))
+        self.save_button = tk.Button(
+            button_container, 
+            text="儲存\n設定", 
+            font=('Microsoft JhengHei UI', 14, 'bold'),
+            bg='#4CAF50', 
+            fg='white', 
+            relief='raised', 
+            borderwidth=3,
+            cursor="hand2",
+            command=self.save_settings,
+            width=10,
+            height=3
+        )
+        self.save_button.pack(side=tk.LEFT)
+        self.save_button.bind("<Enter>", lambda e: self.save_button.config(bg='#45a049'))
+        self.save_button.bind("<Leave>", lambda e: self.save_button.config(bg='#4CAF50'))
         dut_row += 1
         
         # 指令檔案路徑 - 改為兩行顯示
@@ -439,22 +411,23 @@ class SettingsTab(ttk.Frame):
     # 移除了 reload_settings 函數及相關程式碼
 
     def save_settings(self):
-        """儲存所有設定"""
+        """儲存設定到 setup.json"""
         try:
+            # 生成設定字典
             settings_dict = self.generate_settings_dict()
+            
+            # 保存設定
             save_setup(settings_dict)
             
-            # 調用回調函數通知主程式設定已更新
+            # 調用回調函數通知其他組件設定已更新
             if self.on_save_callback:
-                self.on_save_callback(settings_dict)
+                self.on_save_callback()
             
-            messagebox.showinfo("成功", "設定已儲存！")
-            print("[DEBUG] 設定已成功儲存")
+            # 顯示成功訊息
+            messagebox.showinfo("成功", "設定已儲存")
             
         except Exception as e:
-            error_msg = f"儲存設定失敗：{str(e)}"
-            print(f"[ERROR] {error_msg}")
-            messagebox.showerror("錯誤", error_msg)
+            messagebox.showerror("錯誤", f"儲存設定時發生錯誤: {e}")
 
     def on_tooltip_setting_changed(self):
         """當 ToolTip 設定變更時的處理"""

@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[],
+    datas=[('Command_TABLE', 'Command_TABLE'), ('Command_TABLE/*.txt', 'Command_TABLE'), ('FIXTURE', 'FIXTURE'), ('FIXTURE/*.txt', 'FIXTURE'), ('user_guide.txt', '.'), ('setup.json', '.'), ('assets', 'assets'), ('ui_parts', 'ui_parts')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

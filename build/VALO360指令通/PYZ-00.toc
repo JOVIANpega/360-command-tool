@@ -401,6 +401,13 @@
    'D:\\((Python '
    'TOOL\\指令工具-20250428T020034Z-001\\程式代碼\\ui_parts\\notification_manager.py',
    'PYMODULE'),
+  ('ui_parts.shared_config',
+   'D:\\((Python '
+   'TOOL\\指令工具-20250428T020034Z-001\\程式代碼\\ui_parts\\shared_config.py',
+   'PYMODULE'),
+  ('ui_parts.tooltip',
+   'D:\\((Python TOOL\\指令工具-20250428T020034Z-001\\程式代碼\\ui_parts\\tooltip.py',
+   'PYMODULE'),
   ('ui_parts.ui_components',
    'D:\\((Python '
    'TOOL\\指令工具-20250428T020034Z-001\\程式代碼\\ui_parts\\ui_components.py',

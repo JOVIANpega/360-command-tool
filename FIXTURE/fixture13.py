@@ -187,12 +187,12 @@ class FixtureControlWindow:
             self.parity_var.set(serial_settings.get('Parity', 'None'))
             self.timeout_var.set(serial_settings.get('Timeout', '1.0'))
             
-            # 載入字體大小設定 (從主設定中讀取)
-            self.font_size = int(settings.get('UIFontSize', 11))
+            # 載入字體大小設定 (設定為12)
+            self.font_size = 12
             
         except Exception as e:
             print(f"載入設定時發生錯誤: {e}")
-            self.font_size = 11
+            self.font_size = 12
 
     def load_commands(self):
         """載入指令檔案"""
@@ -382,7 +382,7 @@ class FixtureControlWindow:
         # 字體大小
         font_frame = ttk.Frame(left_frame)
         font_frame.pack(fill=tk.X, pady=2)
-        tk.Label(font_frame, text="字體大小:", font=("微軟正黑體", 10)).pack(side=tk.LEFT, padx=(0, 5))
+        tk.Label(font_frame, text="字體大小:", font=("微軟正黑體", 12)).pack(side=tk.LEFT, padx=(0, 5))
         self.fixture_font_var = tk.StringVar()
         self.fixture_font_spinbox = ttk.Spinbox(
             font_frame, 
@@ -399,7 +399,7 @@ class FixtureControlWindow:
         right_frame.pack(side=tk.LEFT, fill=tk.X, expand=True)
         
         # 串列設定標題
-        tk.Label(right_frame, text="串列埠設定:", font=("微軟正黑體", 10, "bold")).pack(anchor='w', pady=(0, 5))
+        tk.Label(right_frame, text="串列埠設定:", font=("微軟正黑體", 12, "bold")).pack(anchor='w', pady=(0, 5))
         
         # 建立2x3的網格來放置串列設定
         serial_grid = ttk.Frame(right_frame)
@@ -409,7 +409,7 @@ class FixtureControlWindow:
         row1_frame = ttk.Frame(serial_grid)
         row1_frame.pack(fill=tk.X, pady=2)
         
-        tk.Label(row1_frame, text="波特率:", font=("微軟正黑體", 9)).pack(side=tk.LEFT)
+        tk.Label(row1_frame, text="波特率:", font=("微軟正黑體", 12)).pack(side=tk.LEFT)
         self.baudrate_combo = ttk.Combobox(
             row1_frame,
             textvariable=self.baudrate_var,
@@ -418,7 +418,7 @@ class FixtureControlWindow:
         )
         self.baudrate_combo.pack(side=tk.LEFT, padx=(5, 15))
         
-        tk.Label(row1_frame, text="資料位元:", font=("微軟正黑體", 9)).pack(side=tk.LEFT)
+        tk.Label(row1_frame, text="資料位元:", font=("微軟正黑體", 12)).pack(side=tk.LEFT)
         self.bytesize_combo = ttk.Combobox(
             row1_frame,
             textvariable=self.bytesize_var,
@@ -431,7 +431,7 @@ class FixtureControlWindow:
         row2_frame = ttk.Frame(serial_grid)
         row2_frame.pack(fill=tk.X, pady=2)
         
-        tk.Label(row2_frame, text="停止位元:", font=("微軟正黑體", 9)).pack(side=tk.LEFT)
+        tk.Label(row2_frame, text="停止位元:", font=("微軟正黑體", 12)).pack(side=tk.LEFT)
         self.stopbits_combo = ttk.Combobox(
             row2_frame,
             textvariable=self.stopbits_var,
@@ -440,7 +440,7 @@ class FixtureControlWindow:
         )
         self.stopbits_combo.pack(side=tk.LEFT, padx=(5, 15))
         
-        tk.Label(row2_frame, text="奇偶校驗:", font=("微軟正黑體", 9)).pack(side=tk.LEFT)
+        tk.Label(row2_frame, text="奇偶校驗:", font=("微軟正黑體", 12)).pack(side=tk.LEFT)
         self.parity_combo = ttk.Combobox(
             row2_frame,
             textvariable=self.parity_var,
@@ -453,7 +453,7 @@ class FixtureControlWindow:
         row3_frame = ttk.Frame(serial_grid)
         row3_frame.pack(fill=tk.X, pady=2)
         
-        tk.Label(row3_frame, text="超時時間(秒):", font=("微軟正黑體", 9)).pack(side=tk.LEFT)
+        tk.Label(row3_frame, text="超時時間(秒):", font=("微軟正黑體", 12)).pack(side=tk.LEFT)
         self.timeout_entry = ttk.Entry(
             row3_frame,
             textvariable=self.timeout_var,
@@ -477,7 +477,7 @@ class FixtureControlWindow:
             fixture_settings = settings.get('Fixture_Control', {})
             
             # 載入字體大小
-            font_size = fixture_settings.get('Fixture_Font_Size', '11')
+            font_size = '12'
             self.fixture_font_var.set(font_size)
             
             # 載入串列設定

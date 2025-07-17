@@ -111,12 +111,15 @@ v1.5.0.1 (2025-07-12)
 # 定義版本號
 VERSION = version_info['version']
 
+APP_VERSION = "V1.6.0.0"
+APP_VERSION_DETAIL = "\n【V1.6.0.0 主要更新】\n- 指令下拉選單顯示20筆\n- 設定頁面美化（儲存設定移至內容字體下方）\n- 使用說明(user_guide.txt)精簡為純操作指引\n- 其他細節優化與錯誤修正\n"
+
 # 生成版本資訊檔案
 with open("version_info_zh.txt", "w", encoding="utf-8") as f:
     f.write("VSVersionInfo(\n")
     f.write("  ffi=FixedFileInfo(\n")
-    f.write("    filevers=(1, 5, 0, 8),\n")
-    f.write("    prodvers=(1, 5, 0, 8),\n")
+    f.write("    filevers=(1, 5, 0, 9),\n")
+    f.write("    prodvers=(1, 5, 0, 9),\n")
     f.write("    mask=0x3f,\n")
     f.write("    flags=0x0,\n")
     f.write("    OS=0x40004,\n")

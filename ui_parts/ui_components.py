@@ -230,15 +230,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.btn_execute.bind("<Enter>", self.on_enter_exec)
         self.btn_execute.bind("<Leave>", self.on_leave_exec)
 
-        # 儲存設定按鈕 (正方形，40x40)
-        self.btn_save_settings = tk.Button(
-            cmd_frame, text='儲存\n設定', font=('Microsoft JhengHei UI', 10, 'bold'),
-            bg='#FF9800', fg='white', relief='raised', borderwidth=2, cursor="hand2",
-            command=self.on_save_settings_click, width=5, height=2
-        )
-        self.btn_save_settings.grid(row=0, column=3, sticky='e', padx=(0, 0))
-        self.btn_save_settings.bind("<Enter>", self.on_enter_save)
-        self.btn_save_settings.bind("<Leave>", self.on_leave_save)
+
 
         self.combobox_cmd.bind('<Return>', lambda event: self.parent.handlers.on_execute())
 
@@ -248,37 +240,9 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
     def on_leave_exec(self, event):
         self.btn_execute.config(bg='#4CAF50')
 
-    def on_enter_save(self, event):
-        self.btn_save_settings.config(bg='#F57C00')
 
-    def on_leave_save(self, event):
-        self.btn_save_settings.config(bg='#FF9800')
 
-    def on_save_settings_click(self):
-        """儲存設定按鈕點擊處理"""
-        try:
-            # 導入統一設定管理器
-            from ui_parts.shared_config import get_shared_config
-            shared_config = get_shared_config()
-            
-            # 儲存所有設定
-            shared_config.save_to_setup()
-            
-            # 顯示成功訊息
-            if hasattr(self, 'show_notification'):
-                self.show_notification("所有設定已儲存至 setup.json", "success", 3000)
-            elif hasattr(self.parent, 'show_global_notification'):
-                self.parent.show_global_notification("所有設定已儲存至 setup.json", "success", 3000)
-            else:
-                print("[INFO] 所有設定已儲存至 setup.json")
-                
-        except Exception as e:
-            error_msg = f"儲存設定時發生錯誤: {e}"
-            print(f"[ERROR] {error_msg}")
-            if hasattr(self, 'show_notification'):
-                self.show_notification(error_msg, "error", 5000)
-            elif hasattr(self.parent, 'show_global_notification'):
-                self.parent.show_global_notification(error_msg, "error", 5000)
+
 
     def get_section_description(self, section):
         # 預設描述

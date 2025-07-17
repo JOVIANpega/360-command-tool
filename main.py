@@ -113,7 +113,7 @@ if __name__ == "__main__":
 
 
         root = tk.Tk()
-        
+
         # 初始化統一設定管理器
         from ui_parts.shared_config import get_shared_config
         shared_config = get_shared_config(root)
