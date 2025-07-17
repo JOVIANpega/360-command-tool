@@ -158,6 +158,10 @@ if __name__ == "__main__":
         # 新增：視窗大小變動時即時寫回 setup.json
         def on_resize(event):
             try:
+                # 確保 root 視窗存在
+                if not root.winfo_exists():
+                    return
+                
                 import json
                 from config_core import load_setup, save_setup
                 setup = load_setup()
@@ -169,7 +173,9 @@ if __name__ == "__main__":
                 setup["DUT_Control"]["Window_Height"] = str(root.winfo_height())
                 save_setup(setup)
             except Exception as e:
-                print(f"[錯誤] 即時寫回視窗大小失敗: {e}")
+                # 減少在主控台的輸出，避免干擾
+                # print(f"[錯誤] 即時寫回視窗大小失敗: {e}")
+                pass
         root.bind('<Configure>', on_resize)
 
         
