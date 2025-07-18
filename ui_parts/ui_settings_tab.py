@@ -487,18 +487,39 @@ class SettingsTab(ttk.Frame):
             print(f"[ERROR] 更新 ToolTip 設定失敗: {e}")
 
     def setup_tooltips(self):
-        """設定工具提示 - 使用AI自動生成"""
-        if not self.tooltip_manager:
-            return
-            
+        """設置所有設定頁面元件的tooltip"""
         try:
-            # 使用AI自動生成tooltip內容
+            # 嘗試獲取全域通知管理器
+            global_notification_manager = None
+            
+            # 從 parent 獲取
+            if hasattr(self.parent, 'notification_manager'):
+                global_notification_manager = self.parent.notification_manager
+                print("[DEBUG] 設定頁面: 從 parent 獲取全域通知管理器")
+            # 從 root 獲取
+            elif hasattr(self.parent, 'master') and hasattr(self.parent.master, 'notification_manager'):
+                global_notification_manager = self.parent.master.notification_manager
+                print("[DEBUG] 設定頁面: 從 root 獲取全域通知管理器")
+            # 從 TabManager 獲取
+            elif hasattr(self.parent, 'master') and hasattr(self.parent.master, 'tab_manager') and \
+                 hasattr(self.parent.master.tab_manager, 'notification_manager'):
+                global_notification_manager = self.parent.master.tab_manager.notification_manager
+                print("[DEBUG] 設定頁面: 從 tab_manager 獲取全域通知管理器")
+            
+            # 重新初始化 ToolTip 管理器，傳入全域通知管理器
+            self.tooltip_manager = ToolTipManager(global_notification_manager)
+            
+            # 從設定中讀取 ToolTip 啟用狀態，預設為啟用
+            tooltip_enabled = self.setup_data.get("UI_Settings", {}).get("ToolTip_Enabled", True)
+            self.tooltip_manager.set_all_enabled(tooltip_enabled)
+            
+            # 為所有設定頁面元件添加tooltip
             self._add_tooltip_to_settings_widgets()
             
-            print("[DEBUG] 設定頁面的所有AI tooltip已初始化完成")
+            print("[DEBUG] 設定頁面: 所有tooltip已初始化完成")
             
         except Exception as e:
-            print(f"[ERROR] 設定頁面初始化tooltip時發生錯誤: {e}")
+            print(f"[ERROR] 設定頁面: 初始化tooltip時發生錯誤: {e}")
             import traceback
             traceback.print_exc()
     

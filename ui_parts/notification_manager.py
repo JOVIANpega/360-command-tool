@@ -20,6 +20,10 @@ class NotificationManager:
         self.notification_log = []
         self.current_notification_job = None
         self.notification_widget = None
+        self.breathing_job = None  # 呼吸顯示效果的任務ID
+        self.message_lines = []    # 分割後的訊息行
+        self.current_line_index = 0  # 當前顯示的行索引
+        self.font_size = 11  # 預設字體大小
         
         # 從設定中載入通知歷史
         self.load_notification_history()
@@ -55,10 +59,32 @@ class NotificationManager:
         self.brief_message = ttk.Label(
             self.control_frame,
             text="系統就緒",
-            font=('Microsoft JhengHei UI', 9),
+            font=('Microsoft JhengHei UI', self.font_size),
             foreground='#666666'
         )
         self.brief_message.grid(row=0, column=1, padx=10, sticky='ew')
+        
+        # 右側：字體大小控制按鈕
+        self.font_control_frame = ttk.Frame(self.control_frame)
+        self.font_control_frame.grid(row=0, column=2, padx=5, sticky='e')
+        
+        # 減小字體按鈕
+        self.font_minus_btn = ttk.Button(
+            self.font_control_frame, 
+            text="-", 
+            width=2,
+            command=self.decrease_font_size
+        )
+        self.font_minus_btn.pack(side='left', padx=2)
+        
+        # 增大字體按鈕
+        self.font_plus_btn = ttk.Button(
+            self.font_control_frame, 
+            text="+", 
+            width=2,
+            command=self.increase_font_size
+        )
+        self.font_plus_btn.pack(side='left', padx=2)
         
         # 創建通知文字區域 (直接顯示，不需要展開)
         self.create_notification_text()
@@ -97,19 +123,19 @@ class NotificationManager:
         # 載入歷史通知（保留數據但不顯示UI）
         self.load_notification_history()
     
-    def show_notification(self, message, msg_type="info"):
+    def show_notification(self, message, msg_type="info", duration=0):
         """
-        顯示全域通知訊息 - 簡化版本
+        顯示全域通知訊息 - 支援呼吸顯示效果
         
         Args:
             message: 要顯示的訊息內容
             msg_type: 訊息類型 ("info", "success", "warning", "error")
+            duration: 顯示時間(毫秒)，0表示不自動消失
         """
         timestamp = datetime.now().strftime("%H:%M:%S")
         
-        # 更新簡要顯示（控制欄中的一行訊息）
-        brief_text = message[:50] + "..." if len(message) > 50 else message
-        self.brief_message.config(text=brief_text)
+        # 取消先前的呼吸顯示任務
+        self.cancel_breathing_display()
         
         # 根據訊息類型設定顏色
         color_map = {
@@ -118,7 +144,18 @@ class NotificationManager:
             "warning": "#cc6600",
             "error": "#cc0000"
         }
-        self.brief_message.config(foreground=color_map.get(msg_type, "#666666"))
+        text_color = color_map.get(msg_type, "#666666")
+        
+        # 分割長訊息為多行
+        self.split_message_into_lines(message)
+        
+        # 如果只有一行訊息，直接顯示
+        if len(self.message_lines) <= 1:
+            self.brief_message.config(text=message, foreground=text_color)
+        else:
+            # 有多行訊息，啟動呼吸顯示效果
+            self.current_line_index = 0
+            self.start_breathing_display(text_color)
         
         # 記錄到歷史（保留數據功能）
         log_entry = {
@@ -135,6 +172,96 @@ class NotificationManager:
         
         # 保存歷史記錄
         self.save_notification_history()
+        
+        # 如果設定了自動消失時間，安排清除通知
+        if duration > 0:
+            if self.current_notification_job:
+                self.parent_frame.after_cancel(self.current_notification_job)
+            self.current_notification_job = self.parent_frame.after(duration, self.clear_notification)
+    
+    def split_message_into_lines(self, message):
+        """將長訊息分割為多行"""
+        # 獲取視窗寬度來計算每行字元數
+        try:
+            window_width = self.parent_frame.winfo_width()
+            # 根據視窗寬度計算合適的每行字元數 (估算值)
+            chars_per_line = max(40, min(50, int(window_width / 12)))
+        except:
+            chars_per_line = 45  # 預設值
+        
+        # 分割訊息
+        self.message_lines = []
+        if len(message) <= chars_per_line:
+            self.message_lines = [message]
+        else:
+            # 將長訊息分割為多行
+            start = 0
+            while start < len(message):
+                end = min(start + chars_per_line, len(message))
+                # 避免在單詞中間斷行
+                if end < len(message) and message[end] != ' ' and message[end-1] != ' ':
+                    # 向前尋找空格
+                    space_pos = message.rfind(' ', start, end)
+                    if space_pos > start:
+                        end = space_pos + 1
+                self.message_lines.append(message[start:end])
+                start = end
+    
+    def start_breathing_display(self, text_color):
+        """開始呼吸顯示效果"""
+        def show_next_line():
+            if not self.message_lines:
+                return
+            
+            # 顯示當前行
+            current_line = self.message_lines[self.current_line_index]
+            self.brief_message.config(text=current_line, foreground=text_color)
+            
+            # 更新索引，準備顯示下一行
+            self.current_line_index = (self.current_line_index + 1) % len(self.message_lines)
+            
+            # 安排下一次顯示 (2.5秒後)
+            self.breathing_job = self.parent_frame.after(2500, show_next_line)
+        
+        # 開始顯示第一行
+        show_next_line()
+    
+    def cancel_breathing_display(self):
+        """取消呼吸顯示效果"""
+        if self.breathing_job:
+            self.parent_frame.after_cancel(self.breathing_job)
+            self.breathing_job = None
+    
+    def increase_font_size(self):
+        """增加通知字體大小"""
+        if self.font_size < 20:  # 設定上限
+            self.font_size += 1
+            self.update_font_size()
+            self.save_font_size_to_setup()
+    
+    def decrease_font_size(self):
+        """減少通知字體大小"""
+        if self.font_size > 8:  # 設定下限
+            self.font_size -= 1
+            self.update_font_size()
+            self.save_font_size_to_setup()
+    
+    def update_font_size(self):
+        """更新字體大小"""
+        self.brief_message.config(font=('Microsoft JhengHei UI', self.font_size))
+    
+    def save_font_size_to_setup(self):
+        """將字體大小保存到設定檔"""
+        try:
+            current_setup = load_setup()
+            if "DUT_Control" not in current_setup:
+                current_setup["DUT_Control"] = {}
+            
+            current_setup["DUT_Control"]["Notification_Font_Size"] = str(self.font_size)
+            save_setup(current_setup)
+            print(f"[INFO] 已保存通知字體大小: {self.font_size}")
+        except Exception as e:
+            print(f"[ERROR] 保存通知字體大小時發生錯誤: {e}")
     
     def update_notification_font(self):
         """更新通知字體大小 - 已移除，保留方法避免錯誤"""
@@ -147,6 +274,12 @@ class NotificationManager:
     def clear_notification(self):
         """清除目前顯示的通知"""
         try:
+            # 取消呼吸顯示效果
+            self.cancel_breathing_display()
+            self.message_lines = []
+            self.current_line_index = 0
+            
+            # 清除顯示
             self.brief_message.config(text="系統就緒", foreground='#666666')
         except Exception as e:
             print(f"[ERROR] 清除通知時發生錯誤: {e}")
@@ -198,10 +331,14 @@ class NotificationManager:
             notifications = self.setup_data.get("notification_messages", {}).get("history", [])
             self.notification_log = notifications[-100:]  # 只保留最近100條
             print(f"[INFO] 已載入 {len(self.notification_log)} 條通知歷史")
+            
+            # 載入字體大小設定
+            self.font_size = int(self.setup_data.get("DUT_Control", {}).get("Notification_Font_Size", "11"))
                 
         except Exception as e:
             print(f"[ERROR] 載入通知歷史時發生錯誤: {e}")
             self.notification_log = []
+            self.font_size = 11
 
     def save_notification_history(self):
         """保存通知歷史到設定檔"""
@@ -218,9 +355,12 @@ class NotificationManager:
             print(f"[ERROR] 保存通知歷史時發生錯誤: {e}")
 
     def set_font_size(self, size):
-        """設定字體大小 - 簡化版本"""
-        # 原本的字體設定功能已移除，保留方法避免錯誤
-        pass
+        """設定字體大小"""
+        try:
+            self.font_size = int(size)
+            self.update_font_size()
+        except:
+            print(f"[ERROR] 無效的字體大小: {size}")
 
     def update_setup_data(self, new_setup_data):
         """更新設定資料"""

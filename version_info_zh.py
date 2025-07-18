@@ -13,9 +13,9 @@ import sys
 import datetime
 
 version_info = {
-    'version': '1.6.0.2',
-    'file_version': (1, 6, 0, 2),
-    'product_version': (1, 6, 0, 2),
+    'version': '1.6.0.3',
+    'file_version': (1, 6, 0, 3),
+    'product_version': (1, 6, 0, 3),
     'company_name': 'VALO360指令通',
     'file_description': 'VALO360指令通 - 序列埠通訊工具',
     'internal_name': 'VALO360指令通',
@@ -27,6 +27,22 @@ version_info = {
 
 # 版本更新記錄
 version_history = """
+v1.6.0.3 (2025-01-28)
+----------------------
+• 全域通知系統優化：
+  - 新增「呼吸顯示」效果，自動處理長文字顯示
+  - 長訊息自動分行，每行顯示2.5秒後輪流切換
+  - 通知字體大小控制按鈕 [+][-] 直接整合到通知區域
+  - 字體大小設定自動儲存至 setup.json
+• ToolTip 與全域通知整合強化：
+  - 修復 ToolTip 顯示在全域通知欄的功能
+  - 確保所有頁面的 ToolTip 都能正確顯示在通知欄
+  - 滑鼠離開元件時自動清除通知
+• 程式架構改進：
+  - 優化全域通知管理器的傳遞機制
+  - 確保設定頁面的 ToolTip 也能使用全域通知
+  - 提升通知系統的穩定性和使用者體驗
+
 v1.6.0.2 (2025-01-27)
 ----------------------
 • AI ToolTip 系統完整實現：
@@ -144,15 +160,15 @@ v1.5.0.1 (2025-07-12)
 # 定義版本號
 VERSION = version_info['version']
 
-APP_VERSION = "V1.6.0.2"
-APP_VERSION_DETAIL = "\n【V1.6.0.2 主要更新】\n- AI ToolTip 系統完整實現\n- 新增 tooltip_config.txt 配置檔案\n- 所有 UI 元件皆有友善中文說明\n- ToolTip 與全域通知區域聯動顯示\n- 支援從配置檔案讀取說明，無需修改程式碼\n- 提升程式穩定性和使用者體驗\n"
+APP_VERSION = "V1.6.0.3"
+APP_VERSION_DETAIL = "\n【V1.6.0.3 主要更新】\n- 全域通知系統優化，新增「呼吸顯示」效果\n- 長訊息自動分行，每行顯示2.5秒後輪流切換\n- 通知字體大小控制按鈕 [+][-] 直接整合到通知區域\n- ToolTip 與全域通知整合強化\n- 滑鼠離開元件時自動清除通知\n- 提升通知系統的穩定性和使用者體驗\n"
 
 # 生成版本資訊檔案
 with open("version_info_zh.txt", "w", encoding="utf-8") as f:
     f.write("VSVersionInfo(\n")
     f.write("  ffi=FixedFileInfo(\n")
-    f.write("    filevers=(1, 6, 0, 2),\n")
-    f.write("    prodvers=(1, 6, 0, 2),\n")
+    f.write("    filevers=(1, 6, 0, 3),\n")
+    f.write("    prodvers=(1, 6, 0, 3),\n")
     f.write("    mask=0x3f,\n")
     f.write("    flags=0x0,\n")
     f.write("    OS=0x40004,\n")

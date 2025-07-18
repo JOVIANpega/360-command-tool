@@ -302,8 +302,12 @@ class TabManager:
             # 創建通知管理器
             self.notification_manager = NotificationManager(parent, setup)
             
-            # 創建全域變數方便其他模組使用
-            self.notification_text = self.notification_manager.notification_text
+            # 載入字體大小設定
+            font_size = setup.get("DUT_Control", {}).get("Notification_Font_Size", "11")
+            try:
+                self.notification_manager.set_font_size(int(font_size))
+            except:
+                print(f"[WARNING] 無效的通知字體大小設定: {font_size}")
             
             # 顯示啟動訊息
             app_version = config_utils.get_app_version()

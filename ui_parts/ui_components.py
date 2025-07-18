@@ -1344,6 +1344,28 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
     def init_tooltips(self):
         """初始化所有UI元件的AI自動生成tooltip說明"""
         try:
+            # 確保全域通知管理器已設定
+            if not hasattr(self, 'global_notification_manager') or not self.global_notification_manager:
+                # 嘗試從 parent 獲取全域通知管理器
+                if hasattr(self.parent, 'notification_manager'):
+                    self.global_notification_manager = self.parent.notification_manager
+                    print("[DEBUG] 從 parent 獲取全域通知管理器")
+                # 嘗試從 root 獲取全域通知管理器
+                elif hasattr(self.root, 'notification_manager'):
+                    self.global_notification_manager = self.root.notification_manager
+                    print("[DEBUG] 從 root 獲取全域通知管理器")
+                # 嘗試從 TabManager 獲取全域通知管理器
+                elif hasattr(self.parent, 'tab_manager') and hasattr(self.parent.tab_manager, 'notification_manager'):
+                    self.global_notification_manager = self.parent.tab_manager.notification_manager
+                    print("[DEBUG] 從 tab_manager 獲取全域通知管理器")
+            
+            # 重新初始化 ToolTip 管理器，傳入全域通知管理器
+            self.tooltip_manager = ToolTipManager(self.global_notification_manager)
+            
+            # 從設定中讀取 ToolTip 啟用狀態，預設為啟用
+            tooltip_enabled = self.parent.setup.get("UI_Settings", {}).get("ToolTip_Enabled", True)
+            self.tooltip_manager.set_all_enabled(tooltip_enabled)
+            
             # 使用AI自動生成tooltip內容
             self._add_tooltip_to_widgets()
             
