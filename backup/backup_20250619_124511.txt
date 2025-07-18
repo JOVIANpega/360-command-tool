@@ -1,0 +1,10 @@
+
+=== 執行指令: 0. I LOVE JOVIAN ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+=== 執行指令: 1. 取得360序號 Get 360 SN States ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+
+=== 執行指令: 1. 取得360序號 Get 360 SN States ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+

@@ -1,0 +1,14 @@
+An unexpected error occurred: invalid literal for int() with base 10: ''
+Traceback (most recent call last):
+  File "main.py", line 122, in <module>
+  File "ui_parts\ui_main.py", line 281, in __init__
+    self.init_dut_tab()
+  File "ui_parts\ui_main.py", line 1046, in init_dut_tab
+    self.dut_ui = SerialUI(self.dut_frame, self.root, self.highlight_keywords)
+  File "ui_parts\ui_main.py", line 1572, in __init__
+    self.components = UIComponents(self, self.handlers, self.root)
+  File "ui_parts\ui_components.py", line 37, in __init__
+    super().__init__(parent)
+  File "ui_parts\ui_components_base.py", line 123, in __init__
+    width = int(self.parent.setup.get('Window_Width', 800))
+ValueError: invalid literal for int() with base 10: ''

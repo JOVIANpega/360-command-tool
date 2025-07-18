@@ -1,0 +1,167 @@
+# -*- coding: utf-8 -*-
+import subprocess
+import platform
+from tkinter import messagebox
+import json
+from datetime import datetime
+import os
+import tkinter as tk
+import threading
+
+from config_core import COMMAND_FILE, GUIDE_FILE, save_setup, list_com_ports, load_setup
+
+class UIHandlersCore:
+    def __init__(self, parent):
+        self.parent = parent
+        self.countdown_job = None
+        self._progress_update_job = None  # 進度條更新任務
+        # 初始化 component_label_map，用於記錄標籤對應的索引
+        self.component_label_map = {}
+        # 獲取高亮關鍵字
+        self.highlight_keywords = {}
+        if hasattr(parent, 'highlight_keywords'):
+            self.highlight_keywords = parent.highlight_keywords
+            print(f"[DEBUG] UIHandlers: 從 parent 獲取了 {len(self.highlight_keywords)} 個高亮關鍵字")
+        # 解析指令文件中的分類和指令
+        self.parse_commands_by_section()
+        
+    def parse_commands_by_section(self):
+        """解析命令文件，按區段整理"""
+        commands = {}
+        section = "全部指令"  # 預設區段
+        
+        print("[DEBUG] 開始解析指令文件")
+        
+        try:
+            with open(COMMAND_FILE, "r", encoding="utf-8") as file:
+                for line in file:
+                    line = line.strip()
+                    if not line or line.startswith("#") or line.startswith("//"):
+                        continue
+                    
+                    # 檢查是否為區段標記
+                    if line.startswith("==") and line.endswith("=="):
+                        section = line.strip("=").strip()
+                        if section not in commands:
+                            commands[section] = {}
+                            print(f"[DEBUG] 發現新區段：{section}")
+                        continue
+                    
+                    # 解析命令
+                    parts = line.split("=", 1)
+                    if len(parts) >= 2:
+                        label = parts[0].strip()
+                        command = parts[1].strip()
+                        
+                        # 檢查是否有顏色標記
+                        has_color = '[COLOR:' in label
+                        if has_color:
+                            print(f"[DEBUG] 發現帶顏色標記的指令：{label}")
+                        
+                        # 將命令添加到當前區段
+                        commands.setdefault(section, {})[label] = command
+                        
+                        # 不再自動添加到「全部指令」區段，因為我們已經在 command.txt 中維護了完整的全部指令列表
+                        # 這樣避免重複添加
+        except Exception as e:
+            print(f"[ERROR] 讀取命令文件時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
+            
+            # 如果讀取失敗，提供一個預設命令
+            if "全部指令" not in commands or not commands["全部指令"]:
+                commands["全部指令"] = {"執行重啟 (預設命令)": "reboot"}
+        
+        # 輸出各區段指令數量
+        for section_name, section_cmds in commands.items():
+            print(f"[DEBUG] 區段 '{section_name}' 有 {len(section_cmds)} 個指令")
+            # 檢查顏色標記
+            color_cmds = [cmd for cmd in section_cmds.keys() if '[COLOR:' in cmd]
+            if color_cmds:
+                print(f"[DEBUG] 區段 '{section_name}' 有 {len(color_cmds)} 個帶顏色標記的指令")
+                for cmd in color_cmds:
+                    print(f"[DEBUG] - {cmd}")
+        
+        return commands
+
+    def update_cmd_list(self):
+        section = self.parent.components.section_var.get()
+        
+        # 檢查選擇的分類是否存在
+        if section not in self.parent.commands_by_section:
+            print(f"[WARNING] 選擇的分類 '{section}' 不存在，使用全部指令")
+            section = '全部指令'
+            self.parent.components.section_var.set('全部指令')
+            
+            # 顯示特定區段的指令
+            self.parent.components.combobox_cmd['values'] = list(self.parent.commands_by_section.get(section, {}).keys())
+        
+        # 如果有指令，選擇第一個
+        if self.parent.components.combobox_cmd['values']:
+            self.parent.components.combobox_cmd.set(self.parent.components.combobox_cmd['values'][0])
+        else:
+            self.parent.components.combobox_cmd.set('')
+
+    def refresh_com_ports(self):
+        """刷新COM口列表並保持當前選擇（如果可能）"""
+        try:
+            # 保存當前選擇
+            current_selection = self.parent.components.combobox_com.get()
+            
+            # 更新 COM 口列表
+            new_ports = list_com_ports()
+            self.parent.components.combobox_com['values'] = new_ports
+            
+            # 如果當前選擇仍在新列表中，保持選擇
+            if current_selection and current_selection in new_ports:
+                self.parent.components.combobox_com.set(current_selection)
+            # 否則選擇第一個 COM 口
+            elif new_ports:
+                self.parent.components.combobox_com.set(new_ports[0])
+            else:
+                self.parent.components.combobox_com.set('')
+                
+            # 顯示通知
+            if new_ports:
+                self.parent.components.show_notification(f"找到 {len(new_ports)} 個 COM 口", "blue", 3000)
+            else:
+                self.parent.components.show_notification("未找到任何 COM 口", "red", 3000)
+                
+        except Exception as e:
+            print(f"[ERROR] 刷新 COM 口列表時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def clear_output(self, event=None):
+        """清空輸出區域"""
+        try:
+            # 設為可編輯狀態
+            self.parent.components.text_output.configure(state='normal')
+            # 清空內容
+            self.parent.components.text_output.delete(1.0, tk.END)
+            # 設回唯讀狀態
+            self.parent.components.text_output.configure(state='disabled')
+            # 顯示通知
+            self.parent.components.show_notification("已清空輸出區域", "blue", 2000)
+        except Exception as e:
+            print(f"[ERROR] 清空輸出區域時發生錯誤: {e}")
+
+    def backup_output(self):
+        """備份輸出內容到檔案"""
+        try:
+            # 獲取當前輸出內容
+            content = self.parent.components.text_output.get(1.0, tk.END)
+            
+            # 生成備份檔名
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            backup_file = f"backup/backup_{timestamp}.txt"
+            
+            # 寫入備份檔
+            with open(backup_file, 'w', encoding='utf-8') as f:
+                f.write(content)
+                
+            # 顯示通知
+            self.parent.components.show_notification(f"已備份輸出內容至: {backup_file}", "green", 3000)
+        except Exception as e:
+            print(f"[ERROR] 備份輸出內容時發生錯誤: {e}")
+            self.parent.components.show_notification(f"備份失敗: {e}", "red", 3000) 

@@ -1,0 +1,85 @@
+# -*- coding: utf-8 -*-
+import os
+import sys
+import codecs
+import shutil
+
+def fix_file(file_path):
+    print(f"處理檔案: {file_path}")
+    try:
+        # 先備份原始檔案
+        backup_path = file_path + '.bak'
+        shutil.copy2(file_path, backup_path)
+        
+        # 讀取檔案內容
+        with open(file_path, 'rb') as f:
+            content = f.read()
+        
+        # 嘗試不同的編碼
+        encodings = ['utf-8', 'big5', 'gbk', 'cp950', 'cp936']
+        decoded = None
+        used_encoding = None
+        
+        for enc in encodings:
+            try:
+                decoded = content.decode(enc)
+                used_encoding = enc
+                break
+            except UnicodeDecodeError:
+                continue
+        
+        if decoded is None:
+            print(f"  無法解碼檔案: {file_path}")
+            return False
+        
+        # 添加編碼聲明
+        if not decoded.startswith("# -*- coding: utf-8 -*-"):
+            if decoded.startswith("#!") or decoded.startswith("#"):
+                lines = decoded.split('\n')
+                lines.insert(1, "# -*- coding: utf-8 -*-")
+                decoded = '\n'.join(lines)
+            else:
+                decoded = "# -*- coding: utf-8 -*-\n" + decoded
+        
+        # 使用 UTF-8 編碼寫入檔案
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(decoded)
+        
+        print(f"  成功將檔案從 {used_encoding} 轉換為 UTF-8: {file_path}")
+        return True
+    except Exception as e:
+        print(f"  處理檔案時發生錯誤: {file_path}, 錯誤: {e}")
+        # 如果發生錯誤，還原備份
+        if os.path.exists(backup_path):
+            shutil.copy2(backup_path, file_path)
+            print(f"  已還原備份檔案: {file_path}")
+        return False
+
+def process_directory(directory):
+    success_count = 0
+    fail_count = 0
+    
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if file.endswith('.py') and not file.endswith('.bak'):
+                file_path = os.path.join(root, file)
+                if fix_file(file_path):
+                    success_count += 1
+                else:
+                    fail_count += 1
+    
+    return success_count, fail_count
+
+if __name__ == "__main__":
+    print("開始修復 Python 檔案編碼...")
+    directories = ['.', 'ui_parts']
+    total_success = 0
+    total_fail = 0
+    
+    for directory in directories:
+        print(f"處理目錄: {directory}")
+        success, fail = process_directory(directory)
+        total_success += success
+        total_fail += fail
+    
+    print(f"完成! 成功轉換 {total_success} 個檔案，失敗 {total_fail} 個檔案")
