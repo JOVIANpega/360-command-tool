@@ -19,12 +19,24 @@ class ToolTip:
         self.widget.bind("<ButtonPress>", self.leave, add=True)
         self.id = None
         self.tw = None
-        self.enabled = True  # 新增：控制是否啟用 ToolTip
+        self.enabled = True  # 控制是否啟用 ToolTip
         self.global_notification_manager = global_notification_manager  # 全域通知管理器
+        
+        # Windows 風格設定
+        self.bg_color = "#FFFFDD"  # 淡黃色背景，類似 Windows 原生提示
+        self.border_color = "#CCCCCC"  # 淺灰色邊框
+        self.text_color = "#000000"  # 黑色文字
+        self.font = ("Segoe UI", 9)  # Windows 預設字體
+        self.padding = 5  # 內部填充
+        self.alpha = 0.95  # 透明度 (0.0-1.0)
+        self.corner_radius = 2  # 圓角半徑
 
     def enter(self, event=None):
-        if not self.enabled:  # 新增：檢查是否啟用
+        if not self.enabled:  # 檢查是否啟用
             return
+        # 立即顯示於全域提示欄
+        if self.global_notification_manager:
+            self.global_notification_manager.show_notification(self.text, "info", 0)  # 0=不自動消失
         self.schedule()
 
     def leave(self, event=None):
@@ -45,35 +57,86 @@ class ToolTip:
             self.widget.after_cancel(id)
 
     def showtip(self, event=None):
-        if not self.enabled:  # 新增：檢查是否啟用
+        if not self.enabled:  # 檢查是否啟用
             return
         
-        # 顯示傳統tooltip
-        x, y, cx, cy = self.widget.bbox("insert") if hasattr(self.widget, 'bbox') else (0, 0, 0, 0)
-        x += self.widget.winfo_rootx() + 25
-        y += self.widget.winfo_rooty() + 20
+        # 獲取元件位置
+        x = y = 0
+        if hasattr(self.widget, 'winfo_rootx') and hasattr(self.widget, 'winfo_rooty'):
+            x = self.widget.winfo_rootx()
+            y = self.widget.winfo_rooty() + self.widget.winfo_height() + 5
+        else:
+            # 如果是特殊元件，嘗試其他方法獲取位置
+            try:
+                x, y, cx, cy = self.widget.bbox("insert")
+                x += self.widget.winfo_rootx() + 25
+                y += self.widget.winfo_rooty() + 20
+            except:
+                # 最後的備用方案
+                x = self.widget.winfo_pointerx() + 15
+                y = self.widget.winfo_pointery() + 15
         
         # 創建提示窗口
         self.tw = tk.Toplevel(self.widget)
-        self.tw.wm_overrideredirect(True)
-        self.tw.wm_geometry("+%d+%d" % (x, y))
+        self.tw.wm_overrideredirect(True)  # 移除窗口邊框
+        self.tw.wm_geometry(f"+{x}+{y}")
+        
+        # 設置透明度 (如果平台支持)
+        try:
+            self.tw.attributes("-alpha", self.alpha)
+        except:
+            pass
         
         # 創建標籤
         label = tk.Label(self.tw, text=self.text, justify='left',
-                        background="#ffffe0", relief='solid', borderwidth=1,
-                        font=("Microsoft JhengHei UI", "10", "normal"),
-                        wraplength=self.wraplen)
+                        background=self.bg_color, foreground=self.text_color,
+                        relief='solid', borderwidth=1, 
+                        font=self.font,
+                        wraplength=self.wraplen,
+                        padx=self.padding, pady=self.padding)
         label.pack(ipadx=1)
+        
+        # 設置淡入效果
+        self.fade_in()
         
         # 同時在全域通知區域顯示
         if self.global_notification_manager:
-            self.global_notification_manager.show_notification(self.text, "info", 3000)
+            self.global_notification_manager.show_notification(self.text, "info", 0)  # 不自動消失
+
+    def fade_in(self, alpha=0.1):
+        """實現淡入效果"""
+        if not self.tw:
+            return
+            
+        try:
+            if alpha < self.alpha:
+                self.tw.attributes("-alpha", alpha)
+                self.tw.after(50, lambda: self.fade_in(alpha + 0.1))
+        except:
+            # 如果不支持透明度，直接顯示
+            pass
 
     def hidetip(self):
         tw = self.tw
         self.tw = None
         if tw:
-            tw.destroy()
+            # 設置淡出效果
+            try:
+                self.fade_out(tw)
+            except:
+                tw.destroy()
+
+    def fade_out(self, window, alpha=0.9):
+        """實現淡出效果"""
+        try:
+            if alpha > 0.1:
+                window.attributes("-alpha", alpha)
+                window.after(50, lambda: self.fade_out(window, alpha - 0.1))
+            else:
+                window.destroy()
+        except:
+            # 如果不支持透明度，直接關閉
+            window.destroy()
 
     def set_enabled(self, enabled):
         """設定是否啟用 ToolTip"""
@@ -96,6 +159,9 @@ class ToolTipManager:
         self.global_notification_manager = global_notification_manager
         self.tooltip_config = {}  # 儲存tooltip配置
         self.load_tooltip_config()
+        
+        # 預設延遲時間 (毫秒)
+        self.default_delay = 500
 
     def load_tooltip_config(self):
         """載入tooltip配置檔案"""
@@ -128,7 +194,7 @@ class ToolTipManager:
             context=""
         )
 
-    def add_tooltip(self, widget, text=None, delay=500, wraplen=250):
+    def add_tooltip(self, widget, text=None, delay=None, wraplen=250):
         """添加一個 ToolTip"""
         # 如果沒有提供text，嘗試從配置檔案中獲取
         if text is None:
@@ -143,6 +209,10 @@ class ToolTipManager:
             else:
                 text = "UI 元件說明"
         
+        # 如果沒有指定延遲時間，使用預設值
+        if delay is None:
+            delay = self.default_delay
+            
         tooltip = ToolTip(widget, text, delay, wraplen, self.global_notification_manager)
         tooltip.set_enabled(self.enabled)
         self.tooltips.append(tooltip)
