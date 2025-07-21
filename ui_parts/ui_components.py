@@ -859,14 +859,21 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             traceback.print_exc()
 
     def update_radio_bg(self):
-        selected = self.section_var.get()
-        for rb, sec in zip(self.section_radiobuttons, self.sections):
-            if rb['state'] == 'disabled':
-                rb.config(bg="#e0e0e0", fg="#b0b0b0", activebackground="#e0e0e0", activeforeground="#b0b0b0")
-            elif selected == sec:
-                rb.config(bg="#2196f3", fg="white", activebackground="#2196f3", activeforeground="white")
-            else:
-                rb.config(bg="#d9d9d9", fg="black", activebackground="#d9d9d9", activeforeground="black")
+        try:
+            selected = self.section_var.get()
+            for rb, sec in zip(self.section_radiobuttons, self.sections):
+                # 確保只在 tk.Radiobutton 上使用這些配置選項
+                if isinstance(rb, tk.Radiobutton):
+                    if rb['state'] == 'disabled':
+                        rb.config(bg="#e0e0e0", fg="#b0b0b0", activebackground="#e0e0e0", activeforeground="#b0b0b0")
+                    elif selected == sec:
+                        rb.config(bg="#2196f3", fg="white", activebackground="#2196f3", activeforeground="white")
+                    else:
+                        rb.config(bg="#d9d9d9", fg="black", activebackground="#d9d9d9", activeforeground="black")
+        except Exception as e:
+            print(f"[ERROR] update_radio_bg: {e}")
+            import traceback
+            traceback.print_exc()
 
     def update_cmd_list(self):
         """更新指令下拉選單的選項
@@ -1724,3 +1731,21 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             return default_descriptions[section]
         
         return f'用於{section}的指令集'
+
+    def on_ip_history_selected(self, event=None):
+        """當 IP 歷史記錄列表中的項目被選中時調用"""
+        try:
+            # 獲取選中的索引
+            selected_indices = self.listbox_ip_history.curselection()
+            if selected_indices:
+                # 獲取選中的 IP
+                selected_index = selected_indices[0]
+                selected_ip = self.listbox_ip_history.get(selected_index)
+                
+                # 更新 IP 輸入框
+                self.entry_ip.set(selected_ip)
+                print(f"[DEBUG] 已選擇 IP 歷史記錄: {selected_ip}")
+        except Exception as e:
+            print(f"[ERROR] 選擇 IP 歷史記錄時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
