@@ -114,6 +114,9 @@ try:
     from ui_parts.ui_settings_tab import SettingsTab # 新增
 
 
+    from ui_parts.tooltip import AIToolTipGenerator
+
+
 except ImportError as e:
 
 
@@ -290,6 +293,82 @@ class TabManager:
         # 綁定關閉事件
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         
+    def init_global_styles(self):
+        """初始化全局樣式"""
+        style = ttk.Style()
+        
+        # 嘗試使用 Windows 原生主題
+        try:
+            style.theme_use('clam')  # 或使用 'vista' 如果支援
+        except:
+            print("[WARNING] 無法設定 'clam' 主題，使用預設主題")
+        
+        # 定義標準 UI 風格參數
+        ui_font = "Segoe UI"  # Windows 預設字體
+        ui_font_size = 10     # 預設字體大小
+        ui_padding = 5        # 元件間距
+        ui_bg_color = "#f0f0f0" # 淺灰白底色
+        
+        # 設定全局字體
+        default_font = (ui_font, ui_font_size)
+        
+        # 設定各種元件樣式
+        style.configure('TLabel', font=default_font, background=ui_bg_color)
+        style.configure('TFrame', background=ui_bg_color)
+        style.configure('TButton', font=default_font)
+        style.configure('TEntry', font=default_font)
+        style.configure('TCombobox', font=default_font)
+        
+        # 設定按鈕懸停效果
+        style.map('TButton',
+                 foreground=[('active', '#000000')],
+                 background=[('active', '#d1d1d1')])
+        
+        # 設定 Notebook (Tab) 樣式
+        style.configure('TNotebook', background=ui_bg_color)
+        style.configure('TNotebook.Tab', font=default_font, padding=[10, 5])
+        
+        # 設定分隔線樣式
+        style.configure('TSeparator', background='#d1d1d1')
+        
+        # 設定進度條樣式
+        style.configure('TProgressbar', background='#2196f3')
+        
+        # 設定 Panedwindow 樣式
+        style.configure('TPanedwindow', background=ui_bg_color)
+        
+        # 設定 Labelframe (分組框) 樣式
+        style.configure('TLabelframe', font=default_font, background=ui_bg_color)
+        style.configure('TLabelframe.Label', font=default_font, background=ui_bg_color)
+        
+        # 設定 Scrollbar 樣式
+        style.configure('TScrollbar', background=ui_bg_color, arrowcolor='#000000')
+        
+        # 設定強調按鈕樣式
+        style.configure('Accent.TButton', font=default_font, background='#0078d7', foreground='white')
+        style.map('Accent.TButton',
+                 foreground=[('active', 'white')],
+                 background=[('active', '#1a8fe3')])
+        
+        # 設定標題標籤樣式
+        style.configure('Title.TLabel', font=(ui_font, ui_font_size + 2, 'bold'))
+        
+        # 設定說明標籤樣式
+        style.configure('Description.TLabel', font=(ui_font, ui_font_size - 1))
+        
+        # 設定 Notebook 頁籤樣式
+        style.configure('TNotebook.Tab', font=default_font, padding=[15, 5])
+        style.map('TNotebook.Tab',
+                 background=[('selected', '#ffffff'), ('active', '#e5f1fb')],
+                 foreground=[('selected', '#000000'), ('active', '#000000')])
+                 
+        # 設定分組框標題樣式
+        style.configure('TLabelframe.Label', font=(ui_font, ui_font_size, 'bold'))
+        
+        # 設定通知樣式
+        style.configure('Notification.TLabel', font=(ui_font, ui_font_size), background='#f0f0f0')
+        style.configure('Notification.TButton', width=3)
+
     def init_global_notification_area(self, parent, setup):
         """初始化全域通知區域"""
         try:
@@ -299,25 +378,29 @@ class TabManager:
             # 創建通知管理器
             self.notification_manager = NotificationManager(parent, setup)
             
-            # 創建全域變數方便其他模組使用
-            self.notification_text = self.notification_manager.notification_text
+            # 載入字體大小設定
+            font_size = setup.get("DUT_Control", {}).get("Notification_Font_Size", "11")
+            try:
+                self.notification_manager.set_font_size(int(font_size))
+            except:
+                print(f"[WARNING] 無效的通知字體大小設定: {font_size}")
             
             # 顯示啟動訊息
             app_version = config_utils.get_app_version()
             app_name = setup.get('Window_Title', setup.get('DUT_Control', {}).get('Window_Title', 'VALO360 指令通'))
             
-            # 延遲1秒顯示啟動訊息
-            self.root.after(1000, lambda: self.notification_manager.show_notification(
-                f"{app_name} 已啟動 (版本：V{app_version})", "success"
-            ))
+            # 顯示啟動訊息
+            welcome_message = f"歡迎使用 {app_name} {app_version}"
+            self.notification_manager.show_notification(welcome_message, "info", 5000)
             
-            print("[DEBUG] 全域通知區域初始化完成")
-            
+            print("[DEBUG] 全域通知區域初始化成功")
+            return self.notification_manager
         except Exception as e:
-            print(f"[ERROR] 初始化全域通知區域失敗: {e}")
+            print(f"[ERROR] 初始化全域通知區域時發生錯誤: {e}")
             import traceback
             traceback.print_exc()
-    
+            return None
+
     def show_global_notification(self, message, message_type="info", duration=2000, callback=None):
         """顯示全域通知的快捷方法"""
         if hasattr(self, 'notification_manager'):
@@ -963,394 +1046,161 @@ class TabManager:
             traceback.print_exc()
 
 
-    def init_global_styles(self):
-
-
-        style = ttk.Style()
-
-
-        style.theme_use('clam')
-
-
-        style.configure('Main.TFrame', background='white')
-
-
-        style.configure('TNotebook', background='white')
-
-
-        # 分頁標籤字體、大小、padding，預設灰底黑字，選取為藍底白字
-
-
-        style.configure('TNotebook.Tab', font=('Microsoft JhengHei UI', 13, 'bold'), padding=[16, 6], background='#d9d9d9', foreground='black')
-
-
-        style.map('TNotebook.Tab',
-
-
-            background=[('selected', '#2196f3'), ('active', '#0056d6'), ('!active', '#d9d9d9')],
-
-
-            foreground=[('selected', 'white'), ('active', 'white'), ('!active', 'black')]
-
-
-        )
-
-
-        # HANDOVER 分頁綠底白字
-
-
-        style.element_create('Green.Tab', 'from', 'default')
-
-
-        style.layout('Green.TNotebook.Tab', style.layout('TNotebook.Tab'))
-
-
-        style.configure('Green.TNotebook.Tab', background='#1abc1a', foreground='white')
-
-
-        style.map('Green.TNotebook.Tab',
-
-
-            background=[('selected', '#1abc1a'), ('active', '#1abc1a'), ('!active', '#d9d9d9')],
-
-
-            foreground=[('selected', 'white'), ('active', 'white'), ('!active', 'black')]
-
-
-        )
-
-
-        # 一般TButton維持灰底黑字hover藍底白字
-
-
-        style.configure('TButton', font=('Microsoft JhengHei UI', 12), padding=[8, 4])
-
-
-        style.map('TButton',
-
-
-            background=[('active', '#003a80'), ('!active', '#f5f5f5')],
-
-
-            foreground=[('active', 'white'), ('!active', 'black')]
-
-
-        )
-
-
-    
-
-
     def init_dut_tab(self):
-        # 初始化 DUT 控制分頁
+        """初始化 DUT 控制分頁"""
+        # 創建 DUT 控制分頁
+        self.dut_frame = ttk.Frame(self.notebook, style="TFrame")
+        self.notebook.add(self.dut_frame, text='DUT 控制')
+        
+        # 將 DUT 控制分頁設為預設選擇
+        self.notebook.select(self.dut_frame)
+        
+        # 初始化 DUT 控制元件
         self.dut_ui = SerialUI(self.dut_frame, self.root, self.highlight_keywords)
         
-        # 將全域通知管理器傳遞給DUT UI
-        if hasattr(self, 'notification_manager'):
-            self.dut_ui.global_notification_manager = self.notification_manager
-            if hasattr(self.dut_ui, 'components'):
-                self.dut_ui.components.global_notification_manager = self.notification_manager
-        
-        # 初始化完成後立即更新 DUT 按鈕
-        self.update_dut_buttons()
-        print("[DEBUG] DUT 控制分頁初始化完成，已更新按鈕")
-
+        # 添加 tooltip
+        try:
+            from ui_parts.tooltip import ToolTip
+            ToolTip(self.notebook.tab(0), "DUT 控制分頁 - 控制與測試裝置的通訊", 500, 250, self.notification_manager)
+        except Exception as e:
+            print(f"[ERROR] 添加 DUT 控制分頁 tooltip 時發生錯誤: {e}")
 
     def init_fixture_tab(self):
-
-
-        # 初始化治具控制分頁
-
-
-        from FIXTURE.fixture13 import FixtureFrame
-
-
-        self.fixture_ui = FixtureFrame(self.fixture_frame)
-
-
-        self.fixture_ui.pack(fill='both', expand=True)
-
+        """初始化治具控制分頁"""
+        # 創建治具控制分頁
+        self.fixture_frame = ttk.Frame(self.notebook, style="TFrame")
+        self.notebook.add(self.fixture_frame, text='治具控制')
+        
+        # 初始化治具控制元件
+        self.fixture_ui = SerialUI(self.fixture_frame, self.root, self.highlight_keywords)
+        
+        # 添加 tooltip
+        try:
+            from ui_parts.tooltip import ToolTip
+            ToolTip(self.notebook.tab(1), "治具控制分頁 - 控制與測試治具的通訊", 500, 250, self.notification_manager)
+        except Exception as e:
+            print(f"[ERROR] 添加治具控制分頁 tooltip 時發生錯誤: {e}")
 
     def init_settings_tab(self):
-        # 初始化設定分頁
-        self.settings_ui = SettingsTab(self.settings_frame, on_save_callback=self.update_all_settings)
-        self.settings_ui.pack(fill='both', expand=True)
-    
+        """初始化設定分頁"""
+        # 創建設定分頁
+        self.settings_tab = SettingsTab(self.notebook, self.root, self)
+        
+        # 添加 tooltip
+        try:
+            from ui_parts.tooltip import ToolTip
+            ToolTip(self.notebook.tab(2), "設定分頁 - 配置應用程式參數與選項", 500, 250, self.notification_manager)
+        except Exception as e:
+            print(f"[ERROR] 添加設定分頁 tooltip 時發生錯誤: {e}")
+
     def init_guide_tab(self):
-        # 初始化使用說明分頁
+        """初始化使用說明分頁"""
         # 創建主框架
-        guide_main_frame = ttk.LabelFrame(
-            self.handover_frame, 
-            text="使用說明", 
-            padding=20, 
-            style="Main.TLabelframe"
+        self.guide_frame = ttk.Frame(self.notebook, style="TFrame")
+        self.notebook.add(self.guide_frame, text='使用說明')
+        
+        # 配置網格
+        self.guide_frame.grid_rowconfigure(0, weight=1)
+        self.guide_frame.grid_columnconfigure(0, weight=1)
+        
+        # 創建內容框架
+        content_frame = ttk.Frame(self.guide_frame, style="TFrame")
+        content_frame.grid(row=0, column=0, sticky='nsew', padx=10, pady=10)
+        content_frame.grid_rowconfigure(0, weight=1)
+        content_frame.grid_columnconfigure(0, weight=1)
+        
+        # 創建文本區域
+        self.guide_text = scrolledtext.ScrolledText(
+            content_frame, 
+            wrap=tk.WORD, 
+            font=("Segoe UI", 10),
+            width=80, 
+            height=25
         )
-        guide_main_frame.grid(row=0, column=0, sticky='nsew', padx=20, pady=20)
+        self.guide_text.grid(row=0, column=0, sticky='nsew')
+        self.guide_text.config(state=tk.DISABLED)  # 設為只讀
         
-        # 獲取版本號
-        app_version = config_utils.get_app_version()
+        # 創建按鈕區域
+        button_frame = ttk.Frame(self.guide_frame, style="TFrame")
+        button_frame.grid(row=1, column=0, sticky='ew', padx=10, pady=10)
         
-        # 標題
-        title_label = ttk.Label(
-            guide_main_frame,
-            text=f"VALO360 指令通 V{app_version} 使用說明",
-            font=('Microsoft JhengHei UI', 18, 'bold'),
-            style="TLabel"
-        )
-        title_label.grid(row=0, column=0, pady=(0, 20))
-
-
+        # 添加按鈕
+        ttk.Button(
+            button_frame, 
+            text='重新載入說明', 
+            command=lambda: self.load_guide_content(True),
+            style="TButton"
+        ).pack(side=tk.LEFT, padx=5)
         
-
-
-        # 說明文字
-
-
-        desc_label = ttk.Label(
-
-
-            guide_main_frame,
-
-
-            text="點擊下方按鈕開啟詳細的使用說明文件",
-
-
-            font=('Microsoft JhengHei UI', 14),
-
-
-            style="TLabel"
-
-
-        )
-
-
-        desc_label.grid(row=1, column=0, pady=(0, 30))
-
-
-        
-
-
-        # 開啟使用說明按鈕
-
-
-        def open_guide():
-
-
-            try:
-
-
-                # 獲取 EXE 目錄路徑
-
-
-                if getattr(sys, 'frozen', False):
-
-
-                    # 如果是打包後的 EXE
-
-
-                    exe_dir = os.path.dirname(sys.executable)
-
-
-                else:
-
-
-                    # 如果是開發環境
-
-
-                    exe_dir = os.path.dirname(os.path.abspath(__file__))
-
-
-                    exe_dir = os.path.dirname(exe_dir)  # 回到上一層目錄
-
-
-                
-
-
-                guide_file = os.path.join(exe_dir, "VALO360 指令通使用指南.html")
-
-
-                
-
-
-                if not os.path.exists(guide_file):
-
-
-                    messagebox.showerror("錯誤", f"找不到使用指南檔案：\n{guide_file}")
-
-
-                    return
-
-
-                
-
-
-                # 嘗試用 Chrome 開啟
-
-
-                chrome_paths = [
-
-
-                    r"C:\Program Files\Google\Chrome\Application\chrome.exe",
-
-
-                    r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
-
-
-                    os.path.expanduser(r"~\AppData\Local\Google\Chrome\Application\chrome.exe")
-
-
-                ]
-
-
-                
-
-
-                chrome_opened = False
-
-
-                for chrome_path in chrome_paths:
-
-
-                    if os.path.exists(chrome_path):
-
-
-                        try:
-
-
-                            subprocess.Popen([chrome_path, guide_file])
-
-
-                            chrome_opened = True
-
-
-                            break
-
-
-                        except Exception:
-
-
-                            continue
-
-
-                
-
-
-                # 如果 Chrome 開啟失敗，嘗試用預設瀏覽器
-
-
-                if not chrome_opened:
-
-
-                    try:
-
-
-                        webbrowser.open(f"file:///{guide_file.replace(os.sep, '/')}")
-
-
-                    except Exception as e:
-
-
-                        messagebox.showerror("錯誤", f"無法開啟使用指南：\n{str(e)}")
-
-
-                        
-
-
-            except Exception as e:
-
-
-                messagebox.showerror("錯誤", f"開啟使用指南時發生錯誤：\n{str(e)}")
-
-
-        
-
-
-        guide_button = tk.Button(
-
-
-            guide_main_frame,
-
-
-            text="開啟使用說明",
-
-
+        ttk.Button(
+            button_frame, 
+            text='開啟說明檔案', 
             command=open_guide,
-
-
-            font=('Microsoft JhengHei UI', 16, 'bold'),
-
-
-            width=20,
-
-
-            height=3,
-
-
-            bg='#cccccc',
-
-
-            fg='black',
-
-
-            relief='groove',
-
-
-            borderwidth=2,
-
-
-            highlightthickness=0
-
-
-        )
-
-
-        guide_button.grid(row=2, column=0, pady=20)
-
-
+            style="TButton"
+        ).pack(side=tk.LEFT, padx=5)
         
-
-
-        # 按鈕 hover 效果
-
-
-        guide_button.bind("<Enter>", lambda e: guide_button.config(bg="#4caf50", fg="white"))
-
-
-        guide_button.bind("<Leave>", lambda e: guide_button.config(bg="#cccccc", fg="black"))
-
-
-        # 添加「開啟 DOS 視窗」按鈕
+        ttk.Button(
+            button_frame, 
+            text='在瀏覽器中開啟', 
+            command=lambda: webbrowser.open(f"file://{os.path.abspath(GUIDE_FILE)}"),
+            style="TButton"
+        ).pack(side=tk.LEFT, padx=5)
+        
+        ttk.Button(
+            button_frame, 
+            text='開啟命令列視窗', 
+            command=open_dos_window,
+            style="TButton"
+        ).pack(side=tk.RIGHT, padx=5)
+        
+        # 載入說明內容
+        self.load_guide_content()
+        
+        # 添加 tooltip
+        try:
+            from ui_parts.tooltip import ToolTip
+            ToolTip(self.notebook.tab(3), "使用說明分頁 - 查看應用程式使用指南", 500, 250, self.notification_manager)
+        except Exception as e:
+            print(f"[ERROR] 添加使用說明分頁 tooltip 時發生錯誤: {e}")
+        
+        # 定義開啟說明檔案的函數
+        def open_guide():
+            try:
+                guide_path = os.path.abspath(GUIDE_FILE)
+                if os.path.exists(guide_path):
+                    if sys.platform == 'win32':
+                        os.startfile(guide_path)
+                    else:
+                        subprocess.Popen(['xdg-open', guide_path])
+                else:
+                    messagebox.showwarning('警告', f'找不到說明檔案: {guide_path}')
+            except Exception as e:
+                messagebox.showerror('錯誤', f'無法開啟說明檔案: {e}')
+        
+        # 定義開啟 DOS 視窗的函數
         def open_dos_window():
             # 檢查是否已經開啟 DOS 視窗
-            if self.dos_process is None or self.dos_process.poll() is not None:
-                # 如果沒有開啟或已關閉，則開啟新的 DOS 視窗
-                self.dos_process = subprocess.Popen(["cmd"], creationflags=subprocess.CREATE_NEW_CONSOLE)
-                print("[DEBUG] 已開啟 DOS 視窗")
-            else:
-                # 如果已經開啟，則顯示提示訊息
-                messagebox.showinfo("提示", "DOS 視窗已經開啟")
-        
-        dos_button = tk.Button(
-            guide_main_frame,
-            text="開啟 DOS 視窗",
-            command=open_dos_window,
-            font=('Microsoft JhengHei UI', 16, 'bold'),
-            width=20,
-            height=3,
-            bg='#cccccc',
-            fg='black',
-            relief='groove',
-            borderwidth=2,
-            highlightthickness=0
-        )
-        dos_button.grid(row=3, column=0, pady=20)
-        
-        # 按鈕 hover 效果
-        dos_button.bind("<Enter>", lambda e: dos_button.config(bg="#4caf50", fg="white"))
-        dos_button.bind("<Leave>", lambda e: dos_button.config(bg="#cccccc", fg="black"))
-
-
-
+            if hasattr(self, 'dos_process') and self.dos_process and self.dos_process.poll() is None:
+                messagebox.showinfo('提示', 'DOS 視窗已經開啟')
+                return
+                
+            try:
+                # 獲取當前工作目錄
+                cwd = os.getcwd()
+                
+                # 在 Windows 上開啟 CMD
+                if sys.platform == 'win32':
+                    self.dos_process = subprocess.Popen('cmd.exe', cwd=cwd)
+                # 在 Linux/Mac 上開啟終端機
+                else:
+                    terminal_cmd = 'gnome-terminal' if os.path.exists('/usr/bin/gnome-terminal') else 'xterm'
+                    self.dos_process = subprocess.Popen([terminal_cmd], cwd=cwd)
+                    
+                # 顯示通知
+                self.notification_manager.show_notification('已開啟命令列視窗', 'info', 3000)
+            except Exception as e:
+                messagebox.showerror('錯誤', f'無法開啟命令列視窗: {e}')
+                self.notification_manager.show_notification(f'無法開啟命令列視窗: {e}', 'error', 5000)
 
 
     def on_tab_changed(self, event):

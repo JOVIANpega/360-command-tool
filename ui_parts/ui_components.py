@@ -12,7 +12,7 @@ from ui_parts.ui_components_base import UIComponentsBase
 from ui_parts.ui_components_input import UIComponentsInput
 from ui_parts.ui_components_output import UIComponentsOutput
 from ui_parts.ui_components_settings import UIComponentsSettings
-from ui_parts.tooltip import ToolTipManager
+from ui_parts.tooltip import ToolTipManager, ToolTip, AIToolTipGenerator
 from config_utils import get_notification_text, get_app_version
 from config_core import load_setup, save_setup, GUIDE_FILE, COMMAND_FILE, list_com_ports
 
@@ -26,7 +26,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
     def __init__(self, parent, handlers, root):
         # Call the __init__ of the base class (UIComponentsBase) which sets up the UI structure
         self.parent = parent  # 先設定 parent 屬性
-        super().__init__(root, parent)
+        super().__init__(parent, root)
         self.root = root
         self.handlers = handlers
         
@@ -49,6 +49,14 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         tooltip_enabled = self.parent.setup.get("UI_Settings", {}).get("ToolTip_Enabled", True)
         self.tooltip_manager.set_all_enabled(tooltip_enabled)
         
+        # 定義標準 UI 風格參數
+        self.ui_font = "Segoe UI"  # Windows 預設字體
+        self.ui_font_size = int(self.parent.setup.get('UI_Font_Size', '10'))
+        self.ui_padding = 5        # 元件間距
+        self.ui_button_width = 100 # 標準按鈕寬度
+        self.ui_button_height = 30 # 標準按鈕高度
+        self.ui_bg_color = "#f0f0f0" # 淺灰白底色
+        
         # 初始化各個元件
         self.init_com_components()
         self.init_cmd_components()
@@ -57,7 +65,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.init_output_components()
         self.init_progress_components()
         
-        # 為所有按鈕添加 ToolTip 提示
+        # 初始化所有tooltip（在所有元件創建完成後）
         self.init_tooltips()
         
         # 強化 left_panel 內所有 Entry/Combobox 的 <Return> 綁定
@@ -75,32 +83,439 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.parent.root.after(8000, self.show_system_status)
 
     def init_com_components(self):
-        com_frame = ttk.Frame(self.left_panel, style="TFrame")
-        com_frame.grid(row=0, column=0, sticky='ew', pady=3)
-        com_frame.columnconfigure(0, weight=0)
-        com_frame.columnconfigure(1, weight=1)
-        com_frame.columnconfigure(2, weight=0)
-        com_frame.columnconfigure(3, weight=0)
+        """初始化 COM 口相關元件"""
+        # 創建分組框架
+        com_frame = ttk.LabelFrame(self.left_panel, text="COM 口設定", style="TLabelframe")
+        com_frame.grid(row=0, column=0, sticky='ew', padx=self.ui_padding, pady=self.ui_padding)
+        
+        # 配置網格
+        com_frame.columnconfigure(0, weight=0)  # 標籤固定寬度
+        com_frame.columnconfigure(1, weight=1)  # 下拉選單可擴展
+        com_frame.columnconfigure(2, weight=0)  # 刷新按鈕固定寬度
+        com_frame.columnconfigure(3, weight=0)  # 狀態指示器固定寬度
+        
+        # COM口標籤
         self.label_com = ttk.Label(com_frame, text='COM口:', style="TLabel")
-        self.label_com.grid(row=0, column=0, sticky='w')
+        self.label_com.grid(row=0, column=0, sticky='w', padx=self.ui_padding, pady=self.ui_padding)
+        
+        # COM口下拉選單
         com_values = list_com_ports()
         self.combobox_com = ttk.Combobox(com_frame, values=com_values, state='readonly', width=15)
-        self.combobox_com.grid(row=0, column=1, padx=5, sticky='ew')
+        self.combobox_com.grid(row=0, column=1, sticky='ew', padx=self.ui_padding, pady=self.ui_padding)
         self.combobox_com.bind("<<ComboboxSelected>>", self.on_com_port_changed)
+        
+        # 刷新按鈕
         refresh_command = None
         if hasattr(self.parent, 'handlers') and hasattr(self.parent.handlers, 'refresh_com_ports'):
             refresh_command = self.parent.handlers.refresh_com_ports
         else:
             refresh_command = lambda: None
             print("[WARNING] handlers 不存在或沒有 refresh_com_ports 方法")
-        self.btn_refresh = tk.Button(com_frame, text='刷新', command=refresh_command,
-                                   bg='#e0e0e0', fg='black', activebackground='#2196f3', activeforeground='black')
-        self.btn_refresh.grid(row=0, column=2, padx=3, sticky='ew')
-        self.status_canvas = tk.Canvas(com_frame, width=40, height=40, bg='white', highlightthickness=0)
-        self.status_canvas.grid(row=0, column=3, padx=3, sticky='ew')
-        self.status_light = self.status_canvas.create_oval(5, 5, 35, 35, fill='black')
-        self.led_blinking = False
         
+        self.btn_refresh = ttk.Button(com_frame, text='刷新', command=refresh_command, width=8)
+        self.btn_refresh.grid(row=0, column=2, padx=self.ui_padding, pady=self.ui_padding)
+        
+        # 狀態指示燈
+        self.status_canvas = tk.Canvas(com_frame, width=30, height=30, bg=self.ui_bg_color, highlightthickness=0)
+        self.status_canvas.grid(row=0, column=3, padx=self.ui_padding, pady=self.ui_padding)
+        self.status_light = self.status_canvas.create_oval(5, 5, 25, 25, fill='black')
+        self.led_blinking = False
+
+    def init_cmd_components(self):
+        """初始化指令相關元件"""
+        # 創建分組框架
+        cmd_frame = ttk.LabelFrame(self.left_panel, text="指令設定", style="TLabelframe")
+        cmd_frame.grid(row=1, column=0, sticky='ew', padx=self.ui_padding, pady=self.ui_padding)
+        cmd_frame.columnconfigure(0, weight=1)  # 讓內容可以水平擴展
+        
+        # 分類選擇區域
+        self.section_frame = ttk.Frame(cmd_frame, style="TFrame")
+        self.section_frame.grid(row=0, column=0, sticky='ew', pady=self.ui_padding)
+        
+        # 配置網格
+        for i in range(4):  # 假設最多4列
+            self.section_frame.columnconfigure(i, weight=1)
+        
+        self.section_var = tk.StringVar()
+        
+        # 從 command.txt 動態讀取分類
+        self.sections = []
+        try:
+            command_file_path = self.parent.setup.get("DUT_Control", {}).get("Command_File_Path", "")
+            command_file = command_file_path if command_file_path and os.path.exists(command_file_path) else COMMAND_FILE
+            with open(command_file, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line.startswith('==') and line.endswith('=='):
+                        section_name = line.strip('=')
+                        if section_name and section_name not in self.sections:
+                            self.sections.append(section_name)
+        except Exception as e:
+            print(f"[ERROR] 讀取分類時發生錯誤: {e}")
+            
+        if not self.sections:
+            self.sections = ['全部指令']
+        
+        if self.sections:
+            self.section_var.set(self.sections[0])
+        
+        max_buttons_per_row = 4
+        self.section_radiobuttons = []
+        
+        # 創建分類選擇按鈕
+        for i, sec in enumerate(self.sections):
+            row, col = i // max_buttons_per_row, i % max_buttons_per_row
+            rb = ttk.Radiobutton(
+                self.section_frame, 
+                text=sec, 
+                variable=self.section_var, 
+                value=sec, 
+                command=self.update_cmd_list,
+                style="TRadiobutton"
+            )
+            rb.grid(row=row, column=col, padx=2, pady=2, sticky='ew')
+            self.section_radiobuttons.append(rb)
+        
+        # 分類說明
+        self.section_description = ttk.Label(
+            self.section_frame, 
+            text=self.get_section_description(self.section_var.get()), 
+            style="TLabel", 
+            wraplength=300
+        )
+        last_row = (len(self.sections) - 1) // max_buttons_per_row + 1
+        self.section_description.grid(row=last_row, column=0, columnspan=max_buttons_per_row, pady=2, sticky='w')
+        
+        # 指令選擇區域
+        cmd_control_frame = ttk.Frame(cmd_frame, style="TFrame")
+        cmd_control_frame.grid(row=1, column=0, sticky='ew', pady=self.ui_padding)
+        
+        # 配置網格
+        cmd_control_frame.columnconfigure(0, weight=0)  # 標籤固定寬度
+        cmd_control_frame.columnconfigure(1, weight=1)  # 下拉選單可擴展
+        cmd_control_frame.columnconfigure(2, weight=0)  # 執行按鈕固定寬度
+        
+        # 指令標籤
+        self.label_cmd = ttk.Label(cmd_control_frame, text='指令:', style="TLabel")
+        self.label_cmd.grid(row=0, column=0, sticky='w', padx=self.ui_padding, pady=self.ui_padding)
+        
+        # 指令下拉選單
+        self.combobox_cmd = ttk.Combobox(cmd_control_frame, state='readonly', width=25)
+        self.combobox_cmd.grid(row=0, column=1, sticky='ew', padx=self.ui_padding, pady=self.ui_padding)
+        self.combobox_cmd.bind("<<ComboboxSelected>>", lambda e: self.on_cmd_selected())
+        self.combobox_cmd.bind("<<ComboboxOpened>>", self.limit_dropdown_height)
+        
+        # 執行按鈕
+        self.btn_execute = ttk.Button(
+            cmd_control_frame, 
+            text='執行指令', 
+            command=lambda: self.parent.handlers.on_execute(),
+            style="Accent.TButton",
+            width=10
+        )
+        self.btn_execute.grid(row=0, column=2, padx=self.ui_padding, pady=self.ui_padding)
+        
+        # 超時設定區域
+        timeout_frame = ttk.Frame(cmd_frame, style="TFrame")
+        timeout_frame.grid(row=2, column=0, sticky='ew', pady=self.ui_padding)
+        
+        # 配置網格
+        timeout_frame.columnconfigure(0, weight=0)  # 標籤固定寬度
+        timeout_frame.columnconfigure(1, weight=1)  # 輸入框可擴展
+        timeout_frame.columnconfigure(2, weight=0)  # 標籤固定寬度
+        timeout_frame.columnconfigure(3, weight=1)  # 下拉選單可擴展
+        
+        # 超時標籤
+        self.label_timeout = ttk.Label(timeout_frame, text='超時:', style="TLabel")
+        self.label_timeout.grid(row=0, column=0, sticky='w', padx=self.ui_padding, pady=self.ui_padding)
+        
+        # 超時輸入框
+        self.entry_timeout = ttk.Entry(timeout_frame, width=8)
+        self.entry_timeout.grid(row=0, column=1, sticky='ew', padx=self.ui_padding, pady=self.ui_padding)
+        self.entry_timeout.insert(0, "1000")  # 預設值
+        
+        # 結束符標籤
+        self.label_end = ttk.Label(timeout_frame, text='結束符:', style="TLabel")
+        self.label_end.grid(row=0, column=2, sticky='w', padx=self.ui_padding, pady=self.ui_padding)
+        
+        # 結束符下拉選單
+        end_values = ["\\r", "\\n", "\\r\\n", "OK", "ERROR", "自定義..."]
+        self.combobox_end = ttk.Combobox(timeout_frame, values=end_values, width=10)
+        self.combobox_end.grid(row=0, column=3, sticky='ew', padx=self.ui_padding, pady=self.ui_padding)
+        self.combobox_end.current(2)  # 預設選擇 \r\n
+        
+        # 更新指令列表
+        self.update_cmd_list()
+
+    def init_ping_components(self):
+        """初始化 Ping 相關元件"""
+        # 創建分組框架
+        ping_frame = ttk.LabelFrame(self.left_panel, text="Ping 工具", style="TLabelframe")
+        ping_frame.grid(row=2, column=0, sticky='ew', padx=self.ui_padding, pady=self.ui_padding)
+        
+        # 配置網格
+        ping_frame.columnconfigure(0, weight=0)  # 標籤固定寬度
+        ping_frame.columnconfigure(1, weight=1)  # 輸入框可擴展
+        ping_frame.columnconfigure(2, weight=0)  # 按鈕固定寬度
+        ping_frame.columnconfigure(3, weight=0)  # 按鈕固定寬度
+        
+        # IP 標籤
+        self.label_ip = ttk.Label(ping_frame, text='IP:', style="TLabel")
+        self.label_ip.grid(row=0, column=0, sticky='w', padx=self.ui_padding, pady=self.ui_padding)
+        
+        # IP 輸入框
+        self.entry_ip = ttk.Combobox(ping_frame, width=15)
+        self.entry_ip.grid(row=0, column=1, sticky='ew', padx=self.ui_padding, pady=self.ui_padding)
+        
+        # 載入 IP 歷史記錄
+        self.load_ip_history()
+        
+        # Ping 按鈕
+        self.btn_ping = ttk.Button(
+            ping_frame, 
+            text='Ping', 
+            command=lambda: self.parent.handlers.on_ping(),
+            style="TButton",
+            width=8
+        )
+        self.btn_ping.grid(row=0, column=2, padx=self.ui_padding, pady=self.ui_padding)
+        
+        # 儲存按鈕
+        self.btn_save_ip = ttk.Button(
+            ping_frame, 
+            text='儲存', 
+            command=self.save_current_ip,
+            style="TButton",
+            width=8
+        )
+        self.btn_save_ip.grid(row=0, column=3, padx=self.ui_padding, pady=self.ui_padding)
+        
+        # IP 歷史記錄區域
+        ip_history_frame = ttk.Frame(ping_frame, style="TFrame")
+        ip_history_frame.grid(row=1, column=0, columnspan=4, sticky='ew', pady=self.ui_padding)
+        
+        # 配置網格
+        ip_history_frame.columnconfigure(0, weight=1)  # 歷史記錄列表可擴展
+        ip_history_frame.columnconfigure(1, weight=0)  # 按鈕固定寬度
+        
+        # 歷史記錄列表
+        self.listbox_ip_history = tk.Listbox(ip_history_frame, height=4, exportselection=0)
+        self.listbox_ip_history.grid(row=0, column=0, sticky='ew', padx=self.ui_padding)
+        self.listbox_ip_history.bind('<<ListboxSelect>>', self.on_ip_history_selected)
+        self.listbox_ip_history.bind('<Double-1>', lambda e: self.on_ping_with_save())
+        
+        # 歷史記錄滾動條
+        scrollbar = ttk.Scrollbar(ip_history_frame, orient="vertical", command=self.listbox_ip_history.yview)
+        scrollbar.grid(row=0, column=1, sticky='ns')
+        self.listbox_ip_history.configure(yscrollcommand=scrollbar.set)
+        
+        # 刪除按鈕
+        self.btn_delete_ip = ttk.Button(
+            ping_frame, 
+            text='刪除', 
+            command=self.delete_current_ip,
+            style="TButton",
+            width=8
+        )
+        self.btn_delete_ip.grid(row=2, column=2, padx=self.ui_padding, pady=self.ui_padding)
+        
+        # 清空按鈕
+        self.btn_clear_ip = ttk.Button(
+            ping_frame, 
+            text='清空', 
+            command=self.clear_ip_history,
+            style="TButton",
+            width=8
+        )
+        self.btn_clear_ip.grid(row=2, column=3, padx=self.ui_padding, pady=self.ui_padding)
+
+    def init_settings_components(self):
+        """初始化設定相關元件"""
+        # 創建分組框架
+        settings_frame = ttk.LabelFrame(self.left_panel, text="其他設定", style="TLabelframe")
+        settings_frame.grid(row=3, column=0, sticky='ew', padx=self.ui_padding, pady=self.ui_padding)
+        
+        # 配置網格
+        settings_frame.columnconfigure(0, weight=1)  # 讓內容可以水平擴展
+        
+        # 自動執行區域
+        auto_exec_frame = ttk.Frame(settings_frame, style="TFrame")
+        auto_exec_frame.grid(row=0, column=0, sticky='ew', pady=self.ui_padding)
+        
+        # 自動執行核取方塊
+        self.auto_exec_var = tk.BooleanVar(value=False)
+        self.checkbtn_auto_exec = ttk.Checkbutton(
+            auto_exec_frame, 
+            text='自動執行', 
+            variable=self.auto_exec_var,
+            command=self.on_auto_exec_changed,
+            style="TCheckbutton"
+        )
+        self.checkbtn_auto_exec.pack(side=tk.LEFT, padx=self.ui_padding)
+        
+        # 顯示 Tooltip 核取方塊
+        self.tooltip_enabled_var = tk.BooleanVar(value=True)
+        self.checkbtn_tooltip = ttk.Checkbutton(
+            auto_exec_frame, 
+            text='顯示提示', 
+            variable=self.tooltip_enabled_var,
+            command=self.on_tooltip_changed,
+            style="TCheckbutton"
+        )
+        self.checkbtn_tooltip.pack(side=tk.LEFT, padx=20)
+        
+        # 功能按鈕區域
+        buttons_frame = ttk.Frame(settings_frame, style="TFrame")
+        buttons_frame.grid(row=1, column=0, sticky='ew', pady=self.ui_padding)
+        
+        # 配置網格
+        for i in range(3):
+            buttons_frame.columnconfigure(i, weight=1)
+        
+        # 說明按鈕
+        self.btn_guide = ttk.Button(
+            buttons_frame, 
+            text='使用說明', 
+            command=lambda: self.parent.handlers.on_show_guide(),
+            style="TButton",
+            width=10
+        )
+        self.btn_guide.grid(row=0, column=0, padx=self.ui_padding, pady=self.ui_padding)
+        
+        # 清空輸出按鈕
+        self.btn_clear_output = ttk.Button(
+            buttons_frame, 
+            text='清空輸出', 
+            command=lambda: self.parent.handlers.on_clear_output(),
+            style="TButton",
+            width=10
+        )
+        self.btn_clear_output.grid(row=0, column=1, padx=self.ui_padding, pady=self.ui_padding)
+        
+        # 設定按鈕
+        self.btn_settings = ttk.Button(
+            buttons_frame, 
+            text='進階設定', 
+            command=lambda: self.parent.handlers.on_show_settings(),
+            style="TButton",
+            width=10
+        )
+        self.btn_settings.grid(row=0, column=2, padx=self.ui_padding, pady=self.ui_padding)
+
+    def init_output_components(self):
+        """初始化輸出相關元件"""
+        # 右側面板已在 UIComponentsBase 中初始化
+        pass
+
+    def init_progress_components(self):
+        """初始化進度條元件"""
+        # 創建進度條框架
+        self.progress_frame = ttk.Frame(self.left_panel, style="TFrame")
+        self.progress_frame.grid(row=4, column=0, sticky='ew', padx=self.ui_padding, pady=self.ui_padding)
+        self.progress_frame.grid_columnconfigure(0, weight=1)
+        
+        # 創建進度條
+        self.progress = ttk.Progressbar(
+            self.progress_frame, 
+            orient="horizontal", 
+            length=200, 
+            mode="determinate",
+            style="TProgressbar"
+        )
+        self.progress.grid(row=0, column=0, sticky='ew', padx=self.ui_padding, pady=self.ui_padding)
+        
+        # 默認隱藏進度條
+        self.progress_frame.grid_remove()
+
+    def on_tooltip_changed(self):
+        """當 Tooltip 啟用狀態變更時"""
+        enabled = self.tooltip_enabled_var.get()
+        self.tooltip_manager.set_all_enabled(enabled)
+        
+        # 更新設定
+        if "UI_Settings" not in self.parent.setup:
+            self.parent.setup["UI_Settings"] = {}
+        self.parent.setup["UI_Settings"]["ToolTip_Enabled"] = enabled
+        
+        # 保存設定
+        from config_core import save_setup
+        save_setup(self.parent.setup)
+        
+        # 顯示通知
+        status = "啟用" if enabled else "停用"
+        self.show_notification(f"已{status}元件提示功能", "info", 3000)
+
+    def init_tooltips(self):
+        """初始化所有UI元件的tooltip說明"""
+        try:
+            # 確保全域通知管理器已設定
+            if not hasattr(self, 'global_notification_manager') or not self.global_notification_manager:
+                # 嘗試從 parent 獲取全域通知管理器
+                if hasattr(self.parent, 'notification_manager'):
+                    self.global_notification_manager = self.parent.notification_manager
+                    print("[DEBUG] 從 parent 獲取全域通知管理器")
+                # 嘗試從 root 獲取全域通知管理器
+                elif hasattr(self.root, 'notification_manager'):
+                    self.global_notification_manager = self.root.notification_manager
+                    print("[DEBUG] 從 root 獲取全域通知管理器")
+                # 嘗試從 TabManager 獲取全域通知管理器
+                elif hasattr(self.parent, 'tab_manager') and hasattr(self.parent.tab_manager, 'notification_manager'):
+                    self.global_notification_manager = self.parent.tab_manager.notification_manager
+                    print("[DEBUG] 從 tab_manager 獲取全域通知管理器")
+            
+            # 將全域通知管理器傳遞給 ToolTipManager
+            self.tooltip_manager.global_notification_manager = self.global_notification_manager
+            
+            # 為所有元件添加 tooltip
+            self._add_tooltip_to_widgets()
+            
+            print("[DEBUG] 已初始化所有 tooltip")
+        except Exception as e:
+            print(f"[ERROR] 初始化 tooltip 時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def _add_tooltip_to_widgets(self):
+        """為所有元件添加 tooltip"""
+        # COM 口相關元件
+        self.tooltip_manager.add_tooltip(self.label_com, "COM 口選擇標籤")
+        self.tooltip_manager.add_tooltip(self.combobox_com, "選擇要連接的 COM 口")
+        self.tooltip_manager.add_tooltip(self.btn_refresh, "刷新 COM 口列表")
+        self.tooltip_manager.add_tooltip(self.status_canvas, "連接狀態指示燈")
+        
+        # 指令相關元件
+        self.tooltip_manager.add_tooltip(self.label_cmd, "指令選擇標籤")
+        self.tooltip_manager.add_tooltip(self.combobox_cmd, "選擇要執行的指令")
+        self.tooltip_manager.add_tooltip(self.btn_execute, "執行選定的指令")
+        self.tooltip_manager.add_tooltip(self.label_timeout, "指令超時時間設定")
+        self.tooltip_manager.add_tooltip(self.entry_timeout, "設定指令超時時間 (毫秒)")
+        self.tooltip_manager.add_tooltip(self.label_end, "指令結束符設定")
+        self.tooltip_manager.add_tooltip(self.combobox_end, "選擇指令結束符")
+        
+        # 分類按鈕
+        for i, rb in enumerate(self.section_radiobuttons):
+            if i < len(self.sections):
+                self.tooltip_manager.add_tooltip(rb, f"顯示 {self.sections[i]} 分類的指令")
+        
+        # Ping 相關元件
+        self.tooltip_manager.add_tooltip(self.label_ip, "IP 地址輸入標籤")
+        self.tooltip_manager.add_tooltip(self.entry_ip, "輸入要 Ping 的 IP 地址")
+        self.tooltip_manager.add_tooltip(self.btn_ping, "Ping 指定的 IP 地址")
+        self.tooltip_manager.add_tooltip(self.btn_save_ip, "儲存當前 IP 到歷史記錄")
+        self.tooltip_manager.add_tooltip(self.listbox_ip_history, "已儲存的 IP 歷史記錄")
+        self.tooltip_manager.add_tooltip(self.btn_delete_ip, "刪除選定的 IP 記錄")
+        self.tooltip_manager.add_tooltip(self.btn_clear_ip, "清空所有 IP 歷史記錄")
+        
+        # 設定相關元件
+        self.tooltip_manager.add_tooltip(self.checkbtn_auto_exec, "啟用後，選擇指令時會自動執行")
+        self.tooltip_manager.add_tooltip(self.checkbtn_tooltip, "啟用或停用元件提示功能")
+        self.tooltip_manager.add_tooltip(self.btn_guide, "顯示使用說明")
+        self.tooltip_manager.add_tooltip(self.btn_clear_output, "清空右側輸出區域")
+        self.tooltip_manager.add_tooltip(self.btn_settings, "開啟進階設定視窗")
+        
+        # 進度條
+        self.tooltip_manager.add_tooltip(self.progress, "指令執行進度")
+
     def on_com_port_changed(self, event=None):
         """當 COM 口選擇變更時，自動儲存到設定檔"""
         try:
@@ -128,341 +543,292 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             import traceback
             traceback.print_exc()
 
-    def init_cmd_components(self):
-        self.section_frame = ttk.Frame(self.left_panel, style="TFrame")
-        self.section_frame.grid(row=1, column=0, sticky='ew', pady=5)
-        for i in range(4):
-            self.section_frame.columnconfigure(i, weight=1)
-        self.section_var = tk.StringVar()
-        
-        # 從 command.txt 動態讀取分類
-        self.sections = []
+    def on_cmd_selected(self):
+        """當選擇指令時的回調函數"""
+        cmd_key = self.combobox_cmd.get()
+        if cmd_key:
+            section = self.section_var.get()
+            cmd = self.parent.commands_by_section.get(section, {}).get(cmd_key, "")
+            if not cmd:
+                cmd = self.parent.commands_by_section.get("全部指令", {}).get(cmd_key, "")
+            
+            # 顯示選擇的指令內容
+            self.show_notification(get_notification_text("cmd_selected", cmd_key), "blue", 3000)
+            
+            # 如果是特殊指令，顯示提示
+            if cmd.startswith("DELAY:"):
+                delay_time = cmd.split(":")[1]
+                self.show_notification(get_notification_text("delay_cmd", delay_time), "purple", 3000)
+            elif cmd.startswith("SHOW:"):
+                message = cmd.split(":")[1]
+                self.show_notification(get_notification_text("show_msg", message), "green", 3000)
+
+    def show_system_status(self):
+        """顯示系統狀態信息"""
         try:
-            command_file_path = self.parent.setup.get("DUT_Control", {}).get("Command_File_Path", "")
-            command_file = command_file_path if command_file_path and os.path.exists(command_file_path) else COMMAND_FILE
-            with open(command_file, 'r', encoding='utf-8') as f:
-                for line in f:
-                    line = line.strip()
-                    if line.startswith('==') and line.endswith('=='):
-                        section_name = line.strip('=')
-                        if section_name and section_name not in self.sections:
-                            self.sections.append(section_name)
+            # 獲取 COM 口
+            com = self.combobox_com.get() or "未選擇"
+            
+            # 獲取當前選擇的分類
+            section = self.section_var.get()
+            
+            # 獲取指令數量
+            cmd_count = len(self.parent.commands_by_section.get(section, {}))
+            
+            # 獲取超時設定
+            timeout = self.entry_timeout.get() or "30"
+            
+            # 顯示系統狀態
+            self.show_notification(get_notification_text("system_status", com, section, cmd_count, timeout), "blue", 5000)
         except Exception as e:
-            print(f"[ERROR] 讀取分類時發生錯誤: {e}")
-            
-        if not self.sections:
-            self.sections = ['全部指令']
-        
-        if self.sections:
-            self.section_var.set(self.sections[0])
-        
-        max_buttons_per_row = 4
-        self.section_radiobuttons = []
-        
-        for i, sec in enumerate(self.sections):
-            row, col = i // max_buttons_per_row, i % max_buttons_per_row
-            rb = tk.Radiobutton(
-                self.section_frame, text=sec, variable=self.section_var, value=sec, 
-                command=self.update_cmd_list, bg='#d9d9d9', fg='black', selectcolor='#d9d9d9', 
-                activebackground='#2196f3', activeforeground='white', indicatoron=0, relief='flat', 
-                borderwidth=1, width=8, height=1, font=('Microsoft JhengHei UI', int(self.parent.setup.get('UI_Font_Size', '12')))
-            )
-            rb.grid(row=row, column=col, padx=1, pady=1, sticky='ew')
-            rb.bind("<Enter>", lambda e, b=rb: b.config(bg="#2196f3", fg='white'))
-            rb.bind("<Leave>", lambda e, b=rb: self.update_radio_bg())
-            self.section_radiobuttons.append(rb)
-            self.section_frame.columnconfigure(col, weight=1)
-        
-        self.update_radio_bg()
-
-        self.section_description = ttk.Label(self.section_frame, text=self.get_section_description(self.section_var.get()), style="TLabel", wraplength=300)
-        last_row = (len(self.sections) - 1) // max_buttons_per_row + 1
-        self.section_description.grid(row=last_row, column=0, columnspan=max_buttons_per_row, pady=2, sticky='w')
-        
-        cmd_frame = ttk.Frame(self.left_panel, style="TFrame")
-        cmd_frame.grid(row=2, column=0, sticky='ew', pady=3)
-        cmd_frame.columnconfigure(1, weight=1)  # 讓指令下拉選單擴展
-        cmd_frame.columnconfigure(2, weight=0)  # 執行指令按鈕固定大小
-        cmd_frame.columnconfigure(3, weight=0)  # 儲存設定按鈕固定大小
-        
-        self.label_cmd = ttk.Label(cmd_frame, text='指令:', style="TLabel")
-        self.label_cmd.grid(row=0, column=0, sticky='w')
-        
-        font_size = int(self.parent.setup.get('UI_Font_Size', '12'))
-        style = ttk.Style()
-        style.configure('Custom.TCombobox', font=('Microsoft JhengHei UI', font_size))
-        
-        self.combobox_cmd = ttk.Combobox(cmd_frame, state='readonly', width=25, style='Custom.TCombobox')
-        self.combobox_cmd.grid(row=0, column=1, padx=5, sticky='ew')
-        self.combobox_cmd.bind("<<ComboboxSelected>>", lambda e: self.on_cmd_selected())
-        self.combobox_cmd.bind("<<ComboboxOpened>>", self.limit_dropdown_height)
-
-        self.btn_execute = tk.Button(
-            cmd_frame, text='執行指令', font=('Microsoft JhengHei UI', 14, 'bold'),
-            bg='#4CAF50', fg='white', relief='raised', borderwidth=2, cursor="hand2",
-            command=self.parent.handlers.on_execute, width=14, height=2
-        )
-        self.btn_execute.grid(row=0, column=2, sticky='e', padx=(5, 5))
-        self.btn_execute.bind("<Enter>", self.on_enter_exec)
-        self.btn_execute.bind("<Leave>", self.on_leave_exec)
-
-
-
-        self.combobox_cmd.bind('<Return>', lambda event: self.parent.handlers.on_execute())
-
-    def on_enter_exec(self, event):
-        self.btn_execute.config(bg='#2196F3')
-
-    def on_leave_exec(self, event):
-        self.btn_execute.config(bg='#4CAF50')
-
-
-
-
-
-    def get_section_description(self, section):
-        # 預設描述
-        default_descriptions = {
-            '全部指令': '顯示所有可用的指令',
-            '單板指令': '用於單板測試的指令集',
-            '整機指令': '用於整機測試的指令集',
-            '驗證喇叭': '用於驗證喇叭的指令集',
-            '出貨指令': '用於出貨測試的指令集'
-        }
-        
-        if section in default_descriptions:
-            return default_descriptions[section]
-        
-        return f'用於{section}的指令集'
-        
-    def init_ping_components(self):
-        print('[DEBUG] handlers in init_ping_components:', self.parent.handlers)
-        ping_frame = ttk.LabelFrame(self.left_panel, text='Ping 檢查', padding=5, style="TLabelframe")
-        ping_frame.grid(row=3, column=0, sticky='ew', pady=5)  # 減少間距
-        
-        # IP輸入區域
-        ip_frame = ttk.Frame(ping_frame, style="TFrame")
-        ip_frame.grid(row=0, column=0, sticky='ew', pady=1)  # 減少間距
-        ip_frame.columnconfigure(1, weight=1)
-        self.label_ip = ttk.Label(ip_frame, text='IP地址:', style="TLabel")
-        self.label_ip.grid(row=0, column=0, sticky='w')
-        
-        # 使用Combobox替代Entry，支援IP記錄
-        self.entry_ip = ttk.Combobox(ip_frame, width=15)
-        self.entry_ip.grid(row=0, column=1, padx=5, sticky='ew')
-        
-        # 載入並設定IP記錄
-        self.load_ip_history()
-        default_ip = self.parent.setup.get('DUT_Control', {}).get('Default_IP_Address', '192.168.11.143')
-        self.entry_ip.set(default_ip)
-        
-        # Ping按鈕
-        self.btn_ping = tk.Button(ip_frame, text='Ping', command=self.on_ping_with_save, bg='white', fg='black')
-        self.btn_ping.grid(row=0, column=2, padx=5)
-        self.btn_ping.bind("<Enter>", lambda e: self.btn_ping.config(bg="#ff9999"))
-        self.btn_ping.bind("<Leave>", lambda e: self.btn_ping.config(bg="white"))
-        
-        # IP管理按鈕區域
-        ip_mgmt_frame = ttk.Frame(ping_frame, style="TFrame")
-        ip_mgmt_frame.grid(row=1, column=0, sticky='ew', pady=2)
-        
-        # 保存IP按鈕
-        self.btn_save_ip = tk.Button(ip_mgmt_frame, text='保存IP', command=self.save_current_ip, 
-                                    bg='#e6ffe6', fg='black', width=8)
-        self.btn_save_ip.grid(row=0, column=0, padx=2)
-        
-        # 刪除IP按鈕
-        self.btn_delete_ip = tk.Button(ip_mgmt_frame, text='刪除IP', command=self.delete_current_ip, 
-                                      bg='#ffe6e6', fg='black', width=8)
-        self.btn_delete_ip.grid(row=0, column=1, padx=2)
-        
-        # 清空記錄按鈕
-        self.btn_clear_ip = tk.Button(ip_mgmt_frame, text='清空記錄', command=self.clear_ip_history, 
-                                     bg='#fff0e6', fg='black', width=8)
-        self.btn_clear_ip.grid(row=0, column=2, padx=2)
-
-    def init_settings_components(self):
-        settings_frame = ttk.LabelFrame(self.left_panel, text='設定', padding=5, style="TLabelframe")
-        settings_frame.grid(row=4, column=0, sticky='ew', pady=5)  # 減少間距
-        
-        # 結束字串設定
-        end_frame = ttk.Frame(settings_frame, style="TFrame")
-        end_frame.grid(row=0, column=0, sticky='ew', pady=2)  # 減少間距
-        self.label_end = ttk.Label(end_frame, text='結束字串:', style="TLabel")
-        self.label_end.grid(row=0, column=0, sticky='w')
-        self.combobox_end = ttk.Combobox(end_frame, width=15)
-        self.combobox_end.grid(row=0, column=1, padx=5, sticky='ew')
-        self.update_end_strings()
-        self.combobox_end.set(self.parent.setup.get('Command_End_String', 'root'))
-        # 加入刪除按鈕
-        self.btn_remove_end = tk.Button(end_frame, text='-', command=self.parent.handlers.remove_end_string, width=2, bg='#ffcccc', fg='black')
-        self.btn_remove_end.grid(row=0, column=2, padx=2)
-        
-        # 超時設定
-        timeout_frame = ttk.Frame(settings_frame, style="TFrame")
-        timeout_frame.grid(row=1, column=0, sticky='ew', pady=2)  # 減少間距
-        self.label_timeout = ttk.Label(timeout_frame, text='超時(秒):', style="TLabel")
-        self.label_timeout.grid(row=0, column=0, sticky='w')
-        self.entry_timeout = ttk.Entry(timeout_frame, width=8)
-        self.entry_timeout.grid(row=0, column=1, padx=5, sticky='ew')
-        self.entry_timeout.insert(0, self.parent.setup.get('Command_Timeout_Seconds', '30'))
-        
-        # 添加自動執行勾選框
-        auto_exec_frame = ttk.Frame(settings_frame, style="TFrame")
-        auto_exec_frame.grid(row=2, column=0, sticky='ew', pady=2)  # 減少間距
-        self.auto_exec_var = tk.BooleanVar(value=self.parent.setup.get('Auto_Execute', False))
-        self.auto_exec_checkbox = tk.Checkbutton(
-            auto_exec_frame, 
-            text='啟動時自動執行指令',
-            variable=self.auto_exec_var,
-            command=self.on_auto_exec_changed,
-            bg='white',
-            activebackground='white',
-            highlightthickness=0,
-            font=('Microsoft JhengHei UI', int(self.parent.setup.get('UI_Font_Size', '12')))
-        )
-        self.auto_exec_checkbox.grid(row=0, column=0, sticky='w', padx=5)
-        
-        # 字體大小設定 - 將兩個字體設定合併到一行
-        font_frame = ttk.Frame(settings_frame, style="TFrame")
-        font_frame.grid(row=3, column=0, sticky='ew', pady=2)  # 減少間距
-        font_frame.columnconfigure(1, weight=1)
-        font_frame.columnconfigure(3, weight=1)
-        
-        # UI字體大小設定
-        self.label_ui_font = ttk.Label(font_frame, text='介面字體:', style="TLabel")
-        self.label_ui_font.grid(row=0, column=0, sticky='w', padx=(0,2))
-        
-        font_controls_frame = ttk.Frame(font_frame, style="TFrame")
-        font_controls_frame.grid(row=0, column=1, sticky='ew')
-        
-        self.btn_ui_font_minus = tk.Button(font_controls_frame, text='－', width=2, command=lambda: self.ui_font_scale.set(self.ui_font_scale.get()-1))
-        self.btn_ui_font_minus.grid(row=0, column=0, padx=1)
-        
-        self.ui_font_scale = tk.Scale(font_controls_frame, from_=8, to=20, orient='horizontal', 
-                                    command=self.parent.handlers.change_ui_font_size, length=80, bg='white', fg='black', 
-                                    highlightthickness=0)
-        self.ui_font_scale.grid(row=0, column=1, padx=1)
-        self.ui_font_scale.set(int(self.parent.setup.get('UI_Font_Size', '12')))
-        
-        self.btn_ui_font_plus = tk.Button(font_controls_frame, text='＋', width=2, command=lambda: self.ui_font_scale.set(self.ui_font_scale.get()+1))
-        self.btn_ui_font_plus.grid(row=0, column=2, padx=1)
-        
-        # 內容字體大小設定
-        self.label_content_font = ttk.Label(font_frame, text='內容字體:', style="TLabel")
-        self.label_content_font.grid(row=0, column=2, sticky='w', padx=(10,2))
-        
-        # 添加內容字體的控制框架
-        content_font_controls_frame = ttk.Frame(font_frame, style="TFrame")
-        content_font_controls_frame.grid(row=0, column=3, sticky='ew')
-        
-        # 添加減號按鈕
-        self.btn_content_font_minus = tk.Button(content_font_controls_frame, text='－', width=2, 
-                                              command=lambda: self.content_font_scale.set(self.content_font_scale.get()-1))
-        self.btn_content_font_minus.grid(row=0, column=0, padx=1)
-        
-        self.content_font_scale = tk.Scale(content_font_controls_frame, from_=8, to=20, orient='horizontal', 
-                                         command=self.parent.handlers.change_content_font_size, length=80, bg='white', fg='black', 
-                                         highlightthickness=0)
-        self.content_font_scale.grid(row=0, column=1, padx=1)
-        self.content_font_scale.set(int(self.parent.setup.get('Content_Font_Size', '12')))
-        
-        # 添加加號按鈕
-        self.btn_content_font_plus = tk.Button(content_font_controls_frame, text='＋', width=2, 
-                                             command=lambda: self.content_font_scale.set(self.content_font_scale.get()+1))
-        self.btn_content_font_plus.grid(row=0, column=2, padx=1)
-        
-        # 按鈕區 - 改為水平排列
-        btn_frame = ttk.Frame(self.left_panel, style="TFrame")
-        btn_frame.grid(row=5, column=0, sticky='ew', pady=5)  # 減少間距
-        btn_frame.columnconfigure(0, weight=1)
-        btn_frame.columnconfigure(1, weight=1)
-        btn_frame.columnconfigure(2, weight=1)
-        
-        self.btn_clear = ttk.Button(btn_frame, text='清空回應', command=self.parent.handlers.clear_output, style='Blue.TButton')
-        self.btn_clear.grid(row=0, column=0, padx=2, sticky='ew')
-        
-        self.btn_backup = ttk.Button(btn_frame, text='備份Log', command=self.parent.handlers.backup_output, style='Blue.TButton')
-        self.btn_backup.grid(row=0, column=1, padx=2, sticky='ew')
-        
-        self.btn_guide = ttk.Button(btn_frame, text='使用說明', command=self.parent.handlers.toggle_guide, style='Blue.TButton')
-        self.btn_guide.grid(row=0, column=2, padx=2, sticky='ew')
-        
-        # 將 ui_font_scale 的 command 綁定為 handlers.change_ui_font_size，避免 lambda 導致無法正確更新
-        self.ui_font_scale.config(command=self.parent.handlers.change_ui_font_size)
-
-    def init_output_components(self):
-        try:
-            # 建立輸出區域
-            self.text_output = scrolledtext.ScrolledText(
-                self.right_panel,
-                wrap=tk.WORD,
-                width=50,
-                height=20,
-                font=('Microsoft JhengHei UI', int(self.parent.setup.get('Content_Font_Size', '12')))
-            )
-            self.text_output.grid(row=0, column=0, sticky='nsew')
-            self.right_panel.grid_rowconfigure(0, weight=1)
-            self.right_panel.grid_columnconfigure(0, weight=1)
-            
-            # 設定 tag
-            self.text_output.tag_configure("send", foreground="blue")
-            self.text_output.tag_configure("end", foreground="green")  # 收到結束字串為綠色
-            self.text_output.tag_configure("timeout", foreground="red")  # 超時為紅色
-            self.text_output.tag_configure("purple", foreground="#800080")  # 紫色
-            self.text_output.tag_configure("guide_title", foreground="#006400", font=('Microsoft JhengHei UI', int(self.parent.setup.get('Content_Font_Size', '12')) + 2, 'bold'))  # 使用說明標題
-            self.text_output.tag_configure("error", foreground="red")  # 錯誤訊息為紅色
-            self.text_output.tag_configure("success", foreground="green")  # 成功訊息為綠色
-            self.text_output.tag_configure("warning", foreground="orange")  # 警告訊息為橙色
-            
-            # 為高亮關鍵字定義標籤
-            print(f"[DEBUG] 初始化關鍵字高亮標籤，parent={self.parent}")
-            if hasattr(self.parent, 'highlight_keywords'):
-                print(f"[DEBUG] highlight_keywords={self.parent.highlight_keywords}")
-                for keyword, color in self.parent.highlight_keywords.items():
-                    print(f"[DEBUG] 創建關鍵字標籤: {keyword} -> {color}")
-                    self.text_output.tag_configure(color, foreground=color)
-            else:
-                print(f"[WARNING] parent 沒有 highlight_keywords 屬性")
-            
-            # 設定唯讀
-            self.text_output.config(state='disabled')
-            
-            # 添加右鍵菜單
-            self.output_context_menu = tk.Menu(self.text_output, tearoff=0)
-            self.output_context_menu.add_command(label="複製", command=self.copy_selected_text)
-            self.output_context_menu.add_command(label="全選", command=self.select_all_text)
-            self.output_context_menu.add_separator()
-            self.output_context_menu.add_command(label="清空", command=self.parent.handlers.clear_output)
-            self.text_output.bind("<Button-3>", self.show_output_context_menu)
-            
-        except Exception as e:
-            print(f"Error in init_output_components: {e}")
+            print(f"[ERROR] 顯示系統狀態時發生錯誤: {e}")
             import traceback
             traceback.print_exc()
-            raise
 
-    def init_progress_components(self):
-        """初始化進度條組件"""
-        self.progress = ttk.Progressbar(
-            self.right_panel,
-            mode='determinate',
-            style="gray.Horizontal.TProgressbar",
-            length=200
-        )
-        self.progress.grid(row=1, column=0, sticky='ew', pady=5)
-        self.progress['value'] = 0
-        # 確保進度條始終顯示
-        self.progress.grid_remove()  # 初始隱藏
-        self.right_panel.rowconfigure(1, weight=0)  # 進度條行不擴展
+    def change_notification_font_size(self, delta):
+        """修改通知區域字體大小"""
+        try:
+            # 原本的通知區域已被全域通知管理器取代，不再需要
+            pass
+        except Exception as e:
+            print(f"[ERROR] 修改通知區域字體大小時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
 
-    def show_progress(self, show=True):
-        """控制進度條顯示/隱藏"""
-        print(f"[DEBUG] show_progress: show={show}")
-        if show:
-            self.progress.grid()
-        else:
-            self.progress.grid_remove()
+    def copy_selected_text(self):
+        # 實現複製選中文字的功能
+        try:
+            selected_text = self.text_output.get(tk.SEL_FIRST, tk.SEL_LAST)
+            if selected_text:
+                self.parent.root.clipboard_clear()
+                self.parent.root.clipboard_append(selected_text)
+                self.show_notification(get_notification_text("text_copied"), "green", 2000)
+        except tk.TclError:
+            # 如果沒有選中文字，會拋出 TclError
+            self.show_notification(get_notification_text("no_text_selected"), "orange", 2000)
+
+    def select_all_text(self):
+        # 實現全選文字的功能
+        self.text_output.tag_add(tk.SEL, "1.0", tk.END)
+        self.show_notification(get_notification_text("all_text_selected"), "green", 2000)
+
+    def show_output_context_menu(self, event):
+        """顯示輸出區域的右鍵菜單"""
+        try:
+            self.output_context_menu.post(event.x_root, event.y_root)
+        except Exception as e:
+            print(f"[ERROR] 顯示右鍵菜單時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def load_ip_history(self):
+        """載入IP記錄到下拉選單"""
+        try:
+            from config_core import load_setup
+            setup = load_setup()
+            ip_history = setup.get('DUT_Control', {}).get('IP_History', [])
+            
+            # 確保IP記錄是列表
+            if not isinstance(ip_history, list):
+                ip_history = []
+            
+            # 移除重複項目並保持順序
+            unique_ips = []
+            for ip in ip_history:
+                if ip not in unique_ips:
+                    unique_ips.append(ip)
+            
+            # 限制最多保存20個IP記錄
+            if len(unique_ips) > 20:
+                unique_ips = unique_ips[-20:]
+            
+            self.entry_ip['values'] = unique_ips
+            print(f"[INFO] 載入 {len(unique_ips)} 個IP記錄")
+            
+        except Exception as e:
+            print(f"[ERROR] 載入IP記錄時發生錯誤: {e}")
+            self.entry_ip['values'] = []
+
+    def save_current_ip(self):
+        """保存當前IP到記錄中"""
+        try:
+            current_ip = self.entry_ip.get().strip()
+            if not current_ip:
+                from tkinter import messagebox
+                messagebox.showwarning("警告", "請輸入IP地址")
+                return
+                
+            # 簡單的IP格式檢查
+            import re
+            ip_pattern = r'^(\d{1,3}\.){3}\d{1,3}$'
+            if not re.match(ip_pattern, current_ip):
+                from tkinter import messagebox
+                messagebox.showwarning("警告", "請輸入有效的IP地址格式")
+                return
+            
+            from config_core import load_setup, save_setup
+            setup = load_setup()
+            
+            if 'DUT_Control' not in setup:
+                setup['DUT_Control'] = {}
+            if 'IP_History' not in setup['DUT_Control']:
+                setup['DUT_Control']['IP_History'] = []
+            
+            ip_history = setup['DUT_Control']['IP_History']
+            
+            # 如果IP已存在，先移除然後加到最前面
+            if current_ip in ip_history:
+                ip_history.remove(current_ip)
+            ip_history.insert(0, current_ip)
+            
+            # 限制最多保存20個記錄
+            if len(ip_history) > 20:
+                ip_history = ip_history[:20]
+            
+            setup['DUT_Control']['IP_History'] = ip_history
+            save_setup(setup)
+            
+            # 重新載入下拉選單
+            self.load_ip_history()
+            
+            from tkinter import messagebox
+            messagebox.showinfo("成功", f"IP地址 {current_ip} 已保存到記錄中")
+            print(f"[INFO] IP {current_ip} 已保存到記錄")
+            
+        except Exception as e:
+            print(f"[ERROR] 保存IP記錄時發生錯誤: {e}")
+            from tkinter import messagebox
+            messagebox.showerror("錯誤", f"保存IP記錄失敗: {e}")
+
+    def delete_current_ip(self):
+        """從記錄中刪除當前選中的IP"""
+        try:
+            current_ip = self.entry_ip.get().strip()
+            if not current_ip:
+                from tkinter import messagebox
+                messagebox.showwarning("警告", "請選擇要刪除的IP地址")
+                return
+                
+            from config_core import load_setup, save_setup
+            setup = load_setup()
+            
+            ip_history = setup.get('DUT_Control', {}).get('IP_History', [])
+            
+            if current_ip not in ip_history:
+                from tkinter import messagebox
+                messagebox.showwarning("警告", "該IP地址不在記錄中")
+                return
+            
+            # 詢問確認
+            from tkinter import messagebox
+            result = messagebox.askyesno("確認刪除", f"確定要刪除IP地址 {current_ip} 嗎？")
+            if not result:
+                return
+            
+            ip_history.remove(current_ip)
+            setup['DUT_Control']['IP_History'] = ip_history
+            save_setup(setup)
+            
+            # 重新載入下拉選單
+            self.load_ip_history()
+            
+            # 清空輸入框
+            self.entry_ip.set("")
+            
+            messagebox.showinfo("成功", f"IP地址 {current_ip} 已從記錄中刪除")
+            print(f"[INFO] IP {current_ip} 已從記錄中刪除")
+            
+        except Exception as e:
+            print(f"[ERROR] 刪除IP記錄時發生錯誤: {e}")
+            from tkinter import messagebox
+            messagebox.showerror("錯誤", f"刪除IP記錄失敗: {e}")
+
+    def clear_ip_history(self):
+        """清空所有IP記錄"""
+        try:
+            from tkinter import messagebox
+            result = messagebox.askyesno("確認清空", "確定要清空所有IP記錄嗎？此操作無法恢復。")
+            if not result:
+                return
+                
+            from config_core import load_setup, save_setup
+            setup = load_setup()
+            
+            if 'DUT_Control' not in setup:
+                setup['DUT_Control'] = {}
+            setup['DUT_Control']['IP_History'] = []
+            save_setup(setup)
+            
+            # 重新載入下拉選單
+            self.load_ip_history()
+            
+            messagebox.showinfo("成功", "所有IP記錄已清空")
+            print(f"[INFO] 所有IP記錄已清空")
+            
+        except Exception as e:
+            print(f"[ERROR] 清空IP記錄時發生錯誤: {e}")
+            from tkinter import messagebox
+            messagebox.showerror("錯誤", f"清空IP記錄失敗: {e}")
+
+    def on_ping_with_save(self):
+        """執行Ping並自動保存IP到記錄"""
+        try:
+            current_ip = self.entry_ip.get().strip()
+            if current_ip:
+                # 執行Ping前自動保存IP到記錄
+                self.save_current_ip_silent()
+            
+            # 執行Ping操作
+            if hasattr(self.parent, 'handlers') and hasattr(self.parent.handlers, 'on_ping'):
+                self.parent.handlers.on_ping()
+            else:
+                print("[ERROR] 找不到ping處理程序")
+                
+        except Exception as e:
+            print(f"[ERROR] 執行Ping時發生錯誤: {e}")
+
+    def save_current_ip_silent(self):
+        """靜默保存當前IP（不顯示訊息框）"""
+        try:
+            current_ip = self.entry_ip.get().strip()
+            if not current_ip:
+                return
+                
+            # 簡單的IP格式檢查
+            import re
+            ip_pattern = r'^(\d{1,3}\.){3}\d{1,3}$'
+            if not re.match(ip_pattern, current_ip):
+                return
+            
+            from config_core import load_setup, save_setup
+            setup = load_setup()
+            
+            if 'DUT_Control' not in setup:
+                setup['DUT_Control'] = {}
+            if 'IP_History' not in setup['DUT_Control']:
+                setup['DUT_Control']['IP_History'] = []
+            
+            ip_history = setup['DUT_Control']['IP_History']
+            
+            # 如果IP已存在，先移除然後加到最前面
+            if current_ip in ip_history:
+                ip_history.remove(current_ip)
+            ip_history.insert(0, current_ip)
+            
+            # 限制最多保存20個記錄
+            if len(ip_history) > 20:
+                ip_history = ip_history[:20]
+            
+            setup['DUT_Control']['IP_History'] = ip_history
+            save_setup(setup)
+            
+            # 重新載入下拉選單
+            self.load_ip_history()
+            
+            print(f"[INFO] IP {current_ip} 已自動保存到記錄")
+            
+        except Exception as e:
+            print(f"[ERROR] 自動保存IP記錄時發生錯誤: {e}")
 
     def update_progress(self, value, style="blue.Horizontal.TProgressbar"):
         """更新進度條值和樣式"""
@@ -1268,54 +1634,93 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             print(f"[ERROR] 自動保存IP記錄時發生錯誤: {e}")
 
     def init_tooltips(self):
-        """為所有按鈕添加 ToolTip 提示說明"""
+        """初始化所有UI元件的tooltip說明"""
         try:
-            # 執行指令按鈕
-            if hasattr(self, 'btn_execute'):
-                self.tooltip_manager.add_tooltip(self.btn_execute, "執行所選指令區塊的命令序列")
+            # 確保全域通知管理器已設定
+            if not hasattr(self, 'global_notification_manager') or not self.global_notification_manager:
+                # 嘗試從 parent 獲取全域通知管理器
+                if hasattr(self.parent, 'notification_manager'):
+                    self.global_notification_manager = self.parent.notification_manager
+                    print("[DEBUG] 從 parent 獲取全域通知管理器")
+                # 嘗試從 root 獲取全域通知管理器
+                elif hasattr(self.root, 'notification_manager'):
+                    self.global_notification_manager = self.root.notification_manager
+                    print("[DEBUG] 從 root 獲取全域通知管理器")
+                # 嘗試從 TabManager 獲取全域通知管理器
+                elif hasattr(self.parent, 'tab_manager') and hasattr(self.parent.tab_manager, 'notification_manager'):
+                    self.global_notification_manager = self.parent.tab_manager.notification_manager
+                    print("[DEBUG] 從 tab_manager 獲取全域通知管理器")
             
-            # 清空回應按鈕
-            if hasattr(self, 'btn_clear'):
-                self.tooltip_manager.add_tooltip(self.btn_clear, "清除下方的執行結果顯示區域")
+            # 將全域通知管理器傳遞給 ToolTipManager
+            self.tooltip_manager.global_notification_manager = self.global_notification_manager
             
-            # 備份Log按鈕
-            if hasattr(self, 'btn_backup'):
-                self.tooltip_manager.add_tooltip(self.btn_backup, "將執行記錄匯出為備份檔案")
+            # 為所有元件添加 tooltip
+            self._add_tooltip_to_widgets()
             
-            # 使用說明按鈕
-            if hasattr(self, 'btn_guide'):
-                self.tooltip_manager.add_tooltip(self.btn_guide, "開啟說明文件或說明視窗")
-            
-            # 刷新按鈕
-            if hasattr(self, 'btn_refresh'):
-                self.tooltip_manager.add_tooltip(self.btn_refresh, "重新取得可用的 COM 埠")
-            
-            # Ping按鈕
-            if hasattr(self, 'btn_ping'):
-                self.tooltip_manager.add_tooltip(self.btn_ping, "執行與指定 IP 的 Ping 檢查")
-            
-            # 保存IP按鈕
-            if hasattr(self, 'btn_save_ip'):
-                self.tooltip_manager.add_tooltip(self.btn_save_ip, "將當前 IP 地址保存到記錄")
-            
-            # 清除IP記錄按鈕
-            if hasattr(self, 'btn_clear_ip'):
-                self.tooltip_manager.add_tooltip(self.btn_clear_ip, "清除所有已保存的 IP 記錄")
-            
-            # 字體調整按鈕
-            if hasattr(self, 'btn_ui_font_minus'):
-                self.tooltip_manager.add_tooltip(self.btn_ui_font_minus, "減小介面字體大小")
-            
-            if hasattr(self, 'btn_ui_font_plus'):
-                self.tooltip_manager.add_tooltip(self.btn_ui_font_plus, "增大介面字體大小")
-            
-            if hasattr(self, 'btn_content_font_minus'):
-                self.tooltip_manager.add_tooltip(self.btn_content_font_minus, "減小內容字體大小")
-            
-            if hasattr(self, 'btn_content_font_plus'):
-                self.tooltip_manager.add_tooltip(self.btn_content_font_plus, "增大內容字體大小")
-            
-            print("[INFO] ToolTip 提示已初始化完成")
-            
+            print("[DEBUG] 已初始化所有 tooltip")
         except Exception as e:
-            print(f"[ERROR] 初始化 ToolTip 時發生錯誤: {e}")
+            print(f"[ERROR] 初始化 tooltip 時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def _add_tooltip_to_widgets(self):
+        """為所有元件添加 tooltip"""
+        # COM 口相關元件
+        self.tooltip_manager.add_tooltip(self.label_com, "COM 口選擇標籤")
+        self.tooltip_manager.add_tooltip(self.combobox_com, "選擇要連接的 COM 口")
+        self.tooltip_manager.add_tooltip(self.btn_refresh, "刷新 COM 口列表")
+        self.tooltip_manager.add_tooltip(self.status_canvas, "連接狀態指示燈")
+        
+        # 指令相關元件
+        self.tooltip_manager.add_tooltip(self.label_cmd, "指令選擇標籤")
+        self.tooltip_manager.add_tooltip(self.combobox_cmd, "選擇要執行的指令")
+        self.tooltip_manager.add_tooltip(self.btn_execute, "執行選定的指令")
+        self.tooltip_manager.add_tooltip(self.label_timeout, "指令超時時間設定")
+        self.tooltip_manager.add_tooltip(self.entry_timeout, "設定指令超時時間 (毫秒)")
+        self.tooltip_manager.add_tooltip(self.label_end, "指令結束符設定")
+        self.tooltip_manager.add_tooltip(self.combobox_end, "選擇指令結束符")
+        
+        # 分類按鈕
+        for i, rb in enumerate(self.section_radiobuttons):
+            if i < len(self.sections):
+                self.tooltip_manager.add_tooltip(rb, f"顯示 {self.sections[i]} 分類的指令")
+        
+        # Ping 相關元件
+        self.tooltip_manager.add_tooltip(self.label_ip, "IP 地址輸入標籤")
+        self.tooltip_manager.add_tooltip(self.entry_ip, "輸入要 Ping 的 IP 地址")
+        self.tooltip_manager.add_tooltip(self.btn_ping, "Ping 指定的 IP 地址")
+        self.tooltip_manager.add_tooltip(self.btn_save_ip, "儲存當前 IP 到歷史記錄")
+        self.tooltip_manager.add_tooltip(self.listbox_ip_history, "已儲存的 IP 歷史記錄")
+        self.tooltip_manager.add_tooltip(self.btn_delete_ip, "刪除選定的 IP 記錄")
+        self.tooltip_manager.add_tooltip(self.btn_clear_ip, "清空所有 IP 歷史記錄")
+        
+        # 設定相關元件
+        self.tooltip_manager.add_tooltip(self.checkbtn_auto_exec, "啟用後，選擇指令時會自動執行")
+        self.tooltip_manager.add_tooltip(self.checkbtn_tooltip, "啟用或停用元件提示功能")
+        self.tooltip_manager.add_tooltip(self.btn_guide, "顯示使用說明")
+        self.tooltip_manager.add_tooltip(self.btn_clear_output, "清空右側輸出區域")
+        self.tooltip_manager.add_tooltip(self.btn_settings, "開啟進階設定視窗")
+        
+        # 進度條
+        self.tooltip_manager.add_tooltip(self.progress, "指令執行進度")
+
+    def on_enter_exec(self, event):
+        self.btn_execute.config(bg='#2196F3')
+
+    def on_leave_exec(self, event):
+        self.btn_execute.config(bg='#4CAF50')
+
+    def get_section_description(self, section):
+        # 預設描述
+        default_descriptions = {
+            '全部指令': '顯示所有可用的指令',
+            '單板指令': '用於單板測試的指令集',
+            '整機指令': '用於整機測試的指令集',
+            '驗證喇叭': '用於驗證喇叭的指令集',
+            '出貨指令': '用於出貨測試的指令集'
+        }
+        
+        if section in default_descriptions:
+            return default_descriptions[section]
+        
+        return f'用於{section}的指令集'

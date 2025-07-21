@@ -1,5 +1,5 @@
 {
-  "version": "1.6.1.0",
+  "version": "1.6.1.1",
   "notification_messages": {
     "app_started": "VALO360 指令通 已啟動",
     "settings_updated": "設定已更新！",
@@ -32,187 +32,162 @@
     "system_status": "COM口: {0} | 分類: {1} ({2}個指令) | 超時: {3}秒",
     "history": [
       {
-        "timestamp": "15:14:49",
+        "timestamp": "11:25:57",
+        "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:52:17",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:52:19",
+        "message": "VALO指令通_3 已啟動 (版本：V1.6.1.1)",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:52:20",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:52:25",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:52:25",
+        "message": "COM口: COM1 | 分類: 全部指令 (46個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:52:32",
+        "message": "COM口: COM1 | 分類: 全部指令 (46個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:52:41",
+        "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:52:43",
+        "message": "已顯示使用說明，按「清空回應」按鈕可返回",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:52:45",
+        "message": "已返回正常模式",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:52:48",
+        "message": "已顯示使用說明，按「清空回應」按鈕可返回",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:52:49",
+        "message": "已備份輸出內容至: backup\\backup_20250718_155249.txt",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:52:51",
+        "message": "已返回正常模式",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:52:58",
+        "message": "已連接到 COM1",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:53:03",
         "message": "連接已關閉",
         "type": "error"
       },
       {
-        "timestamp": "15:17:47",
+        "timestamp": "15:53:09",
         "message": "設定已更新！\n• 指令檔案已重新載入\n• COM口設定已更新\n• 結束字串設定已更新\n• IP地址設定已更新\n• 超時設定已更新",
         "type": "success"
       },
       {
-        "timestamp": "15:17:47",
+        "timestamp": "15:53:09",
         "message": "標籤頁名稱已同步更新",
         "type": "success"
       },
       {
-        "timestamp": "15:17:47",
+        "timestamp": "15:53:10",
         "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱",
         "type": "success"
       },
       {
-        "timestamp": "15:17:47",
-        "message": "找到 3 個 COM 口",
-        "type": "info"
-      },
-      {
-        "timestamp": "15:17:52",
-        "message": "已連接到 COM3",
-        "type": "success"
-      },
-      {
-        "timestamp": "15:17:56",
-        "message": "連接已關閉",
-        "type": "error"
-      },
-      {
-        "timestamp": "15:18:24",
-        "message": "找到 3 個 COM 口",
-        "type": "info"
-      },
-      {
-        "timestamp": "15:18:27",
+        "timestamp": "15:53:37",
         "message": "設定已更新！\n• 指令檔案已重新載入\n• COM口設定已更新\n• 結束字串設定已更新\n• IP地址設定已更新\n• 超時設定已更新",
         "type": "success"
       },
       {
-        "timestamp": "15:18:27",
+        "timestamp": "15:53:37",
         "message": "標籤頁名稱已同步更新",
         "type": "success"
       },
       {
-        "timestamp": "15:18:28",
+        "timestamp": "15:53:39",
         "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱",
         "type": "success"
       },
       {
-        "timestamp": "15:18:28",
+        "timestamp": "15:53:39",
         "message": "找到 3 個 COM 口",
         "type": "info"
       },
       {
-        "timestamp": "15:18:34",
-        "message": "已連接到 COM3",
-        "type": "success"
-      },
-      {
-        "timestamp": "15:18:37",
-        "message": "連接已關閉",
-        "type": "error"
-      },
-      {
-        "timestamp": "15:19:46",
-        "message": "設定已更新！\n• 指令檔案已重新載入\n• COM口設定已更新\n• 結束字串設定已更新\n• IP地址設定已更新\n• 超時設定已更新",
-        "type": "success"
-      },
-      {
-        "timestamp": "15:19:46",
-        "message": "標籤頁名稱已同步更新",
-        "type": "success"
-      },
-      {
-        "timestamp": "15:19:46",
-        "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱",
-        "type": "success"
-      },
-      {
-        "timestamp": "15:19:46",
+        "timestamp": "15:54:10",
         "message": "找到 3 個 COM 口",
         "type": "info"
       },
       {
-        "timestamp": "15:19:55",
-        "message": "設定已更新！\n• 指令檔案已重新載入\n• COM口設定已更新\n• 結束字串設定已更新\n• IP地址設定已更新\n• 超時設定已更新",
-        "type": "success"
-      },
-      {
-        "timestamp": "15:19:55",
-        "message": "標籤頁名稱已同步更新",
-        "type": "success"
-      },
-      {
-        "timestamp": "15:19:55",
-        "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱",
-        "type": "success"
-      },
-      {
-        "timestamp": "15:19:55",
+        "timestamp": "15:54:13",
         "message": "找到 3 個 COM 口",
         "type": "info"
       },
       {
-        "timestamp": "15:19:59",
+        "timestamp": "15:54:30",
+        "message": "已選擇: HW_revision",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:54:31",
+        "message": "已連接到 COM1",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:54:37",
+        "message": "連接已關閉",
+        "type": "error"
+      },
+      {
+        "timestamp": "15:54:38",
+        "message": "已連接到 COM1",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:54:40",
+        "message": "連接已關閉",
+        "type": "error"
+      },
+      {
+        "timestamp": "15:54:55",
         "message": "找到 3 個 COM 口",
         "type": "info"
       },
       {
-        "timestamp": "15:20:04",
-        "message": "已連接到 COM3",
-        "type": "success"
-      },
-      {
-        "timestamp": "15:20:05",
-        "message": "連接已關閉",
-        "type": "error"
-      },
-      {
-        "timestamp": "15:20:14",
-        "message": "已連接到 COM3",
-        "type": "success"
-      },
-      {
-        "timestamp": "15:20:16",
-        "message": "連接已關閉",
-        "type": "error"
-      },
-      {
-        "timestamp": "15:20:20",
-        "message": "已連接到 COM3",
-        "type": "success"
-      },
-      {
-        "timestamp": "15:20:24",
-        "message": "連接已關閉",
-        "type": "error"
-      },
-      {
-        "timestamp": "15:20:30",
-        "message": "已連接到 COM3",
-        "type": "success"
-      },
-      {
-        "timestamp": "15:20:31",
-        "message": "連接已關閉",
-        "type": "error"
-      },
-      {
-        "timestamp": "15:20:34",
-        "message": "已連接到 COM3",
-        "type": "success"
-      },
-      {
-        "timestamp": "15:20:35",
-        "message": "連接已關閉",
-        "type": "error"
-      },
-      {
-        "timestamp": "15:20:39",
-        "message": "已連接到 COM3",
-        "type": "success"
-      },
-      {
-        "timestamp": "15:20:42",
-        "message": "連接已關閉",
-        "type": "error"
-      },
-      {
-        "timestamp": "15:20:51",
+        "timestamp": "15:54:57",
         "message": "找到 3 個 COM 口",
         "type": "info"
       }
     ],
-    "last_updated": "2025-07-21T15:20:51.823083"
+    "last_updated": "2025-07-21T15:54:57.411243"
   },
   "DUT_Control": {
     "Serial_COM_Port": "COM3",
@@ -226,11 +201,11 @@
     ],
     "Default_IP_Address": "192.168.11.143",
     "Window_Width": "1536",
-    "Window_Height": "793",
+    "Window_Height": "801",
     "Last_Selected_Command_Section": "$$指令",
     "Pane_Sash_Position": "636",
     "Auto_Execute": true,
-    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/CODE_HERE/Command_TABLE/MU310_command - 2LINE.txt",
+    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/CODE_HERE/Command_TABLE/command.txt",
     "Notification_Font_Size": "10",
     "Section_Titles": [
       "錯誤指令",
@@ -245,7 +220,7 @@
     "Command_Separator": "$$"
   },
   "Fixture_Control": {
-    "Fixture_COM_Port": "COM5",
+    "Fixture_COM_Port": "COM1",
     "Current_Command": "",
     "Test_Category_FUNCTION": false,
     "Test_Category_MB": true,
@@ -375,7 +350,7 @@
     "tab3": "設定"
   },
   "Window_Width": "1536",
-  "Window_Height": "793",
+  "Window_Height": "801",
   "ContentFontSize": "12",
   "UIFontSize": "13"
 }

@@ -10,6 +10,7 @@ current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(current_dir)
 
 from config_core import load_setup, save_setup
+from ui_parts.tooltip import AIToolTipGenerator
 
 class UIComponentsSettings:
     def init_settings_components(self):
@@ -180,6 +181,68 @@ class SettingsUI:
         
         # 從配置初始化所有UI欄位值
         self.update_ui_from_config()
+        
+        # 初始化所有元件的tooltip
+        self.init_tooltips()
+    
+    def init_tooltips(self):
+        """初始化設定頁面所有元件的tooltip"""
+        try:
+            # 定義需要添加tooltip的元件列表
+            widget_list = [
+                # DUT控制設定區域
+                ('window_title_entry', 'window_title_entry'),
+                ('ui_font_size_entry', 'ui_font_size_entry'),
+                ('content_font_size_entry', 'content_font_size_entry'),
+                ('cmd_end_string_entry', 'cmd_end_string_entry'),
+                ('available_end_strings_entry', 'available_end_strings_entry'),
+                
+                # 治具控制設定區域
+                ('test_category_function_cb', 'test_category_function'),
+                ('test_category_mb_cb', 'test_category_mb'),
+                ('test_category_original_cb', 'test_category_original'),
+                ('fixture_font_size_entry', 'fixture_font_size_entry'),
+                
+                # 按鈕
+                ('save_button', 'save_settings_button'),
+                ('reset_button', 'reset_settings_button'),
+            ]
+            
+            # 為每個元件添加tooltip
+            for attr_name, widget_name in widget_list:
+                if hasattr(self, attr_name):
+                    widget = getattr(self, attr_name)
+                    self._add_ai_tooltip_to_widget(widget, widget_name)
+            
+            print("[DEBUG] 設定頁面所有元件的tooltip已初始化完成")
+            
+        except Exception as e:
+            print(f"[ERROR] 初始化設定頁面tooltip時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def _add_ai_tooltip_to_widget(self, widget, widget_name):
+        """為單個元件添加AI生成的tooltip"""
+        try:
+            # 提取元件資訊
+            widget_info = AIToolTipGenerator.extract_widget_info(widget)
+            
+            # 生成tooltip文字
+            tooltip_text = AIToolTipGenerator.generate_tooltip_for_widget(
+                widget=widget,
+                widget_name=widget_name,
+                widget_type=widget_info['type'],
+                context=widget_info['context']
+            )
+            
+            # 添加tooltip到元件
+            from ui_parts.tooltip import ToolTip
+            ToolTip(widget, tooltip_text)
+            
+            print(f"[DEBUG] 已為設定頁面 {widget_name} 添加tooltip: {tooltip_text[:50]}...")
+            
+        except Exception as e:
+            print(f"[ERROR] 為設定頁面 {widget_name} 添加tooltip時發生錯誤: {e}")
     
     def activate(self):
         """當分頁被選中時調用"""

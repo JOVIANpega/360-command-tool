@@ -1,0 +1,103 @@
+# VALO360 指令通 - Tooltip 配置檔案
+# 格式：變數名=簡潔中文說明
+# 請保持說明友善且易懂，避免技術術語
+
+# === COM 區域 ===
+btn_refresh=重新掃描可用的 COM 通訊埠
+combobox_com=選擇要連接的設備通訊埠
+label_com=通訊埠選擇標籤
+status_canvas=設備連接狀態指示燈
+
+# === 指令區域 ===
+combobox_cmd=選擇要執行的指令
+btn_execute=執行目前選擇的指令
+label_cmd=指令選擇標籤
+section_description=當前分類的功能說明
+
+# === Ping 測試區域 ===
+entry_ip=輸入或選擇要測試的網路位址
+btn_ping=測試網路連線狀態
+btn_save_ip=將目前位址加入常用清單
+btn_delete_ip=從常用清單中移除目前位址
+btn_clear_ip=清空所有常用位址記錄
+label_ip=網路位址輸入標籤
+
+# === 設定區域 ===
+combobox_end=選擇指令結束的判斷字串
+btn_remove_end=移除目前選擇的結束字串
+entry_timeout=設定指令執行的等待時間（秒）
+auto_exec_checkbox=程式啟動時自動執行指令
+label_end=結束字串選擇標籤
+label_timeout=等待時間設定標籤
+
+# === 字體控制區域 ===
+btn_ui_font_plus=放大介面文字大小
+btn_ui_font_minus=縮小介面文字大小
+ui_font_scale=拖動調整介面文字大小
+btn_content_font_plus=放大內容文字大小
+btn_content_font_minus=縮小內容文字大小
+content_font_scale=拖動調整內容文字大小
+label_ui_font=介面文字大小設定標籤
+label_content_font=內容文字大小設定標籤
+
+# === 功能按鈕區域 ===
+btn_clear=清空回應內容
+btn_backup=將回應內容儲存為檔案
+btn_guide=顯示使用說明
+
+# === 輸出區域 ===
+text_output=指令執行結果顯示區域，支援右鍵選單操作
+progress=指令執行進度顯示
+
+# === 框架和面板 ===
+left_panel=控制面板 - 包含所有操作控制項
+right_panel=回應內容面板 - 顯示指令執行結果
+main_frame=主要操作界面，可拖動中間分割線調整左右面板大小
+
+# === 設定頁面 ===
+settings_save_button=儲存所有設定到檔案
+settings_version_entry=應用程式版本號
+settings_window_title_entry=設定視窗標題
+settings_window_width_entry=設定視窗寬度
+settings_window_height_entry=設定視窗高度
+settings_dut_com_entry=預設的通訊埠設定
+settings_dut_timeout_entry=指令執行等待時間（秒）
+settings_dut_end_string_entry=指令結束判斷字串
+settings_dut_ip_entry=預設的網路位址
+settings_dut_command_file_entry=指令檔案路徑
+settings_ui_font_spinbox=調整介面文字大小（即時生效）
+settings_content_font_spinbox=調整內容文字大小（即時生效）
+settings_browse_button=瀏覽並選擇指令檔案
+settings_tooltip_enabled_checkbox=啟用或停用所有提示說明
+settings_auto_execute_checkbox=啟動時自動執行指令
+settings_tab_names_tab0=設定 DUT 控制標籤頁的顯示名稱
+settings_tab_names_tab1=設定治具控制標籤頁的顯示名稱
+settings_tab_names_tab2=設定使用說明標籤頁的顯示名稱
+settings_tab_names_tab3=設定設定標籤頁的顯示名稱
+
+# === 治具控制頁面 ===
+fixture_com_combobox=選擇要連接的治具通訊埠
+fixture_refresh_button=重新掃描可用的治具通訊埠
+fixture_command_combobox=選擇要執行的治具指令
+fixture_execute_button=執行選擇的治具指令
+fixture_sent_command_entry=顯示已發送的治具指令
+fixture_clear_button=清空治具指令結果顯示
+fixture_font_spinbox=調整治具控制頁面的文字大小
+fixture_baudrate_combo=設定通訊速率
+fixture_bytesize_combo=設定資料位元數
+fixture_stopbits_combo=設定停止位元數
+fixture_parity_combo=設定同位檢查方式
+fixture_timeout_entry=設定通訊等待時間（秒）
+fixture_result_text=顯示治具指令執行結果
+fixture_serial_info_label=顯示通訊參數資訊
+fixture_category_FUNCTION=啟用功能測試分類的指令
+fixture_category_MB=啟用主機板測試分類的指令
+fixture_category_原始的指令=啟用原始指令分類
+
+# === 分類按鈕（動態生成） ===
+section_全部指令=切換到全部指令分類
+section_系統指令=切換到系統指令分類
+section_網路指令=切換到網路指令分類
+section_測試指令=切換到測試指令分類
+section_除錯指令=切換到除錯指令分類
+section_配置指令=切換到配置指令分類 

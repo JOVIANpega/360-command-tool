@@ -13,9 +13,9 @@ import sys
 import datetime
 
 version_info = {
-    'version': '1.6.0.0',
-    'file_version': (1, 6, 0, 0),
-    'product_version': (1, 6, 0, 0),
+    'version': '1.6.0.3',
+    'file_version': (1, 6, 0, 3),
+    'product_version': (1, 6, 0, 3),
     'company_name': 'VALO360指令通',
     'file_description': 'VALO360指令通 - 序列埠通訊工具',
     'internal_name': 'VALO360指令通',
@@ -27,6 +27,46 @@ version_info = {
 
 # 版本更新記錄
 version_history = """
+v1.6.0.3 (2025-01-28)
+----------------------
+• 全域通知系統優化：
+  - 新增「呼吸顯示」效果，自動處理長文字顯示
+  - 長訊息自動分行，每行顯示2.5秒後輪流切換
+  - 通知字體大小控制按鈕 [+][-] 直接整合到通知區域
+  - 字體大小設定自動儲存至 setup.json
+• ToolTip 與全域通知整合強化：
+  - 修復 ToolTip 顯示在全域通知欄的功能
+  - 確保所有頁面的 ToolTip 都能正確顯示在通知欄
+  - 滑鼠離開元件時自動清除通知
+• 程式架構改進：
+  - 優化全域通知管理器的傳遞機制
+  - 確保設定頁面的 ToolTip 也能使用全域通知
+  - 提升通知系統的穩定性和使用者體驗
+
+v1.6.0.2 (2025-01-27)
+----------------------
+• AI ToolTip 系統完整實現：
+  - 新增 AI 自動生成 ToolTip 內容功能
+  - 建立 tooltip_config.txt 配置檔案，支援友善中文說明
+  - 所有按鈕、COMBOBOX 等 UI 元件皆有對應 ToolTip
+  - ToolTip 內容同時顯示在元件旁和全域通知區域
+  - 支援從配置檔案讀取說明，無需修改程式碼
+• 全域通知系統優化：
+  - 新增 clear_notification() 方法
+  - ToolTip 與全域通知區域聯動顯示
+  - 滑鼠離開元件時自動清除通知
+• 程式架構改進：
+  - 重構 ToolTip 管理器，支援配置檔案讀取
+  - 優化元件識別與說明文字匹配邏輯
+  - 提升程式穩定性和使用者體驗
+
+v1.6.0.1 (2025-01-27)
+----------------------
+• 基礎 ToolTip 系統建立：
+  - 實現基本 ToolTip 顯示功能
+  - 支援按鈕、下拉選單等元件
+  - 可啟用/停用 ToolTip 功能
+
 v1.6.0.0 (2025-07-18)
 ----------------------
 • 設定儲存功能修復與穩定性提升：
@@ -120,15 +160,15 @@ v1.5.0.1 (2025-07-12)
 # 定義版本號
 VERSION = version_info['version']
 
-APP_VERSION = "V1.6.0.0"
-APP_VERSION_DETAIL = "\n【V1.6.0.0 主要更新】\n- 指令下拉選單顯示20筆\n- 設定頁面美化（儲存設定移至內容字體下方）\n- 使用說明(user_guide.txt)精簡為純操作指引\n- 其他細節優化與錯誤修正\n"
+APP_VERSION = "V1.6.0.3"
+APP_VERSION_DETAIL = "\n【V1.6.0.3 主要更新】\n- 全域通知系統優化，新增「呼吸顯示」效果\n- 長訊息自動分行，每行顯示2.5秒後輪流切換\n- 通知字體大小控制按鈕 [+][-] 直接整合到通知區域\n- ToolTip 與全域通知整合強化\n- 滑鼠離開元件時自動清除通知\n- 提升通知系統的穩定性和使用者體驗\n"
 
 # 生成版本資訊檔案
 with open("version_info_zh.txt", "w", encoding="utf-8") as f:
     f.write("VSVersionInfo(\n")
     f.write("  ffi=FixedFileInfo(\n")
-    f.write("    filevers=(1, 5, 0, 9),\n")
-    f.write("    prodvers=(1, 5, 0, 9),\n")
+    f.write("    filevers=(1, 6, 0, 3),\n")
+    f.write("    prodvers=(1, 6, 0, 3),\n")
     f.write("    mask=0x3f,\n")
     f.write("    flags=0x0,\n")
     f.write("    OS=0x40004,\n")

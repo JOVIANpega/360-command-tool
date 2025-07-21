@@ -60,16 +60,22 @@ import psutil
 from config_utils import get_notification_text, get_app_version
 
 
+from ui_parts.tooltip import ToolTip
+
+
 
 
 
 class UIComponentsBase:
 
 
-    def __init__(self, parent):
+    def __init__(self, parent, root):
 
 
         self.parent = parent
+
+
+        self.root = root
 
 
         self.last_size = (0, 0)
@@ -112,221 +118,208 @@ class UIComponentsBase:
 
 
         print(f"[DEBUG] 載入了 {len(self.highlight_keywords)} 個高亮關鍵字到 UIComponents")
-
-
+        
+        # 定義標準 UI 風格參數
+        self.ui_font = "Segoe UI"  # Windows 預設字體
+        self.ui_font_size = 10     # 預設字體大小
+        self.ui_padding = 5        # 元件間距
+        self.ui_button_width = 100 # 標準按鈕寬度
+        self.ui_button_height = 30 # 標準按鈕高度
+        self.ui_bg_color = "#f0f0f0" # 淺灰白底色
+        
+        # 初始化 UI
         self.init_ui()
-
+        self.init_styles()
 
         # 讀取 setup.txt 的寬高
+        width_str = self.parent.setup.get('Window_Width', 1600)
+        try:
+            width = int(width_str)
+        except (ValueError, TypeError):
+            width = 1600
 
-
-        width = int(self.parent.setup.get('Window_Width', 800))
-
-
-        height = int(self.parent.setup.get('Window_Height', 600))
-
+        height_str = self.parent.setup.get('Window_Height', 900)
+        try:
+            height = int(height_str)
+        except (ValueError, TypeError):
+            height = 900
 
         # 視窗最大化
-
-
         try:
-
-
             self.parent.root.state('zoomed')  # Windows
-
-
         except Exception:
-
-
             self.parent.root.attributes('-zoomed', True)  # Linux
-
-
         self.last_size = (width, height)
-
-
         self.parent.root.bind('<Configure>', self.on_window_resize)
-
-
         # 綁定 Enter 鍵執行指令
-
-
         self.parent.root.bind('<Return>', lambda e: self.parent.handlers.on_execute())
 
-
-
-
+    def init_styles(self):
+        """初始化 ttk 樣式，設定 Windows 風格的外觀"""
+        style = ttk.Style()
+        
+        # 設定主題為 'clam'，這是一個較為現代的主題
+        try:
+            style.theme_use('clam')
+        except:
+            print("[WARNING] 無法設定 'clam' 主題，使用預設主題")
+        
+        # 設定全局字體
+        default_font = (self.ui_font, self.ui_font_size)
+        
+        # 設定各種元件樣式
+        style.configure('TLabel', font=default_font, background=self.ui_bg_color)
+        style.configure('TFrame', background=self.ui_bg_color)
+        style.configure('TButton', font=default_font, width=self.ui_button_width)
+        style.configure('TEntry', font=default_font)
+        style.configure('TCombobox', font=default_font)
+        
+        # 設定按鈕懸停效果
+        style.map('TButton',
+                 foreground=[('active', '#000000')],
+                 background=[('active', '#d1d1d1')])
+        
+        # 設定 Notebook (Tab) 樣式
+        style.configure('TNotebook', background=self.ui_bg_color)
+        style.configure('TNotebook.Tab', font=default_font, padding=[10, 5])
+        
+        # 設定分隔線樣式
+        style.configure('TSeparator', background='#d1d1d1')
+        
+        # 設定進度條樣式
+        style.configure('TProgressbar', background='#2196f3')
+        
+        # 設定 Panedwindow 樣式
+        style.configure('TPanedwindow', background=self.ui_bg_color)
+        
+        # 設定 Labelframe (分組框) 樣式
+        style.configure('TLabelframe', font=default_font, background=self.ui_bg_color)
+        style.configure('TLabelframe.Label', font=default_font, background=self.ui_bg_color)
+        
+        # 設定 Scrollbar 樣式
+        style.configure('TScrollbar', background=self.ui_bg_color, arrowcolor='#000000')
 
     def center_window(self, width, height):
-
-
         self.parent.root.update_idletasks()
-
-
         screen_width = self.parent.root.winfo_screenwidth()
-
-
         screen_height = self.parent.root.winfo_screenheight()
-
-
         x = (screen_width // 2) - (width // 2)
-
-
         y = (screen_height // 2) - (height // 2)
-
-
         self.parent.root.geometry(f'{width}x{height}+{x}+{y}')
-
-
         
-
-
     def init_ui(self):
-
-
         # 建立主框架
-
-
-        self.main_frame = ttk.PanedWindow(self.parent.parent, orient='horizontal', style="Main.TFrame")
-
-
-        self.main_frame.grid(row=0, column=0, sticky='nsew')
-
-
-        # 配置主框架的 grid
-
-
-        self.main_frame.grid_rowconfigure(0, weight=1)
-
-
-        self.main_frame.grid_columnconfigure(0, weight=1)
-
-
-        self.main_frame.grid_columnconfigure(1, weight=2)
-
-
+        self.main_frame = ttk.PanedWindow(self.parent.parent, orient='horizontal', style="TPanedwindow")
+        self.main_frame.grid(row=0, column=0, sticky='nsew', padx=self.ui_padding, pady=self.ui_padding)
         
-
-
-        # --- 左側控制面板 ---
-
-
-        # 直接使用 Frame 而非滾動區域，因為我們已經優化佈局使其不需要滾動
-
-
-        self.left_panel = ttk.LabelFrame(self.main_frame, text='控制面板', padding=5, style="Main.TLabelframe")
-
-
+        # 左側面板 (控制區)
+        self.left_panel = ttk.Frame(self.main_frame, style="TFrame")
+        self.left_panel.grid_columnconfigure(0, weight=1)  # 讓左側面板內容可以水平擴展
         
-
-
-        # 建立右側面板
-
-
-        self.right_panel = ttk.LabelFrame(self.main_frame, text='回應內容', padding=5, style="Main.TLabelframe")
-
-
+        # 右側面板 (輸出區)
+        self.right_panel = ttk.Frame(self.main_frame, style="TFrame")
+        self.right_panel.grid_columnconfigure(0, weight=1)  # 讓右側面板內容可以水平擴展
+        self.right_panel.grid_rowconfigure(0, weight=1)    # 讓右側面板內容可以垂直擴展
         
-
-
-        # 將左右面板加入 PanedWindow
-
-
+        # 添加面板到 PanedWindow
         self.main_frame.add(self.left_panel, weight=1)
-
-
-        self.main_frame.add(self.right_panel, weight=2)
-
-
+        self.main_frame.add(self.right_panel, weight=3)
         
-
-
-        # 綁定分割位置變更事件
-
-
-        self.main_frame.bind("<ButtonRelease-1>", self.on_pane_position_changed)
-
-
+        # 設定 PanedWindow 的拖動事件
+        self.main_frame.bind("<ButtonPress-1>", self.on_pane_drag_start)
+        self.main_frame.bind("<ButtonRelease-1>", self.on_pane_drag_end)
+        self.main_frame.bind("<B1-Motion>", self.on_pane_position_changed)
         
-
-
-        # 在UI完全加載後恢復分割位置
-
-
-        self.parent.root.after(100, self.restore_pane_position)
-
-
+        # 從配置中恢復面板位置
+        pane_position = self.parent.setup.get('Pane_Position', 400)
+        try:
+            pane_position = int(pane_position)
+        except (ValueError, TypeError):
+            pane_position = 400
         
-
-
-        # 初始化各個元件
-
-
-        # 這些方法將在子類中實現
-
-
+        # 設定初始分割位置
+        self.parent.root.after(100, lambda: self.main_frame.sashpos(0, pane_position))
         
-
-
-        # 強化 left_panel 內所有 Entry/Combobox 的 <Return> 綁定
-
-
-        # 這將在子類中完成，因為這些元件尚未創建
-
-
+        # 初始化右側輸出區域
+        self.init_right_panel()
         
-
-
-        # 恢復 PanedWindow 分割位置（延遲執行，確保視窗已完全載入）
-
-
-        self.parent.root.after(200, self.restore_pane_position)
-
-
+    def init_right_panel(self):
+        """初始化右側輸出面板"""
+        # 創建輸出區域框架
+        output_frame = ttk.LabelFrame(self.right_panel, text="輸出區域", style="TLabelframe")
+        output_frame.grid(row=0, column=0, sticky='nsew', padx=self.ui_padding, pady=self.ui_padding)
+        output_frame.grid_rowconfigure(0, weight=1)
+        output_frame.grid_columnconfigure(0, weight=1)
         
-
-
-        # 顯示版本信息
-
-
-        app_version = get_app_version()
-        self.parent.root.after(500, lambda: self.show_notification(get_notification_text("app_started"), "blue", 5000))
-
-
+        # 創建輸出文本框
+        self.output_text = scrolledtext.ScrolledText(
+            output_frame, 
+            wrap=tk.WORD, 
+            font=(self.ui_font, self.ui_font_size),
+            background='white',
+            foreground='black'
+        )
+        self.output_text.grid(row=0, column=0, sticky='nsew', padx=self.ui_padding, pady=self.ui_padding)
         
-
-
-        # 顯示歡迎訊息
-
-
-        welcome_message = "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。"
-
-
-        self.parent.root.after(6000, lambda: self.show_notification(welcome_message, "green", 8000))
-
-
+        # 配置文本標籤
+        self.output_text.tag_configure('red', foreground='red')
+        self.output_text.tag_configure('blue', foreground='blue')
+        self.output_text.tag_configure('green', foreground='green')
+        self.output_text.tag_configure('orange', foreground='orange')
+        self.output_text.tag_configure('purple', foreground='purple')
+        self.output_text.tag_configure('bold', font=(self.ui_font, self.ui_font_size, 'bold'))
         
-
-
-        # 顯示系統狀態
-
-
-        self.parent.root.after(15000, self.show_system_status)
-
-
+        # 添加右鍵選單
+        self.output_text.bind("<Button-3>", self.show_output_context_menu)
         
+        # 創建控制按鈕區域
+        control_frame = ttk.Frame(output_frame, style="TFrame")
+        control_frame.grid(row=1, column=0, sticky='ew', padx=self.ui_padding, pady=self.ui_padding)
+        
+        # 添加清空按鈕
+        self.btn_clear = ttk.Button(
+            control_frame, 
+            text="清空輸出", 
+            command=lambda: self.output_text.delete(1.0, tk.END),
+            style="TButton"
+        )
+        self.btn_clear.pack(side=tk.LEFT, padx=self.ui_padding)
+        
+        # 添加複製按鈕
+        self.btn_copy = ttk.Button(
+            control_frame, 
+            text="複製全部", 
+            command=self.copy_selected_text,
+            style="TButton"
+        )
+        self.btn_copy.pack(side=tk.LEFT, padx=self.ui_padding)
 
+    def show_output_context_menu(self, event):
+        """顯示輸出區域的右鍵選單"""
+        context_menu = tk.Menu(self.parent.root, tearoff=0)
+        context_menu.add_command(label="複製", command=self.copy_selected_text)
+        context_menu.add_command(label="全選", command=self.select_all_text)
+        context_menu.add_command(label="清空", command=lambda: self.output_text.delete(1.0, tk.END))
+        context_menu.tk_popup(event.x_root, event.y_root)
 
-        # 顯示基本操作提示
+    def copy_selected_text(self):
+        """複製選中的文字"""
+        try:
+            selected_text = self.output_text.get(tk.SEL_FIRST, tk.SEL_LAST)
+            self.parent.root.clipboard_clear()
+            self.parent.root.clipboard_append(selected_text)
+        except tk.TclError:
+            # 如果沒有選中文字，則複製全部
+            all_text = self.output_text.get(1.0, tk.END)
+            self.parent.root.clipboard_clear()
+            self.parent.root.clipboard_append(all_text)
 
-
-        basic_tips = "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。"
-
-
-        self.parent.root.after(25000, lambda: self.show_notification(basic_tips, "blue", 10000))
-
-
-
-
+    def select_all_text(self):
+        """全選文字"""
+        self.output_text.tag_add(tk.SEL, "1.0", tk.END)
+        self.output_text.mark_set(tk.INSERT, "1.0")
+        self.output_text.see(tk.INSERT)
+        return 'break'
 
     def on_window_resize(self, event):
 
@@ -531,4 +524,4 @@ class UIComponentsBase:
         except Exception as e:
             print(f"[ERROR] 顯示系統狀態時發生錯誤: {e}")
             import traceback
-            traceback.print_exc() 
+            traceback.print_exc()

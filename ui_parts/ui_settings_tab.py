@@ -10,7 +10,7 @@ current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(current_dir)
 
 from config_core import load_setup, save_setup
-from ui_parts.tooltip import ToolTipManager
+from ui_parts.tooltip import ToolTipManager, AIToolTipGenerator
 
 class SettingsTab(ttk.Frame):
     def __init__(self, parent, on_save_callback=None, **kwargs):
@@ -66,15 +66,17 @@ class SettingsTab(ttk.Frame):
         basic_frame.pack(fill='x', pady=(0, 8))
         basic_frame.columnconfigure(1, weight=1)
         
-        # 應用程式版本 - width=20
-        ttk.Label(basic_frame, text="應用程式版本:").grid(row=0, column=0, sticky="w", pady=4)
+        # 版本號 - width=20
+        ttk.Label(basic_frame, text="版本:").grid(row=0, column=0, sticky="w", pady=4)
         self.vars["version"] = tk.StringVar(value=self.setup_data.get("version", "V1.5.0.2"))
-        ttk.Entry(basic_frame, textvariable=self.vars["version"], width=20).grid(row=0, column=1, sticky="ew", padx=(10, 0), pady=4)
+        self.version_entry = ttk.Entry(basic_frame, textvariable=self.vars["version"], width=20)
+        self.version_entry.grid(row=0, column=1, sticky="ew", padx=(10, 0), pady=4)
         
         # 視窗標題 - width=40
         ttk.Label(basic_frame, text="視窗標題:").grid(row=1, column=0, sticky="w", pady=4)
         self.vars["Window_Title"] = tk.StringVar(value=self.setup_data.get("Window_Title", "VALO360 指令通"))
-        ttk.Entry(basic_frame, textvariable=self.vars["Window_Title"], width=40).grid(row=1, column=1, sticky="ew", padx=(10, 0), pady=4)
+        self.window_title_entry = ttk.Entry(basic_frame, textvariable=self.vars["Window_Title"], width=40)
+        self.window_title_entry.grid(row=1, column=1, sticky="ew", padx=(10, 0), pady=4)
         
         # 視窗大小 - 視窗寬度 width=20
         size_frame = ttk.Frame(basic_frame)
@@ -82,13 +84,15 @@ class SettingsTab(ttk.Frame):
         size_frame.columnconfigure(1, weight=1)
         size_frame.columnconfigure(3, weight=1)
         
-        ttk.Label(size_frame, text="視窗寬度:").grid(row=0, column=0, sticky="w")
+        ttk.Label(size_frame, text="寬度:").grid(row=0, column=0, sticky="w")
         self.vars["Window_Width"] = tk.StringVar(value=self.setup_data.get("Window_Width", "1536"))
-        ttk.Entry(size_frame, textvariable=self.vars["Window_Width"], width=20).grid(row=0, column=1, sticky="w", padx=(5, 10))
+        self.window_width_entry = ttk.Entry(size_frame, textvariable=self.vars["Window_Width"], width=20)
+        self.window_width_entry.grid(row=0, column=1, sticky="w", padx=(5, 10))
         
         ttk.Label(size_frame, text="高度:").grid(row=0, column=2, sticky="w")
         self.vars["Window_Height"] = tk.StringVar(value=self.setup_data.get("Window_Height", "793"))
-        ttk.Entry(size_frame, textvariable=self.vars["Window_Height"], width=20).grid(row=0, column=3, sticky="w", padx=(5, 0))
+        self.window_height_entry = ttk.Entry(size_frame, textvariable=self.vars["Window_Height"], width=20)
+        self.window_height_entry.grid(row=0, column=3, sticky="w", padx=(5, 0))
         
         # DUT 控制設定
         dut_frame = ttk.LabelFrame(left_container, text="DUT 控制設定", padding=(10, 4))
@@ -101,30 +105,53 @@ class SettingsTab(ttk.Frame):
         # 串口設定 - width=20
         ttk.Label(dut_frame, text="串口:").grid(row=dut_row, column=0, sticky="w", pady=4)
         self.vars["DUT_Serial_COM_Port"] = tk.StringVar(value=dut_settings.get("Serial_COM_Port", "COM5"))
-        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Serial_COM_Port"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
+        self.dut_com_entry = ttk.Entry(dut_frame, textvariable=self.vars["DUT_Serial_COM_Port"], width=20)
+        self.dut_com_entry.grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
         dut_row += 1
         
         # 指令超時(秒) - width=20
         ttk.Label(dut_frame, text="指令超時(秒):").grid(row=dut_row, column=0, sticky="w", pady=4)
         self.vars["DUT_Command_Timeout_Seconds"] = tk.StringVar(value=dut_settings.get("Command_Timeout_Seconds", "30"))
-        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Command_Timeout_Seconds"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
+        self.dut_timeout_entry = ttk.Entry(dut_frame, textvariable=self.vars["DUT_Command_Timeout_Seconds"], width=20)
+        self.dut_timeout_entry.grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
         dut_row += 1
         
         # 指令結束字串 - width=20
         ttk.Label(dut_frame, text="指令結束字串:").grid(row=dut_row, column=0, sticky="w", pady=4)
         self.vars["DUT_Command_End_String"] = tk.StringVar(value=dut_settings.get("Command_End_String", "root"))
-        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Command_End_String"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
+        self.dut_end_string_entry = ttk.Entry(dut_frame, textvariable=self.vars["DUT_Command_End_String"], width=20)
+        self.dut_end_string_entry.grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
         dut_row += 1
         
         # 預設IP地址 - width=20
         ttk.Label(dut_frame, text="預設IP地址:").grid(row=dut_row, column=0, sticky="w", pady=4)
         self.vars["DUT_Default_IP_Address"] = tk.StringVar(value=dut_settings.get("Default_IP_Address", "192.168.11.143"))
-        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Default_IP_Address"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
+        self.dut_ip_entry = ttk.Entry(dut_frame, textvariable=self.vars["DUT_Default_IP_Address"], width=20)
+        self.dut_ip_entry.grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
         dut_row += 1
 
         self.vars["DUT_Pane_Sash_Position"] = tk.StringVar(value=dut_settings.get("Pane_Sash_Position", "633"))
         self.vars["DUT_Auto_Execute"] = tk.BooleanVar(value=dut_settings.get("Auto_Execute", False))
         self.vars["UI_ToolTip_Enabled"] = tk.BooleanVar(value=self.setup_data.get('UI_Settings', {}).get("ToolTip_Enabled", True))
+        
+        # 創建ToolTip啟用勾選框
+        self.tooltip_enabled_checkbox = ttk.Checkbutton(
+            dut_frame, 
+            text="啟用 ToolTip 提示", 
+            variable=self.vars["UI_ToolTip_Enabled"],
+            command=self.on_tooltip_setting_changed
+        )
+        self.tooltip_enabled_checkbox.grid(row=dut_row, column=0, columnspan=2, sticky="w", pady=4)
+        dut_row += 1
+        
+        # 創建自動執行勾選框
+        self.auto_execute_checkbox = ttk.Checkbutton(
+            dut_frame,
+            text="啟動時自動執行指令",
+            variable=self.vars["DUT_Auto_Execute"]
+        )
+        self.auto_execute_checkbox.grid(row=dut_row, column=0, columnspan=2, sticky="w", pady=4)
+        dut_row += 1
 
         # 字體設定 - 水平排版，並加入即時更新功能
         font_frame = ttk.Frame(dut_frame)
@@ -178,8 +205,8 @@ class SettingsTab(ttk.Frame):
         
         # 第一行：路徑輸入框
         self.vars["DUT_Command_File_Path"] = tk.StringVar(value=dut_settings.get("Command_File_Path", ""))
-        path_entry = ttk.Entry(path_container, textvariable=self.vars["DUT_Command_File_Path"])
-        path_entry.grid(row=0, column=0, sticky="ew", pady=(0, 5))
+        self.dut_command_file_entry = ttk.Entry(path_container, textvariable=self.vars["DUT_Command_File_Path"])
+        self.dut_command_file_entry.grid(row=0, column=0, sticky="ew", pady=(0, 5))
         
         # 第二行：瀏覽按鈕
         self.browse_button = ttk.Button(path_container, text="瀏覽檔案", command=lambda: self.browse_file("DUT_Command_File_Path"))
@@ -205,7 +232,9 @@ class SettingsTab(ttk.Frame):
             tab_name = tab_names.get(tab_key, default_tab_names[i])
             ttk.Label(tab_frame, text=f"標籤頁 {i+1}:").grid(row=i, column=0, sticky="w", pady=4)
             self.vars[f"tab_names_{tab_key}"] = tk.StringVar(value=tab_name)
-            ttk.Entry(tab_frame, textvariable=self.vars[f"tab_names_{tab_key}"], width=20).grid(row=i, column=1, sticky="ew", padx=(10, 0), pady=4)
+            entry = ttk.Entry(tab_frame, textvariable=self.vars[f"tab_names_{tab_key}"], width=20)
+            entry.grid(row=i, column=1, sticky="ew", padx=(10, 0), pady=4)
+            setattr(self, f"tab_names_{tab_key}_entry", entry)
         
         # 注意：治具控制設定已移動至「TAB 測試治具」的指令控制區塊中
 
@@ -458,27 +487,111 @@ class SettingsTab(ttk.Frame):
             print(f"[ERROR] 更新 ToolTip 設定失敗: {e}")
 
     def setup_tooltips(self):
-        """設定工具提示"""
-        if not self.tooltip_manager:
-            return
+        """設置所有設定頁面元件的tooltip"""
+        try:
+            # 嘗試獲取全域通知管理器
+            global_notification_manager = None
             
-        # 儲存按鈕 - 移除了重新載入按鈕的 tooltip
-        if hasattr(self, 'save_button'):
-            self.tooltip_manager.add_tooltip(self.save_button, "儲存所有設定到檔案")
+            # 從 parent 獲取
+            if hasattr(self.parent, 'notification_manager'):
+                global_notification_manager = self.parent.notification_manager
+                print("[DEBUG] 設定頁面: 從 parent 獲取全域通知管理器")
+            # 從 root 獲取
+            elif hasattr(self.parent, 'master') and hasattr(self.parent.master, 'notification_manager'):
+                global_notification_manager = self.parent.master.notification_manager
+                print("[DEBUG] 設定頁面: 從 root 獲取全域通知管理器")
+            # 從 TabManager 獲取
+            elif hasattr(self.parent, 'master') and hasattr(self.parent.master, 'tab_manager') and \
+                 hasattr(self.parent.master.tab_manager, 'notification_manager'):
+                global_notification_manager = self.parent.master.tab_manager.notification_manager
+                print("[DEBUG] 設定頁面: 從 tab_manager 獲取全域通知管理器")
+            
+            # 重新初始化 ToolTip 管理器，傳入全域通知管理器
+            self.tooltip_manager = ToolTipManager(global_notification_manager)
+            
+            # 從設定中讀取 ToolTip 啟用狀態，預設為啟用
+            tooltip_enabled = self.setup_data.get("UI_Settings", {}).get("ToolTip_Enabled", True)
+            self.tooltip_manager.set_all_enabled(tooltip_enabled)
+            
+            # 為所有設定頁面元件添加tooltip
+            self._add_tooltip_to_settings_widgets()
+            
+            print("[DEBUG] 設定頁面: 所有tooltip已初始化完成")
+            
+        except Exception as e:
+            print(f"[ERROR] 設定頁面: 初始化tooltip時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def _add_tooltip_to_settings_widgets(self):
+        """為設定頁面所有元件添加AI生成的tooltip"""
         
-        # 字體設定
-        if hasattr(self, 'ui_font_spinbox'):
-            self.tooltip_manager.add_tooltip(self.ui_font_spinbox, "調整使用者介面文字大小（即時生效）")
-        if hasattr(self, 'content_font_spinbox'):
-            self.tooltip_manager.add_tooltip(self.content_font_spinbox, "調整內容區域文字大小（即時生效）")
-        if hasattr(self, 'notification_font_spinbox'):
-            self.tooltip_manager.add_tooltip(self.notification_font_spinbox, "調整通知區域文字大小（即時生效）")
-        if hasattr(self, 'fixture_font_spinbox'):
-            self.tooltip_manager.add_tooltip(self.fixture_font_spinbox, "調整治具控制頁面文字大小（即時生效）")
+        # 定義需要添加tooltip的元件列表
+        widget_list = [
+            # 儲存按鈕
+            ('save_button', 'settings_save_button'),
+            
+            # 基本設定區域
+            ('version_entry', 'settings_version_entry'),
+            ('window_title_entry', 'settings_window_title_entry'),
+            ('window_width_entry', 'settings_window_width_entry'),
+            ('window_height_entry', 'settings_window_height_entry'),
+            
+            # DUT控制設定區域
+            ('dut_com_entry', 'settings_dut_com_entry'),
+            ('dut_timeout_entry', 'settings_dut_timeout_entry'),
+            ('dut_end_string_entry', 'settings_dut_end_string_entry'),
+            ('dut_ip_entry', 'settings_dut_ip_entry'),
+            ('dut_command_file_entry', 'settings_dut_command_file_entry'),
+            
+            # 字體設定
+            ('ui_font_spinbox', 'settings_ui_font_spinbox'),
+            ('content_font_spinbox', 'settings_content_font_spinbox'),
+            
+            # 瀏覽按鈕
+            ('browse_button', 'settings_browse_button'),
+            
+            # 勾選框
+            ('tooltip_enabled_checkbox', 'settings_tooltip_enabled_checkbox'),
+            ('auto_execute_checkbox', 'settings_auto_execute_checkbox'),
+        ]
         
-        # 瀏覽按鈕
-        if hasattr(self, 'browse_button'):
-            self.tooltip_manager.add_tooltip(self.browse_button, "瀏覽並選擇指令檔案")
+        # 為每個元件添加tooltip
+        for attr_name, widget_name in widget_list:
+            if hasattr(self, attr_name):
+                widget = getattr(self, attr_name)
+                self._add_ai_tooltip_to_widget(widget, widget_name)
+        
+        # 為標籤頁名稱設定動態添加tooltip
+        for i in range(4):
+            tab_key = f'tab{i}'
+            entry_name = f"tab_names_{tab_key}_entry"
+            if hasattr(self, entry_name):
+                entry = getattr(self, entry_name)
+                tab_names = ['DUT 控制', '治具控制', '使用說明', '設定']
+                self._add_ai_tooltip_to_widget(entry, f"settings_tab_names_{tab_key}")
+    
+    def _add_ai_tooltip_to_widget(self, widget, widget_name):
+        """為單個元件添加AI生成的tooltip"""
+        try:
+            # 提取元件資訊
+            widget_info = AIToolTipGenerator.extract_widget_info(widget)
+            
+            # 生成tooltip文字
+            tooltip_text = AIToolTipGenerator.generate_tooltip_for_widget(
+                widget=widget,
+                widget_name=widget_name,
+                widget_type=widget_info['type'],
+                context=widget_info['context']
+            )
+            
+            # 添加tooltip到元件
+            self.tooltip_manager.add_tooltip(widget, tooltip_text)
+            
+            print(f"[DEBUG] 已為設定頁面 {widget_name} 添加tooltip: {tooltip_text[:50]}...")
+            
+        except Exception as e:
+            print(f"[ERROR] 為設定頁面 {widget_name} 添加tooltip時發生錯誤: {e}")
 
     def activate(self):
         """當分頁被選中時調用"""

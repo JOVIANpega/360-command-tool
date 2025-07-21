@@ -17,7 +17,7 @@ if current_dir not in sys.path:
 try:
     from config_utils import resource_path
     # 導入 ToolTip 管理器
-    from ui_parts.tooltip import ToolTipManager
+    from ui_parts.tooltip import ToolTipManager, AIToolTipGenerator
     from config_core import load_setup, save_setup
 except ImportError as e:
     print(f"導入模組失敗: {e}")
@@ -785,21 +785,85 @@ class FixtureControlWindow:
             pass  # 忽略字體更新錯誤
 
     def setup_tooltips(self):
-        """設定工具提示"""
+        """設定工具提示 - 使用AI自動生成"""
         if not self.tooltip_manager:
             return
             
-        tooltips = {
-            self.com_combobox: "選擇制具連接的 COM 埠",
-            self.command_combobox: "選擇要執行的制具指令",
-            self.execute_btn: "執行選擇的指令",
-            self.sent_command_entry: "顯示剛剛發送的指令代碼", 
-            self.clear_btn: "清除執行結果區域的所有內容"
-        }
+        try:
+            # 使用AI自動生成tooltip內容
+            self._add_tooltip_to_fixture_widgets()
+            
+            print("[DEBUG] 治具控制頁面的所有AI tooltip已初始化完成")
+            
+        except Exception as e:
+            print(f"[ERROR] 治具控制頁面初始化tooltip時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    def _add_tooltip_to_fixture_widgets(self):
+        """為治具控制頁面所有元件添加AI生成的tooltip"""
         
-        for widget, text in tooltips.items():
-            if hasattr(self, widget.__class__.__name__.lower()) and widget:
-                self.tooltip_manager.add_tooltip(widget, text)
+        # 定義需要添加tooltip的元件列表
+        widget_list = [
+            # COM口相關
+            ('com_combobox', 'fixture_com_combobox'),
+            ('refresh_btn', 'fixture_refresh_button'),
+            
+            # 指令相關
+            ('command_combobox', 'fixture_command_combobox'),
+            ('execute_btn', 'fixture_execute_button'),
+            ('sent_command_entry', 'fixture_sent_command_entry'),
+            ('clear_btn', 'fixture_clear_button'),
+            
+            # 字體設定
+            ('fixture_font_spinbox', 'fixture_font_spinbox'),
+            
+            # 串口設定
+            ('baudrate_combo', 'fixture_baudrate_combo'),
+            ('bytesize_combo', 'fixture_bytesize_combo'),
+            ('stopbits_combo', 'fixture_stopbits_combo'),
+            ('parity_combo', 'fixture_parity_combo'),
+            ('timeout_entry', 'fixture_timeout_entry'),
+            
+            # 結果顯示區域
+            ('result_text', 'fixture_result_text'),
+            ('serial_info_label', 'fixture_serial_info_label'),
+        ]
+        
+        # 為每個元件添加tooltip
+        for attr_name, widget_name in widget_list:
+            if hasattr(self, attr_name):
+                widget = getattr(self, attr_name)
+                self._add_ai_tooltip_to_widget(widget, widget_name)
+        
+        # 為分類勾選框動態添加tooltip
+        for category, var in getattr(self, 'category_vars', {}).items():
+            checkbox_name = f"{category.lower()}_checkbox"
+            if hasattr(self, checkbox_name):
+                checkbox = getattr(self, checkbox_name)
+                self._add_ai_tooltip_to_widget(checkbox, f"fixture_category_{category}")
+    
+    def _add_ai_tooltip_to_widget(self, widget, widget_name):
+        """為單個元件添加AI生成的tooltip"""
+        try:
+            # 提取元件資訊
+            widget_info = AIToolTipGenerator.extract_widget_info(widget)
+            
+            # 生成tooltip文字
+            tooltip_text = AIToolTipGenerator.generate_tooltip_for_widget(
+                widget=widget,
+                widget_name=widget_name,
+                widget_type=widget_info['type'],
+                context=widget_info['context']
+            )
+            
+            # 添加tooltip到元件
+            self.tooltip_manager.add_tooltip(widget, tooltip_text)
+            
+            print(f"[DEBUG] 已為治具控制 {widget_name} 添加tooltip: {tooltip_text[:50]}...")
+            
+        except Exception as e:
+            print(f"[ERROR] 為治具控制 {widget_name} 添加tooltip時發生錯誤: {e}")
 
     def refresh_ports(self):
         """刷新 COM 埠列表 (由外部調用)"""
