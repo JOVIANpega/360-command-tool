@@ -49,6 +49,7 @@ class ToolTip:
         self.tw = tk.Toplevel(self.widget)
         self.tw.wm_overrideredirect(True)
         self.tw.wm_geometry("+%d+%d" % (x, y))
+        self.tw.wm_attributes("-topmost", 1)
         
         # 創建標籤
         label = tk.Label(self.tw, text=self.text, justify='left',
@@ -69,33 +70,33 @@ class ToolTip:
         if not enabled and self.tw:
             self.hidetip()
 
-    def update_text(self, new_text):
-        """更新提示文字"""
-        self.text = new_text
-
 
 class ToolTipManager:
     """
     管理所有 ToolTip 的啟用/停用狀態
     """
-    def __init__(self):
-        self.tooltips = []
-        self.enabled = True
+    def __init__(self, enabled=True):
+        self.enabled = enabled
+        self.tooltips = {}
 
-    def add_tooltip(self, widget, text, delay=500, wraplen=250):
+    def add_tooltip(self, widget, text):
         """添加一個 ToolTip"""
-        tooltip = ToolTip(widget, text, delay, wraplen)
-        tooltip.set_enabled(self.enabled)
-        self.tooltips.append(tooltip)
-        return tooltip
+        if self.enabled:
+            self.tooltips[widget] = ToolTip(widget, text)
 
-    def set_all_enabled(self, enabled):
+    def set_enabled(self, enabled):
         """設定所有 ToolTip 的啟用狀態"""
         self.enabled = enabled
-        for tooltip in self.tooltips:
-            tooltip.set_enabled(enabled)
-
-    def remove_tooltip(self, tooltip):
-        """移除一個 ToolTip"""
-        if tooltip in self.tooltips:
-            self.tooltips.remove(tooltip) 
+        for widget, tooltip in self.tooltips.items():
+            if enabled:
+                tooltip.schedule()
+            else:
+                tooltip.hidetip()
+                tooltip.unschedule()
+                
+    def set_all_enabled(self, enabled):
+        """設定所有 ToolTip 的啟用狀態（與 set_enabled 相同，但提供兼容性）"""
+        self.set_enabled(enabled)
+        # 更新所有 tooltip 的內部啟用狀態
+        for widget, tooltip in self.tooltips.items():
+            tooltip.set_enabled(enabled) 

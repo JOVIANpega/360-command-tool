@@ -14,6 +14,7 @@ from ui_parts.ui_components_output import UIComponentsOutput
 from ui_parts.ui_components_settings import UIComponentsSettings
 from ui_parts.tooltip import ToolTipManager
 from config_utils import get_notification_text, get_app_version
+from config_core import load_setup, save_setup, GUIDE_FILE, COMMAND_FILE, list_com_ports
 
 
 # 將當前目錄加入 Python 路徑
@@ -21,16 +22,13 @@ current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(current_dir)
 
 
-from config_core import list_com_ports, save_setup, GUIDE_FILE, COMMAND_FILE
-
-
 class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UIComponentsSettings):
     def __init__(self, parent, handlers, root):
         # Call the __init__ of the base class (UIComponentsBase) which sets up the UI structure
-        super().__init__(parent)
+        self.parent = parent  # 先設定 parent 屬性
+        super().__init__(root, parent)
         self.root = root
         self.handlers = handlers
-        self.current_left_row = 0
         
         # 獲取全域通知管理器的引用
         self.global_notification_manager = None
@@ -444,10 +442,6 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             traceback.print_exc()
             raise
 
-    def init_exec_button_left_panel(self):
-        # This method is now empty as the button has been moved.
-        pass
-
     def init_progress_components(self):
         """初始化進度條組件"""
         self.progress = ttk.Progressbar(
@@ -709,30 +703,6 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.text_output.see(tk.END)
         self.text_output.configure(state='disabled')
 
-    def flush_buffer(self):
-        """將緩衝區的文字一次性添加到輸出區域"""
-        if not hasattr(self.parent, 'text_buffer') or not self.parent.text_buffer:
-            return
-            
-        if not hasattr(self, 'text_output'):
-            print("[ERROR] text_output 不存在，無法刷新緩衝區")
-            return
-            
-        try:
-            self.text_output.configure(state='normal')
-            for text, tag in self.parent.text_buffer:
-                if tag:
-                    self.text_output.insert(tk.END, text, tag)
-                else:
-                    self.text_output.insert(tk.END, text)
-            self.text_output.see(tk.END)  # 自動捲到最底
-            self.text_output.configure(state='disabled')  # 設回唯讀狀態
-            self.parent.text_buffer = []
-        except Exception as e:
-            print(f"[ERROR] 刷新緩衝區時發生錯誤: {e}")
-            import traceback
-            traceback.print_exc()
-
     def update_ui_fonts(self, size=None):
         try:
             if size is None:
@@ -861,31 +831,10 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                 print(f"[DEBUG] 視窗大小已保存: {w}x{h}")
         # 不再自動縮放字體
 
-    def start_led_blink(self):
-        self.led_blinking = True
-        self._blink_led()
-
-    def _blink_led(self):
-        if not self.led_blinking:
-            return
-        current_color = self.status_canvas.itemcget(self.status_light, 'fill')
-        next_color = 'lime' if current_color == 'red' else 'red'
-        self.status_canvas.itemconfig(self.status_light, fill=next_color)
-        self.status_canvas.after(300, self._blink_led)
-
     def stop_led_blink(self):
         self.led_blinking = False
         # 恢復為黑色，表示待命狀態
         self.status_canvas.itemconfig(self.status_light, fill='black')
-
-    def on_pane_drag_start(self, event):
-        self.main_frame.start_x = event.x
-        self.main_frame.start_y = event.y
-
-    def on_pane_drag_end(self, event):
-        dx = event.x - self.main_frame.start_x
-        dy = event.y - self.main_frame.start_y
-        self.main_frame.move(dx, dy)
 
     def on_pane_position_changed(self, event):
         """當 PanedWindow 分割位置改變時保存位置"""
@@ -1080,16 +1029,6 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             self.show_notification(get_notification_text("system_status", com, section, cmd_count, timeout), "blue", 5000)
         except Exception as e:
             print(f"[ERROR] 顯示系統狀態時發生錯誤: {e}")
-            import traceback
-            traceback.print_exc()
-
-    def change_notification_font_size(self, delta):
-        """修改通知區域字體大小"""
-        try:
-            # 原本的通知區域已被全域通知管理器取代，不再需要
-            pass
-        except Exception as e:
-            print(f"[ERROR] 修改通知區域字體大小時發生錯誤: {e}")
             import traceback
             traceback.print_exc()
 
@@ -1380,8 +1319,3 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             
         except Exception as e:
             print(f"[ERROR] 初始化 ToolTip 時發生錯誤: {e}")
-
-    def set_tooltips_enabled(self, enabled):
-        """設定 ToolTip 的啟用狀態"""
-        if hasattr(self, 'tooltip_manager'):
-            self.tooltip_manager.set_all_enabled(enabled)

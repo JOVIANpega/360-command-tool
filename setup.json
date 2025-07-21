@@ -1,5 +1,5 @@
 {
-  "version": "1.5.0.946",
+  "version": "1.6.1.0",
   "notification_messages": {
     "app_started": "VALO360 指令通 已啟動",
     "settings_updated": "設定已更新！",
@@ -32,155 +32,217 @@
     "system_status": "COM口: {0} | 分類: {1} ({2}個指令) | 超時: {3}秒",
     "history": [
       {
-        "timestamp": "17:39:47",
-        "message": "設定已更新！\n• 指令檔案已重新載入\n• COM口設定已更新\n• 結束字串設定已更新\n• IP地址設定已更新\n• 超時設定已更新",
-        "type": "success"
-      },
-      {
-        "timestamp": "17:39:47",
-        "message": "標籤頁名稱已同步更新",
-        "type": "success"
-      },
-      {
-        "timestamp": "17:39:47",
-        "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱",
-        "type": "success"
-      },
-      {
-        "timestamp": "17:39:47",
-        "message": "找到 2 個 COM 口",
-        "type": "info"
-      },
-      {
-        "timestamp": "17:39:53",
-        "message": "找到 2 個 COM 口",
-        "type": "info"
-      },
-      {
-        "timestamp": "17:39:58",
-        "message": "找到 2 個 COM 口",
-        "type": "info"
-      },
-      {
-        "timestamp": "17:40:00",
-        "message": "找到 2 個 COM 口",
-        "type": "info"
-      },
-      {
-        "timestamp": "17:40:04",
+        "timestamp": "15:14:49",
         "message": "連接已關閉",
         "type": "error"
       },
       {
-        "timestamp": "17:40:07",
-        "message": "已連接到 COM5",
-        "type": "success"
-      },
-      {
-        "timestamp": "17:40:53",
-        "message": "找到 2 個 COM 口",
-        "type": "info"
-      },
-      {
-        "timestamp": "17:41:02",
+        "timestamp": "15:17:47",
         "message": "設定已更新！\n• 指令檔案已重新載入\n• COM口設定已更新\n• 結束字串設定已更新\n• IP地址設定已更新\n• 超時設定已更新",
         "type": "success"
       },
       {
-        "timestamp": "17:41:03",
+        "timestamp": "15:17:47",
         "message": "標籤頁名稱已同步更新",
         "type": "success"
       },
       {
-        "timestamp": "17:41:03",
+        "timestamp": "15:17:47",
         "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱",
         "type": "success"
       },
       {
-        "timestamp": "17:41:03",
-        "message": "找到 2 個 COM 口",
+        "timestamp": "15:17:47",
+        "message": "找到 3 個 COM 口",
         "type": "info"
       },
       {
-        "timestamp": "17:41:11",
-        "message": "找到 2 個 COM 口",
-        "type": "info"
-      },
-      {
-        "timestamp": "17:46:10",
-        "message": "找到 2 個 COM 口",
-        "type": "info"
-      },
-      {
-        "timestamp": "17:46:10",
-        "message": "VALO360 指令通 已啟動",
-        "type": "info"
-      },
-      {
-        "timestamp": "17:46:13",
-        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "timestamp": "15:17:52",
+        "message": "已連接到 COM3",
         "type": "success"
       },
       {
-        "timestamp": "17:46:15",
+        "timestamp": "15:17:56",
+        "message": "連接已關閉",
+        "type": "error"
+      },
+      {
+        "timestamp": "15:18:24",
+        "message": "找到 3 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:18:27",
         "message": "設定已更新！\n• 指令檔案已重新載入\n• COM口設定已更新\n• 結束字串設定已更新\n• IP地址設定已更新\n• 超時設定已更新",
         "type": "success"
       },
       {
-        "timestamp": "17:46:15",
+        "timestamp": "15:18:27",
         "message": "標籤頁名稱已同步更新",
         "type": "success"
       },
       {
-        "timestamp": "17:46:16",
+        "timestamp": "15:18:28",
         "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱",
         "type": "success"
       },
       {
-        "timestamp": "17:46:16",
-        "message": "找到 2 個 COM 口",
+        "timestamp": "15:18:28",
+        "message": "找到 3 個 COM 口",
         "type": "info"
       },
       {
-        "timestamp": "17:46:16",
-        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "timestamp": "15:18:34",
+        "message": "已連接到 COM3",
         "type": "success"
       },
       {
-        "timestamp": "17:46:18",
-        "message": "COM口: COM5 | 分類: 全部指令 (18個指令) | 超時: 30秒",
+        "timestamp": "15:18:37",
+        "message": "連接已關閉",
+        "type": "error"
+      },
+      {
+        "timestamp": "15:19:46",
+        "message": "設定已更新！\n• 指令檔案已重新載入\n• COM口設定已更新\n• 結束字串設定已更新\n• IP地址設定已更新\n• 超時設定已更新",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:19:46",
+        "message": "標籤頁名稱已同步更新",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:19:46",
+        "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:19:46",
+        "message": "找到 3 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:19:55",
+        "message": "設定已更新！\n• 指令檔案已重新載入\n• COM口設定已更新\n• 結束字串設定已更新\n• IP地址設定已更新\n• 超時設定已更新",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:19:55",
+        "message": "標籤頁名稱已同步更新",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:19:55",
+        "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:19:55",
+        "message": "找到 3 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:19:59",
+        "message": "找到 3 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:20:04",
+        "message": "已連接到 COM3",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:20:05",
+        "message": "連接已關閉",
+        "type": "error"
+      },
+      {
+        "timestamp": "15:20:14",
+        "message": "已連接到 COM3",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:20:16",
+        "message": "連接已關閉",
+        "type": "error"
+      },
+      {
+        "timestamp": "15:20:20",
+        "message": "已連接到 COM3",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:20:24",
+        "message": "連接已關閉",
+        "type": "error"
+      },
+      {
+        "timestamp": "15:20:30",
+        "message": "已連接到 COM3",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:20:31",
+        "message": "連接已關閉",
+        "type": "error"
+      },
+      {
+        "timestamp": "15:20:34",
+        "message": "已連接到 COM3",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:20:35",
+        "message": "連接已關閉",
+        "type": "error"
+      },
+      {
+        "timestamp": "15:20:39",
+        "message": "已連接到 COM3",
+        "type": "success"
+      },
+      {
+        "timestamp": "15:20:42",
+        "message": "連接已關閉",
+        "type": "error"
+      },
+      {
+        "timestamp": "15:20:51",
+        "message": "找到 3 個 COM 口",
         "type": "info"
       }
     ],
-    "last_updated": "2025-07-17T17:46:18.030537"
+    "last_updated": "2025-07-21T15:20:51.823083"
   },
   "DUT_Control": {
-    "Serial_COM_Port": "COM5",
+    "Serial_COM_Port": "COM3",
     "Command_Timeout_Seconds": "30",
-    "Command_End_String": "root",
+    "Command_End_String": "~#",
     "UI_Font_Size": "13",
     "Content_Font_Size": "12",
-    "Window_Title": "VALO指令通_1",
+    "Window_Title": "VALO指令通_",
     "Available_End_Strings": [
       "root"
     ],
     "Default_IP_Address": "192.168.11.143",
     "Window_Width": "1536",
     "Window_Height": "793",
-    "Last_Selected_Command_Section": "全部指令",
+    "Last_Selected_Command_Section": "$$指令",
     "Pane_Sash_Position": "636",
     "Auto_Execute": true,
-    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/CODE_HERE/Command_TABLE/MU310_command.txt",
+    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/CODE_HERE/Command_TABLE/MU310_command - 2LINE.txt",
     "Notification_Font_Size": "10",
     "Section_Titles": [
-      "全部指令",
-      "MB指令"
+      "錯誤指令",
+      "||指令",
+      "$$指令"
     ],
     "IP_History": [
       "192.168.11.143",
       "127.0.0.1",
       "192.168.11.3"
-    ]
+    ],
+    "Command_Separator": "$$"
   },
   "Fixture_Control": {
     "Fixture_COM_Port": "COM5",
@@ -305,7 +367,7 @@
   "UI_Settings": {
     "ToolTip_Enabled": false
   },
-  "Window_Title": "VALO指令通_1",
+  "Window_Title": "VALO指令通_",
   "tab_names": {
     "tab0": "DUT 控制",
     "tab1": "治具控制",
