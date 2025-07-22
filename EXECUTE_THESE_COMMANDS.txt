@@ -1,0 +1,19 @@
+請在命令提示符中依次執行以下命令：
+
+1. git init
+
+2. git remote add origin https://github.com/JOVIANpega/360-command-tool.git
+
+3. git add .
+
+4. git commit -m "Initial commit - VALO360 Command Tool V1.6.2.0"
+
+5. git branch -M main
+
+6. git push -u origin main
+
+7. git tag v1.6.2.0
+
+8. git push origin v1.6.2.0
+
+執行完成後，訪問 https://github.com/JOVIANpega/360-command-tool 查看結果
