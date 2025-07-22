@@ -1,0 +1,69 @@
+//MU310 指令可以自行修改 
+
+==全部指令==
+I LOVE JOVIAN=cat /etc/pega_fwinfo
+Login=root|DELAY:2|oelinux123
+HW_revision=uci -P /var/state show pega.board.model
+SW_Firmware_Version=uci -P /var/state show pega.fw.cur_ver
+SIM CARD狀態:=uci -c /var/etc show cellstatus.sim.status
+5G module 版本號碼:=atcli 'AT+GMM' | awk '{if(NR==2){print "module_sku=\047" $1 "\047"}}'
+Ethernet_link_speed=ethtool eth0 | grep Speed | awk '{print "ethernet_linkSpeed=\047" $2 "\047"}'
+ping_ip_(IPv4)=ping 192.168.11.3
+ping_ip_(IPv6)=ping -6 xxxx::xxxx:xxxx
+固定IP=ifconfig eth0 192.168.11.143 netmask 255.255.255.0 up
+
+LED signal OFF=echo 0 > /sys/class/leds/signal\:blue/brightness|echo 0 > /sys/class/leds/signal\:green/brightness|echo 0 > /sys/class/leds/signal\:red/brightness
+
+LED status OFF=echo 0 > /sys/class/leds/status\:blue/brightness|echo 0 > /sys/class/leds/status\:red/brightness|echo 0 > /sys/class/leds/status\:green/brightness
+
+
+Check signal LED GREEN =echo 255 > /sys/class/leds/signal\:green/brightness|DELAY:2|echo 0 > /sys/class/leds/signal\:green/brightness
+Check signal LED RED=echo 255 > /sys/class/leds/signal\:red/brightness|DELAY:2|echo 0 > /sys/class/leds/signal\:red/brightness
+Check signal LED BLUE=echo 255 > /sys/class/leds/signal\:blue/brightness|DELAY:2|echo 0 > /sys/class/leds/signal\:blue/brightness
+
+
+Check status LED GREEN =echo 255 > /sys/class/leds/status\:green/brightness|DELAY:2|echo 0 > /sys/class/leds/status\:green/brightness
+Check status LED RED=echo 255 > /sys/class/leds/status\:red/brightness|DELAY:2|echo 0 > /sys/class/leds/status\:red/brightness
+Check status LED BLUE=echo 255 > /sys/class/leds/status\:blue/brightness|DELAY:2|echo 0 > /sys/class/leds/status\:blue/brightness
+
+
+
+
+
+
+
+==MB指令==
+EXIT=exit
+Login=root|DELAY:2|oelinux123
+HW_revision=uci -P /var/state show pega.board.model
+SW_Firmware_Version=uci -P /var/state show pega.fw.cur_ver
+SIM CARD狀態:=uci -c /var/etc show cellstatus.sim.status
+5G module 版本號碼:=atcli 'AT+GMM' | awk '{if(NR==2){print "module_sku=\047" $1 "\047"}}'
+Ethernet_link_speed=ethtool eth0 | grep Speed | awk '{print "ethernet_linkSpeed=\047" $2 "\047"}'
+ping_ip_(IPv4)=ping 192.168.11.3
+ping_ip_(IPv6)=ping -6 xxxx::xxxx:xxxx
+LED BLUE ON=echo 0 > /sys/class/leds/signal\:blue/brightness
+LED BLUE OFF=echo 255 > /sys/class/leds/signal\:green/brightness
+LED GREEN ON=echo 0 > /sys/class/leds/signal\:green/brightness
+LED GREEN OFF=echo 255 > /sys/class/leds/signal\:red/brightness
+LED RED ON=echo 255 > /sys/class/leds/status\:red/brightness
+LED RED OFF=echo 0 > /sys/class/leds/signal\:red/brightness
+LED PURPLE ON=echo 255 > /sys/class/leds/status\:blue/brightness
+LED PURPLE OFF=echo 0 > /sys/class/leds/status\:red/brightness
+LED WHILE OFF=echo 0 > /sys/class/leds/status\:blue/brightness
+LED WHITE ON=echo 255 > /sys/class/leds/status\:green/brightness
+
+
+
+
+//指令可以自行修改
+
+MU310指令通_V1 
+
+[關鍵字高亮]
+diag=red
+test5g=blue
+error=red
+fail=red
+successfully=green
+version=green

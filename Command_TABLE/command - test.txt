@@ -1,0 +1,31 @@
+//指令可以自行修改 
+
+==全部指令==
+0. I LOVE JOVIAN=SHOW:TEST|DELAY:3
+
+13. 檢查藍牙 Check BT = bt_init
+14. 檢查LEN感測器溫度 Check LEN sensor溫度 = diag -g temp s1|diag -g temp s2|diag -g temp s3|diag -g temp s0
+15. 檢查5G模組 Check 5G Module = lspci|test5g at+egmr=0,5|test5g at+simcomati|
+16. 檢查LED燈狀態 Check LED = SHOW:確認LED綠燈橘燈熄滅，三種狀態...|diag -s led g off|diag -s led o off|diag -s led g on|diag -s led o on
+17. 檢查按鍵 Check 按鍵 = diag -s keySw|DELAY:10|diag -g keySw
+18. 檢查天線 Check 天線 = test5g AT+CSYSSEL=?|test5g at+cqcnv|test5g at+csub
+
+
+
+
+
+==MB指令2==
+
+4. 取得MAC位址 Get MAC = diag -g mac eth|diag -g mac wifi
+5. 取得WIFI序號 Get WIFI SN = wpa_cli status
+
+
+
+==整機==
+16. 檢查LED燈狀態 Check LED = SHOW:確認LED綠燈橘燈熄滅，三種狀態...|diag -s led g off|diag -s led o off|diag -s led g on|diag -s led o on
+17. 檢查按鍵 Check 按鍵 = diag -s keySw|DELAY:10|diag -g keySw
+
+
+
+
+
