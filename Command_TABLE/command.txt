@@ -126,7 +126,7 @@
 14.Write new Privekey=diag -s privKey all 1|diag -g privKey ver
 15.check Development IVKEY_LPR=kill_processor.sh gsl|kill_processor.sh valo|diag -g ivLic LPR
 16.check Development IVKEY_LPR=kill_processor.sh gsl|kill_processor.sh valo|diag -g ivLic FD
-
+17.播串流=gslauncher &
 
 
 //指令可以自行修改

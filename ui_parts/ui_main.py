@@ -652,23 +652,53 @@ class TabManager:
             setup = load_setup()
             
             # 優先使用頂層的 Window_Title，如果不存在則使用 DUT_Control 中的 Window_Title
-            window_title = setup.get('Window_Title')
-            if not window_title:
-                window_title = setup.get('DUT_Control', {}).get('Window_Title')
+            base_title = setup.get('Window_Title')
+            if not base_title:
+                base_title = setup.get('DUT_Control', {}).get('Window_Title')
             
             # 如果兩者都不存在，才使用預設值
-            if not window_title:
-                window_title = "VALO360 指令通"
+            if not base_title:
+                base_title = "指令通"
             
-            # 獲取版本號
-            app_version = config_utils.get_app_version()
+            # 從setup.json讀取版本號
+            app_version = setup.get('version', '')
             
-            # 設置新標題
-            new_title = f"{window_title} V{app_version}"
+            # 組合標題：基礎標題 + "_" + 版本號
+            if app_version:
+                new_title = f"{base_title}_{app_version}"
+            else:
+                new_title = base_title
+                
             self.root.title(new_title)
-            print(f"[DEBUG] 視窗標題已更新為：{new_title}")
+            print(f"[DEBUG] 視窗標題已更新為：{new_title} (基礎: {base_title}, 版本: {app_version})")
         except Exception as e:
             print(f"[ERROR] 更新視窗標題時發生錯誤：{e}")
+            import traceback
+            traceback.print_exc()
+    
+    def update_window_title_from_setup(self, setup):
+        """從指定的setup資料更新視窗標題"""
+        try:
+            # 從傳入的setup讀取視窗標題
+            base_title = setup.get('Window_Title')
+            if not base_title:
+                base_title = setup.get('DUT_Control', {}).get('Window_Title')
+            if not base_title:
+                base_title = "指令通"
+            
+            # 從setup讀取版本號
+            app_version = setup.get('version', '')
+            
+            # 組合標題：基礎標題 + "_" + 版本號
+            if app_version:
+                new_title = f"{base_title}_{app_version}"
+            else:
+                new_title = base_title
+                
+            self.root.title(new_title)
+            print(f"[DEBUG] 視窗標題已從setup更新為：{new_title} (基礎: {base_title}, 版本: {app_version})")
+        except Exception as e:
+            print(f"[ERROR] 從setup更新視窗標題時發生錯誤：{e}")
             import traceback
             traceback.print_exc()
 
@@ -686,27 +716,32 @@ class TabManager:
                 latest_setup = load_setup()
                 print("[DEBUG] 重新載入設定檔")
             
+            # 立即重新讀取setup.json確保資料最新
+            print("[DEBUG] 強制重新讀取setup.json...")
+            from config_core import load_setup
+            fresh_setup = load_setup()
+            
+            # 更新視窗標題（使用最新資料）
+            self.update_window_title_from_setup(fresh_setup)
+            
             # 更新DUT設定
             self.update_dut_settings()
             
             # 更新治具設定
             self.update_fixture_settings()
             
-            # 更新視窗標題
-            self.update_window_title()
-            
             # 更新標籤頁名稱
             self.update_tab_names_from_settings()
             
             # 同步所有字體設定
-            self.sync_font_settings(latest_setup)
+            self.sync_font_settings(fresh_setup)
             
             # 同步通知設定
-            self.sync_notification_settings(latest_setup)
+            self.sync_notification_settings(fresh_setup)
             
             # 顯示綜合更新通知
             self.show_global_notification(
-                "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱", 
+                "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱\n✓ 視窗標題", 
                 "success", 
                 5000
             )
@@ -1781,7 +1816,15 @@ class SerialUI:
             # 獲取當前視窗標題 (不包含版本號)
             current_title = self.root.title()
             window_title = current_title
-            if " V" in current_title:
+            # 處理新的標題格式：基礎標題_版本號
+            if "_" in current_title:
+                # 分離基礎標題和版本號
+                parts = current_title.split("_")
+                if len(parts) >= 2:
+                    # 取除了最後一部分（版本號）之外的所有部分作為基礎標題
+                    window_title = "_".join(parts[:-1])
+            # 兼容舊格式：標題 V版本號
+            elif " V" in current_title:
                 window_title = current_title.split(" V")[0]
             
             # 更新頂層和DUT_Control中的視窗標題
@@ -2025,7 +2068,15 @@ class SerialUI:
         if hasattr(c, 'text_output'):
             c.text_output.config(font=('Microsoft JhengHei', content_font_size))
         
-        # 7. 更新指令相關設定
+        # 7. 更新設備標籤
+        if hasattr(c, 'device_label'):
+            device_label_text = self.setup.get('Device_Label', '')
+            # 限制最多顯示100個字元
+            if len(device_label_text) > 100:
+                device_label_text = device_label_text[:100]
+            c.device_label.config(text=device_label_text)
+        
+        # 8. 更新指令相關設定
         # 重新解析指令文件
         if hasattr(self.handlers, 'parse_commands_by_section'):
             self.commands_by_section = self.handlers.parse_commands_by_section()

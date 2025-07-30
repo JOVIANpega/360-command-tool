@@ -66,15 +66,27 @@ class SettingsTab(ttk.Frame):
         basic_frame.pack(fill='x', pady=(0, 8))
         basic_frame.columnconfigure(1, weight=1)
         
-        # 應用程式版本 - width=20
+        # 應用程式版本 - width=20，直接從setup_data讀取版本號
         ttk.Label(basic_frame, text="應用程式版本:").grid(row=0, column=0, sticky="w", pady=4)
-        self.vars["version"] = tk.StringVar(value=self.setup_data.get("version", "V1.5.0.2"))
+        # 直接從setup_data讀取版本號
+        current_version = self.setup_data.get("version", "1.6.2.0")
+        self.vars["version"] = tk.StringVar(value=current_version)
         ttk.Entry(basic_frame, textvariable=self.vars["version"], width=20).grid(row=0, column=1, sticky="ew", padx=(10, 0), pady=4)
+        print(f"[DEBUG] 設定頁面初始化版本號: {current_version}")
         
-        # 視窗標題 - width=40
-        ttk.Label(basic_frame, text="視窗標題:").grid(row=1, column=0, sticky="w", pady=4)
+        # 視窗標題 - width=40，最多50個字元
+        ttk.Label(basic_frame, text="視窗標題 (最多50字元):").grid(row=1, column=0, sticky="w", pady=4)
         self.vars["Window_Title"] = tk.StringVar(value=self.setup_data.get("Window_Title", "VALO360 指令通"))
-        ttk.Entry(basic_frame, textvariable=self.vars["Window_Title"], width=40).grid(row=1, column=1, sticky="ew", padx=(10, 0), pady=4)
+        self.title_entry = ttk.Entry(basic_frame, textvariable=self.vars["Window_Title"], width=40)
+        self.title_entry.grid(row=1, column=1, sticky="ew", padx=(10, 0), pady=4)
+        
+        # 綁定字元限制檢查
+        self.vars["Window_Title"].trace('w', self.on_title_changed)
+        
+        # 添加字元計數標籤
+        self.title_count_label = ttk.Label(basic_frame, text=f"({len(self.vars['Window_Title'].get())}/50)", 
+                                          font=('Microsoft JhengHei UI', 9), foreground='gray')
+        self.title_count_label.grid(row=1, column=2, sticky="w", padx=(5, 0), pady=4)
         
         # 視窗大小 - 視窗寬度 width=20
         size_frame = ttk.Frame(basic_frame)
@@ -296,6 +308,30 @@ class SettingsTab(ttk.Frame):
         except Exception as e:
             print(f"更新治具字體時發生錯誤: {e}")
 
+    def on_title_changed(self, *args):
+        """視窗標題變更時的處理，限制最多50個字元"""
+        try:
+            current_title = self.vars["Window_Title"].get()
+            char_count = len(current_title)
+            
+            # 更新字元計數顯示
+            if hasattr(self, 'title_count_label'):
+                color = 'red' if char_count > 50 else 'gray'
+                self.title_count_label.config(text=f"({char_count}/50)", foreground=color)
+            
+            # 如果超過50個字元，截斷並顯示警告
+            if char_count > 50:
+                truncated_title = current_title[:50]
+                self.vars["Window_Title"].set(truncated_title)
+                print(f"[WARNING] 視窗標題已截斷至50個字元: {truncated_title}")
+                
+                # 顯示提示訊息
+                if hasattr(self, 'parent') and hasattr(self.parent, 'show_global_notification'):
+                    self.parent.show_global_notification("視窗標題已限制為50個字元", "warning", 3000)
+                    
+        except Exception as e:
+            print(f"[ERROR] 處理視窗標題變更時發生錯誤: {e}")
+
     def on_command_separator_changed(self, event=None):
         """指令間隔符號即時更新"""
         try:
@@ -469,11 +505,26 @@ class SettingsTab(ttk.Frame):
             settings_dict = self.generate_settings_dict()
             # 保存設定
             save_setup(settings_dict)
+            
+            # 立即重新讀取setup.json的所有資料
+            print("[DEBUG] 儲存完成，重新讀取setup.json...")
+            updated_setup = load_setup()
+            
+            # 更新本地設定資料
+            self.setup_data = updated_setup
+            
+            # 重新載入UI顯示的所有設定值
+            self.update_ui_from_settings()
+            
             # 調用回調函數通知其他組件設定已更新
             if self.on_save_callback:
-                self.on_save_callback()
+                # 傳遞最新的設定資料
+                self.on_save_callback(updated_setup)
+            
             # 顯示成功訊息
-            messagebox.showinfo("成功", "設定已儲存")
+            messagebox.showinfo("成功", "設定已儲存並重新載入")
+            print("[DEBUG] 設定已儲存並重新載入完成")
+            
         except Exception as e:
             print(f"[錯誤] 儲存設定失敗: {e}")
             traceback.print_exc()
@@ -545,9 +596,17 @@ class SettingsTab(ttk.Frame):
     def update_ui_from_settings(self):
         """從設定更新 UI 控件的值"""
         try:
-            # 更新基本設定
-            self.vars["version"].set(self.setup_data.get("version", "V1.5.0.2"))
-            self.vars["Window_Title"].set(self.setup_data.get("Window_Title", "VALO360 指令通"))
+            # 更新基本設定 - 版本號直接從setup_data讀取
+            current_version = self.setup_data.get("version", "1.6.2.0")
+            self.vars["version"].set(current_version)
+            print(f"[DEBUG] 設定頁面版本號更新為: {current_version}")
+            window_title = self.setup_data.get("Window_Title", "VALO360 指令通")
+            self.vars["Window_Title"].set(window_title)
+            # 更新字元計數顯示
+            if hasattr(self, 'title_count_label'):
+                char_count = len(window_title)
+                color = 'red' if char_count > 50 else 'gray'
+                self.title_count_label.config(text=f"({char_count}/50)", foreground=color)
             self.vars["Window_Width"].set(self.setup_data.get("Window_Width", "1536"))
             self.vars["Window_Height"].set(self.setup_data.get("Window_Height", "793"))
             

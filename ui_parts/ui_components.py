@@ -390,6 +390,29 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.btn_guide = ttk.Button(btn_frame, text='使用說明', command=self.parent.handlers.toggle_guide, style='Blue.TButton')
         self.btn_guide.grid(row=0, column=2, padx=2, sticky='ew')
         
+        # 設備標籤顯示區域 - 放在使用說明按鈕下方
+        device_label_frame = ttk.Frame(self.left_panel, style="TFrame")
+        device_label_frame.grid(row=6, column=0, sticky='ew', pady=5)
+        device_label_frame.columnconfigure(0, weight=1)
+        
+        # 從設定檔讀取設備標籤文字
+        device_label_text = self.parent.setup.get('Device_Label', '')
+        # 限制最多顯示100個字元
+        if len(device_label_text) > 100:
+            device_label_text = device_label_text[:100]
+        
+        self.device_label = ttk.Label(
+            device_label_frame, 
+            text=device_label_text,
+            style="TLabel",
+            font=('Microsoft JhengHei UI', int(self.parent.setup.get('UI_Font_Size', '12'))),
+            foreground='#333333',
+            background='#FFFACD',  # 淡黃色背景
+            wraplength=300,  # 自動換行
+            justify='left'
+        )
+        self.device_label.grid(row=0, column=0, sticky='ew', padx=5, pady=2)
+        
         # 將 ui_font_scale 的 command 綁定為 handlers.change_ui_font_size，避免 lambda 導致無法正確更新
         self.ui_font_scale.config(command=self.parent.handlers.change_ui_font_size)
 
@@ -744,6 +767,10 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                 self.label_ui_font, self.label_content_font, self.btn_refresh,
                 self.btn_clear, self.btn_backup, self.btn_guide, self.label_ip, self.btn_ping
             ]
+            
+            # 更新設備標籤字體
+            if hasattr(self, 'device_label'):
+                widgets.append(self.device_label)
             for w in widgets:
                 if w.winfo_exists():
                     try:

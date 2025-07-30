@@ -1,208 +1,212 @@
 # -*- coding: utf-8 -*-
-
+"""
+VALO360 指令通主程式
+提供序列埠通訊和指令執行的圖形化介面
+"""
 import os
-
 import sys
-
 import tkinter as tk
-
 from tkinter import ttk, messagebox
-
 import traceback
-
-from config_core import load_commands, load_highlight_keywords, load_setup
-
-from ui_parts.ui_main import SerialUI, TabManager
-
 import re
-
 import threading
-
 import json
 
+# 導入核心模組
+from core import get_error_handler, get_config_manager, safe_execute, log_info, log_error
 
+# 導入配置和UI模組
+from config_core import load_commands, load_highlight_keywords, load_setup
+from ui_parts.ui_main import SerialUI, TabManager
+
+
+
+# 初始化核心組件
+error_handler = get_error_handler()
+config_manager = get_config_manager()
 
 # 設置路徑
-
 current_dir = os.path.dirname(os.path.abspath(__file__))
-
 if current_dir not in sys.path:
-
     sys.path.insert(0, current_dir)
 
-
-
 ui_parts_dir = os.path.join(current_dir, 'ui_parts')
-
 if ui_parts_dir not in sys.path:
-
     sys.path.insert(0, ui_parts_dir)
 
-
-
-def write_log(msg):
-
+@safe_execute(error_handler)
+def write_log(msg: str):
+    """寫入運行日誌"""
     try:
-
         with open("run_log.txt", "a", encoding="utf-8") as f:
-
             f.write(msg + "\n")
+        log_info(f"運行日誌: {msg}")
+    except Exception as e:
+        log_error("寫入運行日誌失敗", e)
 
-    except Exception:
-
-        pass
-
-
-
+# 記錄啟動
 write_log("main.py 啟動")
+log_info("VALO360 指令通主程式啟動")
 
 
 
-try:
+@safe_execute(error_handler, show_user_error=True)
+def import_required_modules():
+    """導入必要的模組"""
+    try:
+        from ui_parts.ui_main import TabManager
+        write_log("成功 import TabManager")
+        log_info("UI模組導入成功")
+        return TabManager
+    except Exception as e:
+        write_log("import TabManager 失敗：" + traceback.format_exc())
+        log_error("導入UI模組失敗", e, show_user=True)
+        sys.exit(1)
 
-    from ui_parts.ui_main import TabManager
-
-    write_log("成功 import TabManager")
-
-except Exception as e:
-
-    write_log("import TabManager 失敗：" + traceback.format_exc())
-
-    messagebox.showerror('錯誤', f'導入模組失敗: {e}')
-
-    sys.exit(1)
-
-
-
+@safe_execute(error_handler)
 def setup_logging():
-
+    """設置日誌系統"""
     try:
-
         with open("run_log.txt", "a", encoding="utf-8") as f:
-
             f.write("=== 應用程式啟動 ===\n")
+        log_info("日誌系統初始化完成")
+    except Exception as e:
+        log_error("設置日誌系統失敗", e)
 
-    except Exception:
+# 導入模組
+TabManager = import_required_modules()
 
-        pass
-
-
-
-if __name__ == "__main__":
-
-    log_file = "error_log.txt"
-
+@safe_execute(error_handler)
+def setup_window_properties(root):
+    """設置視窗屬性"""
     try:
+        # 載入設定
+        setup = load_setup()
+        dut_setup = setup.get('DUT_Control', {})
 
+        # 設置視窗標題
+        base_title = setup.get('Window_Title')
+        if not base_title:
+            base_title = dut_setup.get('Window_Title', '指令通')
+
+        app_version = setup.get('version', '')
+        full_title = f"{base_title}_{app_version}" if app_version else base_title
+
+        # 設置視窗大小
+        width = int(dut_setup.get('Window_Width', 1024))
+        height = int(dut_setup.get('Window_Height', 768))
+
+        # 應用設置
+        root.title(full_title)
+        root.geometry(f"{width}x{height}")
+
+        log_info(f"視窗設置完成: {full_title} ({width}x{height})")
+
+        # 設置視窗大小變動事件
+        setup_window_resize_handler(root)
+
+    except Exception as e:
+        log_error("設置視窗屬性失敗", e)
+
+@safe_execute(error_handler)
+def setup_window_resize_handler(root):
+    """設置視窗大小變動處理器"""
+    def on_resize(event):
+        try:
+            if not root.winfo_exists():
+                return
+
+            # 使用配置管理器更新設定
+            config_manager.set_value('Window_Width', str(root.winfo_width()))
+            config_manager.set_value('Window_Height', str(root.winfo_height()))
+            config_manager.set_value('DUT_Control.Window_Width', str(root.winfo_width()))
+            config_manager.set_value('DUT_Control.Window_Height', str(root.winfo_height()))
+
+        except Exception as e:
+            # 靜默處理，避免干擾用戶操作
+            pass
+
+    root.bind('<Configure>', on_resize)
+
+
+
+@safe_execute(error_handler)
+def load_highlight_keywords() -> dict:
+    """載入關鍵字高亮設定"""
+    try:
+        with open('highlight_keywords.json', 'r', encoding='utf-8') as f:
+            highlight_keywords = json.load(f)
+        log_info(f"載入了 {len(highlight_keywords)} 個關鍵字高亮設定")
+        return highlight_keywords
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        log_info("未找到關鍵字高亮設定文件，使用空設定")
+        return {}
+    except Exception as e:
+        log_error("載入關鍵字高亮設定失敗", e)
+        return {}
+
+@safe_execute(error_handler, show_user_error=True)
+def initialize_application():
+    """初始化應用程式"""
+    try:
         setup_logging()
 
-        
+        # 載入關鍵字高亮設定
+        highlight_keywords = load_highlight_keywords()
 
-        # 讀取 highlight_keywords
-
-        try:
-
-            with open('highlight_keywords.json', 'r', encoding='utf-8') as f:
-
-                highlight_keywords = json.load(f)
-
-        except (FileNotFoundError, json.JSONDecodeError):
-
-            highlight_keywords = {}
-
-
-
+        # 創建主視窗
         root = tk.Tk()
 
         # 初始化統一設定管理器
         from ui_parts.shared_config import get_shared_config
         shared_config = get_shared_config(root)
-        print("[DEBUG] 統一設定管理器已在主程式中初始化")
+        log_info("統一設定管理器已初始化")
 
+        # 創建應用程式實例
         app = TabManager(root, highlight_keywords=highlight_keywords)
 
-        
-
-        # 載入視窗標題和大小
-
-        setup = load_setup()
-
-        dut_setup = setup.get('DUT_Control', {})
-
-        
-
-        # 優先使用頂層的 Window_Title
-
-        title = setup.get('Window_Title')
-
-        if not title:
-
-            title = dut_setup.get('Window_Title', 'VALO360 指令通')
-
-            
-
-        print(f"[DEBUG] 程式啟動時設置視窗標題: {title}")
-
-        width = dut_setup.get('Window_Width', 1024)
-
-        height = dut_setup.get('Window_Height', 768)
-
-        
-
-        # 設置視窗標題和大小
-
-        root.title(title)
-
-        root.geometry(f"{width}x{height}")
-        
-        # 新增：視窗大小變動時即時寫回 setup.json
-        def on_resize(event):
-            try:
-                # 確保 root 視窗存在
-                if not root.winfo_exists():
-                    return
-                
-                import json
-                from config_core import load_setup, save_setup
-                setup = load_setup()
-                setup["Window_Width"] = str(root.winfo_width())
-                setup["Window_Height"] = str(root.winfo_height())
-                if "DUT_Control" not in setup:
-                    setup["DUT_Control"] = {}
-                setup["DUT_Control"]["Window_Width"] = str(root.winfo_width())
-                setup["DUT_Control"]["Window_Height"] = str(root.winfo_height())
-                save_setup(setup)
-            except Exception as e:
-                # 減少在主控台的輸出，避免干擾
-                # print(f"[錯誤] 即時寫回視窗大小失敗: {e}")
-                pass
-        root.bind('<Configure>', on_resize)
-
-        
-
-        # 讀取標籤頁名稱並立即更新
-
-        if hasattr(app, 'update_tab_names'):
-
-            print(f"[DEBUG] 程式啟動時更新標籤頁名稱")
-
-            app.update_tab_names()
-
-        
-
-        root.mainloop()
-
-
+        return root, app
 
     except Exception as e:
+        log_error("初始化應用程式失敗", e, show_user=True)
+        sys.exit(1)
 
-        import traceback
+if __name__ == "__main__":
+    try:
+        # 初始化應用程式
+        root, app = initialize_application()
 
-        with open(log_file, "w", encoding="utf-8") as f:
+        # 設置視窗屬性
+        setup_window_properties(root)
 
-            f.write(f"An unexpected error occurred: {e}\n")
+        # 更新標籤頁名稱
+        if hasattr(app, 'update_tab_names'):
+            log_info("程式啟動時更新標籤頁名稱")
+            app.update_tab_names()
 
-            f.write(traceback.format_exc())
+        # 啟動主循環
+        log_info("應用程式啟動完成，進入主循環")
+        root.mainloop()
 
-        print(f"An error occurred. Details have been written to {log_file}")
+    except Exception as e:
+        log_error("應用程式運行時發生嚴重錯誤", e, show_user=True)
+
+        # 寫入錯誤日誌文件（向後相容）
+        try:
+            with open("error_log.txt", "w", encoding="utf-8") as f:
+                f.write(f"An unexpected error occurred: {e}\n")
+                f.write(traceback.format_exc())
+        except Exception:
+            pass
+
+        sys.exit(1)
+
+    finally:
+        # 清理資源
+        try:
+            from core import get_resource_manager
+            get_resource_manager().cleanup()
+            log_info("應用程式資源清理完成")
+        except Exception as e:
+            log_error("清理資源時發生錯誤", e)
 
