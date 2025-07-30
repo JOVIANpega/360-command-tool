@@ -66,31 +66,28 @@ class SettingsTab(ttk.Frame):
         basic_frame.pack(fill='x', pady=(0, 8))
         basic_frame.columnconfigure(1, weight=1)
         
-        # 應用程式版本 - width=20，直接從setup_data讀取版本號
-        ttk.Label(basic_frame, text="應用程式版本:").grid(row=0, column=0, sticky="w", pady=4)
-        # 直接從setup_data讀取版本號
-        current_version = self.setup_data.get("version", "1.6.2.0")
+        # 獲取版本號（用於後面的版本與路徑資訊區塊）
+        current_version = self.setup_data.get("version", "1.7.1")
         self.vars["version"] = tk.StringVar(value=current_version)
-        ttk.Entry(basic_frame, textvariable=self.vars["version"], width=20).grid(row=0, column=1, sticky="ew", padx=(10, 0), pady=4)
         print(f"[DEBUG] 設定頁面初始化版本號: {current_version}")
-        
+
         # 視窗標題 - width=40，最多50個字元
-        ttk.Label(basic_frame, text="視窗標題 (最多50字元):").grid(row=1, column=0, sticky="w", pady=4)
+        ttk.Label(basic_frame, text="視窗標題 (最多50字元):").grid(row=0, column=0, sticky="w", pady=4)
         self.vars["Window_Title"] = tk.StringVar(value=self.setup_data.get("Window_Title", "VALO360 指令通"))
         self.title_entry = ttk.Entry(basic_frame, textvariable=self.vars["Window_Title"], width=40)
-        self.title_entry.grid(row=1, column=1, sticky="ew", padx=(10, 0), pady=4)
-        
+        self.title_entry.grid(row=0, column=1, sticky="ew", padx=(10, 0), pady=4)
+
         # 綁定字元限制檢查
         self.vars["Window_Title"].trace('w', self.on_title_changed)
-        
+
         # 添加字元計數標籤
-        self.title_count_label = ttk.Label(basic_frame, text=f"({len(self.vars['Window_Title'].get())}/50)", 
+        self.title_count_label = ttk.Label(basic_frame, text=f"({len(self.vars['Window_Title'].get())}/50)",
                                           font=('Microsoft JhengHei UI', 9), foreground='gray')
-        self.title_count_label.grid(row=1, column=2, sticky="w", padx=(5, 0), pady=4)
+        self.title_count_label.grid(row=0, column=2, sticky="w", padx=(5, 0), pady=4)
         
         # 視窗大小 - 視窗寬度 width=20
         size_frame = ttk.Frame(basic_frame)
-        size_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=4)
+        size_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=4)
         size_frame.columnconfigure(1, weight=1)
         size_frame.columnconfigure(3, weight=1)
         
@@ -128,13 +125,26 @@ class SettingsTab(ttk.Frame):
         ttk.Entry(dut_frame, textvariable=self.vars["DUT_Command_End_String"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
         dut_row += 1
         
-        # 指令間隔符號 - width=20
+        # 指令間隔符號 - width=20，淡黃色底色
         ttk.Label(dut_frame, text="指令間隔符號:").grid(row=dut_row, column=0, sticky="w", pady=4)
+
+        # 創建一個容器來放置輸入框和說明標籤
+        separator_container = ttk.Frame(dut_frame)
+        separator_container.grid(row=dut_row, column=1, columnspan=2, sticky="ew", padx=(10, 0), pady=4)
+        separator_container.columnconfigure(0, weight=0)
+        separator_container.columnconfigure(1, weight=1)
+
         self.vars["DUT_Command_Separator"] = tk.StringVar(value=dut_settings.get("Command_Separator", "|"))
-        self.command_separator_entry = ttk.Entry(dut_frame, textvariable=self.vars["DUT_Command_Separator"], width=20)
-        self.command_separator_entry.grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
+        self.command_separator_entry = tk.Entry(separator_container, textvariable=self.vars["DUT_Command_Separator"],
+                                               width=20, bg='#FFFACD', relief='solid', borderwidth=1)
+        self.command_separator_entry.grid(row=0, column=0, sticky="w")
         self.command_separator_entry.bind('<KeyRelease>', self.on_command_separator_changed)
         self.command_separator_entry.bind('<FocusOut>', self.on_command_separator_changed)
+
+        # 添加說明標籤
+        separator_label = ttk.Label(separator_container, text="<-- 從 command.txt 中決定多重指令的分隔符號",
+                                   font=('Microsoft JhengHei UI', 9), foreground='#666666')
+        separator_label.grid(row=0, column=1, sticky="w", padx=(10, 0))
         dut_row += 1
         
         # 預設IP地址 - width=20
@@ -191,20 +201,51 @@ class SettingsTab(ttk.Frame):
         self.save_button.bind("<Leave>", lambda e: self.save_button.config(bg='#4CAF50'))
         dut_row += 1
         
-        # 指令檔案路徑 - 改為兩行顯示
-        ttk.Label(dut_frame, text="指令檔案路徑:").grid(row=dut_row, column=0, sticky="nw", pady=4)
-        path_container = ttk.Frame(dut_frame)
-        path_container.grid(row=dut_row, column=1, sticky="ew", padx=(10, 0), pady=4)
+        # 版本與路徑資訊區塊 - 放在一起顯示
+        info_frame = ttk.LabelFrame(dut_frame, text="版本與路徑資訊", padding=(10, 4))
+        info_frame.grid(row=dut_row, column=0, columnspan=3, sticky="ew", pady=4)
+        info_frame.columnconfigure(1, weight=1)
+
+        # 應用程式版本（移到這裡）
+        ttk.Label(info_frame, text="應用程式版本:").grid(row=0, column=0, sticky="w", pady=2)
+        version_display = ttk.Label(info_frame, text=current_version,
+                                   font=('Microsoft JhengHei UI', 10, 'bold'),
+                                   foreground='#2E8B57', background='#F0F8FF',
+                                   relief='solid', borderwidth=1, padding=(5, 2))
+        version_display.grid(row=0, column=1, sticky="w", padx=(10, 0), pady=2)
+
+        # 指令檔案路徑
+        ttk.Label(info_frame, text="指令檔案路徑:").grid(row=1, column=0, sticky="nw", pady=2)
+        path_container = ttk.Frame(info_frame)
+        path_container.grid(row=1, column=1, sticky="ew", padx=(10, 0), pady=2)
         path_container.columnconfigure(0, weight=1)
-        
-        # 第一行：路徑輸入框
-        self.vars["DUT_Command_File_Path"] = tk.StringVar(value=dut_settings.get("Command_File_Path", ""))
+
+        # 設定預設路徑為 Command_TABLE\command.txt
+        default_path = os.path.join("Command_TABLE", "command.txt")
+        current_path = dut_settings.get("Command_File_Path", default_path)
+        self.vars["DUT_Command_File_Path"] = tk.StringVar(value=current_path)
         path_entry = ttk.Entry(path_container, textvariable=self.vars["DUT_Command_File_Path"])
         path_entry.grid(row=0, column=0, sticky="ew", pady=(0, 5))
-        
-        # 第二行：瀏覽按鈕
+
+        # 瀏覽按鈕
         self.browse_button = ttk.Button(path_container, text="瀏覽檔案", command=lambda: self.browse_file("DUT_Command_File_Path"))
         self.browse_button.grid(row=1, column=0, sticky="w")
+
+        # 設備標籤設定
+        ttk.Label(info_frame, text="設備標籤內容:").grid(row=2, column=0, sticky="nw", pady=2)
+        device_label_container = ttk.Frame(info_frame)
+        device_label_container.grid(row=2, column=1, sticky="ew", padx=(10, 0), pady=2)
+        device_label_container.columnconfigure(0, weight=1)
+
+        self.vars["Device_Label"] = tk.StringVar(value=self.setup_data.get("Device_Label", "MU310 : root/oelinux123"))
+        device_label_entry = ttk.Entry(device_label_container, textvariable=self.vars["Device_Label"])
+        device_label_entry.grid(row=0, column=0, sticky="ew")
+
+        # 添加說明標籤
+        device_help_label = ttk.Label(device_label_container, text="此內容將顯示在DUT控制頁面的清空回應按鈕下方",
+                                     font=('Microsoft JhengHei UI', 9), foreground='#666666')
+        device_help_label.grid(row=1, column=0, sticky="w", pady=(2, 0))
+
         dut_row += 1
         
         # === 右側內容 ===
@@ -492,7 +533,10 @@ class SettingsTab(ttk.Frame):
         # 更新全域字體設定
         current_setup["UIFontSize"] = self.vars["DUT_UI_Font_Size"].get()
         current_setup["ContentFontSize"] = self.vars["DUT_Content_Font_Size"].get()
-        
+
+        # 更新設備標籤設定
+        current_setup["Device_Label"] = self.vars["Device_Label"].get()
+
         return current_setup
 
     # 移除了 reload_settings 函數及相關程式碼

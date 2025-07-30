@@ -395,8 +395,8 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         device_label_frame.grid(row=6, column=0, sticky='ew', pady=5)
         device_label_frame.columnconfigure(0, weight=1)
         
-        # 從設定檔讀取設備標籤文字
-        device_label_text = self.parent.setup.get('Device_Label', '')
+        # 從設定檔讀取設備標籤文字，預設顯示設備信息
+        device_label_text = self.parent.setup.get('Device_Label', 'MU310 : root/oelinux123')
         # 限制最多顯示100個字元
         if len(device_label_text) > 100:
             device_label_text = device_label_text[:100]

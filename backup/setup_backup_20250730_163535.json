@@ -1,0 +1,245 @@
+{
+  "version": "1.6.3.3",
+  "Window_Title": "指令通",
+  "Window_Width": "1222",
+  "Window_Height": "776",
+  "UIFontSize": "13",
+  "ContentFontSize": "11",
+  "DUT_Control": {
+    "Serial_COM_Port": "COM5",
+    "Command_Timeout_Seconds": "30",
+    "Command_End_String": "root",
+    "Command_Separator": "==>",
+    "UI_Font_Size": "13",
+    "Content_Font_Size": "11",
+    "Window_Title": "指令通",
+    "Available_End_Strings": [
+      "root"
+    ],
+    "Default_IP_Address": "192.168.11.143",
+    "IP_History": [],
+    "Window_Width": "1222",
+    "Window_Height": "776",
+    "Last_Selected_Command_Section": "全部指令",
+    "Pane_Sash_Position": "531",
+    "Auto_Execute": false,
+    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/CODE_HERE2/dist/Command_TABLE/command_360.txt",
+    "Notification_Font_Size": "10"
+  },
+  "Fixture_Control": {
+    "Fixture_COM_Port": "COM5",
+    "Current_Command": "",
+    "Test_Category_FUNCTION": false,
+    "Test_Category_MB": false,
+    "Test_Category_Original_Commands": true,
+    "Fixture_Font_Size": "11",
+    "Serial_Settings": {
+      "Baudrate": "9600",
+      "Bytesize": "8",
+      "Stopbits": "1",
+      "Parity": "None",
+      "Timeout": "1.0"
+    }
+  },
+  "tab_names": {
+    "tab0": "DUT 控制",
+    "tab1": "治具控制",
+    "tab2": "使用說明",
+    "tab3": "設定"
+  },
+  "UI_Settings": {
+    "ToolTip_Enabled": false
+  },
+  "notification_messages": {
+    "app_started": "VALO360 指令通 已啟動",
+    "settings_updated": "設定已更新！",
+    "cmd_reloaded": "• 指令檔案已重新載入",
+    "com_updated": "• COM口設定已更新",
+    "end_string_updated": "• 結束字串設定已更新",
+    "ip_updated": "• IP地址設定已更新",
+    "timeout_updated": "• 超時設定已更新",
+    "history": [
+      {
+        "timestamp": "14:42:23",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "14:42:26",
+        "message": "system_status",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:42:28",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:42:32",
+        "message": "system_status",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:42:33",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:42:36",
+        "message": "connected",
+        "type": "success"
+      },
+      {
+        "timestamp": "14:42:37",
+        "message": "disconnected",
+        "type": "error"
+      },
+      {
+        "timestamp": "14:42:42",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:42:42",
+        "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:42:44",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:45:51",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:45:51",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:45:54",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "14:45:57",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "14:45:59",
+        "message": "system_status",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:46:05",
+        "message": "system_status",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:46:15",
+        "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:46:44",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:48:17",
+        "message": "設定已更新！\n• 指令檔案已重新載入\n• COM口設定已更新\n• 結束字串設定已更新\n• IP地址設定已更新\n• 超時設定已更新",
+        "type": "success"
+      },
+      {
+        "timestamp": "14:48:17",
+        "message": "標籤頁名稱已同步更新",
+        "type": "success"
+      },
+      {
+        "timestamp": "14:48:18",
+        "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱\n✓ 視窗標題",
+        "type": "success"
+      },
+      {
+        "timestamp": "14:48:18",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:55:12",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "15:58:24",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "16:33:31",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "16:33:31",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "16:33:34",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "16:33:38",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "16:33:39",
+        "message": "system_status",
+        "type": "info"
+      },
+      {
+        "timestamp": "16:33:45",
+        "message": "system_status",
+        "type": "info"
+      },
+      {
+        "timestamp": "16:33:55",
+        "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
+        "type": "info"
+      },
+      {
+        "timestamp": "16:34:26",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "16:34:30",
+        "message": "cmd_selected",
+        "type": "info"
+      },
+      {
+        "timestamp": "16:34:31",
+        "message": "connected",
+        "type": "success"
+      },
+      {
+        "timestamp": "16:34:32",
+        "message": "disconnected",
+        "type": "error"
+      },
+      {
+        "timestamp": "16:34:39",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      }
+    ],
+    "last_updated": "2025-07-30T16:34:39.038165"
+  }
+}

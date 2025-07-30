@@ -1112,63 +1112,18 @@ class TabManager:
         self.settings_ui.pack(fill='both', expand=True)
     
     def init_guide_tab(self):
-        # 初始化使用說明分頁
-        # 創建主框架
-        guide_main_frame = ttk.LabelFrame(
-            self.handover_frame, 
-            text="使用說明", 
-            padding=20, 
-            style="Main.TLabelframe"
-        )
-        guide_main_frame.grid(row=0, column=0, sticky='nsew', padx=20, pady=20)
-        
-        # 獲取版本號
-        app_version = config_utils.get_app_version()
-        
-        # 標題
-        title_label = ttk.Label(
-            guide_main_frame,
-            text=f"VALO360 指令通 V{app_version} 使用說明",
-            font=('Microsoft JhengHei UI', 18, 'bold'),
-            style="TLabel"
-        )
-        title_label.grid(row=0, column=0, pady=(0, 20))
+        # 初始化使用說明分頁 - 使用新的GuideTab類
+        from ui_parts.ui_guide_tab import GuideTab
+        self.guide_tab = GuideTab(self.handover_frame)
+        # 保持對DOS進程的引用
+        self.dos_process = self.guide_tab.dos_process
 
 
         
 
 
-        # 說明文字
-
-
-        desc_label = ttk.Label(
-
-
-            guide_main_frame,
-
-
-            text="點擊下方按鈕開啟詳細的使用說明文件",
-
-
-            font=('Microsoft JhengHei UI', 14),
-
-
-            style="TLabel"
-
-
-        )
-
-
-        desc_label.grid(row=1, column=0, pady=(0, 30))
-
-
-        
-
-
-        # 開啟使用說明按鈕
-
-
-        def open_guide():
+        # 開啟外部檔案按鈕
+        def open_external_guide():
 
 
             try:
@@ -1300,58 +1255,28 @@ class TabManager:
         
 
 
-        guide_button = tk.Button(
-
-
-            guide_main_frame,
-
-
-            text="開啟使用說明",
-
-
-            command=open_guide,
-
-
-            font=('Microsoft JhengHei UI', 16, 'bold'),
-
-
-            width=20,
-
-
-            height=3,
-
-
-            bg='#cccccc',
-
-
-            fg='black',
-
-
-            relief='groove',
-
-
-            borderwidth=2,
-
-
-            highlightthickness=0
-
-
-        )
-
-
-        guide_button.grid(row=2, column=0, pady=20)
+        # guide_button = tk.Button(
+            # # guide_main_frame,  # 已移除，使用新的GuideTab類
+            # text="開啟使用說明",
+            # command=open_guide,
+            # font=('Microsoft JhengHei UI', 16, 'bold'),
+            # width=20,
+            # height=3,
+            # bg='#cccccc',
+            # fg='black',
+            # relief='groove',
+            # borderwidth=2,
+            # highlightthickness=0
+        # )
+        # guide_button.grid(row=2, column=0, pady=20)
 
 
         
 
 
-        # 按鈕 hover 效果
-
-
-        guide_button.bind("<Enter>", lambda e: guide_button.config(bg="#4caf50", fg="white"))
-
-
-        guide_button.bind("<Leave>", lambda e: guide_button.config(bg="#cccccc", fg="black"))
+        # 按鈕 hover 效果 (已移除，使用新的GuideTab類)
+        # guide_button.bind("<Enter>", lambda e: guide_button.config(bg="#4caf50", fg="white"))
+        # guide_button.bind("<Leave>", lambda e: guide_button.config(bg="#cccccc", fg="black"))
 
 
         # 添加「開啟 DOS 視窗」按鈕
@@ -1365,24 +1290,24 @@ class TabManager:
                 # 如果已經開啟，則顯示提示訊息
                 messagebox.showinfo("提示", "DOS 視窗已經開啟")
         
-        dos_button = tk.Button(
-            guide_main_frame,
-            text="開啟 DOS 視窗",
-            command=open_dos_window,
-            font=('Microsoft JhengHei UI', 16, 'bold'),
-            width=20,
-            height=3,
-            bg='#cccccc',
-            fg='black',
-            relief='groove',
-            borderwidth=2,
-            highlightthickness=0
-        )
-        dos_button.grid(row=3, column=0, pady=20)
-        
-        # 按鈕 hover 效果
-        dos_button.bind("<Enter>", lambda e: dos_button.config(bg="#4caf50", fg="white"))
-        dos_button.bind("<Leave>", lambda e: dos_button.config(bg="#cccccc", fg="black"))
+        # dos_button = tk.Button(
+            # guide_main_frame,  # 已移除，使用新的GuideTab類
+            # text="開啟 DOS 視窗",
+            # command=open_dos_window,
+            # font=('Microsoft JhengHei UI', 16, 'bold'),
+            # width=20,
+            # height=3,
+            # bg='#cccccc',
+            # fg='black',
+            # relief='groove',
+            # borderwidth=2,
+            # highlightthickness=0
+        # )
+        # dos_button.grid(row=3, column=0, pady=20)
+
+        # 按鈕 hover 效果 (已移除，使用新的GuideTab類)
+        # dos_button.bind("<Enter>", lambda e: dos_button.config(bg="#4caf50", fg="white"))
+        # dos_button.bind("<Leave>", lambda e: dos_button.config(bg="#cccccc", fg="black"))
 
 
 
@@ -2099,6 +2024,8 @@ class SerialUI:
             self.handlers.on_execute()
         else:
             print("[ERROR] handlers 不存在或沒有 on_execute 方法")
+
+
 
 
 # 若有 FixtureFrame 也在這裡加 get_settings

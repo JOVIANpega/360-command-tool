@@ -13,9 +13,9 @@ import sys
 import datetime
 
 version_info = {
-    'version': '1.7.0',
-    'file_version': (1, 7, 0, 0),
-    'product_version': (1, 7, 0, 0),
+    'version': '1.7.1',
+    'file_version': (1, 7, 1, 0),
+    'product_version': (1, 7, 1, 0),
     'company_name': 'VALO360指令通',
     'file_description': 'VALO360指令通 - 序列埠通訊工具',
     'internal_name': 'VALO360指令通',
@@ -27,6 +27,31 @@ version_info = {
 
 # 版本更新記錄
 version_history = """
+v1.7.1 (2025-07-30) - GUI優化版本
+===========================================
+🎨 GUI介面優化與用戶體驗提升
+• 自動顯示應用程式版本號到GUI右上欄位
+• 打包時自動包含整個Command_TABLE目錄
+• 指令檔案路徑預設為EXE所在目錄下的Command_TABLE\command.txt
+
+🔧 設定標籤頁改善
+• 指令間隔符號欄位新增淡黃色底色
+• 新增說明標籤：從command.txt中決定多重指令的分隔符號
+• 重新排列應用程式版本與Command_TABLE路徑欄位
+
+📱 DUT控制標籤頁增強
+• 支援左右拖拉調整視窗大小
+• 自動記錄視窗大小到setup.json
+• 新增固定內容Label顯示（可在設定頁修改）
+
+🌐 使用說明標籤頁改進
+• HTML內容嵌入式顯示於TAB內的frame中
+• 不再跳出外部瀏覽器
+
+📢 全域通知系統優化
+• 顯示更多操作狀態與結果摘要
+• 包含Ping、儲存設定、載入檔案、執行指令等狀態
+
 v1.7.0 (2025-07-30) - Augment 優化版本
 ===========================================
 🚀 全面架構重構與性能優化
@@ -148,15 +173,15 @@ v1.5.0.1 (2025-07-12)
 # 定義版本號
 VERSION = version_info['version']
 
-APP_VERSION = "V1.7.0"
-APP_VERSION_DETAIL = "\n【V1.7.0 主要更新 - Augment 優化】\n- 全面重構代碼架構，提升穩定性和性能\n- 新增統一錯誤處理和日誌系統\n- 實施智能配置管理和資源快取\n- 新增異步處理和性能監控功能\n- 大幅優化記憶體使用和響應速度\n"
+APP_VERSION = "V1.7.1"
+APP_VERSION_DETAIL = "\n【V1.7.1 主要更新 - GUI優化】\n- 優化GUI介面設計和用戶體驗\n- 新增版本號自動顯示功能\n- 改善設定標籤頁布局和視覺效果\n- 增強DUT控制標籤頁功能\n- 優化全域通知系統\n"
 
 # 生成版本資訊檔案
 with open("version_info_zh.txt", "w", encoding="utf-8") as f:
     f.write("VSVersionInfo(\n")
     f.write("  ffi=FixedFileInfo(\n")
-    f.write("    filevers=(1, 7, 0, 0),\n")
-    f.write("    prodvers=(1, 7, 0, 0),\n")
+    f.write("    filevers=(1, 7, 1, 0),\n")
+    f.write("    prodvers=(1, 7, 1, 0),\n")
     f.write("    mask=0x3f,\n")
     f.write("    flags=0x0,\n")
     f.write("    OS=0x40004,\n")
