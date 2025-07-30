@@ -197,7 +197,7 @@ class FixtureControlWindow:
     def load_commands(self):
         """載入指令檔案"""
         try:
-            command_file = resource_path("FIXTURE/Fixture_Command.txt")
+            command_file = resource_path("Command_TABLE/Fixture_Command.txt")
             if not os.path.exists(command_file):
                 messagebox.showerror("錯誤", f"找不到指令檔案: {command_file}")
                 return

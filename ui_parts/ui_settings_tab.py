@@ -180,39 +180,17 @@ class SettingsTab(ttk.Frame):
         self.content_font_spinbox.bind('<Return>', self.on_content_font_changed)
         self.content_font_spinbox.bind('<FocusOut>', self.on_content_font_changed)
         dut_row += 1
-        # 儲存設定按鈕 - 靠右對齊內容字體下方
-        button_container = ttk.Frame(font_frame)
-        button_container.grid(row=1, column=3, sticky="e", pady=(10, 4))
-        self.save_button = tk.Button(
-            button_container, 
-            text="儲存\n設定", 
-            font=('Microsoft JhengHei UI', 14, 'bold'),
-            bg='#4CAF50', 
-            fg='white', 
-            relief='raised', 
-            borderwidth=3,
-            cursor="hand2",
-            command=self.save_settings,
-            width=10,
-            height=3
-        )
-        self.save_button.pack(side=tk.RIGHT)
-        self.save_button.bind("<Enter>", lambda e: self.save_button.config(bg='#45a049'))
-        self.save_button.bind("<Leave>", lambda e: self.save_button.config(bg='#4CAF50'))
-        dut_row += 1
         
         # 版本與路徑資訊區塊 - 放在一起顯示
         info_frame = ttk.LabelFrame(dut_frame, text="版本與路徑資訊", padding=(10, 4))
         info_frame.grid(row=dut_row, column=0, columnspan=3, sticky="ew", pady=4)
         info_frame.columnconfigure(1, weight=1)
 
-        # 應用程式版本（移到這裡）
+        # 應用程式版本（移到這裡，改為可編輯）
         ttk.Label(info_frame, text="應用程式版本:").grid(row=0, column=0, sticky="w", pady=2)
-        version_display = ttk.Label(info_frame, text=current_version,
-                                   font=('Microsoft JhengHei UI', 10, 'bold'),
-                                   foreground='#2E8B57', background='#F0F8FF',
-                                   relief='solid', borderwidth=1, padding=(5, 2))
-        version_display.grid(row=0, column=1, sticky="w", padx=(10, 0), pady=2)
+        version_entry = ttk.Entry(info_frame, textvariable=self.vars["version"], width=15,
+                                 font=('Microsoft JhengHei UI', 10, 'bold'))
+        version_entry.grid(row=0, column=1, sticky="w", padx=(10, 0), pady=2)
 
         # 指令檔案路徑
         ttk.Label(info_frame, text="指令檔案路徑:").grid(row=1, column=0, sticky="nw", pady=2)
@@ -270,6 +248,27 @@ class SettingsTab(ttk.Frame):
             ttk.Entry(tab_frame, textvariable=self.vars[f"tab_names_{tab_key}"], width=20).grid(row=i, column=1, sticky="ew", padx=(10, 0), pady=4)
         
         # 注意：治具控制設定已移動至「TAB 測試治具」的指令控制區塊中
+
+        # 在最底部添加儲存按鈕 - 靠右對齊
+        bottom_frame = ttk.Frame(self)
+        bottom_frame.pack(fill='x', side='bottom', padx=10, pady=(10, 10))
+
+        self.save_button = tk.Button(
+            bottom_frame,
+            text="儲存設定",
+            font=('Microsoft JhengHei UI', 14, 'bold'),
+            bg='#4CAF50',
+            fg='white',
+            relief='raised',
+            borderwidth=3,
+            cursor="hand2",
+            command=self.save_settings,
+            width=12,
+            height=2
+        )
+        self.save_button.pack(side=tk.RIGHT)
+        self.save_button.bind("<Enter>", lambda e: self.save_button.config(bg='#45a049'))
+        self.save_button.bind("<Leave>", lambda e: self.save_button.config(bg='#4CAF50'))
 
     def on_ui_font_changed(self, event=None):
         """介面字體大小即時更新"""

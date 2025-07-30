@@ -201,15 +201,10 @@ class TabManager:
 
 
         # 創建分頁
-
-
         self.dut_frame = ttk.Frame(self.notebook, style='Main.TFrame')
-
-
         self.fixture_frame = ttk.Frame(self.notebook, style='Main.TFrame')
-
-
-        self.handover_frame = ttk.Frame(self.notebook, style='Main.TFrame')  # 新增第三個 tab
+        self.handover_frame = ttk.Frame(self.notebook, style='Main.TFrame')  # 使用說明 tab
+        self.dos_frame = ttk.Frame(self.notebook, style='Main.TFrame')  # 新增 DOS tab
 
 
         
@@ -244,7 +239,8 @@ class TabManager:
         tab0_name = tab_names.get('tab0', 'DUT 控制')
         tab1_name = tab_names.get('tab1', '治具控制')
         tab2_name = tab_names.get('tab2', '使用說明')
-        tab3_name = tab_names.get('tab3', '設定')
+        tab3_name = tab_names.get('tab3', 'DOS 工具')
+        tab4_name = tab_names.get('tab4', '設定')
         
         print(f"[DEBUG] 從設定檔讀取的標籤名稱: {tab_names}")
         
@@ -254,16 +250,13 @@ class TabManager:
 
 
         self.notebook.add(self.dut_frame, text=tab0_name)
-
-
         self.notebook.add(self.fixture_frame, text=tab1_name)
+        self.notebook.add(self.handover_frame, text=tab2_name)  # 使用說明
+        self.notebook.add(self.dos_frame, text=tab3_name)  # DOS 工具
 
-
-        self.notebook.add(self.handover_frame, text=tab2_name)  # 改名為使用說明
-        
         # 新增設定分頁
         self.settings_frame = ttk.Frame(self.notebook, style='Main.TFrame')
-        self.notebook.add(self.settings_frame, text=tab3_name)
+        self.notebook.add(self.settings_frame, text=tab4_name)
 
         # 設置分頁切換事件
         self.notebook.bind('<<NotebookTabChanged>>', self.on_tab_changed)
@@ -279,13 +272,10 @@ class TabManager:
 
 
         self.init_dut_tab()
-
-
         self.init_fixture_tab()
-
-
-        self.init_guide_tab()  # 改名為 init_guide_tab
-        self.init_settings_tab() # 新增
+        self.init_guide_tab()  # 使用說明
+        self.init_dos_tab()  # DOS 工具
+        self.init_settings_tab() # 設定
         
         # 綁定關閉事件
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
@@ -1115,8 +1105,11 @@ class TabManager:
         # 初始化使用說明分頁 - 使用新的GuideTab類
         from ui_parts.ui_guide_tab import GuideTab
         self.guide_tab = GuideTab(self.handover_frame)
-        # 保持對DOS進程的引用
-        self.dos_process = self.guide_tab.dos_process
+
+    def init_dos_tab(self):
+        # 初始化DOS工具分頁
+        from ui_parts.ui_dos_tab import DosTab
+        self.dos_tab = DosTab(self.dos_frame)
 
 
         

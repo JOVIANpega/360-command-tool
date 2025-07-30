@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VALO360 指令通使用指南 v1.7.1</title>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei UI', Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #2980b9;
+            margin-top: 25px;
+        }
+        .feature-box {
+            background-color: #ecf0f1;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+        ul, ol {
+            padding-left: 25px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        code {
+            background-color: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .version-info {
+            text-align: center;
+            background-color: #e8f4fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .image-placeholder {
+            background-color: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            border-radius: 5px;
+            color: #6c757d;
+        }
+        .tab-section {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .step-list {
+            background-color: #fff;
+            border: 1px solid #e9ecef;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .highlight {
+            background-color: #fff3cd;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .button-demo {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>VALO360 指令通 v1.7.1 使用指南</h1>
+        
+        <div class="version-info">
+            <strong>版本：1.7.1 - GUI優化版本</strong><br>
+            發布日期：2025-07-30<br>
+            支援系統：Windows 7 或更高版本<br>
+            檔案大小：9.7 MB
+        </div>
+
+        <h2>🚀 快速開始</h2>
+        <div class="success">
+            <strong>第一次使用？</strong><br>
+            1. 下載並執行 <code>VALO360指令通_v1.7.1.exe</code><br>
+            2. 程式會自動載入 <code>Command_TABLE</code> 目錄下的指令檔案<br>
+            3. 在「設定」標籤頁配置基本參數<br>
+            4. 開始使用各項功能！
+        </div>
+
+        <h2>📋 標籤頁功能說明</h2>
+        
+        <div class="tab-section">
+            <h3>🎛️ DUT 控制標籤頁</h3>
+            <div class="image-placeholder">
+                [圖片位置：figure1.jpg - DUT控制標籤頁截圖]
+            </div>
+            
+            <div class="feature-box">
+                <strong>主要功能：</strong>
+                <ul>
+                    <li><span class="highlight">COM口選擇</span>：選擇正確的串口連接設備</li>
+                    <li><span class="highlight">指令執行</span>：從下拉選單選擇或手動輸入AT指令</li>
+                    <li><span class="highlight">IP Ping測試</span>：測試網路連線狀態</li>
+                    <li><span class="highlight">即時回應</span>：查看指令執行結果和設備回應</li>
+                </ul>
+            </div>
+            
+            <div class="step-list">
+                <strong>使用步驟：</strong>
+                <ol>
+                    <li>點擊「重新整理」按鈕掃描可用的COM口</li>
+                    <li>從下拉選單選擇正確的COM口</li>
+                    <li>選擇指令類別（全部指令、AT指令等）</li>
+                    <li>從指令下拉選單選擇要執行的指令（顯示15行）</li>
+                    <li>點擊「執行」按鈕發送指令</li>
+                    <li>在右側回應區域查看執行結果</li>
+                </ol>
+            </div>
+            
+            <div class="info">
+                <strong>v1.7.1 新功能：</strong><br>
+                • IP按鈕加大為 <span class="button-demo">Ping</span> 樣式，更易點擊<br>
+                • 指令下拉選單顯示15行（原10行）<br>
+                • IP位址自動記錄到setup.json，下次開啟自動填入<br>
+                • 設備標籤內容可在設定頁自訂（預設：MU310 : root/oelinux123）
+            </div>
+        </div>
+
+        <div class="tab-section">
+            <h3>🔧 治具控制標籤頁</h3>
+            <div class="image-placeholder">
+                [圖片位置：figure2.jpg - 治具控制標籤頁截圖]
+            </div>
+            
+            <div class="feature-box">
+                <strong>主要功能：</strong>
+                <ul>
+                    <li><span class="highlight">治具指令控制</span>：執行測試治具相關指令</li>
+                    <li><span class="highlight">序列執行</span>：支援批次指令執行</li>
+                    <li><span class="highlight">狀態監控</span>：即時顯示治具狀態</li>
+                    <li><span class="highlight">自動化測試</span>：支援測試序列自動執行</li>
+                </ul>
+            </div>
+            
+            <div class="step-list">
+                <strong>使用步驟：</strong>
+                <ol>
+                    <li>確保治具設備已正確連接</li>
+                    <li>選擇要執行的治具指令</li>
+                    <li>點擊執行按鈕開始控制</li>
+                    <li>觀察治具狀態變化</li>
+                </ol>
+            </div>
+            
+            <div class="info">
+                <strong>v1.7.1 更新：</strong><br>
+                • 指令檔案路徑更改為 <code>Command_TABLE\Fixture_Command.txt</code><br>
+                • 與DUT控制使用相同的指令目錄結構
+            </div>
+        </div>
+
+        <div class="tab-section">
+            <h3>📖 使用說明標籤頁</h3>
+            <div class="image-placeholder">
+                [圖片位置：figure3.jpg - 使用說明標籤頁截圖]
+            </div>
+            
+            <div class="feature-box">
+                <strong>主要功能：</strong>
+                <ul>
+                    <li><span class="highlight">開啟使用說明</span>：點擊按鈕開啟詳細的HTML使用指南</li>
+                    <li><span class="highlight">簡潔介面</span>：不再顯示HTML代碼，提供更好的用戶體驗</li>
+                </ul>
+            </div>
+            
+            <div class="step-list">
+                <strong>使用方式：</strong>
+                <ol>
+                    <li>切換到「使用說明」標籤頁</li>
+                    <li>點擊 <span class="button-demo">開啟使用說明</span> 按鈕</li>
+                    <li>系統會在預設瀏覽器中開啟詳細的使用指南</li>
+                </ol>
+            </div>
+            
+            <div class="info">
+                <strong>v1.7.1 改進：</strong><br>
+                • 移除HTML內容嵌入顯示，改為簡潔的按鈕介面<br>
+                • 保留開啟外部網頁功能，提供更好的閱讀體驗
+            </div>
+        </div>
+
+        <div class="tab-section">
+            <h3>💻 DOS 工具標籤頁</h3>
+            <div class="image-placeholder">
+                [圖片位置：figure4.jpg - DOS工具標籤頁截圖]
+            </div>
+            
+            <div class="feature-box">
+                <strong>主要功能：</strong>
+                <ul>
+                    <li><span class="highlight">開啟DOS視窗</span>：快速開啟命令提示字元</li>
+                    <li><span class="highlight">批次檔執行</span>：選擇並執行.bat或.cmd檔案</li>
+                    <li><span class="highlight">多種執行模式</span>：支援當前視窗或新視窗執行</li>
+                    <li><span class="highlight">執行狀態顯示</span>：即時顯示執行狀態和結果</li>
+                </ul>
+            </div>
+            
+            <div class="step-list">
+                <strong>DOS視窗使用：</strong>
+                <ol>
+                    <li>點擊 <span class="button-demo">開啟 DOS 視窗</span> 按鈕</li>
+                    <li>系統會開啟新的命令提示字元視窗</li>
+                    <li>可在DOS視窗中執行各種系統指令</li>
+                </ol>
+            </div>
+            
+            <div class="step-list">
+                <strong>批次檔執行：</strong>
+                <ol>
+                    <li>點擊「瀏覽」按鈕選擇.bat或.cmd檔案</li>
+                    <li>選擇執行模式：
+                        <ul>
+                            <li><span class="button-demo">執行批次檔</span>：在當前視窗執行，可看到返回結果</li>
+                            <li><span class="button-demo">在新視窗執行</span>：在新的DOS視窗中執行</li>
+                        </ul>
+                    </li>
+                    <li>觀察底部狀態顯示區域的執行結果</li>
+                </ol>
+            </div>
+            
+            <div class="success">
+                <strong>v1.7.1 新增功能：</strong><br>
+                • 全新的DOS工具標籤頁<br>
+                • 從使用說明標籤頁移動DOS視窗功能到此處<br>
+                • 新增批次檔執行功能，支援多種執行模式<br>
+                • 提供執行狀態即時反饋
+            </div>
+        </div>
+
+        <div class="tab-section">
+            <h3>⚙️ 設定標籤頁</h3>
+            <div class="image-placeholder">
+                [圖片位置：figure5.jpg - 設定標籤頁截圖]
+            </div>
+
+            <div class="feature-box">
+                <strong>主要功能：</strong>
+                <ul>
+                    <li><span class="highlight">應用程式基本設定</span>：視窗標題、大小等基本配置</li>
+                    <li><span class="highlight">DUT控制設定</span>：COM口、超時、字體等參數</li>
+                    <li><span class="highlight">版本與路徑管理</span>：應用程式版本、指令檔案路徑設定</li>
+                    <li><span class="highlight">標籤頁名稱自訂</span>：可自訂各標籤頁的顯示名稱</li>
+                </ul>
+            </div>
+
+            <div class="step-list">
+                <strong>基本設定項目：</strong>
+                <ul>
+                    <li><strong>視窗標題</strong>：自訂應用程式視窗標題（最多50字元）</li>
+                    <li><strong>視窗大小</strong>：設定視窗寬度和高度</li>
+                    <li><strong>COM口設定</strong>：預設COM口選擇</li>
+                    <li><strong>指令超時</strong>：設定指令執行超時時間（秒）</li>
+                    <li><strong>指令結束字串</strong>：設定指令結束的判斷字串</li>
+                    <li><strong>指令間隔符號</strong>：<span class="highlight" style="background-color: #FFFACD;">多重指令的分隔符號（淡黃色底色）</span></li>
+                </ul>
+            </div>
+
+            <div class="step-list">
+                <strong>字體設定：</strong>
+                <ul>
+                    <li><strong>介面字體</strong>：調整UI介面文字大小（8-24）</li>
+                    <li><strong>內容字體</strong>：調整內容顯示文字大小（8-24）</li>
+                    <li><strong>即時生效</strong>：字體設定修改後立即生效，無需重啟</li>
+                </ul>
+            </div>
+
+            <div class="step-list">
+                <strong>版本與路徑資訊：</strong>
+                <ul>
+                    <li><strong>應用程式版本</strong>：<span class="highlight">可編輯版本號</span>（預設1.7.1）</li>
+                    <li><strong>指令檔案路徑</strong>：設定DUT控制的指令檔案位置</li>
+                    <li><strong>設備標籤內容</strong>：自訂DUT控制頁面顯示的設備資訊</li>
+                </ul>
+            </div>
+
+            <div class="step-list">
+                <strong>標籤頁名稱設定：</strong>
+                <ul>
+                    <li>標籤頁1：DUT 控制</li>
+                    <li>標籤頁2：治具控制</li>
+                    <li>標籤頁3：使用說明</li>
+                    <li>標籤頁4：DOS 工具</li>
+                    <li>標籤頁5：設定</li>
+                </ul>
+            </div>
+
+            <div class="warning">
+                <strong>重要提醒：</strong><br>
+                • 修改設定後請點擊右下角的 <span class="button-demo">儲存設定</span> 按鈕<br>
+                • 所有設定會自動保存到 <code>setup.json</code> 檔案<br>
+                • 程式關閉時會自動保存當前設定
+            </div>
+
+            <div class="info">
+                <strong>v1.7.1 改進：</strong><br>
+                • 應用程式版本改為可編輯欄位<br>
+                • 指令間隔符號欄位新增淡黃色底色和說明標籤<br>
+                • 儲存設定按鈕移至頁面最下方靠右位置<br>
+                • 版本與路徑資訊區塊化顯示，更清晰易讀<br>
+                • 新增設備標籤內容設定功能
+            </div>
+        </div>
+
+        <h2>🔧 系統需求</h2>
+        <div class="feature-box">
+            <ul>
+                <li><strong>作業系統</strong>：Windows 7 或更高版本</li>
+                <li><strong>記憶體</strong>：建議 4GB 或以上</li>
+                <li><strong>磁碟空間</strong>：至少 100MB 可用空間</li>
+                <li><strong>檔案大小</strong>：9.7 MB</li>
+            </ul>
+        </div>
+
+        <h2>📝 使用注意事項</h2>
+        <div class="warning">
+            <ul>
+                <li>確保設備已正確連接到指定的COM口</li>
+                <li>執行指令前請確認設備狀態</li>
+                <li>如遇到問題，請檢查COM口設定和設備連接</li>
+                <li>可在設定頁面調整字體大小以獲得更好的顯示效果</li>
+                <li>所有設定會自動保存，無需手動備份</li>
+            </ul>
+        </div>
+
+        <h2>🆕 v1.7.1 版本更新內容</h2>
+        <div class="success">
+            <h3>GUI介面優化</h3>
+            <ul>
+                <li>自動顯示應用程式版本號到GUI右上欄位</li>
+                <li>打包時自動包含整個Command_TABLE目錄</li>
+                <li>指令檔案路徑預設為EXE所在目錄下的Command_TABLE\command.txt</li>
+            </ul>
+
+            <h3>設定標籤頁改善</h3>
+            <ul>
+                <li>指令間隔符號欄位新增淡黃色底色</li>
+                <li>新增說明標籤：從command.txt中決定多重指令的分隔符號</li>
+                <li>應用程式版本改為可編輯，預設1.7.1</li>
+                <li>儲存設定按鈕移至最下方靠右</li>
+            </ul>
+
+            <h3>新增DOS工具標籤頁</h3>
+            <ul>
+                <li>移動DOS視窗功能到專屬標籤頁</li>
+                <li>新增批次檔執行功能</li>
+                <li>支援多種執行模式</li>
+                <li>提供執行狀態即時反饋</li>
+            </ul>
+
+            <h3>DUT控制標籤頁增強</h3>
+            <ul>
+                <li>IP按鈕加大，更易點擊</li>
+                <li>指令下拉視窗顯示15行（原10行）</li>
+                <li>IP位址自動記錄功能</li>
+                <li>新增設備標籤內容設定</li>
+            </ul>
+
+            <h3>使用說明標籤頁改進</h3>
+            <ul>
+                <li>移除HTML內容嵌入顯示</li>
+                <li>改為簡潔的按鈕介面</li>
+                <li>保留開啟外部網頁功能</li>
+            </ul>
+
+            <h3>治具控制改進</h3>
+            <ul>
+                <li>指令檔案路徑更改為Command_TABLE\Fixture_Command.txt</li>
+                <li>與DUT控制使用相同的目錄結構</li>
+            </ul>
+        </div>
+
+        <h2>📞 技術支援</h2>
+        <div class="info">
+            <p><strong>GitHub專案</strong>：<a href="https://github.com/JOVIANpega/360-command-tool" target="_blank">https://github.com/JOVIANpega/360-command-tool</a></p>
+            <p><strong>版本</strong>：v1.7.1 - GUI優化版本</p>
+            <p><strong>發布日期</strong>：2025-07-30</p>
+            <p>如有任何問題或建議，歡迎在GitHub上提出Issue。</p>
+        </div>
+    </div>
+</body>
+</html>

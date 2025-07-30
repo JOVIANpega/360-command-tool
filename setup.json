@@ -230,9 +230,44 @@
         "timestamp": "16:29:27",
         "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
         "type": "info"
+      },
+      {
+        "timestamp": "17:07:11",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "17:07:11",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "17:07:13",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "17:07:16",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "17:07:18",
+        "message": "COM口: COM5 | 分類: 全部指令 (46個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "17:07:24",
+        "message": "COM口: COM5 | 分類: 全部指令 (46個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "17:07:35",
+        "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
+        "type": "info"
       }
     ],
-    "last_updated": "2025-07-30T16:29:27.188691"
+    "last_updated": "2025-07-30T17:07:35.005808"
   },
   "DUT_Control": {
     "Serial_COM_Port": "COM5",

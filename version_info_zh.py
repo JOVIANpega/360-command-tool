@@ -13,9 +13,9 @@ import sys
 import datetime
 
 version_info = {
-    'version': '1.7.1',
-    'file_version': (1, 7, 1, 0),
-    'product_version': (1, 7, 1, 0),
+    'version': '1.7.2',
+    'file_version': (1, 7, 2, 0),
+    'product_version': (1, 7, 2, 0),
     'company_name': 'VALO360指令通',
     'file_description': 'VALO360指令通 - 序列埠通訊工具',
     'internal_name': 'VALO360指令通',
@@ -27,6 +27,39 @@ version_info = {
 
 # 版本更新記錄
 version_history = """
+v1.7.2 (2025-07-30) - 功能增強版
+===========================================
+🆕 新增DOS工具標籤頁
+• 全新的DOS工具標籤頁，提供DOS視窗開啟功能
+• 新增批次檔執行功能，支援.bat和.cmd檔案
+• 支援當前視窗執行和新視窗執行兩種模式
+• 提供執行狀態即時反饋
+
+📖 使用說明標籤頁簡化
+• 移除HTML內容嵌入顯示，改為簡潔的按鈕介面
+• 保留開啟外部網頁功能，提供更好的閱讀體驗
+• 新增詳細的HTML使用說明文件
+
+⚙️ 設定功能增強
+• 應用程式版本改為可編輯欄位，預設1.7.2
+• 儲存設定按鈕移至頁面最下方靠右位置
+• 指令間隔符號欄位保持淡黃色底色和說明標籤
+
+🎛️ DUT控制標籤頁優化
+• IP按鈕加大為更易點擊的樣式
+• 指令下拉視窗顯示15行（原10行）
+• IP位址自動記錄功能正常運作
+• 新增設備標籤內容設定功能
+
+🔧 治具控制改進
+• 指令檔案路徑更改為Command_TABLE\Fixture_Command.txt
+• 與DUT控制使用相同的目錄結構
+
+📚 文檔完善
+• 新增詳細的HTML使用說明文件
+• 包含每個標籤頁的功能說明和使用步驟
+• 準備圖片位置供後續添加截圖
+
 v1.7.1 (2025-07-30) - GUI優化版本
 ===========================================
 🎨 GUI介面優化與用戶體驗提升
@@ -173,15 +206,15 @@ v1.5.0.1 (2025-07-12)
 # 定義版本號
 VERSION = version_info['version']
 
-APP_VERSION = "V1.7.1"
-APP_VERSION_DETAIL = "\n【V1.7.1 主要更新 - GUI優化】\n- 優化GUI介面設計和用戶體驗\n- 新增版本號自動顯示功能\n- 改善設定標籤頁布局和視覺效果\n- 增強DUT控制標籤頁功能\n- 優化全域通知系統\n"
+APP_VERSION = "V1.7.2"
+APP_VERSION_DETAIL = "\n【V1.7.2 主要更新 - 功能增強版】\n- 新增DOS工具標籤頁，支援批次檔執行\n- 使用說明標籤頁簡化，移除HTML內容顯示\n- 應用程式版本改為可編輯\n- IP按鈕加大，指令下拉視窗顯示15行\n- 治具控制檔案路徑更改為Command_TABLE\\Fixture_Command.txt\n- 儲存設定按鈕移至最下方靠右\n- 新增詳細的HTML使用說明文件\n"
 
 # 生成版本資訊檔案
 with open("version_info_zh.txt", "w", encoding="utf-8") as f:
     f.write("VSVersionInfo(\n")
     f.write("  ffi=FixedFileInfo(\n")
-    f.write("    filevers=(1, 7, 1, 0),\n")
-    f.write("    prodvers=(1, 7, 1, 0),\n")
+    f.write("    filevers=(1, 7, 2, 0),\n")
+    f.write("    prodvers=(1, 7, 2, 0),\n")
     f.write("    mask=0x3f,\n")
     f.write("    flags=0x0,\n")
     f.write("    OS=0x40004,\n")
