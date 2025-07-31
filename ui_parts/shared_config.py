@@ -371,28 +371,128 @@ class SharedConfigManager:
     def force_save_all(self):
         """強制保存所有待保存的設定"""
         try:
-            if not self.initialized:
-                print("[DEBUG] SharedConfigManager: 尚未初始化，無法強制保存")
-                return
+            print("[DEBUG] SharedConfigManager: 開始強制保存所有設定...")
 
-            # 收集所有當前變數的值
-            settings_dict = {}
-            for var_name, var in self.vars.items():
+            # 載入當前完整的 setup 資料
+            setup = load_setup()
+
+            if self.initialized:
+                # 如果已初始化，從 Tkinter 變數收集設定
+                print("[DEBUG] SharedConfigManager: 從 Tkinter 變數收集設定...")
+
+                # 更新 DUT 控制設定
+                if 'DUT_Control' not in setup:
+                    setup['DUT_Control'] = {}
+
+                # 映射 Tkinter 變數到設定路徑
+                var_mapping = {
+                    'dut_com_port': 'Serial_COM_Port',
+                    'dut_timeout': 'Command_Timeout_Seconds',
+                    'dut_end_string': 'Command_End_String',
+                    'dut_ip_address': 'Default_IP_Address',
+                    'dut_ui_font_size': 'UI_Font_Size',
+                    'dut_content_font_size': 'Content_Font_Size',
+                    'dut_notification_font_size': 'Notification_Font_Size',
+                    'dut_command_file_path': 'Command_File_Path',
+                    'dut_auto_execute': 'Auto_Execute',
+                    'window_width': 'Window_Width',
+                    'window_height': 'Window_Height',
+                    'window_title': 'Window_Title'
+                }
+
+                # 更新 DUT_Control 設定
+                for var_name, setup_key in var_mapping.items():
+                    if var_name in self.vars:
+                        try:
+                            value = self.vars[var_name].get()
+                            setup['DUT_Control'][setup_key] = value
+                            print(f"[DEBUG] SharedConfigManager: 更新 DUT_Control.{setup_key} = {value}")
+                        except Exception as e:
+                            print(f"[WARNING] SharedConfigManager: 無法獲取變數 {var_name}: {e}")
+
+                # 更新全域設定
+                global_mapping = {
+                    'app_version': 'version',
+                    'window_title': 'Window_Title',
+                    'window_width': 'Window_Width',
+                    'window_height': 'Window_Height'
+                }
+
+                for var_name, setup_key in global_mapping.items():
+                    if var_name in self.vars:
+                        try:
+                            value = self.vars[var_name].get()
+                            setup[setup_key] = value
+                            print(f"[DEBUG] SharedConfigManager: 更新全域 {setup_key} = {value}")
+                        except Exception as e:
+                            print(f"[WARNING] SharedConfigManager: 無法獲取變數 {var_name}: {e}")
+
+                # 更新標籤頁名稱
+                if 'tab_names' not in setup:
+                    setup['tab_names'] = {}
+
+                for i in range(4):
+                    var_name = f'tab_name_{i}'
+                    if var_name in self.vars:
+                        try:
+                            value = self.vars[var_name].get()
+                            setup['tab_names'][f'tab{i}'] = value
+                            print(f"[DEBUG] SharedConfigManager: 更新標籤頁 tab{i} = {value}")
+                        except Exception as e:
+                            print(f"[WARNING] SharedConfigManager: 無法獲取標籤頁變數 {var_name}: {e}")
+
+                # 更新UI設定
+                if 'UI_Settings' not in setup:
+                    setup['UI_Settings'] = {}
+
+                if 'tooltip_enabled' in self.vars:
+                    try:
+                        value = self.vars['tooltip_enabled'].get()
+                        setup['UI_Settings']['ToolTip_Enabled'] = value
+                        print(f"[DEBUG] SharedConfigManager: 更新 UI_Settings.ToolTip_Enabled = {value}")
+                    except Exception as e:
+                        print(f"[WARNING] SharedConfigManager: 無法獲取 tooltip_enabled: {e}")
+
+            # 如果有 root 窗口，獲取當前視窗狀態
+            if self.root and hasattr(self.root, 'winfo_exists') and self.root.winfo_exists():
                 try:
-                    if hasattr(var, 'get'):
-                        settings_dict[var_name] = var.get()
-                except Exception as e:
-                    print(f"[WARNING] SharedConfigManager: 無法獲取變數 {var_name} 的值: {e}")
+                    # 獲取當前視窗大小
+                    width = self.root.winfo_width()
+                    height = self.root.winfo_height()
 
-            # 強制保存
-            if settings_dict:
-                save_setup(settings_dict, manual_save=True)
-                print(f"[DEBUG] SharedConfigManager: 強制保存完成，共保存 {len(settings_dict)} 個設定")
-            else:
-                print("[DEBUG] SharedConfigManager: 沒有需要保存的設定")
+                    if width > 100 and height > 100:  # 確保視窗大小有效
+                        setup['Window_Width'] = str(width)
+                        setup['Window_Height'] = str(height)
+                        setup['DUT_Control']['Window_Width'] = str(width)
+                        setup['DUT_Control']['Window_Height'] = str(height)
+                        print(f"[DEBUG] SharedConfigManager: 更新視窗大小: {width}x{height}")
+
+                    # 獲取當前視窗標題（去除版本號）
+                    current_title = self.root.title()
+                    window_title = current_title
+                    if "_" in current_title:
+                        parts = current_title.split("_")
+                        if len(parts) >= 2:
+                            window_title = "_".join(parts[:-1])
+                    elif " V" in current_title:
+                        window_title = current_title.split(" V")[0]
+
+                    setup['Window_Title'] = window_title
+                    setup['DUT_Control']['Window_Title'] = window_title
+                    print(f"[DEBUG] SharedConfigManager: 更新視窗標題: {window_title}")
+
+                except Exception as e:
+                    print(f"[WARNING] SharedConfigManager: 獲取視窗狀態失敗: {e}")
+
+            # 強制保存到檔案
+            save_setup(setup, manual_save=True)
+            self.setup_data = setup  # 更新本地快取
+            print(f"[DEBUG] SharedConfigManager: 強制保存完成")
 
         except Exception as e:
             print(f"[ERROR] SharedConfigManager: 強制保存失敗: {e}")
+            import traceback
+            traceback.print_exc()
 
 # 全域設定管理器實例
 shared_config = None

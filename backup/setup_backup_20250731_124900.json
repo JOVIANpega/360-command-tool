@@ -153,10 +153,10 @@
     "Default_IP_Address": "127.0.0.1",
     "Window_Width": "1536",
     "Window_Height": "793",
-    "Last_Selected_Command_Section": "全部指令",
-    "Pane_Sash_Position": "533",
+    "Last_Selected_Command_Section": "MB指令==>",
+    "Pane_Sash_Position": "526",
     "Auto_Execute": true,
-    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/CODE_HERE2/Command_TABLE/command_360.txt",
+    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/CODE_HERE2/Command_TABLE/command.txt",
     "Notification_Font_Size": "10",
     "Section_Titles": [
       "全部指令",
@@ -296,11 +296,11 @@
   "Window_Title": "指令通",
   "Device_Label": "MU310:root/oelinux123",
   "tab_names": {
-    "tab0": "DUT 控制",
-    "tab1": "治具控制",
-    "tab2": "使用說明",
-    "tab3": "DOS 工具",
-    "tab4": "設定"
+    "tab0": "DUT控制1",
+    "tab1": "治具控制1",
+    "tab2": "使用說明1",
+    "tab3": "DOS 工具1",
+    "tab4": "設定1"
   },
   "Window_Width": "1536",
   "Window_Height": "793",

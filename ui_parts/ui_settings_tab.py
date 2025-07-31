@@ -479,8 +479,71 @@ class SettingsTab(ttk.Frame):
         """手動保存設定到 setup.json"""
         import traceback
         try:
+            print("[DEBUG] 開始手動保存設定...")
+
             # 生成設定字典
             settings_dict = self.generate_settings_dict()
+
+            # 獲取當前視窗狀態並添加到設定中
+            try:
+                # 找到主視窗
+                root = self.parent
+                while root and not hasattr(root, 'winfo_exists'):
+                    root = getattr(root, 'master', None) or getattr(root, 'parent', None)
+
+                if root and hasattr(root, 'winfo_exists') and root.winfo_exists():
+                    # 獲取當前視窗大小
+                    width = root.winfo_width()
+                    height = root.winfo_height()
+
+                    if width > 100 and height > 100:  # 確保視窗大小有效
+                        settings_dict['Window_Width'] = str(width)
+                        settings_dict['Window_Height'] = str(height)
+                        settings_dict['DUT_Control']['Window_Width'] = str(width)
+                        settings_dict['DUT_Control']['Window_Height'] = str(height)
+                        print(f"[DEBUG] 手動保存：視窗大小 {width}x{height}")
+
+                    # 獲取當前視窗標題（去除版本號）
+                    current_title = root.title()
+                    window_title = current_title
+                    if "_" in current_title:
+                        parts = current_title.split("_")
+                        if len(parts) >= 2:
+                            window_title = "_".join(parts[:-1])
+                    elif " V" in current_title:
+                        window_title = current_title.split(" V")[0]
+
+                    settings_dict['Window_Title'] = window_title
+                    settings_dict['DUT_Control']['Window_Title'] = window_title
+                    print(f"[DEBUG] 手動保存：視窗標題 {window_title}")
+
+                    # 獲取分割位置（如果存在）
+                    try:
+                        # 尋找 PanedWindow 元件
+                        def find_panedwindow(widget):
+                            if hasattr(widget, 'winfo_class') and widget.winfo_class() == 'PanedWindow':
+                                return widget
+                            for child in widget.winfo_children():
+                                result = find_panedwindow(child)
+                                if result:
+                                    return result
+                            return None
+
+                        panedwindow = find_panedwindow(root)
+                        if panedwindow:
+                            try:
+                                sash_position = panedwindow.sashpos(0)
+                                if sash_position > 0:
+                                    settings_dict['DUT_Control']['Pane_Sash_Position'] = str(sash_position)
+                                    print(f"[DEBUG] 手動保存：分割位置 {sash_position}")
+                            except Exception as e:
+                                print(f"[DEBUG] 獲取分割位置失敗: {e}")
+                    except Exception as e:
+                        print(f"[DEBUG] 尋找分割位置失敗: {e}")
+
+            except Exception as e:
+                print(f"[WARNING] 獲取視窗狀態失敗: {e}")
+
             # 手動保存設定（繞過自動保存限制）
             from config_core import save_setup
             from core.config_manager import get_config_manager
@@ -491,6 +554,16 @@ class SettingsTab(ttk.Frame):
             # 同時使用ConfigManager的手動保存
             config_manager = get_config_manager()
             config_manager.save_config(settings_dict, manual_save=True)
+
+            # 強制保存 SharedConfigManager 中的設定
+            try:
+                from ui_parts.shared_config import get_shared_config
+                shared_config = get_shared_config()
+                if hasattr(shared_config, 'force_save_all'):
+                    shared_config.force_save_all()
+                    print("[DEBUG] SharedConfigManager 強制保存完成")
+            except Exception as e:
+                print(f"[WARNING] SharedConfigManager 強制保存失敗: {e}")
 
             # 立即重新讀取setup.json的所有資料
             print("[DEBUG] 手動儲存完成，重新讀取setup.json...")
@@ -511,7 +584,7 @@ class SettingsTab(ttk.Frame):
             self.update_tab_names_immediately()
 
             # 顯示成功訊息
-            messagebox.showinfo("成功", "設定已手動儲存並立即生效！")
+            messagebox.showinfo("成功", "設定已手動儲存並立即生效！\n包含視窗大小、分割位置等所有設定。")
             print("[DEBUG] 設定已手動儲存並重新載入完成")
 
         except Exception as e:

@@ -5,12 +5,12 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('Command_TABLE', 'Command_TABLE'), ('FIXTURE', 'FIXTURE'), ('assets', 'assets'), ('ui_parts', 'ui_parts'), ('*.py', '.'), ('*.json', '.'), ('*.txt', '.'), ('*.html', '.')],
+    datas=[],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['backup'],
+    excludes=[],
     noarchive=False,
 )
 pyz = PYZ(a.pure)
@@ -34,6 +34,6 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    version='version_info_zh.txt',
+    version='version_info.txt',
     icon=['assets\\app.ico'],
 )
