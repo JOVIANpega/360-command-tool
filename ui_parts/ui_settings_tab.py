@@ -237,10 +237,10 @@ class SettingsTab(ttk.Frame):
         
         # 獲取當前的標籤頁名稱
         tab_names = self.setup_data.get('tab_names', {})
-        default_tab_names = ['DUT 控制', '治具控制', '使用說明', '設定']
-        
-        # 創建標籤頁名稱輸入框 - 標籤頁1~4 width=20
-        for i in range(4):
+        default_tab_names = ['DUT 控制', '治具控制', '使用說明', 'DOS 工具', '設定']
+
+        # 創建標籤頁名稱輸入框 - 標籤頁1~5 width=20
+        for i in range(5):
             tab_key = f'tab{i}'
             tab_name = tab_names.get(tab_key, default_tab_names[i])
             ttk.Label(tab_frame, text=f"標籤頁 {i+1}:").grid(row=i, column=0, sticky="w", pady=4)
@@ -503,6 +503,7 @@ class SettingsTab(ttk.Frame):
         current_setup["tab_names"]["tab1"] = self.vars["tab_names_tab1"].get()
         current_setup["tab_names"]["tab2"] = self.vars["tab_names_tab2"].get()
         current_setup["tab_names"]["tab3"] = self.vars["tab_names_tab3"].get()
+        current_setup["tab_names"]["tab4"] = self.vars["tab_names_tab4"].get()
         
         # 更新DUT_Control設定
         if "DUT_Control" not in current_setup:

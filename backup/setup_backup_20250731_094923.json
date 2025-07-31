@@ -32,6 +32,211 @@
     "system_status": "COM口: {0} | 分類: {1} ({2}個指令) | 超時: {3}秒",
     "history": [
       {
+        "timestamp": "11:16:07",
+        "message": "已選擇: SW_Firmware_Version",
+        "type": "info"
+      },
+      {
+        "timestamp": "11:16:08",
+        "message": "已連接到 COM3",
+        "type": "success"
+      },
+      {
+        "timestamp": "11:16:09",
+        "message": "連接已關閉",
+        "type": "error"
+      },
+      {
+        "timestamp": "11:16:18",
+        "message": "找到 4 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:02:24",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:02:24",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:02:28",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "14:02:29",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "14:02:31",
+        "message": "COM口: COM5 | 分類: KANGAROO (40個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:02:38",
+        "message": "COM口: COM5 | 分類: KANGAROO (40個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:02:48",
+        "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:28:13",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:28:13",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:28:15",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "14:28:20",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "14:28:20",
+        "message": "COM口: COM5 | 分類: KANGAROO (40個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:28:27",
+        "message": "COM口: COM5 | 分類: KANGAROO (40個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:28:37",
+        "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:29:09",
+        "message": "設定已更新！\n• 指令檔案已重新載入\n• COM口設定已更新\n• 結束字串設定已更新\n• IP地址設定已更新\n• 超時設定已更新",
+        "type": "success"
+      },
+      {
+        "timestamp": "14:29:09",
+        "message": "標籤頁名稱已同步更新",
+        "type": "success"
+      },
+      {
+        "timestamp": "14:29:11",
+        "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱\n✓ 視窗標題",
+        "type": "success"
+      },
+      {
+        "timestamp": "14:29:11",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:29:14",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:29:18",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:29:21",
+        "message": "已選擇: 1. 取得360序號 Get 360 SN States",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:29:21",
+        "message": "已連接到 COM5",
+        "type": "success"
+      },
+      {
+        "timestamp": "14:29:23",
+        "message": "連接已關閉",
+        "type": "error"
+      },
+      {
+        "timestamp": "14:35:07",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:35:07",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:35:10",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "14:35:15",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "14:35:15",
+        "message": "COM口: COM5 | 分類: 全部指令 (46個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "14:35:21",
+        "message": "COM口: COM5 | 分類: 全部指令 (46個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "16:29:03",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "16:29:03",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "16:29:05",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "16:29:10",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "16:29:10",
+        "message": "COM口: COM5 | 分類: 全部指令 (46個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "16:29:17",
+        "message": "COM口: COM5 | 分類: 全部指令 (46個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "16:29:27",
+        "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
+        "type": "info"
+      },
+      {
+        "timestamp": "17:07:11",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
         "timestamp": "17:07:11",
         "message": "VALO360 指令通 已啟動",
         "type": "info"
@@ -110,39 +315,9 @@
         "timestamp": "09:49:23",
         "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
         "type": "success"
-      },
-      {
-        "timestamp": "09:49:25",
-        "message": "COM口: COM5 | 分類: 全部指令 (46個指令) | 超時: 30秒",
-        "type": "info"
-      },
-      {
-        "timestamp": "09:49:32",
-        "message": "COM口: COM5 | 分類: 全部指令 (46個指令) | 超時: 30秒",
-        "type": "info"
-      },
-      {
-        "timestamp": "09:49:35",
-        "message": "設定已更新！\n• 指令檔案已重新載入\n• COM口設定已更新\n• 結束字串設定已更新\n• IP地址設定已更新\n• 超時設定已更新",
-        "type": "success"
-      },
-      {
-        "timestamp": "09:49:35",
-        "message": "標籤頁名稱已同步更新",
-        "type": "success"
-      },
-      {
-        "timestamp": "09:49:41",
-        "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱\n✓ 視窗標題",
-        "type": "success"
-      },
-      {
-        "timestamp": "09:49:43",
-        "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
-        "type": "info"
       }
     ],
-    "last_updated": "2025-07-31T09:49:43.343922"
+    "last_updated": "2025-07-31T09:49:23.962906"
   },
   "DUT_Control": {
     "Serial_COM_Port": "COM5",
@@ -301,11 +476,11 @@
   "Window_Title": "指令通___",
   "Device_Label": "MU310:root/oelinux123",
   "tab_names": {
-    "tab0": "DUT 控制1",
-    "tab1": "治具控制1",
-    "tab2": "使用說明1",
-    "tab3": "DOS 工具1",
-    "tab4": "設定1"
+    "tab0": "DUT 控制",
+    "tab1": "治具控制",
+    "tab2": "使用說明",
+    "tab3": "DOS 工具",
+    "tab4": "設定"
   },
   "Window_Width": "1536",
   "Window_Height": "793",

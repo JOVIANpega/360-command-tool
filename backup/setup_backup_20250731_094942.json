@@ -135,14 +135,9 @@
         "timestamp": "09:49:41",
         "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱\n✓ 視窗標題",
         "type": "success"
-      },
-      {
-        "timestamp": "09:49:43",
-        "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
-        "type": "info"
       }
     ],
-    "last_updated": "2025-07-31T09:49:43.343922"
+    "last_updated": "2025-07-31T09:49:41.754459"
   },
   "DUT_Control": {
     "Serial_COM_Port": "COM5",

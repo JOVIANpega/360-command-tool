@@ -24,7 +24,7 @@
     ],
     "Window_Width": "1536",
     "Window_Height": "793",
-    "Last_Selected_Command_Section": "單板指令",
+    "Last_Selected_Command_Section": "整機指令",
     "Pane_Sash_Position": "636",
     "Auto_Execute": false,
     "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/CODE_HERE2/Command_TABLE/command_360.txt",
@@ -178,14 +178,9 @@
         "timestamp": "09:44:26",
         "message": "找到 2 個 COM 口",
         "type": "info"
-      },
-      {
-        "timestamp": "09:44:29",
-        "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
-        "type": "info"
       }
     ],
-    "last_updated": "2025-07-31T09:44:29.532974"
+    "last_updated": "2025-07-31T09:44:26.607024"
   },
   "Device_Label": "MU310 : root/oelinux123"
 }
