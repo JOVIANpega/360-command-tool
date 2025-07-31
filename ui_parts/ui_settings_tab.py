@@ -16,6 +16,7 @@ class SettingsTab(ttk.Frame):
     def __init__(self, parent, on_save_callback=None, **kwargs):
         super().__init__(parent, **kwargs)
         self.parent = parent
+        self.parent_frame = self  # 設置parent_frame屬性供字體更新使用
         self.on_save_callback = on_save_callback
         self.setup_data = load_setup()
         self.vars = {}
@@ -73,7 +74,7 @@ class SettingsTab(ttk.Frame):
 
         # 視窗標題 - width=40，最多50個字元
         ttk.Label(basic_frame, text="視窗標題 (最多50字元):").grid(row=0, column=0, sticky="w", pady=4)
-        self.vars["Window_Title"] = tk.StringVar(value=self.setup_data.get("Window_Title", "VALO360 指令通"))
+        self.vars["Window_Title"] = tk.StringVar(value=self.setup_data.get("Window_Title", "指令通"))
         self.title_entry = ttk.Entry(basic_frame, textvariable=self.vars["Window_Title"], width=40)
         self.title_entry.grid(row=0, column=1, sticky="ew", padx=(10, 0), pady=4)
 
@@ -157,29 +158,8 @@ class SettingsTab(ttk.Frame):
         self.vars["DUT_Auto_Execute"] = tk.BooleanVar(value=dut_settings.get("Auto_Execute", False))
         self.vars["UI_ToolTip_Enabled"] = tk.BooleanVar(value=self.setup_data.get('UI_Settings', {}).get("ToolTip_Enabled", True))
 
-        # 字體設定 - 水平排版，並加入即時更新功能
-        font_frame = ttk.Frame(dut_frame)
-        font_frame.grid(row=dut_row, column=0, columnspan=2, sticky="ew", pady=4)
-        font_frame.columnconfigure(1, weight=1)
-        font_frame.columnconfigure(3, weight=1)
-        
-        # 介面字體 - width=20
-        ttk.Label(font_frame, text="介面字體:").grid(row=0, column=0, sticky="w")
-        self.vars["DUT_UI_Font_Size"] = tk.StringVar(value=dut_settings.get("UI_Font_Size", "13"))
-        self.ui_font_spinbox = ttk.Spinbox(font_frame, textvariable=self.vars["DUT_UI_Font_Size"], 
-                                          from_=8, to=24, width=8, command=self.on_ui_font_changed)
-        self.ui_font_spinbox.grid(row=0, column=1, sticky="ew", padx=(5, 10))
-        self.ui_font_spinbox.bind('<Return>', self.on_ui_font_changed)
-        self.ui_font_spinbox.bind('<FocusOut>', self.on_ui_font_changed)
-        
-        ttk.Label(font_frame, text="內容字體:").grid(row=0, column=2, sticky="w")
-        self.vars["DUT_Content_Font_Size"] = tk.StringVar(value=dut_settings.get("Content_Font_Size", "11"))
-        self.content_font_spinbox = ttk.Spinbox(font_frame, textvariable=self.vars["DUT_Content_Font_Size"], 
-                                               from_=8, to=24, width=8, command=self.on_content_font_changed)
-        self.content_font_spinbox.grid(row=0, column=3, sticky="ew", padx=(5, 0))
-        self.content_font_spinbox.bind('<Return>', self.on_content_font_changed)
-        self.content_font_spinbox.bind('<FocusOut>', self.on_content_font_changed)
-        dut_row += 1
+        # 字體設定已移至DUT控制標籤頁，此處不再顯示
+        # 保留註解以說明字體設定位置
         
         # 版本與路徑資訊區塊 - 放在一起顯示
         info_frame = ttk.LabelFrame(dut_frame, text="版本與路徑資訊", padding=(10, 4))
@@ -270,45 +250,7 @@ class SettingsTab(ttk.Frame):
         self.save_button.bind("<Enter>", lambda e: self.save_button.config(bg='#45a049'))
         self.save_button.bind("<Leave>", lambda e: self.save_button.config(bg='#4CAF50'))
 
-    def on_ui_font_changed(self, event=None):
-        """介面字體大小即時更新"""
-        try:
-            new_size = self.vars["DUT_UI_Font_Size"].get()
-            if new_size.isdigit():
-                size = int(new_size)
-                if 8 <= size <= 24:
-                    # 立即更新設定檔
-                    settings = load_setup()
-                    if 'DUT_Control' not in settings:
-                        settings['DUT_Control'] = {}
-                    settings['DUT_Control']['UI_Font_Size'] = str(size)
-                    settings['UIFontSize'] = size  # 全域字體設定
-                    save_setup(settings)
-                    
-                    # 通知其他元件更新字體
-                    self.apply_font_changes_immediately()
-        except Exception as e:
-            print(f"更新介面字體時發生錯誤: {e}")
-
-    def on_content_font_changed(self, event=None):
-        """內容字體大小即時更新"""
-        try:
-            new_size = self.vars["DUT_Content_Font_Size"].get()
-            if new_size.isdigit():
-                size = int(new_size)
-                if 8 <= size <= 24:
-                    # 立即更新設定檔
-                    settings = load_setup()
-                    if 'DUT_Control' not in settings:
-                        settings['DUT_Control'] = {}
-                    settings['DUT_Control']['Content_Font_Size'] = str(size)
-                    settings['ContentFontSize'] = size  # 全域內容字體設定
-                    save_setup(settings)
-                    
-                    # 通知其他元件更新字體
-                    self.apply_font_changes_immediately()
-        except Exception as e:
-            print(f"更新內容字體時發生錯誤: {e}")
+    # 字體設定函式已移至DUT控制標籤頁
 
     def on_notification_font_changed(self, event=None):
         """通知字體大小即時更新"""
@@ -424,17 +366,7 @@ class SettingsTab(ttk.Frame):
                 if hasattr(dut_ui, 'update_from_config'):
                     dut_ui.update_from_config()
                 
-                # 更新字體大小相關設定
-                ui_font_size = self.vars["DUT_UI_Font_Size"].get()
-                content_font_size = self.vars["DUT_Content_Font_Size"].get()
-                notification_font_size = self.vars["DUT_Notification_Font_Size"].get()
-                
-                if hasattr(dut_ui, 'components'):
-                    components = dut_ui.components
-                    if hasattr(components, 'font_size_var') and ui_font_size.isdigit():
-                        components.font_size_var.set(ui_font_size)
-                    if hasattr(components, 'content_font_size_var') and content_font_size.isdigit():
-                        components.content_font_size_var.set(content_font_size)
+                # 字體設定已移至DUT控制標籤頁，此處不再處理
                     if hasattr(components, 'notification_font_size') and notification_font_size.isdigit():
                         components.notification_font_size = int(notification_font_size)
                         
@@ -514,8 +446,7 @@ class SettingsTab(ttk.Frame):
         current_setup["DUT_Control"]["Command_End_String"] = self.vars["DUT_Command_End_String"].get()
         current_setup["DUT_Control"]["Command_Separator"] = self.vars["DUT_Command_Separator"].get()
         current_setup["DUT_Control"]["Default_IP_Address"] = self.vars["DUT_Default_IP_Address"].get()
-        current_setup["DUT_Control"]["UI_Font_Size"] = self.vars["DUT_UI_Font_Size"].get()
-        current_setup["DUT_Control"]["Content_Font_Size"] = self.vars["DUT_Content_Font_Size"].get()
+        # 字體設定已移至DUT控制標籤頁，此處不再處理
         current_setup["DUT_Control"]["Pane_Sash_Position"] = self.vars["DUT_Pane_Sash_Position"].get()
         current_setup["DUT_Control"]["Auto_Execute"] = self.vars["DUT_Auto_Execute"].get()
         current_setup["DUT_Control"]["Command_File_Path"] = self.vars["DUT_Command_File_Path"].get()
@@ -530,9 +461,7 @@ class SettingsTab(ttk.Frame):
             current_setup["UI_Settings"] = {}
         current_setup["UI_Settings"]["ToolTip_Enabled"] = self.vars["UI_ToolTip_Enabled"].get()
         
-        # 更新全域字體設定
-        current_setup["UIFontSize"] = self.vars["DUT_UI_Font_Size"].get()
-        current_setup["ContentFontSize"] = self.vars["DUT_Content_Font_Size"].get()
+        # 全域字體設定已移至DUT控制標籤頁，此處不再處理
 
         # 更新設備標籤設定
         current_setup["Device_Label"] = self.vars["Device_Label"].get()
@@ -564,6 +493,9 @@ class SettingsTab(ttk.Frame):
             if self.on_save_callback:
                 # 傳遞最新的設定資料
                 self.on_save_callback(updated_setup)
+
+            # 立即更新標籤頁名稱
+            self.update_tab_names_immediately()
             
             # 顯示成功訊息
             messagebox.showinfo("成功", "設定已儲存並重新載入")
@@ -573,6 +505,41 @@ class SettingsTab(ttk.Frame):
             print(f"[錯誤] 儲存設定失敗: {e}")
             traceback.print_exc()
             messagebox.showerror("錯誤", f"儲存設定時發生錯誤: {e}")
+
+    def update_tab_names_immediately(self):
+        """立即更新標籤頁名稱"""
+        try:
+            # 獲取主視窗的notebook
+            root = self.parent
+            while root and not hasattr(root, 'notebook'):
+                root = getattr(root, 'master', None) or getattr(root, 'parent', None)
+
+            if root and hasattr(root, 'notebook'):
+                # 重新載入設定
+                updated_setup = load_setup()
+                tab_names = updated_setup.get('tab_names', {})
+
+                # 更新每個標籤頁的名稱
+                for i in range(5):  # 現在有5個標籤頁
+                    tab_key = f'tab{i}'
+                    if tab_key in tab_names:
+                        try:
+                            current_name = root.notebook.tab(i, "text")
+                            new_name = tab_names[tab_key]
+                            if current_name != new_name:
+                                root.notebook.tab(i, text=new_name)
+                                print(f"[DEBUG] 即時更新標籤頁 {i}: {current_name} → {new_name}")
+                        except Exception as e:
+                            print(f"[WARNING] 更新標籤頁 {i} 時發生錯誤: {e}")
+
+                print("[DEBUG] 標籤頁名稱即時更新完成")
+            else:
+                print("[WARNING] 找不到主視窗的notebook，無法即時更新標籤頁名稱")
+
+        except Exception as e:
+            print(f"[ERROR] 即時更新標籤頁名稱時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
 
     def on_tooltip_setting_changed(self):
         """當 ToolTip 設定變更時的處理"""
@@ -644,7 +611,7 @@ class SettingsTab(ttk.Frame):
             current_version = self.setup_data.get("version", "1.6.2.0")
             self.vars["version"].set(current_version)
             print(f"[DEBUG] 設定頁面版本號更新為: {current_version}")
-            window_title = self.setup_data.get("Window_Title", "VALO360 指令通")
+            window_title = self.setup_data.get("Window_Title", "指令通")
             self.vars["Window_Title"].set(window_title)
             # 更新字元計數顯示
             if hasattr(self, 'title_count_label'):
@@ -669,8 +636,7 @@ class SettingsTab(ttk.Frame):
             self.vars["DUT_Command_End_String"].set(dut_settings.get("Command_End_String", "root"))
             self.vars["DUT_Command_Separator"].set(dut_settings.get("Command_Separator", "|"))
             self.vars["DUT_Default_IP_Address"].set(dut_settings.get("Default_IP_Address", "192.168.11.143"))
-            self.vars["DUT_UI_Font_Size"].set(dut_settings.get("UI_Font_Size", "13"))
-            self.vars["DUT_Content_Font_Size"].set(dut_settings.get("Content_Font_Size", "11"))
+            # 字體設定已移至DUT控制標籤頁，此處不再處理
             self.vars["DUT_Pane_Sash_Position"].set(dut_settings.get("Pane_Sash_Position", "633"))
             self.vars["DUT_Auto_Execute"].set(dut_settings.get("Auto_Execute", False))
             self.vars["DUT_Command_File_Path"].set(dut_settings.get("Command_File_Path", ""))

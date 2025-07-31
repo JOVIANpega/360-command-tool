@@ -1,7 +1,7 @@
 {
-  "version": "1.7.2",
+  "version": "1.7.3.0",
   "notification_messages": {
-    "app_started": "VALO360 指令通 已啟動",
+    "app_started": "指令通 已啟動",
     "settings_updated": "設定已更新！",
     "cmd_reloaded": "• 指令檔案已重新載入",
     "com_updated": "• COM口設定已更新",
@@ -32,126 +32,121 @@
     "system_status": "COM口: {0} | 分類: {1} ({2}個指令) | 超時: {3}秒",
     "history": [
       {
-        "timestamp": "17:07:11",
-        "message": "VALO360 指令通 已啟動",
-        "type": "info"
-      },
-      {
-        "timestamp": "17:07:13",
-        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
-        "type": "success"
-      },
-      {
-        "timestamp": "17:07:16",
-        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
-        "type": "success"
-      },
-      {
-        "timestamp": "17:07:18",
-        "message": "COM口: COM5 | 分類: 全部指令 (46個指令) | 超時: 30秒",
-        "type": "info"
-      },
-      {
-        "timestamp": "17:07:24",
-        "message": "COM口: COM5 | 分類: 全部指令 (46個指令) | 超時: 30秒",
-        "type": "info"
-      },
-      {
-        "timestamp": "17:07:35",
+        "timestamp": "11:05:07",
         "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
         "type": "info"
       },
       {
-        "timestamp": "09:46:16",
+        "timestamp": "11:06:00",
         "message": "找到 2 個 COM 口",
         "type": "info"
       },
       {
-        "timestamp": "09:46:16",
-        "message": "VALO360 指令通 已啟動",
-        "type": "info"
-      },
-      {
-        "timestamp": "09:46:18",
-        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
-        "type": "success"
-      },
-      {
-        "timestamp": "09:46:21",
-        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
-        "type": "success"
-      },
-      {
-        "timestamp": "09:46:24",
-        "message": "COM口: COM5 | 分類: 全部指令 (46個指令) | 超時: 30秒",
-        "type": "info"
-      },
-      {
-        "timestamp": "09:46:30",
-        "message": "COM口: COM5 | 分類: 全部指令 (46個指令) | 超時: 30秒",
-        "type": "info"
-      },
-      {
-        "timestamp": "09:49:18",
+        "timestamp": "11:06:11",
         "message": "找到 2 個 COM 口",
         "type": "info"
       },
       {
-        "timestamp": "09:49:18",
-        "message": "VALO360 指令通 已啟動",
+        "timestamp": "11:06:17",
+        "message": "找到 2 個 COM 口",
         "type": "info"
       },
       {
-        "timestamp": "09:49:20",
-        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
-        "type": "success"
-      },
-      {
-        "timestamp": "09:49:23",
-        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
-        "type": "success"
-      },
-      {
-        "timestamp": "09:49:25",
-        "message": "COM口: COM5 | 分類: 全部指令 (46個指令) | 超時: 30秒",
-        "type": "info"
-      },
-      {
-        "timestamp": "09:49:32",
-        "message": "COM口: COM5 | 分類: 全部指令 (46個指令) | 超時: 30秒",
-        "type": "info"
-      },
-      {
-        "timestamp": "09:49:35",
+        "timestamp": "11:06:33",
         "message": "設定已更新！\n• 指令檔案已重新載入\n• COM口設定已更新\n• 結束字串設定已更新\n• IP地址設定已更新\n• 超時設定已更新",
         "type": "success"
       },
       {
-        "timestamp": "09:49:35",
+        "timestamp": "11:06:33",
         "message": "標籤頁名稱已同步更新",
         "type": "success"
       },
       {
-        "timestamp": "09:49:41",
+        "timestamp": "11:06:33",
         "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱\n✓ 視窗標題",
         "type": "success"
       },
       {
-        "timestamp": "09:49:43",
+        "timestamp": "11:06:33",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "11:06:45",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "11:06:52",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "11:10:42",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "11:10:44",
+        "message": "指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "11:10:44",
+        "message": "指令通 已啟動 (版本：V1.7.3.0)",
+        "type": "success"
+      },
+      {
+        "timestamp": "11:10:45",
+        "message": "歡迎使用指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "11:10:50",
+        "message": "歡迎使用指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "11:10:50",
+        "message": "COM口: COM5 | 分類: 全部指令 (46個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "11:10:56",
+        "message": "COM口: COM5 | 分類: 全部指令 (46個指令) | 超時: 30秒",
+        "type": "info"
+      },
+      {
+        "timestamp": "11:11:06",
         "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
         "type": "info"
+      },
+      {
+        "timestamp": "11:11:13",
+        "message": "設定已更新！\n• 指令檔案已重新載入\n• COM口設定已更新\n• 結束字串設定已更新\n• IP地址設定已更新\n• 超時設定已更新",
+        "type": "success"
+      },
+      {
+        "timestamp": "11:11:13",
+        "message": "標籤頁名稱已同步更新",
+        "type": "success"
+      },
+      {
+        "timestamp": "11:11:13",
+        "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱\n✓ 視窗標題",
+        "type": "success"
       }
     ],
-    "last_updated": "2025-07-31T09:49:43.343922"
+    "last_updated": "2025-07-31T11:11:13.823854"
   },
   "DUT_Control": {
     "Serial_COM_Port": "COM5",
     "Command_Timeout_Seconds": "30",
     "Command_End_String": "root",
     "Command_Separator": "==>",
-    "UI_Font_Size": "13",
-    "Content_Font_Size": "11",
-    "Window_Title": "指令通___",
+    "UI_Font_Size": "12",
+    "Content_Font_Size": "12",
+    "Window_Title": "指令通",
     "Available_End_Strings": [
       "root"
     ],
@@ -159,7 +154,7 @@
     "Window_Width": "1536",
     "Window_Height": "793",
     "Last_Selected_Command_Section": "全部指令",
-    "Pane_Sash_Position": "636",
+    "Pane_Sash_Position": "533",
     "Auto_Execute": true,
     "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/CODE_HERE2/Command_TABLE/command_360.txt",
     "Notification_Font_Size": "10",
@@ -298,18 +293,18 @@
   "UI_Settings": {
     "ToolTip_Enabled": false
   },
-  "Window_Title": "指令通___",
+  "Window_Title": "指令通",
   "Device_Label": "MU310:root/oelinux123",
   "tab_names": {
     "tab0": "DUT 控制1",
     "tab1": "治具控制1",
     "tab2": "使用說明1",
     "tab3": "DOS 工具1",
-    "tab4": "設定1"
+    "tab4": "設定2"
   },
   "Window_Width": "1536",
   "Window_Height": "793",
-  "ContentFontSize": "11",
-  "UIFontSize": "13",
+  "ContentFontSize": "12",
+  "UIFontSize": "12",
   "test_key": "test_value_123"
 }

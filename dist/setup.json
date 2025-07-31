@@ -4,29 +4,30 @@
   "Window_Width": "1536",
   "Window_Height": "793",
   "UIFontSize": "13",
-  "ContentFontSize": "11",
+  "ContentFontSize": "12",
   "DUT_Control": {
     "Serial_COM_Port": "COM5",
     "Command_Timeout_Seconds": "30",
     "Command_End_String": "root",
     "Command_Separator": "==>",
     "UI_Font_Size": "13",
-    "Content_Font_Size": "11",
+    "Content_Font_Size": "12",
     "Window_Title": "指令通",
     "Available_End_Strings": [
       "root"
     ],
     "Default_IP_Address": "192.168.244.1",
     "IP_History": [
+      "192.168.255.1",
       "192.168.244.1",
       "192.168.11.143",
       "192.168.11.3"
     ],
     "Window_Width": "1536",
     "Window_Height": "793",
-    "Last_Selected_Command_Section": "單板指令",
+    "Last_Selected_Command_Section": "全部指令",
     "Pane_Sash_Position": "636",
-    "Auto_Execute": false,
+    "Auto_Execute": true,
     "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/CODE_HERE2/Command_TABLE/command_360.txt",
     "Notification_Font_Size": "10",
     "Section_Titles": [
@@ -39,9 +40,9 @@
   "Fixture_Control": {
     "Fixture_COM_Port": "COM5",
     "Current_Command": "",
-    "Test_Category_FUNCTION": false,
+    "Test_Category_FUNCTION": true,
     "Test_Category_MB": false,
-    "Test_Category_Original_Commands": true,
+    "Test_Category_Original_Commands": false,
     "Fixture_Font_Size": "11",
     "Serial_Settings": {
       "Baudrate": "9600",
@@ -52,10 +53,11 @@
     }
   },
   "tab_names": {
-    "tab0": "DUT 控制",
-    "tab1": "治具控制",
-    "tab2": "使用說明",
-    "tab3": "設定"
+    "tab0": "DUT 控制1",
+    "tab1": "治具控制1",
+    "tab2": "使用說明1",
+    "tab3": "DOS",
+    "tab4": "設定1"
   },
   "UI_Settings": {
     "ToolTip_Enabled": false
@@ -69,91 +71,6 @@
     "ip_updated": "• IP地址設定已更新",
     "timeout_updated": "• 超時設定已更新",
     "history": [
-      {
-        "timestamp": "17:15:33",
-        "message": "connected",
-        "type": "success"
-      },
-      {
-        "timestamp": "17:15:34",
-        "message": "disconnected",
-        "type": "error"
-      },
-      {
-        "timestamp": "17:15:36",
-        "message": "cmd_selected",
-        "type": "info"
-      },
-      {
-        "timestamp": "17:15:36",
-        "message": "connected",
-        "type": "success"
-      },
-      {
-        "timestamp": "17:15:38",
-        "message": "disconnected",
-        "type": "error"
-      },
-      {
-        "timestamp": "17:15:38",
-        "message": "cmd_selected",
-        "type": "info"
-      },
-      {
-        "timestamp": "17:15:39",
-        "message": "connected",
-        "type": "success"
-      },
-      {
-        "timestamp": "17:15:40",
-        "message": "disconnected",
-        "type": "error"
-      },
-      {
-        "timestamp": "17:15:58",
-        "message": "cmd_selected",
-        "type": "info"
-      },
-      {
-        "timestamp": "17:15:58",
-        "message": "connected",
-        "type": "success"
-      },
-      {
-        "timestamp": "17:16:05",
-        "message": "disconnected",
-        "type": "error"
-      },
-      {
-        "timestamp": "17:16:05",
-        "message": "找到 2 個 COM 口",
-        "type": "info"
-      },
-      {
-        "timestamp": "09:44:05",
-        "message": "找到 2 個 COM 口",
-        "type": "info"
-      },
-      {
-        "timestamp": "09:44:05",
-        "message": "VALO360 指令通 已啟動",
-        "type": "info"
-      },
-      {
-        "timestamp": "09:44:08",
-        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
-        "type": "success"
-      },
-      {
-        "timestamp": "09:44:10",
-        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
-        "type": "success"
-      },
-      {
-        "timestamp": "09:44:12",
-        "message": "system_status",
-        "type": "info"
-      },
       {
         "timestamp": "09:44:19",
         "message": "system_status",
@@ -183,9 +100,124 @@
         "timestamp": "09:44:29",
         "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
         "type": "info"
+      },
+      {
+        "timestamp": "09:57:22",
+        "message": "找到 2 個 COM 口",
+        "type": "info"
+      },
+      {
+        "timestamp": "09:57:23",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "09:57:25",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "09:57:28",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "09:57:30",
+        "message": "system_status",
+        "type": "info"
+      },
+      {
+        "timestamp": "09:57:33",
+        "message": "connected",
+        "type": "success"
+      },
+      {
+        "timestamp": "09:57:34",
+        "message": "disconnected",
+        "type": "error"
+      },
+      {
+        "timestamp": "09:57:36",
+        "message": "system_status",
+        "type": "info"
+      },
+      {
+        "timestamp": "09:57:46",
+        "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
+        "type": "info"
+      },
+      {
+        "timestamp": "09:58:04",
+        "message": "cmd_selected",
+        "type": "info"
+      },
+      {
+        "timestamp": "09:58:05",
+        "message": "connected",
+        "type": "success"
+      },
+      {
+        "timestamp": "09:58:06",
+        "message": "disconnected",
+        "type": "error"
+      },
+      {
+        "timestamp": "10:02:59",
+        "message": "設定已更新！\n• 指令檔案已重新載入\n• COM口設定已更新\n• 結束字串設定已更新\n• IP地址設定已更新\n• 超時設定已更新",
+        "type": "success"
+      },
+      {
+        "timestamp": "10:02:59",
+        "message": "標籤頁名稱已同步更新",
+        "type": "success"
+      },
+      {
+        "timestamp": "10:03:00",
+        "message": "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱\n✓ 視窗標題",
+        "type": "success"
+      },
+      {
+        "timestamp": "10:03:40",
+        "message": "VALO360 指令通 已啟動",
+        "type": "info"
+      },
+      {
+        "timestamp": "10:03:42",
+        "message": "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。",
+        "type": "success"
+      },
+      {
+        "timestamp": "10:03:45",
+        "message": "歡迎使用 VALO360 指令通！點擊「使用說明」按鈕查看詳細操作指南。",
+        "type": "success"
+      },
+      {
+        "timestamp": "10:03:47",
+        "message": "system_status",
+        "type": "info"
+      },
+      {
+        "timestamp": "10:03:53",
+        "message": "connected",
+        "type": "success"
+      },
+      {
+        "timestamp": "10:03:54",
+        "message": "system_status",
+        "type": "info"
+      },
+      {
+        "timestamp": "10:03:54",
+        "message": "disconnected",
+        "type": "error"
+      },
+      {
+        "timestamp": "10:04:04",
+        "message": "基本操作：選擇COM口和指令後點擊「執行指令」按鈕。通知區域可使用 +/- 調整文字大小。",
+        "type": "info"
       }
     ],
-    "last_updated": "2025-07-31T09:44:29.532974"
+    "last_updated": "2025-07-31T10:04:04.089150"
   },
   "Device_Label": "MU310 : root/oelinux123"
 }

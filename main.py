@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-VALO360 指令通主程式
+指令通主程式
 提供序列埠通訊和指令執行的圖形化介面
 """
 import os
@@ -46,7 +46,7 @@ def write_log(msg: str):
 
 # 記錄啟動
 write_log("main.py 啟動")
-log_info("VALO360 指令通主程式啟動")
+log_info("指令通主程式啟動")
 
 
 

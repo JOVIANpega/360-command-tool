@@ -70,7 +70,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.parent.root.after(200, self.restore_pane_position)
         
         # 使用全域通知管理器顯示歡迎訊息
-        welcome_message = "歡迎使用 VALO360 指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。"
+        welcome_message = "歡迎使用指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。"
         self.parent.root.after(3000, lambda: self.show_notification(welcome_message, "success", 5000))
         
         # 顯示系統狀態
@@ -877,16 +877,26 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                 # 更新當前設定
                 self.parent.setup['Window_Width'] = str(w)
                 self.parent.setup['Window_Height'] = str(h)
-                # 保存完整的設定結構
-                from config_core import load_setup, save_setup
-                full_setup = load_setup()
-                full_setup['DUT_Control'].update({
-                    'Window_Width': str(w),
-                    'Window_Height': str(h)
-                })
-                save_setup(full_setup)
-                print(f"[DEBUG] 視窗大小已保存: {w}x{h}")
+
+                # 延遲保存，避免頻繁寫入
+                if hasattr(self, '_resize_timer'):
+                    self.parent.root.after_cancel(self._resize_timer)
+                self._resize_timer = self.parent.root.after(2000, self._delayed_save_window_size, w, h)
         # 不再自動縮放字體
+
+    def _delayed_save_window_size(self, w, h):
+        """延遲保存視窗大小"""
+        try:
+            from config_core import load_setup, save_setup
+            full_setup = load_setup()
+            full_setup['DUT_Control'].update({
+                'Window_Width': str(w),
+                'Window_Height': str(h)
+            })
+            save_setup(full_setup)
+            print(f"[DEBUG] 視窗大小已保存: {w}x{h}")
+        except Exception as e:
+            print(f"[ERROR] 保存視窗大小時發生錯誤: {e}")
 
     def start_led_blink(self):
         self.led_blinking = True
@@ -914,43 +924,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         dy = event.y - self.main_frame.start_y
         self.main_frame.move(dx, dy)
 
-    def on_pane_position_changed(self, event):
-        """當 PanedWindow 分割位置改變時保存位置"""
-        try:
-            # 獲取當前分割位置
-            sash_position = self.main_frame.sashpos(0)  # 第一個分割線的位置
-            print(f"[DEBUG] PanedWindow 分割位置變更: {sash_position}")
-            
-            # 保存到設定中
-            self.parent.setup['Pane_Sash_Position'] = str(sash_position)
-            
-            # 保存完整的設定結構
-            from config_core import load_setup, save_setup
-            full_setup = load_setup()
-            full_setup['DUT_Control']['Pane_Sash_Position'] = str(sash_position)
-            save_setup(full_setup)
-            
-        except Exception as e:
-            print(f"[DEBUG] 保存分割位置時發生錯誤: {e}")
-
-    def restore_pane_position(self):
-        """恢復 PanedWindow 分割位置"""
-        try:
-            # 從設定中讀取分割位置
-            sash_position = self.parent.setup.get('Pane_Sash_Position', '')
-            if sash_position:
-                position = int(sash_position)
-                # 確保位置在合理範圍內
-                window_width = self.parent.root.winfo_width()
-                if 100 <= position <= window_width - 100:
-                    self.main_frame.sashpos(0, position)
-                    print(f"[DEBUG] 已恢復 PanedWindow 分割位置: {position}")
-                else:
-                    print(f"[DEBUG] 分割位置 {position} 超出範圍，使用預設位置")
-            else:
-                print(f"[DEBUG] 沒有保存的分割位置，使用預設位置")
-        except Exception as e:
-            print(f"[DEBUG] 恢復分割位置時發生錯誤: {e}")
+    # 移除重複的PanedWindow事件處理，使用基類的實現
 
     def limit_dropdown_height(self, event=None):
         """限制下拉列表的高度，最多顯示指定行數"""

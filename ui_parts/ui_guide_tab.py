@@ -41,7 +41,7 @@ class GuideTab:
         # 標題
         title_label = ttk.Label(
             guide_main_frame,
-            text=f"VALO360 指令通 V{app_version} 使用說明",
+            text=f"指令通 V{app_version} 使用說明",
             font=('Microsoft JhengHei UI', 18, 'bold'),
             style="TLabel"
         )

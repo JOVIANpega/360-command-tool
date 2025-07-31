@@ -42,7 +42,7 @@ class DosTab:
         # 標題
         title_label = ttk.Label(
             dos_main_frame,
-            text=f"VALO360 指令通 V{app_version} - DOS 工具",
+            text=f"指令通 V{app_version} - DOS 工具",
             font=('Microsoft JhengHei UI', 16, 'bold'),
             style="TLabel"
         )

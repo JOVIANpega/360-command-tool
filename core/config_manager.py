@@ -71,7 +71,7 @@ class ConfigManager:
                 'ToolTip_Enabled': False
             },
             'notification_messages': {
-                "app_started": "VALO360 指令通 已啟動",
+                "app_started": "指令通 已啟動",
                 "settings_updated": "設定已更新！",
                 "cmd_reloaded": "• 指令檔案已重新載入",
                 "com_updated": "• COM口設定已更新",

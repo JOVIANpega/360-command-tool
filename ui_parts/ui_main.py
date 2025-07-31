@@ -133,6 +133,8 @@ class TabManager:
 
 
         self.root = root
+        # 將自己設置為root的tab_manager屬性，供其他元件使用
+        self.root.tab_manager = self
 
 
         self.highlight_keywords = highlight_keywords or {}
@@ -288,13 +290,13 @@ class TabManager:
             
             # 創建通知管理器
             self.notification_manager = NotificationManager(parent, setup)
-            
-            # 創建全域變數方便其他模組使用
-            self.notification_text = self.notification_manager.notification_text
+
+            # 創建全域變數方便其他模組使用（NotificationManager沒有notification_text屬性）
+            self.notification_text = None  # 簡化版本的NotificationManager不需要這個屬性
             
             # 顯示啟動訊息
             app_version = config_utils.get_app_version()
-            app_name = setup.get('Window_Title', setup.get('DUT_Control', {}).get('Window_Title', 'VALO360 指令通'))
+            app_name = setup.get('Window_Title', setup.get('DUT_Control', {}).get('Window_Title', '指令通'))
             
             # 延遲1秒顯示啟動訊息
             self.root.after(1000, lambda: self.notification_manager.show_notification(
@@ -1149,7 +1151,7 @@ class TabManager:
                 
 
 
-                guide_file = os.path.join(exe_dir, "VALO360 指令通使用指南.html")
+                guide_file = os.path.join(exe_dir, "指令通使用指南.html")
 
 
                 

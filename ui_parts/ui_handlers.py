@@ -87,7 +87,7 @@ class UIHandlers(UIHandlersCore):
         self.parse_commands_by_section()
 
 
-        
+
 
 
     def parse_commands_by_section(self):
@@ -102,13 +102,13 @@ class UIHandlers(UIHandlersCore):
         section = "全部指令"  # 預設區段
 
 
-        
+
 
 
         print("[DEBUG] 開始解析指令文件")
 
 
-        
+
 
 
         try:
@@ -120,7 +120,7 @@ class UIHandlers(UIHandlersCore):
             command_file_from_setup = self.setup.get("DUT_Control", {}).get("Command_File_Path", "")
 
 
-            
+
 
 
             # 決定使用哪個指令檔路徑
@@ -144,7 +144,7 @@ class UIHandlers(UIHandlersCore):
                 print(f"[INFO] 使用預設指令檔: {command_path}")
 
 
-            
+
 
 
             with open(command_path, "r", encoding="utf-8") as file:
@@ -162,7 +162,7 @@ class UIHandlers(UIHandlersCore):
                         continue
 
 
-                    
+
 
 
                     # 檢查是否為區段標記
@@ -186,7 +186,7 @@ class UIHandlers(UIHandlersCore):
                         continue
 
 
-                    
+
 
 
                     # 解析命令
@@ -204,7 +204,7 @@ class UIHandlers(UIHandlersCore):
                         command = parts[1].strip()
 
 
-                        
+
 
 
                         # 檢查是否有顏色標記
@@ -219,7 +219,7 @@ class UIHandlers(UIHandlersCore):
                             print(f"[DEBUG] 發現帶顏色標記的指令：{label}")
 
 
-                        
+
 
 
                         # 將命令添加到當前區段
@@ -228,7 +228,7 @@ class UIHandlers(UIHandlersCore):
                         commands.setdefault(section, {})[label] = command
 
 
-                        
+
 
 
                         # 不再自動添加到「全部指令」區段，因為我們已經在 command.txt 中維護了完整的全部指令列表
@@ -249,7 +249,7 @@ class UIHandlers(UIHandlersCore):
             traceback.print_exc()
 
 
-            
+
 
 
             # 如果讀取失敗，提供一個預設命令
@@ -261,7 +261,7 @@ class UIHandlers(UIHandlersCore):
                 commands["全部指令"] = {"執行重啟 (預設命令)": "reboot"}
 
 
-        
+
 
 
         # 輸出各區段指令數量
@@ -291,7 +291,7 @@ class UIHandlers(UIHandlersCore):
                     print(f"[DEBUG] - {cmd}")
 
 
-        
+
 
 
         return commands
@@ -306,7 +306,7 @@ class UIHandlers(UIHandlersCore):
         section = self.parent.components.section_var.get()
 
 
-        
+
 
 
         # 檢查選擇的分類是否存在
@@ -324,7 +324,7 @@ class UIHandlers(UIHandlersCore):
             self.parent.components.section_var.set('全部指令')
 
 
-            
+
 
 
             # 顯示特定區段的指令
@@ -333,7 +333,7 @@ class UIHandlers(UIHandlersCore):
             self.parent.components.combobox_cmd['values'] = list(self.parent.commands_by_section.get(section, {}).keys())
 
 
-        
+
 
 
         # 如果有指令，選擇第一個
@@ -438,7 +438,7 @@ class UIHandlers(UIHandlersCore):
                 ip = self.parent.components.entry_ip.get().strip() or default_ip
 
 
-                
+
 
 
                 # 確保進度條已初始化
@@ -450,7 +450,7 @@ class UIHandlers(UIHandlersCore):
                     self.parent.components.progress.config(style="blue.Horizontal.TProgressbar", value=0)
 
 
-                
+
 
 
                 # 更新狀態燈
@@ -459,7 +459,7 @@ class UIHandlers(UIHandlersCore):
                 self.update_status_light(False)
 
 
-                
+
 
 
                 # 根據作業系統設定 ping 參數
@@ -471,7 +471,7 @@ class UIHandlers(UIHandlersCore):
                 command = ['ping', param, '4', '-w', '1000', ip]
 
 
-                
+
 
 
                 self.ping_stop = False
@@ -486,7 +486,7 @@ class UIHandlers(UIHandlersCore):
                 self.parent.root.update_idletasks()
 
 
-                
+
 
 
                 # 設定 Windows 下隱藏命令視窗
@@ -507,7 +507,7 @@ class UIHandlers(UIHandlersCore):
                     startupinfo.wShowWindow = subprocess.SW_HIDE
 
 
-                
+
 
 
                 # 執行 ping 命令
@@ -540,7 +540,7 @@ class UIHandlers(UIHandlersCore):
                 )
 
 
-                
+
 
 
                 # 監控 ping 輸出
@@ -555,7 +555,7 @@ class UIHandlers(UIHandlersCore):
                 last_progress = 0
 
 
-                
+
 
 
                 while True:
@@ -567,7 +567,7 @@ class UIHandlers(UIHandlersCore):
                         break
 
 
-                    
+
 
 
                     output = self.ping_process.stdout.readline()
@@ -579,7 +579,7 @@ class UIHandlers(UIHandlersCore):
                         break
 
 
-                    
+
 
 
                     if output:
@@ -594,7 +594,7 @@ class UIHandlers(UIHandlersCore):
                         self.parent.root.after(0, lambda o=output_copy: self.parent.components.add_to_buffer(o, "error" if ("請求超時" in o or "無法連線" in o or "失敗" in o) else None))
 
 
-                        
+
 
 
                         # 更新進度
@@ -621,7 +621,7 @@ class UIHandlers(UIHandlersCore):
                                 last_progress = progress
 
 
-                
+
 
 
                 # 處理錯誤輸出
@@ -636,7 +636,7 @@ class UIHandlers(UIHandlersCore):
                     self.parent.root.after(0, lambda: self.parent.components.add_to_buffer(error, "error"))
 
 
-                
+
 
 
                 # 根據 ping 結果更新狀態
@@ -663,7 +663,7 @@ class UIHandlers(UIHandlersCore):
                     self.parent.root.after(0, lambda: self.update_status_light(False))
 
 
-                
+
 
 
             except Exception as e:
@@ -696,7 +696,7 @@ class UIHandlers(UIHandlersCore):
                 self.ping_process = None
 
 
-        
+
 
 
         # 創建並啟動 ping 執行緒
@@ -732,7 +732,7 @@ class UIHandlers(UIHandlersCore):
             current_selection = self.parent.components.combobox_com.get()
 
 
-            
+
 
 
             # 更新 COM 口列表
@@ -744,7 +744,7 @@ class UIHandlers(UIHandlersCore):
             self.parent.components.combobox_com['values'] = new_ports
 
 
-            
+
 
 
             # 如果當前選擇仍在新列表中，保持選擇
@@ -771,7 +771,7 @@ class UIHandlers(UIHandlersCore):
                 print(f"[DEBUG] refresh_com_ports: 當前選擇 '{current_selection}' 不可用，選擇新的COM口 {new_ports[0]}")
 
 
-                
+
 
 
                 # 自動保存新選擇的COM口到設定檔
@@ -786,7 +786,7 @@ class UIHandlers(UIHandlersCore):
                 self.parent.setup['DUT_Control']['Serial_COM_Port'] = new_ports[0]
 
 
-                
+
 
 
                 # 保存完整的設定結構到檔案
@@ -822,7 +822,7 @@ class UIHandlers(UIHandlersCore):
                 print(f"[DEBUG] refresh_com_ports: 沒有可用的COM口，清空選擇")
 
 
-            
+
 
 
             # 添加 COM 口更新通知
@@ -870,7 +870,7 @@ class UIHandlers(UIHandlersCore):
         self.parent.components.text_output.configure(state='disabled')
 
 
-        
+
 
 
         # 重置標記
@@ -888,7 +888,7 @@ class UIHandlers(UIHandlersCore):
             self.parent.components.show_notification(
 
 
-                get_notification_text("normal_mode"), 
+                get_notification_text("normal_mode"),
 
 
                 "green", 3000
@@ -936,7 +936,7 @@ class UIHandlers(UIHandlersCore):
             self.parent.components.show_notification(
 
 
-                get_notification_text("backup_success", filename), 
+                get_notification_text("backup_success", filename),
 
 
                 "green", 5000
@@ -954,7 +954,7 @@ class UIHandlers(UIHandlersCore):
             self.parent.components.show_notification(
 
 
-                get_notification_text("backup_failed", str(e)), 
+                get_notification_text("backup_failed", str(e)),
 
 
                 "red", 5000
@@ -1023,7 +1023,7 @@ class UIHandlers(UIHandlersCore):
             size = max(min(int(size), 20), 8)
 
 
-            
+
 
 
             # 更新 UI 字體
@@ -1032,16 +1032,22 @@ class UIHandlers(UIHandlersCore):
             self.parent.components.update_ui_fonts(size)
 
 
-            
 
 
-            # 保存設置
+
+            # 保存設置到DUT_Control和全域設定
 
 
             self.parent.setup['UIFontSize'] = str(size)
+            if 'DUT_Control' not in self.parent.setup:
+                self.parent.setup['DUT_Control'] = {}
+            self.parent.setup['DUT_Control']['UI_Font_Size'] = str(size)
 
 
             save_setup(self.parent.setup)
+
+            # 通知全域字體管理器更新所有GUI元件
+            self.update_global_ui_fonts(size)
 
 
 
@@ -1083,7 +1089,7 @@ class UIHandlers(UIHandlersCore):
             size = max(min(int(size), 20), 8)
 
 
-            
+
 
 
             # 更新內容字體
@@ -1092,19 +1098,25 @@ class UIHandlers(UIHandlersCore):
             self.parent.components.update_content_fonts(size)
 
 
-            
 
 
-            # 保存設置
+
+            # 保存設置到DUT_Control和全域設定
 
 
             self.parent.setup['ContentFontSize'] = str(size)
+            if 'DUT_Control' not in self.parent.setup:
+                self.parent.setup['DUT_Control'] = {}
+            self.parent.setup['DUT_Control']['Content_Font_Size'] = str(size)
 
 
             save_setup(self.parent.setup)
 
+            # 通知全域字體管理器更新所有GUI元件
+            self.update_global_content_fonts(size)
 
-            
+
+
 
 
             # 強制更新 UI
@@ -1117,6 +1129,217 @@ class UIHandlers(UIHandlersCore):
 
 
             print(f"更改內容字體大小時發生錯誤: {e}")
+
+    def update_global_ui_fonts(self, size):
+        """更新全域UI字體大小"""
+        try:
+            # 獲取主視窗的TabManager
+            root = self.parent.root
+            if hasattr(root, 'tab_manager'):
+                tab_manager = root.tab_manager
+
+                # 更新全域通知管理器字體
+                if hasattr(tab_manager, 'notification_manager'):
+                    try:
+                        current_font = tab_manager.notification_manager.notification_text.cget("font")
+                        if isinstance(current_font, tuple):
+                            family, old_size, style = current_font
+                        else:
+                            family, old_size, style = 'Microsoft JhengHei UI', 12, 'bold'
+
+                        new_font = (family, int(size), style)
+                        tab_manager.notification_manager.notification_text.config(font=new_font)
+                        print(f"[DEBUG] 全域通知字體已更新為: {new_font}")
+                    except Exception as e:
+                        print(f"[WARNING] 更新全域通知字體時發生錯誤: {e}")
+
+                # 更新設定標籤頁的字體
+                if hasattr(tab_manager, 'settings_ui'):
+                    try:
+                        settings_ui = tab_manager.settings_ui
+                        self.update_settings_tab_fonts(settings_ui, size)
+                        print(f"[DEBUG] 設定標籤頁UI字體已更新為: {size}")
+                    except Exception as e:
+                        print(f"[WARNING] 更新設定標籤頁字體時發生錯誤: {e}")
+
+                # 更新DOS標籤頁的字體
+                if hasattr(tab_manager, 'dos_ui'):
+                    try:
+                        dos_ui = tab_manager.dos_ui
+                        self.update_dos_tab_fonts(dos_ui, size)
+                        print(f"[DEBUG] DOS標籤頁UI字體已更新為: {size}")
+                    except Exception as e:
+                        print(f"[WARNING] 更新DOS標籤頁字體時發生錯誤: {e}")
+
+                # 更新使用說明標籤頁的字體
+                if hasattr(tab_manager, 'guide_ui'):
+                    try:
+                        guide_ui = tab_manager.guide_ui
+                        self.update_guide_tab_fonts(guide_ui, size)
+                        print(f"[DEBUG] 使用說明標籤頁UI字體已更新為: {size}")
+                    except Exception as e:
+                        print(f"[WARNING] 更新使用說明標籤頁字體時發生錯誤: {e}")
+
+                # 更新治具控制標籤頁的字體
+                if hasattr(tab_manager, 'fixture_ui'):
+                    try:
+                        fixture_ui = tab_manager.fixture_ui
+                        self.update_fixture_tab_fonts(fixture_ui, size)
+                        print(f"[DEBUG] 治具控制標籤頁UI字體已更新為: {size}")
+                    except Exception as e:
+                        print(f"[WARNING] 更新治具控制標籤頁字體時發生錯誤: {e}")
+
+        except Exception as e:
+            print(f"[ERROR] 更新全域UI字體時發生錯誤: {e}")
+
+    def update_global_content_fonts(self, size):
+        """更新全域內容字體大小"""
+        try:
+            # 獲取主視窗的TabManager
+            root = self.parent.root
+            if hasattr(root, 'tab_manager'):
+                tab_manager = root.tab_manager
+
+                # 更新設定標籤頁的內容字體
+                if hasattr(tab_manager, 'settings_ui'):
+                    try:
+                        settings_ui = tab_manager.settings_ui
+                        self.update_settings_tab_content_fonts(settings_ui, size)
+                        print(f"[DEBUG] 設定標籤頁內容字體已更新為: {size}")
+                    except Exception as e:
+                        print(f"[WARNING] 更新設定標籤頁內容字體時發生錯誤: {e}")
+
+                # 更新DOS標籤頁的內容字體
+                if hasattr(tab_manager, 'dos_ui'):
+                    try:
+                        dos_ui = tab_manager.dos_ui
+                        self.update_dos_tab_content_fonts(dos_ui, size)
+                        print(f"[DEBUG] DOS標籤頁內容字體已更新為: {size}")
+                    except Exception as e:
+                        print(f"[WARNING] 更新DOS標籤頁內容字體時發生錯誤: {e}")
+
+                # 更新使用說明標籤頁的內容字體
+                if hasattr(tab_manager, 'guide_ui'):
+                    try:
+                        guide_ui = tab_manager.guide_ui
+                        self.update_guide_tab_content_fonts(guide_ui, size)
+                        print(f"[DEBUG] 使用說明標籤頁內容字體已更新為: {size}")
+                    except Exception as e:
+                        print(f"[WARNING] 更新使用說明標籤頁內容字體時發生錯誤: {e}")
+
+                # 更新治具控制標籤頁的內容字體
+                if hasattr(tab_manager, 'fixture_ui'):
+                    try:
+                        fixture_ui = tab_manager.fixture_ui
+                        self.update_fixture_tab_content_fonts(fixture_ui, size)
+                        print(f"[DEBUG] 治具控制標籤頁內容字體已更新為: {size}")
+                    except Exception as e:
+                        print(f"[WARNING] 更新治具控制標籤頁內容字體時發生錯誤: {e}")
+
+                print(f"[DEBUG] 全域內容字體已更新為: {size}")
+
+        except Exception as e:
+            print(f"[ERROR] 更新全域內容字體時發生錯誤: {e}")
+    def update_settings_tab_fonts(self, settings_ui, size):
+        """更新設定標籤頁的UI字體"""
+        try:
+            font = ('Microsoft JhengHei UI', int(size))
+            # 更新設定標籤頁中的所有標籤
+            for widget in settings_ui.parent_frame.winfo_children():
+                self._update_widget_font_recursive(widget, font, ['Label', 'Button'])
+        except Exception as e:
+            print(f"[ERROR] 更新設定標籤頁字體時發生錯誤: {e}")
+
+    def update_dos_tab_fonts(self, dos_ui, size):
+        """更新DOS標籤頁的UI字體"""
+        try:
+            font = ('Microsoft JhengHei UI', int(size))
+            # 更新DOS標籤頁中的所有標籤和按鈕
+            for widget in dos_ui.parent_frame.winfo_children():
+                self._update_widget_font_recursive(widget, font, ['Label', 'Button'])
+        except Exception as e:
+            print(f"[ERROR] 更新DOS標籤頁字體時發生錯誤: {e}")
+
+    def update_guide_tab_fonts(self, guide_ui, size):
+        """更新使用說明標籤頁的UI字體"""
+        try:
+            font = ('Microsoft JhengHei UI', int(size))
+            # 更新使用說明標籤頁中的所有標籤和按鈕
+            for widget in guide_ui.parent_frame.winfo_children():
+                self._update_widget_font_recursive(widget, font, ['Label', 'Button'])
+        except Exception as e:
+            print(f"[ERROR] 更新使用說明標籤頁字體時發生錯誤: {e}")
+
+    def update_fixture_tab_fonts(self, fixture_ui, size):
+        """更新治具控制標籤頁的UI字體"""
+        try:
+            font = ('Microsoft JhengHei UI', int(size))
+            # 更新治具控制標籤頁中的所有標籤和按鈕
+            if hasattr(fixture_ui, 'parent_frame'):
+                for widget in fixture_ui.parent_frame.winfo_children():
+                    self._update_widget_font_recursive(widget, font, ['Label', 'Button'])
+        except Exception as e:
+            print(f"[ERROR] 更新治具控制標籤頁字體時發生錯誤: {e}")
+
+    def update_settings_tab_content_fonts(self, settings_ui, size):
+        """更新設定標籤頁的內容字體"""
+        try:
+            font = ('Consolas', int(size))
+            # 更新設定標籤頁中的輸入框和下拉選單
+            for widget in settings_ui.parent_frame.winfo_children():
+                self._update_widget_font_recursive(widget, font, ['Entry', 'Combobox', 'Text'])
+        except Exception as e:
+            print(f"[ERROR] 更新設定標籤頁內容字體時發生錯誤: {e}")
+
+    def update_dos_tab_content_fonts(self, dos_ui, size):
+        """更新DOS標籤頁的內容字體"""
+        try:
+            font = ('Consolas', int(size))
+            # 更新DOS標籤頁中的文字區域
+            for widget in dos_ui.parent_frame.winfo_children():
+                self._update_widget_font_recursive(widget, font, ['Entry', 'Text'])
+        except Exception as e:
+            print(f"[ERROR] 更新DOS標籤頁內容字體時發生錯誤: {e}")
+
+    def update_guide_tab_content_fonts(self, guide_ui, size):
+        """更新使用說明標籤頁的內容字體"""
+        try:
+            font = ('Consolas', int(size))
+            # 更新使用說明標籤頁中的文字區域
+            for widget in guide_ui.parent_frame.winfo_children():
+                self._update_widget_font_recursive(widget, font, ['Text'])
+        except Exception as e:
+            print(f"[ERROR] 更新使用說明標籤頁內容字體時發生錯誤: {e}")
+
+    def update_fixture_tab_content_fonts(self, fixture_ui, size):
+        """更新治具控制標籤頁的內容字體"""
+        try:
+            font = ('Consolas', int(size))
+            # 更新治具控制標籤頁中的輸入框和文字區域
+            if hasattr(fixture_ui, 'parent_frame'):
+                for widget in fixture_ui.parent_frame.winfo_children():
+                    self._update_widget_font_recursive(widget, font, ['Entry', 'Combobox', 'Text'])
+        except Exception as e:
+            print(f"[ERROR] 更新治具控制標籤頁內容字體時發生錯誤: {e}")
+
+    def _update_widget_font_recursive(self, widget, font, widget_types):
+        """遞歸更新widget及其子widget的字體"""
+        try:
+            widget_class = widget.winfo_class()
+            if any(wtype in widget_class for wtype in widget_types):
+                try:
+                    widget.configure(font=font)
+                except:
+                    try:
+                        widget['font'] = font
+                    except:
+                        pass
+
+            # 遞歸處理子widget
+            for child in widget.winfo_children():
+                self._update_widget_font_recursive(child, font, widget_types)
+        except Exception as e:
+            pass  # 忽略個別widget的錯誤
 
 
 
@@ -1140,7 +1363,7 @@ class UIHandlers(UIHandlersCore):
                 content = f.read()
 
 
-            
+
 
 
             # 清空回應內容視窗
@@ -1152,19 +1375,19 @@ class UIHandlers(UIHandlersCore):
             self.parent.components.text_output.delete(tk.END)
 
 
-            
+
 
 
             # 在回應內容視窗中顯示使用說明
 
 
-            self.parent.components.text_output.insert('1.0', "\n=== VALO360 指令通使用說明 ===\n\n", "guide_title")
+            self.parent.components.text_output.insert('1.0', "\n=== 指令通使用說明 ===\n\n", "guide_title")
 
 
             self.parent.components.text_output.insert(tk.END, content)
 
 
-            
+
 
 
             # 添加返回按鈕的提示
@@ -1173,7 +1396,7 @@ class UIHandlers(UIHandlersCore):
             self.parent.components.text_output.insert(tk.END, "\n\n按 [清空回應] 按鈕可返回正常模式。\n", "guide_title")
 
 
-            
+
 
 
             # 自動捲到頂部
@@ -1182,7 +1405,7 @@ class UIHandlers(UIHandlersCore):
             self.parent.components.text_output.see('1.0')
 
 
-            
+
 
 
             # 設回唯讀狀態
@@ -1191,7 +1414,7 @@ class UIHandlers(UIHandlersCore):
             self.parent.components.text_output.configure(state='disabled')
 
 
-            
+
 
 
             # 標記當前正在顯示使用說明
@@ -1200,7 +1423,7 @@ class UIHandlers(UIHandlersCore):
             self.parent.showing_guide = True
 
 
-            
+
 
 
             # 在通知區域顯示提示
@@ -1209,7 +1432,7 @@ class UIHandlers(UIHandlersCore):
             self.parent.components.show_notification("已顯示使用說明，按「清空回應」按鈕可返回", "blue", 10000)
 
 
-            
+
 
 
         except Exception as e:
@@ -1242,7 +1465,7 @@ class UIHandlers(UIHandlersCore):
             return
 
 
-        
+
 
 
         # 獲取 COM 口
@@ -1260,7 +1483,7 @@ class UIHandlers(UIHandlersCore):
             return
 
 
-        
+
 
 
         # 獲取指令
@@ -1278,7 +1501,7 @@ class UIHandlers(UIHandlersCore):
             return
 
 
-        
+
 
 
         # 獲取指令內容
@@ -1299,7 +1522,7 @@ class UIHandlers(UIHandlersCore):
             return
 
 
-        
+
 
 
         # 獲取結束字串
@@ -1317,7 +1540,7 @@ class UIHandlers(UIHandlersCore):
             return
 
 
-        
+
 
 
         # 獲取超時時間
@@ -1338,7 +1561,7 @@ class UIHandlers(UIHandlersCore):
             return
 
 
-        
+
 
 
         # 分割指令
@@ -1349,7 +1572,7 @@ class UIHandlers(UIHandlersCore):
         cmd_list = cmd_content.split(separator)
 
 
-        
+
 
 
         # 顯示執行信息
@@ -1361,7 +1584,7 @@ class UIHandlers(UIHandlersCore):
         self.parent.components.add_to_buffer(f"COM 口: {com}, 超時: {timeout} 秒, 結束字串: {end_str}\n", "purple")
 
 
-        
+
 
 
         # 重置進度條並顯示
@@ -1373,7 +1596,7 @@ class UIHandlers(UIHandlersCore):
         self.parent.components.show_progress()
 
 
-        
+
 
 
         # 重置停止事件
@@ -1382,7 +1605,7 @@ class UIHandlers(UIHandlersCore):
         self.parent.stop_event = threading.Event()
 
 
-        
+
 
 
         # 創建並啟動線程
@@ -1412,7 +1635,7 @@ class UIHandlers(UIHandlersCore):
         )
 
 
-        
+
 
 
         # 設置顯示消息的回調
@@ -1421,7 +1644,7 @@ class UIHandlers(UIHandlersCore):
         self.parent.thread.show_message_callback = self._show_messagebox_and_callback
 
 
-        
+
 
 
         # 啟動線程
@@ -1430,7 +1653,7 @@ class UIHandlers(UIHandlersCore):
         self.parent.thread.start()
 
 
-        
+
 
 
     def on_data(self, text, tag=None):
@@ -1451,7 +1674,7 @@ class UIHandlers(UIHandlersCore):
             return
 
 
-            
+
 
 
         # 直接添加文字，在 add_to_buffer 中處理關鍵字高亮
@@ -1526,7 +1749,7 @@ class UIHandlers(UIHandlersCore):
             self.parent.components.btn_exec.config(text='執行指令')
 
 
-            
+
 
 
             # 立即停止進度條並重置
@@ -1535,7 +1758,7 @@ class UIHandlers(UIHandlersCore):
             self.parent.components.reset_progress()
 
 
-            
+
 
 
             # 立即停止 LED 閃爍
@@ -1544,7 +1767,7 @@ class UIHandlers(UIHandlersCore):
             self.parent.components.stop_led_blink()
 
 
-            
+
 
 
             # 取消倒計時定時器
@@ -1559,7 +1782,7 @@ class UIHandlers(UIHandlersCore):
                 self.countdown_job = None
 
 
-            
+
 
 
             # 清空倒計時標籤
@@ -1571,7 +1794,7 @@ class UIHandlers(UIHandlersCore):
                 self.parent.components.label_countdown.configure(text='')
 
 
-            
+
 
 
             # 添加指令完成通知
@@ -1580,7 +1803,7 @@ class UIHandlers(UIHandlersCore):
             self.parent.components.show_notification(get_notification_text("cmd_done"), "green", 3000)
 
 
-            
+
 
 
             # 確保所有 after 任務都已取消
@@ -1643,7 +1866,7 @@ class UIHandlers(UIHandlersCore):
                     self.parent.components.status_canvas.itemconfig(self.parent.components.status_light, fill=color)
 
 
-                    
+
 
 
                 # 添加連接狀態通知
@@ -1679,20 +1902,20 @@ class UIHandlers(UIHandlersCore):
     def on_save_setup(self):
         # 讀取當前的完整設定，確保不會遺失既有資料
         current_setup = load_setup()
-        
+
         # 獲取當前視窗標題（不包含版本號部分）
         current_title = self.parent.title()
         window_title = current_title
         if " V" in current_title:
             window_title = current_title.split(" V")[0]
-        
+
         # 保存頂層 Window_Title
         current_setup['Window_Title'] = window_title
-        
+
         # 更新 DUT_Control 設定
         if 'DUT_Control' not in current_setup:
             current_setup['DUT_Control'] = {}
-            
+
         current_setup['DUT_Control']['Serial_COM_Port'] = self.parent.components.combobox_com.get()
         current_setup['DUT_Control']['Command_Timeout_Seconds'] = self.parent.components.entry_timeout.get()
         current_setup['DUT_Control']['Command_End_String'] = self.parent.components.combobox_end.get()
@@ -1700,33 +1923,33 @@ class UIHandlers(UIHandlersCore):
         current_setup['DUT_Control']['Content_Font_Size'] = self.parent.components.content_font_size_var.get()
         # 確保 DUT_Control 下的 Window_Title 與頂層一致
         current_setup['DUT_Control']['Window_Title'] = window_title
-        
+
         # 保存通知字體大小設定
         if hasattr(self.parent.components, 'notification_font_size'):
             current_setup['DUT_Control']['Notification_Font_Size'] = str(self.parent.components.notification_font_size)
             print(f"[DEBUG] 保存通知字體大小設定: {self.parent.components.notification_font_size}")
-        
+
         # 處理可用結束字串列表
         end_strings = self.parent.components.combobox_end['values']
         if not end_strings:
             end_strings = ["root"]
         current_setup['DUT_Control']['Available_End_Strings'] = list(end_strings)
-        
+
         current_setup['DUT_Control']['Default_IP_Address'] = self.parent.components.entry_ip.get()
         current_setup['DUT_Control']['Window_Width'] = str(self.parent.winfo_width())
         current_setup['DUT_Control']['Window_Height'] = str(self.parent.winfo_height())
         current_setup['DUT_Control']['Last_Selected_Command_Section'] = self.parent.components.section_var.get()
         current_setup['DUT_Control']['Auto_Execute'] = self.parent.components.auto_execute_var.get() if hasattr(self.parent.components, 'auto_execute_var') else False
-        
+
         # 更新 Fixture_Control 設定
         if 'Fixture_Control' not in current_setup:
             current_setup['Fixture_Control'] = {}
-            
+
         current_setup['Fixture_Control']['Fixture_COM_Port'] = self.parent.components.fixture_com_var.get()
         current_setup['Fixture_Control']['Fixture_Font_Size'] = self.parent.components.fixture_font_size_var.get()
         current_setup['Fixture_Control']['Test_Category_MB'] = self.parent.components.mb_var.get()
         current_setup['Fixture_Control']['Current_Command'] = self.parent.components.fixture_cmd_var.get()
-        
+
         # 保存設定
         save_setup(current_setup)
         messagebox.showinfo('成功', '設定已儲存')
@@ -1737,7 +1960,7 @@ class UIHandlers(UIHandlersCore):
 
     def on_load_setup(self):
         setup = load_setup()
-        
+
         # 載入 DUT 設定
         dut_setup = setup.get('DUT_Control', {})
         self.parent.components.combobox_com.set(dut_setup.get('Serial_COM_Port', ''))
@@ -1746,17 +1969,17 @@ class UIHandlers(UIHandlersCore):
         self.parent.components.combobox_end.set(dut_setup.get('Command_End_String', 'root'))
         self.parent.components.font_size_var.set(dut_setup.get('UI_Font_Size', '12'))
         self.parent.components.content_font_size_var.set(dut_setup.get('Content_Font_Size', '12'))
-        
+
         # 設定視窗標題 (優先使用頂層 Window_Title)
         window_title = setup.get('Window_Title')
         if not window_title:
             window_title = dut_setup.get('Window_Title')
         if not window_title:
-            window_title = 'VALO360 指令通'
-            
+            window_title = '指令通'
+
         print(f"[DEBUG] 載入視窗標題: {window_title}")
         self.parent.title(window_title)
-        
+
         # 設定可用結束字串
         end_strings = dut_setup.get('Available_End_Strings', ['root'])
         if isinstance(end_strings, str):
@@ -1765,27 +1988,27 @@ class UIHandlers(UIHandlersCore):
             except:
                 end_strings = ['root']
         self.parent.components.combobox_end['values'] = end_strings
-        
+
         self.parent.components.entry_ip.delete(0, tk.END)
         self.parent.components.entry_ip.insert(0, dut_setup.get('Default_IP_Address', '192.168.11.143'))
         self.parent.components.section_var.set(dut_setup.get('Last_Selected_Command_Section', '全部指令'))
-        
+
         # 設定自動執行選項
         if hasattr(self.parent.components, 'auto_execute_var'):
             self.parent.components.auto_execute_var.set(dut_setup.get('Auto_Execute', False))
-        
+
         # 載入 FIXTURE 設定
         fixture_setup = setup.get('Fixture_Control', {})
         self.parent.components.fixture_com_var.set(fixture_setup.get('Fixture_COM_Port', ''))
         self.parent.components.fixture_font_size_var.set(fixture_setup.get('Fixture_Font_Size', '12'))
         self.parent.components.mb_var.set(fixture_setup.get('Test_Category_MB', True))
         self.parent.components.fixture_cmd_var.set(fixture_setup.get('Current_Command', ''))
-        
+
         # 更新字體大小
         self.parent.components.update_font_size()
         self.parent.components.update_content_font_size()
         self.parent.components.update_fixture_font_size()
-        
+
         # 更新視窗大小
         try:
             width = int(dut_setup.get('Window_Width', '800'))
@@ -1813,7 +2036,7 @@ class UIHandlers(UIHandlersCore):
             return
 
 
-            
+
 
 
         if remaining > 0:
@@ -1828,7 +2051,7 @@ class UIHandlers(UIHandlersCore):
                 self.parent.components.label_countdown.configure(text=f'倒數: {int(remaining)}')
 
 
-            
+
 
 
             # 計算進度百分比（從 0 開始到 100）
@@ -1852,7 +2075,7 @@ class UIHandlers(UIHandlersCore):
                 pass
 
 
-            
+
 
 
             # 每秒更新一次
@@ -1903,7 +2126,7 @@ class UIHandlers(UIHandlersCore):
                 return
 
 
-                
+
 
 
             # 從 combobox 的值列表中移除
@@ -1921,7 +2144,7 @@ class UIHandlers(UIHandlersCore):
                 self.parent.components.combobox_end['values'] = values
 
 
-                
+
 
 
                 # 更新 setup.json 中的兩個位置
@@ -1939,7 +2162,7 @@ class UIHandlers(UIHandlersCore):
                 self.parent.setup['EndStrings'] = values
 
 
-                
+
 
 
                 # 保存到文件
@@ -1951,7 +2174,7 @@ class UIHandlers(UIHandlersCore):
                     json.dump(self.parent.setup, f, indent=4, ensure_ascii=False)
 
 
-                
+
 
 
                 # 更新 combobox 的顯示
@@ -1969,7 +2192,7 @@ class UIHandlers(UIHandlersCore):
                     self.parent.components.combobox_end.set('')
 
 
-                    
+
 
 
         except Exception as e:
@@ -2041,7 +2264,7 @@ class UIHandlers(UIHandlersCore):
             print(f"[DEBUG] 自動執行設置已變更為: {auto_exec}")
 
 
-            
+
 
 
             # 更新設置
@@ -2050,7 +2273,7 @@ class UIHandlers(UIHandlersCore):
             self.parent.setup['Auto_Execute'] = auto_exec
 
 
-            
+
 
 
             # 保存完整的設定結構
@@ -2068,7 +2291,7 @@ class UIHandlers(UIHandlersCore):
             save_setup(full_setup)
 
 
-            
+
 
 
             # 添加自動執行狀態通知
@@ -2086,7 +2309,7 @@ class UIHandlers(UIHandlersCore):
                 self.parent.components.show_notification("已禁用自動執行功能", "blue", 3000)
 
 
-            
+
 
 
             print(f"[DEBUG] 自動執行設置已保存: {auto_exec}")

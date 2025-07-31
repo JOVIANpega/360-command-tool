@@ -29,7 +29,10 @@ class SharedConfigManager:
         
         # 初始化標記
         self.initialized = False
-        
+
+        # 自動保存控制標記
+        self._auto_save_enabled = False
+
         # 載入初始設定資料
         self.load_from_setup()
     
@@ -83,12 +86,17 @@ class SharedConfigManager:
         
         # 將設定資料載入到變數中
         self.load_data_to_vars()
-        
+
+        # 啟用自動保存
+        self._auto_save_enabled = True
+
         self.initialized = True
         print("[DEBUG] SharedConfigManager: Tkinter變數初始化完成")
     
     def bind_var_changes(self):
         """為所有變數綁定變更監聽"""
+        # 暫時禁用自動保存，避免無限循環
+        self._auto_save_enabled = False
         for var_name, var in self.vars.items():
             # 使用 trace 方法監聽變數變更
             var.trace('w', lambda name, index, mode, vn=var_name: self.on_var_changed(vn))

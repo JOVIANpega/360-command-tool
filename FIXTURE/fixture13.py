@@ -823,7 +823,8 @@ class FixtureControlWindow:
 class FixtureFrame(ttk.Frame):
     def __init__(self, parent, **kwargs):
         super().__init__(parent, **kwargs)
-        
+        self.parent_frame = self  # 設置parent_frame屬性供字體更新使用
+
         # 建立制具控制視窗
         self.fixture_window = FixtureControlWindow(self)
     
