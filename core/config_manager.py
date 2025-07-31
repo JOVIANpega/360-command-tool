@@ -24,6 +24,7 @@ class ConfigManager:
         self._cache_lock = threading.RLock()
         self._last_modified = 0
         self._backup_dir = "backup"
+        self._auto_save_enabled = True  # 控制自動保存
         self._ensure_directories()
         
         # 預設配置
@@ -180,7 +181,7 @@ class ConfigManager:
                     # 配置文件不存在，創建預設配置
                     self.error_handler.log_info("配置文件不存在，創建預設配置")
                     default_config = deepcopy(self.default_config)
-                    self.save_config(default_config)
+                    self.save_config(default_config, manual_save=True)  # 初始化時強制保存
                     return default_config
                     
             except Exception as e:
@@ -200,8 +201,13 @@ class ConfigManager:
         return config
     
     @retry_on_failure(max_retries=3, delay=0.5)
-    def save_config(self, config: Dict[str, Any]) -> bool:
+    def save_config(self, config: Dict[str, Any], manual_save: bool = False) -> bool:
         """保存配置"""
+        # 如果不是手動保存且自動保存被禁用，則跳過
+        if not manual_save and not self._auto_save_enabled:
+            self.error_handler.log_debug("自動保存已禁用，跳過配置保存")
+            return False
+
         with self._cache_lock:
             try:
                 config_path = self._get_config_path()
@@ -235,11 +241,11 @@ class ConfigManager:
         config = self.load_config()
         return config.get(section_name, {})
     
-    def update_section(self, section_name: str, section_data: Dict[str, Any]) -> bool:
+    def update_section(self, section_name: str, section_data: Dict[str, Any], manual_save: bool = False) -> bool:
         """更新配置的特定區段"""
         config = self.load_config()
         config[section_name] = section_data
-        return self.save_config(config)
+        return self.save_config(config, manual_save=manual_save)
     
     def get_value(self, key_path: str, default: Any = None) -> Any:
         """獲取配置值，支援點號路徑 (例如: 'DUT_Control.Serial_COM_Port')"""
@@ -255,19 +261,29 @@ class ConfigManager:
         
         return current
     
-    def set_value(self, key_path: str, value: Any) -> bool:
+    def set_value(self, key_path: str, value: Any, manual_save: bool = False) -> bool:
         """設置配置值，支援點號路徑"""
         config = self.load_config()
         keys = key_path.split('.')
-        
+
         current = config
         for key in keys[:-1]:
             if key not in current:
                 current[key] = {}
             current = current[key]
-        
+
         current[keys[-1]] = value
-        return self.save_config(config)
+        return self.save_config(config, manual_save=manual_save)
+
+    def disable_auto_save(self):
+        """禁用自動保存"""
+        self._auto_save_enabled = False
+        self.error_handler.log_debug("ConfigManager: 自動保存已禁用")
+
+    def enable_auto_save(self):
+        """啟用自動保存"""
+        self._auto_save_enabled = True
+        self.error_handler.log_debug("ConfigManager: 自動保存已啟用")
 
 
 # 全局配置管理器實例

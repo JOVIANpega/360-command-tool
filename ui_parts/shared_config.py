@@ -33,6 +33,10 @@ class SharedConfigManager:
         # 自動保存控制標記
         self._auto_save_enabled = False
 
+        # 延遲保存控制
+        self._save_timer = None
+        self._save_delay_ms = 2000  # 2秒延遲保存
+
         # 載入初始設定資料
         self.load_from_setup()
     
@@ -162,6 +166,9 @@ class SharedConfigManager:
     
     def on_var_changed(self, var_name):
         """當變數變更時調用"""
+        # 只更新UI顯示，不自動保存到檔案
+        print(f"[DEBUG] SharedConfigManager: 變數 {var_name} 已變更，等待手動保存")
+
         # 通知相關的回調函數
         if var_name in self.callbacks:
             for callback in self.callbacks[var_name]:
@@ -180,6 +187,32 @@ class SharedConfigManager:
         """取消註冊變數變更回調函數"""
         if var_name in self.callbacks and callback in self.callbacks[var_name]:
             self.callbacks[var_name].remove(callback)
+
+    def _schedule_delayed_save(self):
+        """安排延遲保存"""
+        try:
+            # 如果已經有保存計時器，取消它
+            if self._save_timer:
+                # 假設我們有root引用來取消計時器
+                if hasattr(self, 'root') and self.root:
+                    self.root.after_cancel(self._save_timer)
+
+            # 安排新的延遲保存
+            if hasattr(self, 'root') and self.root:
+                self._save_timer = self.root.after(self._save_delay_ms, self._delayed_save)
+                print(f"[DEBUG] SharedConfigManager: 已安排 {self._save_delay_ms}ms 後保存配置")
+
+        except Exception as e:
+            print(f"[ERROR] SharedConfigManager: 安排延遲保存時發生錯誤: {e}")
+
+    def _delayed_save(self):
+        """延遲保存執行"""
+        try:
+            self._save_timer = None
+            self.save_to_setup()
+            print("[DEBUG] SharedConfigManager: 延遲保存已執行")
+        except Exception as e:
+            print(f"[ERROR] SharedConfigManager: 延遲保存時發生錯誤: {e}")
     
     def load_from_setup(self):
         """從 setup.json 載入設定資料（不依賴Tkinter變數）"""
@@ -324,6 +357,42 @@ class SharedConfigManager:
         if self.initialized:
             self.vars['fixture_font_size'].set(str(size))
         # 這裡會觸發回調函數來更新相關UI元件
+
+    def disable_auto_save(self):
+        """禁用自動保存"""
+        self._auto_save_enabled = False
+        print("[DEBUG] SharedConfigManager: 自動保存已禁用")
+
+    def enable_auto_save(self):
+        """啟用自動保存"""
+        self._auto_save_enabled = True
+        print("[DEBUG] SharedConfigManager: 自動保存已啟用")
+
+    def force_save_all(self):
+        """強制保存所有待保存的設定"""
+        try:
+            if not self.initialized:
+                print("[DEBUG] SharedConfigManager: 尚未初始化，無法強制保存")
+                return
+
+            # 收集所有當前變數的值
+            settings_dict = {}
+            for var_name, var in self.vars.items():
+                try:
+                    if hasattr(var, 'get'):
+                        settings_dict[var_name] = var.get()
+                except Exception as e:
+                    print(f"[WARNING] SharedConfigManager: 無法獲取變數 {var_name} 的值: {e}")
+
+            # 強制保存
+            if settings_dict:
+                save_setup(settings_dict, manual_save=True)
+                print(f"[DEBUG] SharedConfigManager: 強制保存完成，共保存 {len(settings_dict)} 個設定")
+            else:
+                print("[DEBUG] SharedConfigManager: 沒有需要保存的設定")
+
+        except Exception as e:
+            print(f"[ERROR] SharedConfigManager: 強制保存失敗: {e}")
 
 # 全域設定管理器實例
 shared_config = None

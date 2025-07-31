@@ -26,11 +26,7 @@ class SettingsTab(ttk.Frame):
         
         # 初始化 ToolTip 管理器
         try:
-            # 找到主視窗
-            root_widget = self
-            while root_widget.master:
-                root_widget = root_widget.master
-            self.tooltip_manager = ToolTipManager(root_widget)
+            self.tooltip_manager = ToolTipManager()
         except Exception as e:
             print(f"初始化 ToolTip 管理器失敗: {e}")
             self.tooltip_manager = None
@@ -205,6 +201,29 @@ class SettingsTab(ttk.Frame):
         device_help_label.grid(row=1, column=0, sticky="w", pady=(2, 0))
 
         dut_row += 1
+
+        # 添加手動保存按鈕
+        save_button_frame = ttk.Frame(info_frame)
+        save_button_frame.grid(row=dut_row, column=0, columnspan=2, sticky="ew", pady=(10, 5))
+
+        self.manual_save_button = ttk.Button(
+            save_button_frame,
+            text="💾 儲存設定並即刻生效",
+            command=self.manual_save_settings,
+            style="Accent.TButton"
+        )
+        self.manual_save_button.pack(side="left", padx=(0, 10))
+
+        # 添加說明標籤
+        save_help_label = ttk.Label(
+            save_button_frame,
+            text="點擊此按鈕保存所有設定變更並立即生效",
+            font=('Microsoft JhengHei UI', 9),
+            foreground='#0066CC'
+        )
+        save_help_label.pack(side="left", padx=(10, 0))
+
+        dut_row += 1
         
         # === 右側內容 ===
         right_container = ttk.Frame(right_frame)
@@ -253,39 +272,31 @@ class SettingsTab(ttk.Frame):
     # 字體設定函式已移至DUT控制標籤頁
 
     def on_notification_font_changed(self, event=None):
-        """通知字體大小即時更新"""
+        """通知字體大小即時更新（僅更新顯示，不自動保存）"""
         try:
             new_size = self.vars["DUT_Notification_Font_Size"].get()
             if new_size.isdigit():
                 size = int(new_size)
                 if 8 <= size <= 20:
-                    # 立即更新設定檔
-                    settings = load_setup()
-                    if 'DUT_Control' not in settings:
-                        settings['DUT_Control'] = {}
-                    settings['DUT_Control']['Notification_Font_Size'] = str(size)
-                    save_setup(settings)
-                    
-                    # 通知其他元件更新字體
+                    # 只更新UI顯示，不自動保存到檔案
+                    print(f"[DEBUG] 通知字體大小已變更為 {size}，請點擊保存按鈕以儲存變更")
+
+                    # 通知其他元件更新字體顯示
                     self.apply_font_changes_immediately()
         except Exception as e:
             print(f"更新通知字體時發生錯誤: {e}")
 
     def on_fixture_font_changed(self, event=None):
-        """治具字體大小即時更新"""
+        """治具字體大小即時更新（僅更新顯示，不自動保存）"""
         try:
             new_size = self.vars["Fixture_Font_Size"].get()
             if new_size.isdigit():
                 size = int(new_size)
                 if 8 <= size <= 24:
-                    # 立即更新設定檔
-                    settings = load_setup()
-                    if 'Fixture_Control' not in settings:
-                        settings['Fixture_Control'] = {}
-                    settings['Fixture_Control']['Fixture_Font_Size'] = str(size)
-                    save_setup(settings)
-                    
-                    # 通知制具控制頁面更新字體
+                    # 只更新UI顯示，不自動保存到檔案
+                    print(f"[DEBUG] 治具字體大小已變更為 {size}，請點擊保存按鈕以儲存變更")
+
+                    # 通知制具控制頁面更新字體顯示
                     self.apply_fixture_font_changes(size)
         except Exception as e:
             print(f"更新治具字體時發生錯誤: {e}")
@@ -407,15 +418,9 @@ class SettingsTab(ttk.Frame):
         )
         if filename:
             self.vars[var_name].set(filename)
-            # 立即保存到setup.json
-            try:
-                setup = load_setup()
-                setup["DUT_Control"]["Command_File_Path"] = filename
-                save_setup(setup)
-                print(f"[INFO] 指令檔案路徑已更新: {filename}")
-            except Exception as e:
-                print(f"[ERROR] 保存指令檔案路徑失敗: {e}")
-                messagebox.showerror("錯誤", f"保存檔案路徑失敗：{str(e)}")
+            # 只更新UI顯示，不自動保存
+            print(f"[INFO] 指令檔案路徑已選擇: {filename}，請點擊保存按鈕以儲存變更")
+            messagebox.showinfo("提示", f"已選擇檔案：{filename}\n\n請點擊「💾 儲存設定並即刻生效」按鈕以保存變更。")
 
     def generate_settings_dict(self):
         """根據當前設定生成字典 - 保持現有設定不丟失"""
@@ -470,25 +475,33 @@ class SettingsTab(ttk.Frame):
 
     # 移除了 reload_settings 函數及相關程式碼
 
-    def save_settings(self):
-        """儲存設定到 setup.json"""
+    def manual_save_settings(self):
+        """手動保存設定到 setup.json"""
         import traceback
         try:
             # 生成設定字典
             settings_dict = self.generate_settings_dict()
-            # 保存設定
-            save_setup(settings_dict)
-            
+            # 手動保存設定（繞過自動保存限制）
+            from config_core import save_setup
+            from core.config_manager import get_config_manager
+
+            # 使用config_core的手動保存
+            save_setup(settings_dict, manual_save=True)
+
+            # 同時使用ConfigManager的手動保存
+            config_manager = get_config_manager()
+            config_manager.save_config(settings_dict, manual_save=True)
+
             # 立即重新讀取setup.json的所有資料
-            print("[DEBUG] 儲存完成，重新讀取setup.json...")
+            print("[DEBUG] 手動儲存完成，重新讀取setup.json...")
             updated_setup = load_setup()
-            
+
             # 更新本地設定資料
             self.setup_data = updated_setup
-            
+
             # 重新載入UI顯示的所有設定值
             self.update_ui_from_settings()
-            
+
             # 調用回調函數通知其他組件設定已更新
             if self.on_save_callback:
                 # 傳遞最新的設定資料
@@ -496,15 +509,20 @@ class SettingsTab(ttk.Frame):
 
             # 立即更新標籤頁名稱
             self.update_tab_names_immediately()
-            
+
             # 顯示成功訊息
-            messagebox.showinfo("成功", "設定已儲存並重新載入")
-            print("[DEBUG] 設定已儲存並重新載入完成")
-            
+            messagebox.showinfo("成功", "設定已手動儲存並立即生效！")
+            print("[DEBUG] 設定已手動儲存並重新載入完成")
+
         except Exception as e:
-            print(f"[錯誤] 儲存設定失敗: {e}")
+            print(f"[錯誤] 手動儲存設定失敗: {e}")
             traceback.print_exc()
-            messagebox.showerror("錯誤", f"儲存設定時發生錯誤: {e}")
+            messagebox.showerror("錯誤", f"手動儲存設定時發生錯誤: {e}")
+
+    def save_settings(self):
+        """儲存設定到 setup.json（保留原有方法以維持相容性）"""
+        # 直接調用手動保存方法
+        self.manual_save_settings()
 
     def update_tab_names_immediately(self):
         """立即更新標籤頁名稱"""

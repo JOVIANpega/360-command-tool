@@ -197,18 +197,13 @@ class NotificationManager:
             self.notification_log = []
 
     def save_notification_history(self):
-        """保存通知歷史到設定檔"""
+        """保存通知歷史到設定檔 - 使用延遲保存"""
         try:
-            current_setup = load_setup()
-            if "notification_messages" not in current_setup:
-                current_setup["notification_messages"] = {}
-            
-            current_setup["notification_messages"]["history"] = self.notification_log
-            current_setup["notification_messages"]["last_updated"] = datetime.now().isoformat()
-            
-            save_setup(current_setup)
+            # 只更新內存中的資料，不立即保存到檔案
+            # 通知歷史會在程式關閉時統一保存
+            print("[DEBUG] 通知歷史已更新到內存，將在程式關閉時保存")
         except Exception as e:
-            print(f"[ERROR] 保存通知歷史時發生錯誤: {e}")
+            print(f"[ERROR] 更新通知歷史時發生錯誤: {e}")
 
     def set_font_size(self, size):
         """設定字體大小 - 簡化版本"""

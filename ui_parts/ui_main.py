@@ -799,18 +799,19 @@ class TabManager:
             if hasattr(self, 'notification_manager'):
                 system_settings = setup.get('System', {})
                 global_font_size = system_settings.get('Notification_Font_Size', notification_font_size)
-                if hasattr(self.notification_manager, 'notification_text'):
+                # NotificationManager使用brief_message而不是notification_text
+                if hasattr(self.notification_manager, 'brief_message'):
                     try:
-                        current_font = self.notification_manager.notification_text.cget("font")
+                        current_font = self.notification_manager.brief_message.cget("font")
                         if isinstance(current_font, tuple):
                             family, size, style = current_font
                         else:
-                            family, size, style = 'Microsoft JhengHei UI', 12, 'bold'
-                        
+                            family, size, style = 'Microsoft JhengHei UI', 9, 'normal'
+
                         new_font = (family, int(global_font_size), style)
-                        self.notification_manager.notification_text.config(font=new_font)
+                        self.notification_manager.brief_message.config(font=new_font)
                     except Exception as e:
-                        print(f"[WARNING] 更新通知管理器字體時發生錯誤: {e}")
+                        print(f"[WARNING] 更新全域通知字體時發生錯誤: {e}")
                     
         except Exception as e:
             print(f"[ERROR] 同步字體設定時發生錯誤：{e}")
@@ -912,15 +913,15 @@ class TabManager:
                 if hasattr(self, 'notification_manager'):
                     if key == "Notification_Font_Size":
                         # 更新全域通知字體
-                        if hasattr(self.notification_manager, 'notification_text'):
-                            current_font = self.notification_manager.notification_text.cget("font")
+                        if hasattr(self.notification_manager, 'brief_message'):
+                            current_font = self.notification_manager.brief_message.cget("font")
                             if isinstance(current_font, tuple):
                                 family, size, style = current_font
                             else:
-                                family, size, style = 'Microsoft JhengHei UI', 12, 'bold'
-                            
+                                family, size, style = 'Microsoft JhengHei UI', 9, 'normal'
+
                             new_font = (family, int(value), style)
-                            self.notification_manager.notification_text.config(font=new_font)
+                            self.notification_manager.brief_message.config(font=new_font)
                             
         except Exception as e:
             print(f"[ERROR] 同步設定到UI時發生錯誤：{e}")
@@ -1763,9 +1764,9 @@ class SerialUI:
                 full_setup['DUT_Control'][key] = value
                 print(f"[DEBUG] SerialUI.on_close: 保存設定 {key} = {value}")
             
-            # 保存到檔案
-            save_setup(full_setup)
-            print(f"[DEBUG] SerialUI.on_close: 設定已保存到 setup.json")
+            # 程式關閉時手動保存到檔案
+            save_setup(full_setup, manual_save=True)
+            print(f"[DEBUG] SerialUI.on_close: 設定已手動保存到 setup.json")
             
             # 停止所有執行緒
             if hasattr(self, 'stop_event') and self.stop_event:

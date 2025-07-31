@@ -117,8 +117,12 @@ def cleanup_old_backups():
 
 
 
-def save_setup(setup_data: Dict[str, Any]) -> bool:
+def save_setup(setup_data: Dict[str, Any], manual_save=False) -> bool:
     """保存設定檔 - 使用新的配置管理器"""
+    # 如果不是手動保存，則跳過（暫時禁用自動保存）
+    if not manual_save:
+        print("[DEBUG] 自動保存已禁用，請使用手動保存")
+        return False
     return config_manager.save_config(setup_data)
 
 

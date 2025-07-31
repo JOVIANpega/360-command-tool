@@ -395,7 +395,7 @@ class UIComponentsBase:
             if 'DUT_Control' not in full_setup:
                 full_setup['DUT_Control'] = {}
             full_setup['DUT_Control']['Pane_Sash_Position'] = str(sash_position)
-            save_setup(full_setup)
+            save_setup(full_setup, manual_save=True)  # 使用手動保存
             print(f"[DEBUG] 分割位置已保存到設定檔: {sash_position}")
         except Exception as e:
             print(f"[ERROR] 保存分割位置到設定檔時發生錯誤: {e}")

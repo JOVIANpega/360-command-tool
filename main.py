@@ -116,11 +116,11 @@ def setup_window_resize_handler(root):
             if not root.winfo_exists():
                 return
 
-            # 使用配置管理器更新設定
-            config_manager.set_value('Window_Width', str(root.winfo_width()))
-            config_manager.set_value('Window_Height', str(root.winfo_height()))
-            config_manager.set_value('DUT_Control.Window_Width', str(root.winfo_width()))
-            config_manager.set_value('DUT_Control.Window_Height', str(root.winfo_height()))
+            # 使用配置管理器更新設定（不自動保存）
+            config_manager.set_value('Window_Width', str(root.winfo_width()), manual_save=False)
+            config_manager.set_value('Window_Height', str(root.winfo_height()), manual_save=False)
+            config_manager.set_value('DUT_Control.Window_Width', str(root.winfo_width()), manual_save=False)
+            config_manager.set_value('DUT_Control.Window_Height', str(root.winfo_height()), manual_save=False)
 
         except Exception as e:
             # 靜默處理，避免干擾用戶操作
@@ -150,6 +150,12 @@ def initialize_application():
     """初始化應用程式"""
     try:
         setup_logging()
+
+        # 禁用ConfigManager的自動保存功能
+        from core.config_manager import get_config_manager
+        config_manager = get_config_manager()
+        config_manager.disable_auto_save()
+        log_info("ConfigManager自動保存已禁用")
 
         # 載入關鍵字高亮設定
         highlight_keywords = load_highlight_keywords()
@@ -183,6 +189,30 @@ if __name__ == "__main__":
         if hasattr(app, 'update_tab_names'):
             log_info("程式啟動時更新標籤頁名稱")
             app.update_tab_names()
+
+        # 設置關閉事件處理
+        def on_closing():
+            try:
+                # 保存視窗大小（手動保存）
+                from core.config_manager import get_config_manager
+                config_manager = get_config_manager()
+                config_manager.set_value('Window_Width', str(root.winfo_width()), manual_save=True)
+                config_manager.set_value('Window_Height', str(root.winfo_height()), manual_save=True)
+
+                # 強制保存所有待保存的設定
+                from ui_parts.shared_config import get_shared_config
+                shared_config = get_shared_config()
+                if hasattr(shared_config, 'force_save_all'):
+                    shared_config.force_save_all()
+                    log_info("程式關閉時已保存所有待保存的設定")
+
+                log_info("程式正常關閉")
+            except Exception as e:
+                log_error(f"關閉程式時發生錯誤: {e}")
+            finally:
+                root.destroy()
+
+        root.protocol("WM_DELETE_WINDOW", on_closing)
 
         # 啟動主循環
         log_info("應用程式啟動完成，進入主循環")

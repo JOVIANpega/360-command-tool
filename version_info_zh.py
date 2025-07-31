@@ -13,9 +13,9 @@ import sys
 import datetime
 
 version_info = {
-    'version': '1.7.2',
-    'file_version': (1, 7, 2, 0),
-    'product_version': (1, 7, 2, 0),
+    'version': '1.7.4',
+    'file_version': (1, 7, 4, 0),
+    'product_version': (1, 7, 4, 0),
     'company_name': 'VALO360指令通',
     'file_description': 'VALO360指令通 - 序列埠通訊工具',
     'internal_name': 'VALO360指令通',
@@ -27,6 +27,32 @@ version_info = {
 
 # 版本更新記錄
 version_history = """
+v1.7.4 (2025-07-31) - 配置保存優化版
+===========================================
+🔧 配置保存系統重大優化
+• 徹底解決無限配置保存循環問題
+• 新增手動保存機制，禁用自動保存功能
+• 在設定標籤頁添加「💾 儲存設定並即刻生效」按鈕
+• 程式關閉時自動保存重要設定，確保用戶設定不丟失
+
+🛠️ 系統穩定性提升
+• 修復ToolTip初始化錯誤問題
+• 修復通知管理器屬性問題
+• 優化分割位置設置機制
+• 改善程式啟動和關閉流程
+
+⚡ 性能大幅改善
+• 消除配置保存相關的無限循環，程式運行更流暢
+• 減少不必要的磁碟I/O操作
+• 提升UI響應速度和整體用戶體驗
+• 降低系統資源占用
+
+🎯 用戶體驗優化
+• 用戶可以自由調整設定而不觸發自動保存
+• 手動保存按鈕提供明確的保存控制
+• 設定變更即時反映在UI上，保存時機由用戶決定
+• 程式關閉時確保所有設定都被正確保存
+
 v1.7.2 (2025-07-30) - 功能增強版
 ===========================================
 🆕 新增DOS工具標籤頁
@@ -206,15 +232,15 @@ v1.5.0.1 (2025-07-12)
 # 定義版本號
 VERSION = version_info['version']
 
-APP_VERSION = "V1.7.2"
-APP_VERSION_DETAIL = "\n【V1.7.2 主要更新 - 功能增強版】\n- 新增DOS工具標籤頁，支援批次檔執行\n- 使用說明標籤頁簡化，移除HTML內容顯示\n- 應用程式版本改為可編輯\n- IP按鈕加大，指令下拉視窗顯示15行\n- 治具控制檔案路徑更改為Command_TABLE\\Fixture_Command.txt\n- 儲存設定按鈕移至最下方靠右\n- 新增詳細的HTML使用說明文件\n"
+APP_VERSION = "V1.7.4"
+APP_VERSION_DETAIL = "\n【V1.7.4 主要更新 - 配置保存優化版】\n- 徹底解決無限配置保存循環問題\n- 新增手動保存機制，禁用自動保存功能\n- 在設定標籤頁添加「💾 儲存設定並即刻生效」按鈕\n- 程式關閉時自動保存重要設定\n- 修復ToolTip初始化錯誤和通知管理器問題\n- 大幅提升程式運行流暢度和用戶體驗\n- 降低系統資源占用，優化性能表現\n"
 
 # 生成版本資訊檔案
 with open("version_info_zh.txt", "w", encoding="utf-8") as f:
     f.write("VSVersionInfo(\n")
     f.write("  ffi=FixedFileInfo(\n")
-    f.write("    filevers=(1, 7, 2, 0),\n")
-    f.write("    prodvers=(1, 7, 2, 0),\n")
+    f.write("    filevers=(1, 7, 4, 0),\n")
+    f.write("    prodvers=(1, 7, 4, 0),\n")
     f.write("    mask=0x3f,\n")
     f.write("    flags=0x0,\n")
     f.write("    OS=0x40004,\n")
