@@ -1056,20 +1056,24 @@ class TabManager:
 
 
         # 一般TButton維持灰底黑字hover藍底白字
-
-
         style.configure('TButton', font=('Microsoft JhengHei UI', 12), padding=[8, 4])
-
-
         style.map('TButton',
-
-
             background=[('active', '#003a80'), ('!active', '#f5f5f5')],
-
-
             foreground=[('active', 'white'), ('!active', 'black')]
+        )
 
+        # Blue.TButton 藍色按鈕樣式
+        style.configure('Blue.TButton', font=('Microsoft JhengHei UI', 12), padding=[8, 4])
+        style.map('Blue.TButton',
+            background=[('active', '#1976D2'), ('!active', '#2196F3')],
+            foreground=[('active', 'white'), ('!active', 'white')]
+        )
 
+        # Orange.TButton 橙色按鈕樣式
+        style.configure('Orange.TButton', font=('Microsoft JhengHei UI', 12), padding=[8, 4])
+        style.map('Orange.TButton',
+            background=[('active', '#F57C00'), ('!active', '#FF9800')],
+            foreground=[('active', 'white'), ('!active', 'white')]
         )
 
 

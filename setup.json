@@ -1,5 +1,5 @@
 {
-  "version": "1.7.6",
+  "version": "1.7.7",
   "notification_messages": {
     "app_started": "指令通 已啟動",
     "settings_updated": "設定已更新！",
@@ -156,7 +156,7 @@
     "Last_Selected_Command_Section": "MB指令==>",
     "Pane_Sash_Position": "526",
     "Auto_Execute": true,
-    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/CODE_HERE2/Command_TABLE/MU310_command.txt",
+    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/CODE_HERE2/Command_TABLE/command.txt",
     "Notification_Font_Size": "10",
     "Section_Titles": [
       "全部指令",

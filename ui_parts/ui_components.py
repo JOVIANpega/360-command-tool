@@ -52,6 +52,10 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         # 獲取全域通知管理器的引用
         self.global_notification_manager = None
         # 會在init_dut_tab中被設定
+
+        # 初始化腳本檢視模式標記
+        if not hasattr(self.parent, 'script_view_mode'):
+            self.parent.script_view_mode = False
         
         # 初始化統一設定管理器
         try:
@@ -198,7 +202,6 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         cmd_frame.grid(row=2, column=0, sticky='ew', pady=3)
         cmd_frame.columnconfigure(1, weight=1)  # 讓指令下拉選單擴展
         cmd_frame.columnconfigure(2, weight=0)  # 執行指令按鈕固定大小
-        cmd_frame.columnconfigure(3, weight=0)  # 儲存設定按鈕固定大小
         
         self.label_cmd = ttk.Label(cmd_frame, text='指令:', style="TLabel")
         self.label_cmd.grid(row=0, column=0, sticky='w')
@@ -230,6 +233,63 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
 
     def on_leave_exec(self, event):
         self.btn_execute.config(bg='#4CAF50')
+
+
+
+    def on_open_command_script(self):
+        """打開指令腳本文件並顯示內容"""
+        try:
+            # 獲取指令檔案路徑
+            command_file_path = self.parent.setup.get("DUT_Control", {}).get("Command_File_Path", "")
+
+            if not command_file_path:
+                # 如果沒有設定路徑，使用預設路徑
+                from config_core import COMMAND_FILE
+                command_file_path = COMMAND_FILE
+
+            # 檢查檔案是否存在
+            if not os.path.exists(command_file_path):
+                self.show_notification(f"指令檔案不存在: {command_file_path}", "error", 5000)
+                return
+
+            # 讀取檔案內容
+            try:
+                with open(command_file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+            except UnicodeDecodeError:
+                # 如果 UTF-8 解碼失敗，嘗試其他編碼
+                try:
+                    with open(command_file_path, 'r', encoding='big5') as f:
+                        content = f.read()
+                except UnicodeDecodeError:
+                    with open(command_file_path, 'r', encoding='gbk') as f:
+                        content = f.read()
+
+            # 清空輸出區域並顯示檔案內容
+            self.text_output.configure(state='normal')
+            self.text_output.delete(1.0, tk.END)
+
+            # 添加標題
+            title = f"=== 指令腳本檔案內容 ===\n檔案路徑: {command_file_path}\n檔案大小: {len(content)} 字元\n{'='*50}\n\n"
+            self.text_output.insert(tk.END, title, "guide_title")
+
+            # 添加檔案內容
+            self.text_output.insert(tk.END, content)
+
+            self.text_output.configure(state='disabled')
+            self.text_output.see(1.0)  # 捲動到頂部
+
+            # 顯示成功通知
+            self.show_notification(f"已載入指令腳本: {os.path.basename(command_file_path)}", "success", 3000)
+
+            # 設定標記，表示目前在腳本檢視模式
+            self.parent.script_view_mode = True
+
+        except Exception as e:
+            print(f"[ERROR] 打開指令腳本時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
+            self.show_notification(f"打開指令腳本失敗: {str(e)}", "error", 5000)
 
 
 
@@ -393,6 +453,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         btn_frame.columnconfigure(0, weight=1)
         btn_frame.columnconfigure(1, weight=1)
         btn_frame.columnconfigure(2, weight=1)
+        btn_frame.columnconfigure(3, weight=1)
         
         self.btn_clear = ttk.Button(btn_frame, text='清空回應', command=self.parent.handlers.clear_output, style='Blue.TButton')
         self.btn_clear.grid(row=0, column=0, padx=2, sticky='ew')
@@ -402,6 +463,10 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         
         self.btn_guide = ttk.Button(btn_frame, text='使用說明', command=self.parent.handlers.toggle_guide, style='Blue.TButton')
         self.btn_guide.grid(row=0, column=2, padx=2, sticky='ew')
+
+        # 添加「open CMD table」按鈕
+        self.btn_open_script = ttk.Button(btn_frame, text='open CMD table', command=self.on_open_command_script, style='Orange.TButton')
+        self.btn_open_script.grid(row=0, column=3, padx=2, sticky='ew')
         
         # 設備標籤顯示區域 - 放在使用說明按鈕下方
         device_label_frame = ttk.Frame(self.left_panel, style="TFrame")
@@ -544,37 +609,36 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             else:
                 rb.config(bg="#d9d9d9", fg="black", activebackground="#d9d9d9", activeforeground="black")
 
-    def update_cmd_list(self):
-        """更新指令下拉選單的選項
-        
-        此方法會重新解析指令文件，並根據當前選擇的分類更新下拉選單的選項。
-        當設定中的指令檔路徑變更時，此方法會被調用以重新載入指令。
-        """
-        # 重新讀取指令文件 - 確保每次都從設定中獲取最新的指令檔路徑
+    def _reload_commands_and_setup(self):
+        """重新載入設定和指令 - 重構輔助函數"""
         print("[DEBUG] update_cmd_list: 重新解析指令文件")
-        
-        # 強制重新載入設定，確保獲取最新的指令檔路徎
+
+        # 強制重新載入設定，確保獲取最新的指令檔路徑
         self.parent.setup = self.parent.config.load_setup()
         self.parent.handlers.reload_setup(self.parent.setup)
-        
+
         # 解析指令文件
         self.parent.commands_by_section = self.parent.handlers.parse_commands_by_section()
-        
+
+    def _check_and_update_sections(self):
+        """檢查並更新分類按鈕 - 重構輔助函數"""
         # 檢查是否需要重新生成分類按鈕
         available_sections = list(self.parent.commands_by_section.keys())
         current_sections = getattr(self, 'sections', [])
-        
+
         print(f"[DEBUG] update_cmd_list: 當前分類按鈕: {current_sections}")
         print(f"[DEBUG] update_cmd_list: 檔案中的分類: {available_sections}")
-        
+
         # 如果分類有變化，重新生成分類按鈕
         if set(current_sections) != set(available_sections):
             print("[DEBUG] update_cmd_list: 分類有變化，重新生成分類按鈕")
             self.regenerate_section_buttons(available_sections)
-        
+
+    def _validate_and_set_section(self):
+        """驗證並設定當前分類 - 重構輔助函數"""
         # 獲取當前選擇的分類
         section = self.section_var.get()
-        
+
         # 檢查當前選擇的分類是否存在於解析後的指令中
         if section not in self.parent.commands_by_section:
             print(f"[WARNING] 選擇的分類 '{section}' 不存在，使用第一個可用的分類")
@@ -586,27 +650,49 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                 # 如果沒有可用的分類，使用預設值
                 section = '全部指令'
                 self.section_var.set(section)
-        
-        # 更新按鈕背景和說明文字
-        self.update_radio_bg()
-        self.section_description.config(text=self.get_section_description(section))
-        
+
+        return section
+
+    def _update_command_dropdown(self, section):
+        """更新指令下拉選單 - 重構輔助函數"""
         # 獲取當前分類的指令
         cmds = self.parent.commands_by_section.get(section, {})
         if not cmds and section != '全部指令':  # 如果沒有找到對應分類的指令，使用全部指令
             cmds = self.parent.commands_by_section.get('全部指令', {})
-            
+
         # 更新下拉選單選項
         self.combobox_cmd['values'] = list(cmds.keys())
-        
+
         # 自動選中第一個指令
         if cmds:
             first_cmd = list(cmds.keys())[0]
             self.combobox_cmd.set(first_cmd)
         else:
             self.combobox_cmd.set('')
-            
+
         print(f"[DEBUG] update_cmd_list: 已更新指令下拉選單，共 {len(cmds)} 個指令")
+
+    def update_cmd_list(self):
+        """更新指令下拉選單的選項 - 重構版本
+
+        此方法會重新解析指令文件，並根據當前選擇的分類更新下拉選單的選項。
+        當設定中的指令檔路徑變更時，此方法會被調用以重新載入指令。
+        """
+        # 重新載入設定和指令
+        self._reload_commands_and_setup()
+
+        # 檢查並更新分類按鈕
+        self._check_and_update_sections()
+
+        # 驗證並設定當前分類
+        section = self._validate_and_set_section()
+
+        # 更新按鈕背景和說明文字
+        self.update_radio_bg()
+        self.section_description.config(text=self.get_section_description(section))
+
+        # 更新指令下拉選單
+        self._update_command_dropdown(section)
 
     def regenerate_section_buttons(self, new_sections):
         """重新生成分類按鈕"""

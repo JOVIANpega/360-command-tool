@@ -908,26 +908,27 @@ class UIHandlers(UIHandlersCore):
 
 
         # 重置標記
-
+        was_in_special_mode = False
 
         if hasattr(self.parent, 'showing_guide') and self.parent.showing_guide:
-
-
             self.parent.showing_guide = False
+            was_in_special_mode = True
 
+        if hasattr(self.parent, 'script_view_mode') and self.parent.script_view_mode:
+            self.parent.script_view_mode = False
+            was_in_special_mode = True
 
-            # 顯示返回正常模式的通知
-
-
+        # 如果從特殊模式返回，顯示通知
+        if was_in_special_mode:
             self.parent.components.show_notification(
-
-
-                get_notification_text("normal_mode"),
-
-
+                "已清空回應內容，回到測試模式",
                 "green", 3000
-
-
+            )
+        else:
+            # 正常清空時的通知
+            self.parent.components.show_notification(
+                get_notification_text("output_cleared"),
+                "blue", 2000
             )
 
 
@@ -1541,9 +1542,11 @@ class UIHandlers(UIHandlersCore):
 
 
             # 標記當前正在顯示使用說明
-
-
             self.parent.showing_guide = True
+
+            # 確保腳本檢視模式標記存在
+            if not hasattr(self.parent, 'script_view_mode'):
+                self.parent.script_view_mode = False
 
 
 
