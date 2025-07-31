@@ -1,42 +1,25 @@
 # -*- coding: utf-8 -*-
+"""
+UI事件處理器模組 - 重構版本
+負責處理UI事件和用戶交互，已將字體管理和命令處理分離到專門的模組
+"""
 
 import subprocess
-
-
 import platform
-
-
 from tkinter import messagebox, scrolledtext
-
-
 import json
-
-
 from datetime import datetime
-
-
 import os
-
-
 import tkinter as tk
-
-
 import tkinter.ttk as ttk
-
-
 import threading
 
-
 from config_utils import get_notification_text, get_app_version
-
-
 from config_core import COMMAND_FILE, GUIDE_FILE, save_setup, list_com_ports, load_setup
-
-
 from serial_worker import SerialWorker
-
-
 from ui_parts.ui_handlers_core import UIHandlersCore
+from ui_parts.font_manager import FontManager
+from ui_parts.command_processor import CommandProcessor
 
 
 
@@ -46,51 +29,46 @@ class UIHandlers(UIHandlersCore):
 
 
     def __init__(self, parent, setup, highlight_keywords=None):
-
-
+        """初始化UI事件處理器 - 重構版本"""
         super().__init__(parent, setup, highlight_keywords)
 
-
         self.parent = parent
-
-
+        self.setup = setup
         self.countdown_job = None
-
-
         self._progress_update_job = None  # 進度條更新任務
 
+        # 初始化專門的管理器
+        self.font_manager = FontManager(parent)
+        self.command_processor = CommandProcessor(parent)
 
         # 初始化 component_label_map，用於記錄標籤對應的索引
-
-
         self.component_label_map = {}
 
-
         # 獲取高亮關鍵字
-
-
         self.highlight_keywords = {}
-
-
         if hasattr(parent, 'highlight_keywords'):
-
-
             self.highlight_keywords = parent.highlight_keywords
-
-
             print(f"[DEBUG] UIHandlers: 從 parent 獲取了 {len(self.highlight_keywords)} 個高亮關鍵字")
 
+        # 初始化通知管理器
+        if hasattr(parent, 'notification_manager'):
+            self.notification_manager = parent.notification_manager
+        else:
+            self.notification_manager = None
 
-        # 解析指令文件中的分類和指令
+        # 初始化狀態
+        self.is_guide_showing = False
+        self.original_output_content = ""
+
+        # 解析指令文件中的分類和指令（使用命令處理器）
+        self.command_processor.parse_commands_by_section()
 
 
-        self.parse_commands_by_section()
 
 
 
-
-
-    def parse_commands_by_section(self):
+    # parse_commands_by_section 方法已移至 CommandProcessor
+    def _legacy_parse_commands_by_section(self):
 
 
         """解析命令文件，按區段整理"""
