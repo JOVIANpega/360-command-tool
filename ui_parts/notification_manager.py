@@ -51,12 +51,14 @@ class NotificationManager:
         )
         self.status_label.grid(row=0, column=0, padx=5, sticky='w')
         
-        # 中央：最新訊息簡要顯示（一行）
+        # 中央：最新訊息簡要顯示（一行，固定高度）
         self.brief_message = ttk.Label(
             self.control_frame,
             text="系統就緒",
             font=('Microsoft JhengHei UI', 9),
-            foreground='#666666'
+            foreground='#666666',
+            wraplength=0,  # 禁止自動換行
+            justify='left'
         )
         self.brief_message.grid(row=0, column=1, padx=10, sticky='ew')
         
@@ -99,27 +101,30 @@ class NotificationManager:
     
     def show_notification(self, message, msg_type="info"):
         """
-        顯示全域通知訊息 - 簡化版本
-        
+        顯示全域通知訊息 - 簡化版本，確保只顯示一行
+
         Args:
             message: 要顯示的訊息內容
             msg_type: 訊息類型 ("info", "success", "warning", "error")
         """
         timestamp = datetime.now().strftime("%H:%M:%S")
-        
+
+        # 處理多行訊息，只取第一行並限制長度
+        first_line = message.split('\n')[0]  # 只取第一行
+        brief_text = first_line[:80] + "..." if len(first_line) > 80 else first_line
+
         # 更新簡要顯示（控制欄中的一行訊息）
-        brief_text = message[:50] + "..." if len(message) > 50 else message
         self.brief_message.config(text=brief_text)
-        
+
         # 根據訊息類型設定顏色
         color_map = {
             "info": "#0066cc",
-            "success": "#006600", 
+            "success": "#006600",
             "warning": "#cc6600",
             "error": "#cc0000"
         }
         self.brief_message.config(foreground=color_map.get(msg_type, "#666666"))
-        
+
         # 記錄到歷史（保留數據功能）
         log_entry = {
             "timestamp": timestamp,
@@ -127,12 +132,12 @@ class NotificationManager:
             "type": msg_type
         }
         self.notification_log.append(log_entry)
-        
+
         # 限制歷史記錄數量
         max_history = self.setup_data.get("notification_messages", {}).get("history_limit", 100)
         if len(self.notification_log) > max_history:
             self.notification_log = self.notification_log[-max_history:]
-        
+
         # 保存歷史記錄
         self.save_notification_history()
     

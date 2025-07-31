@@ -376,8 +376,11 @@ class UIComponentsBase:
 
             # 如果位置有效（大於0），則保存到設定
             if sash_position > 0:
-                # 更新內存中的設定
+                # 更新內存中的設定（同時更新兩個位置）
                 self.parent.setup['Pane_Sash_Position'] = str(sash_position)
+                if 'DUT_Control' not in self.parent.setup:
+                    self.parent.setup['DUT_Control'] = {}
+                self.parent.setup['DUT_Control']['Pane_Sash_Position'] = str(sash_position)
                 print(f"[DEBUG] 分割位置已更新: {sash_position}")
 
                 # 延遲保存，避免頻繁寫入
@@ -411,8 +414,13 @@ class UIComponentsBase:
     def restore_pane_position(self):
         """恢復上次保存的分割位置"""
         try:
-            # 從設定中獲取分割位置
-            sash_position = self.parent.setup.get('Pane_Sash_Position', '400')
+            # 從設定中獲取分割位置（優先從 DUT_Control 中獲取）
+            dut_control = self.parent.setup.get('DUT_Control', {})
+            sash_position = dut_control.get('Pane_Sash_Position')
+
+            # 如果 DUT_Control 中沒有，則從頂層獲取
+            if not sash_position:
+                sash_position = self.parent.setup.get('Pane_Sash_Position', '400')
 
             # 確保是整數
             if sash_position and sash_position.isdigit():

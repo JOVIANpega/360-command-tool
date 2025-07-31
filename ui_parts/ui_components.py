@@ -69,8 +69,8 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         # 恢復 PanedWindow 分割位置（延遲執行，確保視窗已完全載入）
         self.parent.root.after(200, self.restore_pane_position)
         
-        # 使用全域通知管理器顯示歡迎訊息
-        welcome_message = "歡迎使用指令通！\n選擇COM口和指令後點擊「執行指令」按鈕。"
+        # 使用全域通知管理器顯示歡迎訊息（單行）
+        welcome_message = "歡迎使用指令通！選擇COM口和指令後點擊「執行指令」按鈕。"
         self.parent.root.after(3000, lambda: self.show_notification(welcome_message, "success", 5000))
         
         # 顯示系統狀態

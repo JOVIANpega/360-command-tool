@@ -9,7 +9,7 @@
     "Serial_COM_Port": "COM5",
     "Command_Timeout_Seconds": "30",
     "Command_End_String": "root",
-    "Command_Separator": "|",
+    "Command_Separator": "==>",
     "UI_Font_Size": "13",
     "Content_Font_Size": "12",
     "Window_Title": "指令通",

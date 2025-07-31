@@ -248,26 +248,8 @@ class SettingsTab(ttk.Frame):
         
         # 注意：治具控制設定已移動至「TAB 測試治具」的指令控制區塊中
 
-        # 在最底部添加儲存按鈕 - 靠右對齊
-        bottom_frame = ttk.Frame(self)
-        bottom_frame.pack(fill='x', side='bottom', padx=10, pady=(10, 10))
-
-        self.save_button = tk.Button(
-            bottom_frame,
-            text="儲存設定",
-            font=('Microsoft JhengHei UI', 14, 'bold'),
-            bg='#4CAF50',
-            fg='white',
-            relief='raised',
-            borderwidth=3,
-            cursor="hand2",
-            command=self.save_settings,
-            width=12,
-            height=2
-        )
-        self.save_button.pack(side=tk.RIGHT)
-        self.save_button.bind("<Enter>", lambda e: self.save_button.config(bg='#45a049'))
-        self.save_button.bind("<Leave>", lambda e: self.save_button.config(bg='#4CAF50'))
+        # 移除綠色儲存按鈕 - 已改用手動保存按鈕
+        # 原本的綠色儲存按鈕已被移除，改用上方的手動保存按鈕
 
     # 字體設定函式已移至DUT控制標籤頁
 
