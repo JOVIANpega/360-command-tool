@@ -68,62 +68,6 @@ class UIHandlers(UIHandlersCore):
 
 
     # parse_commands_by_section 方法已移至 CommandProcessor
-
-    def _get_command_file_path(self):
-        """獲取指令檔路徑 - 重構輔助函數"""
-        command_file_from_setup = self.setup.get("DUT_Control", {}).get("Command_File_Path", "")
-
-        if command_file_from_setup and os.path.isfile(command_file_from_setup):
-            command_path = command_file_from_setup
-            print(f"[INFO] 使用者自訂指令檔: {command_path}")
-        else:
-            command_path = COMMAND_FILE  # 使用預設路徑
-            print(f"[INFO] 使用預設指令檔: {command_path}")
-
-        return command_path
-
-    def _parse_command_line(self, line, section, commands):
-        """解析單行指令 - 重構輔助函數"""
-        line = line.strip()
-        if not line or line.startswith("#") or line.startswith("//"):
-            return section
-
-        # 檢查是否為區段標記
-        if line.startswith("==") and line.endswith("=="):
-            section = line.strip("=").strip()
-            if section not in commands:
-                commands[section] = {}
-                print(f"[DEBUG] 發現新區段：{section}")
-            return section
-
-        # 解析命令
-        parts = line.split("=", 1)
-        if len(parts) >= 2:
-            label = parts[0].strip()
-            command = parts[1].strip()
-
-            # 檢查是否有顏色標記
-            has_color = '[COLOR:' in label
-            if has_color:
-                print(f"[DEBUG] 發現帶顏色標記的指令：{label}")
-
-            # 將命令添加到當前區段
-            commands.setdefault(section, {})[label] = command
-
-        return section
-
-    def _print_commands_summary(self, commands):
-        """輸出指令摘要 - 重構輔助函數"""
-        for section_name, section_cmds in commands.items():
-            print(f"[DEBUG] 區段 '{section_name}' 有 {len(section_cmds)} 個指令")
-
-            # 檢查顏色標記
-            color_cmds = [cmd for cmd in section_cmds.keys() if '[COLOR:' in cmd]
-            if color_cmds:
-                print(f"[DEBUG] 區段 '{section_name}' 有 {len(color_cmds)} 個帶顏色標記的指令")
-                for cmd in color_cmds:
-                    print(f"[DEBUG] - {cmd}")
-
     def _legacy_parse_commands_by_section(self):
 
 
@@ -1379,95 +1323,6 @@ class UIHandlers(UIHandlersCore):
 
 
 
-    def _validate_execution_parameters(self):
-        """驗證執行參數 - 重構輔助函數"""
-        # 檢查是否正在執行
-        if hasattr(self.parent, 'thread') and self.parent.thread is not None and self.parent.thread.is_alive():
-            self.parent.stop_event.set()
-            self.parent.components.add_to_buffer("\n[已中止執行]\n", "error")
-            self.parent.components.reset_progress()
-            return False, "正在執行中，已中止"
-
-        # 獲取 COM 口
-        com = self.parent.components.combobox_com.get()
-        if not com:
-            self.parent.components.add_to_buffer("\n[錯誤] 請選擇 COM 口\n", "error")
-            return False, "未選擇 COM 口"
-
-        # 獲取指令
-        cmd = self.parent.components.combobox_cmd.get()
-        if not cmd:
-            self.parent.components.add_to_buffer("\n[錯誤] 請選擇指令\n", "error")
-            return False, "未選擇指令"
-
-        # 獲取指令內容
-        section = self.parent.components.section_var.get()
-        cmd_content = self.parent.commands_by_section.get(section, {}).get(cmd, "")
-        if not cmd_content:
-            self.parent.components.add_to_buffer(f"\n[錯誤] 找不到指令 '{cmd}' 的內容\n", "error")
-            return False, "找不到指令內容"
-
-        # 獲取結束字串
-        end_str = self.parent.components.combobox_end.get()
-        if not end_str:
-            self.parent.components.add_to_buffer("\n[錯誤] 請輸入結束字串\n", "error")
-            return False, "未輸入結束字串"
-
-        # 獲取超時時間
-        try:
-            timeout = int(self.parent.components.entry_timeout.get())
-        except ValueError:
-            self.parent.components.add_to_buffer("\n[錯誤] 超時時間必須是整數\n", "error")
-            return False, "超時時間格式錯誤"
-
-        return True, {
-            'com': com,
-            'cmd': cmd,
-            'cmd_content': cmd_content,
-            'end_str': end_str,
-            'timeout': timeout
-        }
-
-    def _prepare_command_execution(self, params):
-        """準備指令執行 - 重構輔助函數"""
-        # 分割指令 - 使用設定中的間隔符號
-        separator = self.setup.get('DUT_Control', {}).get('Command_Separator', '|')
-        cmd_list = params['cmd_content'].split(separator)
-
-        # 顯示執行信息
-        self.parent.components.add_to_buffer(f"\n=== 執行指令: {params['cmd']} ===\n", "purple")
-        self.parent.components.add_to_buffer(
-            f"COM 口: {params['com']}, 超時: {params['timeout']} 秒, 結束字串: {params['end_str']}\n",
-            "purple"
-        )
-
-        # 重置進度條並顯示
-        self.parent.components.reset_progress()
-        self.parent.components.show_progress()
-
-        # 重置停止事件
-        self.parent.stop_event = threading.Event()
-
-        return cmd_list
-
-    def _create_and_start_worker(self, params, cmd_list):
-        """創建並啟動工作線程 - 重構輔助函數"""
-        # 創建並啟動線程
-        self.parent.thread = SerialWorker(
-            params['com'], cmd_list, params['end_str'], params['timeout'],
-            on_data=lambda text, tag: self.on_data(text, tag),
-            on_status=lambda connected: self.parent.root.after(0, lambda: self.update_status_light(connected)),
-            on_progress=lambda p: self.parent.root.after(0, lambda: self.parent.components.update_progress(p)),
-            on_finish=lambda: self.parent.root.after(0, self.on_command_finish),
-            stop_event=self.parent.stop_event
-        )
-
-        # 設置顯示消息的回調
-        self.parent.thread.show_message_callback = self._show_messagebox_and_callback
-
-        # 啟動線程
-        self.parent.thread.start()
-
     def toggle_guide(self):
 
 
@@ -1570,17 +1425,22 @@ class UIHandlers(UIHandlersCore):
     def on_execute(self):
 
 
-        """執行指令 - 重構版本"""
-        # 驗證執行參數
-        is_valid, result = self._validate_execution_parameters()
-        if not is_valid:
+        # 如果正在執行，則中止
+
+
+        if hasattr(self.parent, 'thread') and self.parent.thread is not None and self.parent.thread.is_alive():
+
+
+            self.parent.stop_event.set()
+
+
+            self.parent.components.add_to_buffer("\n[已中止執行]\n", "error")
+
+
+            self.parent.components.reset_progress()
+
+
             return
-
-        # 準備指令執行
-        cmd_list = self._prepare_command_execution(result)
-
-        # 創建並啟動工作線程
-        self._create_and_start_worker(result, cmd_list)
 
 
 

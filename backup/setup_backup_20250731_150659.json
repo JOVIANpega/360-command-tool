@@ -1,5 +1,5 @@
 {
-  "version": "1.7.6",
+  "version": "1.7.5",
   "notification_messages": {
     "app_started": "指令通 已啟動",
     "settings_updated": "設定已更新！",
@@ -143,7 +143,7 @@
     "Serial_COM_Port": "COM5",
     "Command_Timeout_Seconds": "30",
     "Command_End_String": "root",
-    "Command_Separator": "|",
+    "Command_Separator": "==>",
     "UI_Font_Size": "12",
     "Content_Font_Size": "12",
     "Window_Title": "指令通",
@@ -302,7 +302,7 @@
     "tab3": "DOS 工具",
     "tab4": "設定"
   },
-  "Window_Width": "1536",
+  "Window_Width": "1522",
   "Window_Height": "793",
   "ContentFontSize": "12",
   "UIFontSize": "12",

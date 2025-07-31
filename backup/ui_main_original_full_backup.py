@@ -360,129 +360,122 @@ class TabManager:
                 # 強制切換到DUT控制頁面，確保用戶能看到更新效果
                 self.notebook.select(0)  # 假設DUT控制頁面是第一個分頁
     
-    def _read_section_titles_from_file(self, file_path):
-        """從指令檔案中讀取區段標題 - 重構輔助函數"""
-        section_titles = []
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                for line in f:
-                    line = line.strip()
-                    if line.startswith('==') and line.endswith('=='):
-                        section_name = line.strip('=')
-                        if section_name and section_name not in section_titles:
-                            section_titles.append(section_name)
-                            print(f"[DEBUG] update_dut_buttons: 從指令文件中找到區段: {section_name}")
-        except Exception as e:
-            print(f"[ERROR] update_dut_buttons: 讀取指令文件時發生錯誤: {e}")
-            import traceback
-            traceback.print_exc()
-        return section_titles
-
-    def _get_section_titles(self):
-        """獲取區段標題列表 - 重構輔助函數"""
-        # 從設定中獲取指令檔案路徑
-        command_file_path = self.dut_ui.setup.get("DUT_Control", {}).get("Command_File_Path", "")
-        print(f"[DEBUG] update_dut_buttons: 指令檔案路徑: {command_file_path}")
-
-        section_titles = []
-
-        if command_file_path and os.path.exists(command_file_path):
-            print(f"[DEBUG] update_dut_buttons: 使用設定中的指令檔案: {command_file_path}")
-            section_titles = self._read_section_titles_from_file(command_file_path)
-        else:
-            # 嘗試使用預設指令檔案
-            print(f"[DEBUG] update_dut_buttons: 指令檔案不存在，嘗試使用預設檔案")
-            from config_core import COMMAND_FILE
-            if os.path.exists(COMMAND_FILE):
-                section_titles = self._read_section_titles_from_file(COMMAND_FILE)
-
-        # 如果仍然沒有區段標題，使用預設值
-        if not section_titles:
-            print("[DEBUG] update_dut_buttons: 未找到區段標題，使用預設值")
-            section_titles = ['全部指令']
-
-        print(f"[DEBUG] update_dut_buttons: 最終使用的區段標題: {section_titles}")
-        return section_titles
-
-    def _create_section_radiobutton(self, sec, row, col):
-        """創建區段單選按鈕 - 重構輔助函數"""
-        rb = tk.Radiobutton(
-            self.dut_ui.components.section_frame,
-            text=sec,
-            variable=self.dut_ui.components.section_var,
-            value=sec,
-            command=self.dut_ui.components.update_cmd_list,
-            bg='#d9d9d9',
-            fg='black',
-            selectcolor='#d9d9d9',
-            activebackground='#2196f3',
-            activeforeground='white',
-            indicatoron=0,
-            relief='flat',
-            borderwidth=1,
-            width=8,
-            height=1,
-            font=('Microsoft JhengHei UI', int(self.dut_ui.setup.get('UI_Font_Size', '12')))
-        )
-        rb.grid(row=row, column=col, padx=1, pady=1, sticky='ew')
-        rb.bind("<Enter>", lambda e, b=rb: b.config(bg="#2196f3", fg='white'))
-        rb.bind("<Leave>", lambda e, b=rb: self.dut_ui.components.update_radio_bg())
-
-        # 設置列的權重，使按鈕平均分配空間
-        self.dut_ui.components.section_frame.columnconfigure(col, weight=1)
-
-        return rb
-
     def update_dut_buttons(self):
-        """根據當前指令檔案動態更新 DUT 控制頁面的分類按鈕 - 重構版本"""
+        """根據當前指令檔案動態更新 DUT 控制頁面的分類按鈕"""
         try:
             # 檢查 dut_ui 和 components 是否存在
             if not hasattr(self, 'dut_ui') or not hasattr(self.dut_ui, 'components'):
                 print("[ERROR] dut_ui 或 components 不存在，無法更新按鈕")
                 return
-
+                
+            # 直接從當前指令檔案中讀取區段標題，不依賴設定檔中的快取
+            print("[DEBUG] update_dut_buttons: 從當前指令檔案中讀取區段標題")
+            
+            # 從設定中獲取指令檔案路徑
+            command_file_path = self.dut_ui.setup.get("DUT_Control", {}).get("Command_File_Path", "")
+            print(f"[DEBUG] update_dut_buttons: 指令檔案路徑: {command_file_path}")
+            
+            section_titles = []
+            
+            if command_file_path and os.path.exists(command_file_path):
+                print(f"[DEBUG] update_dut_buttons: 使用設定中的指令檔案: {command_file_path}")
+                try:
+                    with open(command_file_path, 'r', encoding='utf-8') as f:
+                        for line in f:
+                            line = line.strip()
+                            if line.startswith('==') and line.endswith('=='):
+                                section_name = line.strip('=')
+                                if section_name and section_name not in section_titles:
+                                    section_titles.append(section_name)
+                                    print(f"[DEBUG] update_dut_buttons: 從指令文件中找到區段: {section_name}")
+                except Exception as e:
+                    print(f"[ERROR] update_dut_buttons: 讀取指令文件時發生錯誤: {e}")
+                    import traceback
+                    traceback.print_exc()
+            else:
+                # 嘗試使用預設指令檔案
+                print(f"[DEBUG] update_dut_buttons: 指令檔案不存在，嘗試使用預設檔案")
+                from config_core import COMMAND_FILE
+                if os.path.exists(COMMAND_FILE):
+                    try:
+                        with open(COMMAND_FILE, 'r', encoding='utf-8') as f:
+                            for line in f:
+                                line = line.strip()
+                                if line.startswith('==') and line.endswith('=='):
+                                    section_name = line.strip('=')
+                                    if section_name and section_name not in section_titles:
+                                        section_titles.append(section_name)
+                                        print(f"[DEBUG] update_dut_buttons: 從預設指令文件中找到區段: {section_name}")
+                    except Exception as e:
+                        print(f"[ERROR] update_dut_buttons: 讀取預設指令文件時發生錯誤: {e}")
+            
+            # 如果仍然沒有區段標題，使用預設值
+            if not section_titles:
+                print("[DEBUG] update_dut_buttons: 未找到區段標題，使用預設值")
+                section_titles = ['全部指令']
+                
+            print(f"[DEBUG] update_dut_buttons: 最終使用的區段標題: {section_titles}")
+            
             # 檢查是否有 section_frame 和 section_radiobuttons
             if not hasattr(self.dut_ui.components, 'section_frame') or not hasattr(self.dut_ui.components, 'section_radiobuttons'):
                 print("[ERROR] section_frame 或 section_radiobuttons 不存在，無法更新按鈕")
                 return
-
-            print("[DEBUG] update_dut_buttons: 從當前指令檔案中讀取區段標題")
-
-            # 獲取區段標題
-            section_titles = self._get_section_titles()
-
+                
             # 清除現有的按鈕
             for rb in self.dut_ui.components.section_radiobuttons:
                 rb.destroy()
             self.dut_ui.components.section_radiobuttons = []
-
+            
             # 更新 sections 列表
             self.dut_ui.components.sections = section_titles
-
+            
             # 設定預設選中的分類
             if section_titles:
                 self.dut_ui.components.section_var.set(section_titles[0])
-
+            
             # 限制每行最多顯示4個按鈕
             max_buttons_per_row = 4
-
+            
             # 創建新按鈕
             for i, sec in enumerate(section_titles):
                 # 計算行和列位置
                 row = i // max_buttons_per_row
                 col = i % max_buttons_per_row
-
-                rb = self._create_section_radiobutton(sec, row, col)
+                
+                rb = tk.Radiobutton(
+                    self.dut_ui.components.section_frame, 
+                    text=sec, 
+                    variable=self.dut_ui.components.section_var, 
+                    value=sec, 
+                    command=self.dut_ui.components.update_cmd_list,
+                    bg='#d9d9d9', 
+                    fg='black', 
+                    selectcolor='#d9d9d9', 
+                    activebackground='#2196f3', 
+                    activeforeground='white',
+                    indicatoron=0, 
+                    relief='flat', 
+                    borderwidth=1, 
+                    width=8, 
+                    height=1,
+                    font=('Microsoft JhengHei UI', int(self.dut_ui.setup.get('UI_Font_Size', '12')))
+                )
+                rb.grid(row=row, column=col, padx=1, pady=1, sticky='ew')
+                rb.bind("<Enter>", lambda e, b=rb: b.config(bg="#2196f3", fg='white'))
+                rb.bind("<Leave>", lambda e, b=rb: self.dut_ui.components.update_radio_bg())
                 self.dut_ui.components.section_radiobuttons.append(rb)
-
+                
+                # 設置列的權重，使按鈕平均分配空間
+                self.dut_ui.components.section_frame.columnconfigure(col, weight=1)
+            
             # 更新按鈕背景色
             self.dut_ui.components.update_radio_bg()
-
+            
             # 更新指令下拉選單
             self.dut_ui.components.update_cmd_list()
-
+            
             print(f"[DEBUG] update_dut_buttons: 已更新 {len(section_titles)} 個 DUT 按鈕")
-
+            
         except Exception as e:
             print(f"[ERROR] 更新 DUT 按鈕時發生錯誤：{e}")
             import traceback
@@ -1928,33 +1921,28 @@ class SerialUI:
         
         print("[DEBUG] DUT Control settings applied successfully.")
     
-    def _update_basic_settings(self, c, dut_setup):
-        """更新基本設定 - 重構輔助函數"""
+    def update_from_config(self):
+        """集中管理所有 UI 元件的設定同步
+        
+        此方法負責將 setup.json 中的設定值同步到 UI 元件。
+        當設定變更時，只需呼叫此方法即可更新所有相關 UI 元件。
+        """
+        c = self.components
+        dut_setup = self.setup.get("DUT_Control", {})
+        
         # 1. 更新 COM 口設定
         if hasattr(c, 'combobox_com'):
             com_port = dut_setup.get('Serial_COM_Port', '')
             if com_port and com_port in c.combobox_com['values']:
                 c.combobox_com.set(com_port)
-
+        
         # 2. 更新超時設定
         if hasattr(c, 'entry_timeout'):
             timeout = dut_setup.get('Command_Timeout_Seconds', '30')
             c.entry_timeout.delete(0, tk.END)
             c.entry_timeout.insert(0, timeout)
-
-        # 3. 更新 IP 地址設定
-        if hasattr(c, 'entry_ip'):
-            default_ip = dut_setup.get('Default_IP_Address', '192.168.11.143')
-            c.entry_ip.delete(0, tk.END)
-            c.entry_ip.insert(0, default_ip)
-
-        # 4. 更新自動執行設定
-        if hasattr(c, 'auto_exec_var'):
-            auto_execute = dut_setup.get('Auto_Execute', False)
-            c.auto_exec_var.set(auto_execute)
-
-    def _update_end_string_settings(self, c, dut_setup):
-        """更新結束字串設定 - 重構輔助函數"""
+        
+        # 3. 更新結束字串設定
         if hasattr(c, 'combobox_end'):
             # 先更新可用的結束字串列表
             end_strings = dut_setup.get('Available_End_Strings', ['root'])
@@ -1964,36 +1952,43 @@ class SerialUI:
                 except:
                     end_strings = ['root']
             c.combobox_end['values'] = end_strings
-
+            
             # 再設定當前選中的結束字串
             end_string = dut_setup.get('Command_End_String', 'root')
             c.combobox_end.set(end_string)
-
-    def _update_font_settings(self, c, dut_setup):
-        """更新字體設定 - 重構輔助函數"""
+        
+        # 4. 更新 IP 地址設定
+        if hasattr(c, 'entry_ip'):
+            default_ip = dut_setup.get('Default_IP_Address', '192.168.11.143')
+            c.entry_ip.delete(0, tk.END)
+            c.entry_ip.insert(0, default_ip)
+        
+        # 5. 更新自動執行設定
+        if hasattr(c, 'auto_exec_var'):
+            auto_execute = dut_setup.get('Auto_Execute', False)
+            c.auto_exec_var.set(auto_execute)
+        
         # 6. 更新字體大小設定
         ui_font_size = int(dut_setup.get('UI_Font_Size', 12))
         content_font_size = int(dut_setup.get('Content_Font_Size', 12))
-
+        
         # 更新 UI 元件字體
         if hasattr(c, 'ui_font_scale'):
             c.ui_font_scale.set(ui_font_size)
-
+        
         # 更新內容字體
         if hasattr(c, 'content_font_scale'):
             c.content_font_scale.set(content_font_size)
-
+        
         # 應用字體設定到樣式
         style = ttk.Style()
         style.configure('Main.TFrame.Label', font=('Microsoft JhengHei', ui_font_size))
         style.configure('Command.TRadiobutton', font=('Microsoft JhengHei', ui_font_size))
-
+        
         # 更新文字輸出區域字體
         if hasattr(c, 'text_output'):
             c.text_output.config(font=('Microsoft JhengHei', content_font_size))
-
-    def _update_device_and_command_settings(self, c, dut_setup):
-        """更新設備和指令設定 - 重構輔助函數"""
+        
         # 7. 更新設備標籤
         if hasattr(c, 'device_label'):
             device_label_text = self.setup.get('Device_Label', '')
@@ -2001,42 +1996,21 @@ class SerialUI:
             if len(device_label_text) > 100:
                 device_label_text = device_label_text[:100]
             c.device_label.config(text=device_label_text)
-
+        
         # 8. 更新指令相關設定
         # 重新解析指令文件
         if hasattr(self.handlers, 'parse_commands_by_section'):
             self.commands_by_section = self.handlers.parse_commands_by_section()
-
+            
             # 更新指令下拉選單
             if hasattr(c, 'update_cmd_list'):
                 c.update_cmd_list()
-
+                
             # 設定上次選擇的指令分類
             last_section = dut_setup.get('Last_Selected_Command_Section', '全部指令')
             if hasattr(c, 'section_var') and last_section in c.sections:
                 c.section_var.set(last_section)
                 c.update_cmd_list()  # 更新指令列表以匹配選定的分類
-
-    def update_from_config(self):
-        """集中管理所有 UI 元件的設定同步 - 重構版本
-
-        此方法負責將 setup.json 中的設定值同步到 UI 元件。
-        當設定變更時，只需呼叫此方法即可更新所有相關 UI 元件。
-        """
-        c = self.components
-        dut_setup = self.setup.get("DUT_Control", {})
-
-        # 更新基本設定
-        self._update_basic_settings(c, dut_setup)
-
-        # 更新結束字串設定
-        self._update_end_string_settings(c, dut_setup)
-
-        # 更新字體設定
-        self._update_font_settings(c, dut_setup)
-
-        # 更新設備和指令設定
-        self._update_device_and_command_settings(c, dut_setup)
 
 
     def _safe_execute_command(self):

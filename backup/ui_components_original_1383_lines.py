@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-UI元件模組 - 重構版本
-原本超過1300行的檔案已拆分為多個專門模組
-此檔案現在主要作為向後相容的入口點，整合所有拆分的元件模組
-"""
 
 import tkinter as tk
 from tkinter import ttk, scrolledtext, messagebox
@@ -13,8 +8,6 @@ import re
 import threading
 import time
 from datetime import datetime
-
-# 導入拆分後的模組
 from ui_parts.ui_components_base import UIComponentsBase
 from ui_parts.ui_components_input import UIComponentsInput
 from ui_parts.ui_components_output import UIComponentsOutput
@@ -32,16 +25,6 @@ from config_core import list_com_ports, save_setup, GUIDE_FILE, COMMAND_FILE
 
 
 class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UIComponentsSettings):
-    """
-    UI元件類別 - 重構版本
-    整合所有拆分的元件模組，保持原有功能完全不變
-
-    繼承順序：
-    - UIComponentsBase: 基礎元件和框架
-    - UIComponentsInput: 輸入相關元件
-    - UIComponentsOutput: 輸出相關元件
-    - UIComponentsSettings: 設定相關元件
-    """
     def __init__(self, parent, handlers, root):
         # Call the __init__ of the base class (UIComponentsBase) which sets up the UI structure
         super().__init__(parent)
