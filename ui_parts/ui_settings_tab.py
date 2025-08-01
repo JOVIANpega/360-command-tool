@@ -82,12 +82,19 @@ class SettingsTab(ttk.Frame):
                                           font=('Microsoft JhengHei UI', 9), foreground='gray')
         self.title_count_label.grid(row=0, column=2, sticky="w", padx=(5, 0), pady=4)
         
+        # 指令傳輸方式選擇
+        ttk.Label(basic_frame, text="指令傳輸方式:").grid(row=1, column=0, sticky="w", pady=4)
+        self.vars["Command_Transport_Mode"] = tk.StringVar(value=self.setup_data.get("Command_Transport_Mode", "Console"))
+        self.transport_mode_combo = ttk.Combobox(basic_frame, textvariable=self.vars["Command_Transport_Mode"],
+                                               values=["Console", "ADB"], state="readonly", width=15)
+        self.transport_mode_combo.grid(row=1, column=1, sticky="w", padx=(10, 0), pady=4)
+
         # 視窗大小 - 視窗寬度 width=20
         size_frame = ttk.Frame(basic_frame)
-        size_frame.grid(row=1, column=0, columnspan=2, sticky="ew", pady=4)
+        size_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=4)
         size_frame.columnconfigure(1, weight=1)
         size_frame.columnconfigure(3, weight=1)
-        
+
         ttk.Label(size_frame, text="視窗寬度:").grid(row=0, column=0, sticky="w")
         self.vars["Window_Width"] = tk.StringVar(value=self.setup_data.get("Window_Width", "1536"))
         self.width_entry = ttk.Entry(size_frame, textvariable=self.vars["Window_Width"], width=20)
@@ -418,6 +425,7 @@ class SettingsTab(ttk.Frame):
         current_setup["Window_Title"] = self.vars["Window_Title"].get()
         current_setup["Window_Width"] = self.vars["Window_Width"].get()
         current_setup["Window_Height"] = self.vars["Window_Height"].get()
+        current_setup["Command_Transport_Mode"] = self.vars["Command_Transport_Mode"].get()
         
         # 更新標籤頁名稱
         if "tab_names" not in current_setup:

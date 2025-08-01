@@ -101,6 +101,8 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         com_frame.columnconfigure(1, weight=1)
         com_frame.columnconfigure(2, weight=0)
         com_frame.columnconfigure(3, weight=0)
+
+        # 第一行：COM 口設定
         self.label_com = ttk.Label(com_frame, text='COM口:', style="TLabel")
         self.label_com.grid(row=0, column=0, sticky='w')
         com_values = list_com_ports()
@@ -116,6 +118,22 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.btn_refresh = tk.Button(com_frame, text='刷新', command=refresh_command,
                                    bg='#e0e0e0', fg='black', activebackground='#2196f3', activeforeground='black')
         self.btn_refresh.grid(row=0, column=2, padx=3, sticky='ew')
+
+        # 第二行：指令傳輸方式選擇
+        self.label_transport = ttk.Label(com_frame, text='傳輸方式:', style="TLabel")
+        self.label_transport.grid(row=1, column=0, sticky='w', pady=(5, 0))
+
+        # 從設定檔讀取當前的傳輸方式
+        current_mode = self.parent.setup.get('Command_Transport_Mode', 'Console')
+        self.transport_mode_var = tk.StringVar(value=current_mode)
+        self.combobox_transport = ttk.Combobox(com_frame, textvariable=self.transport_mode_var,
+                                             values=['Console', 'ADB'], state='readonly', width=15)
+        self.combobox_transport.grid(row=1, column=1, padx=5, sticky='ew', pady=(5, 0))
+        self.combobox_transport.bind("<<ComboboxSelected>>", self.on_transport_mode_changed)
+
+        # 根據傳輸方式設定 COM 口的啟用狀態
+        self.update_com_state()
+
         # 移除 COM 口旁的圓形閃爍功能 - 改用啟動標籤閃爍
         # self.status_canvas = tk.Canvas(com_frame, width=40, height=40, bg='white', highlightthickness=0)
         # self.status_canvas.grid(row=0, column=3, padx=3, sticky='ew')
@@ -145,6 +163,54 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                 self.show_notification(f"COM 口已更新為 {selected_com}", "blue", 3000)
         except Exception as e:
             print(f"[ERROR] 更新 COM 口設定時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def on_transport_mode_changed(self, event=None):
+        """當指令傳輸方式變更時的處理"""
+        try:
+            selected_mode = self.transport_mode_var.get()
+            print(f"[DEBUG] 指令傳輸方式變更為: {selected_mode}")
+
+            # 更新設定檔中的傳輸方式
+            if hasattr(self.parent, 'setup'):
+                self.parent.setup['Command_Transport_Mode'] = selected_mode
+
+                # 使用統一設定管理器的延遲保存機制
+                if hasattr(self.parent, 'shared_config'):
+                    self.parent.shared_config._schedule_delayed_save()
+
+                # 顯示通知
+                self.show_notification(f"指令傳輸方式已更新為 {selected_mode}", "blue", 3000)
+            else:
+                print("[WARNING] parent.setup 不存在，無法保存指令傳輸方式設定")
+
+            # 更新 COM 口的啟用狀態
+            self.update_com_state()
+
+        except Exception as e:
+            print(f"[ERROR] 處理指令傳輸方式變更時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def update_com_state(self):
+        """根據傳輸方式更新 COM 口的啟用狀態"""
+        try:
+            current_mode = self.transport_mode_var.get()
+            if current_mode == 'ADB':
+                # ADB 模式下禁用 COM 口相關組件
+                self.combobox_com.config(state='disabled')
+                self.btn_refresh.config(state='disabled')
+                self.label_com.config(foreground='gray')
+                print("[DEBUG] ADB 模式：COM 口組件已禁用")
+            else:
+                # Console 模式下啟用 COM 口相關組件
+                self.combobox_com.config(state='readonly')
+                self.btn_refresh.config(state='normal')
+                self.label_com.config(foreground='black')
+                print("[DEBUG] Console 模式：COM 口組件已啟用")
+        except Exception as e:
+            print(f"[ERROR] 更新 COM 口狀態時發生錯誤: {e}")
             import traceback
             traceback.print_exc()
 

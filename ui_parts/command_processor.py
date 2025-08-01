@@ -9,6 +9,7 @@ import threading
 from datetime import datetime
 from config_core import COMMAND_FILE, save_setup, load_setup
 from serial_worker import SerialWorker
+from adb_worker import ADBWorker
 
 
 class CommandProcessor:
@@ -25,6 +26,7 @@ class CommandProcessor:
         self.setup = parent.setup
         self.commands_by_section = {}
         self.serial_worker = None
+        self.adb_worker = None
         
     def parse_commands_by_section(self):
         """解析命令文件，按區段整理"""
@@ -92,41 +94,68 @@ class CommandProcessor:
         
         print(f"[DEBUG] 區段 '{section}' 包含 {len(commands)} 個命令")
     
-    def execute_command(self, com_port, command, timeout, end_string, on_data_callback, on_finish_callback):
+    def execute_command(self, com_port, command, timeout, end_string, on_data_callback, on_finish_callback, transport_mode="Console"):
         """
         執行命令
-        
+
         Args:
-            com_port: COM端口
+            com_port: COM端口 (僅在 Console 模式使用)
             command: 要執行的命令
             timeout: 超時時間
             end_string: 結束字符串
             on_data_callback: 數據接收回調函數
             on_finish_callback: 完成回調函數
+            transport_mode: 傳輸模式 ("Console" 或 "ADB")
         """
         try:
-            # 檢查是否已有串口工作器在運行
-            if self.serial_worker and self.serial_worker.is_alive():
+            # 檢查是否已有工作器在運行
+            if (self.serial_worker and self.serial_worker.is_alive()) or (self.adb_worker and self.adb_worker.is_alive()):
                 print("[WARNING] 已有命令在執行中")
                 return False
-            
-            # 創建新的串口工作器
-            self.serial_worker = SerialWorker(
-                com_port=com_port,
-                command=command,
-                timeout=timeout,
-                end_string=end_string,
-                on_data=on_data_callback,
-                on_finish=on_finish_callback,
-                stop_event=self.parent.stop_event
-            )
-            
-            # 啟動串口工作器
-            self.serial_worker.start()
-            
-            print(f"[DEBUG] 開始執行命令: {command}")
+
+            if transport_mode == "ADB":
+                # 使用 ADB 模式
+                print(f"[DEBUG] 使用 ADB 模式執行命令: {command}")
+
+                # 分割指令 - 使用設定中的間隔符號
+                separator = self.setup.get('DUT_Control', {}).get('Command_Separator', '|')
+                cmd_list = command.split(separator)
+
+                # 創建新的 ADB 工作器
+                self.adb_worker = ADBWorker(
+                    cmd_list=cmd_list,
+                    end_str=end_string,
+                    timeout=timeout,
+                    on_data=on_data_callback,
+                    on_status=lambda connected: None,  # ADB 不需要狀態燈
+                    on_progress=lambda p: None,  # 進度由外部處理
+                    on_finish=on_finish_callback,
+                    stop_event=self.parent.stop_event
+                )
+
+                # 啟動 ADB 工作器
+                self.adb_worker.start()
+
+            else:
+                # 使用 Console 模式 (原有邏輯)
+                print(f"[DEBUG] 使用 Console 模式執行命令: {command}")
+
+                # 創建新的串口工作器
+                self.serial_worker = SerialWorker(
+                    com_port=com_port,
+                    command=command,
+                    timeout=timeout,
+                    end_string=end_string,
+                    on_data=on_data_callback,
+                    on_finish=on_finish_callback,
+                    stop_event=self.parent.stop_event
+                )
+
+                # 啟動串口工作器
+                self.serial_worker.start()
+
             return True
-            
+
         except Exception as e:
             print(f"執行命令時發生錯誤: {e}")
             return False
@@ -134,33 +163,53 @@ class CommandProcessor:
     def stop_command(self):
         """停止當前執行的命令"""
         try:
+            stopped = False
+
+            # 停止串口工作器
             if self.serial_worker and self.serial_worker.is_alive():
                 # 設置停止事件
                 self.parent.stop_event.set()
-                
+
                 # 等待工作器結束
                 self.serial_worker.join(timeout=2.0)
-                
+
                 if self.serial_worker.is_alive():
                     print("[WARNING] 串口工作器未能正常結束")
                 else:
-                    print("[DEBUG] 命令執行已停止")
-                
+                    print("[DEBUG] 串口命令執行已停止")
+
+                stopped = True
+
+            # 停止 ADB 工作器
+            if self.adb_worker and self.adb_worker.is_alive():
+                # 設置停止事件
+                self.parent.stop_event.set()
+
+                # 等待工作器結束
+                self.adb_worker.join(timeout=2.0)
+
+                if self.adb_worker.is_alive():
+                    print("[WARNING] ADB 工作器未能正常結束")
+                else:
+                    print("[DEBUG] ADB 命令執行已停止")
+
+                stopped = True
+
+            if stopped:
                 # 清除停止事件
                 self.parent.stop_event.clear()
-                
                 return True
             else:
                 print("[DEBUG] 沒有正在執行的命令")
                 return False
-                
+
         except Exception as e:
             print(f"停止命令時發生錯誤: {e}")
             return False
     
     def is_command_running(self):
         """檢查是否有命令正在執行"""
-        return self.serial_worker and self.serial_worker.is_alive()
+        return (self.serial_worker and self.serial_worker.is_alive()) or (self.adb_worker and self.adb_worker.is_alive())
     
     def ping_device(self, com_port, timeout, on_data_callback, on_finish_callback):
         """

@@ -1453,6 +1453,11 @@ class UIHandlers(UIHandlersCore):
         section = self.parent.components.section_var.get()
         cmd_content = self.parent.commands_by_section.get(section, {}).get(selected_command, "")
 
+        # 獲取傳輸模式
+        transport_mode = "Console"  # 預設值
+        if hasattr(self.parent.components, 'transport_mode_var'):
+            transport_mode = self.parent.components.transport_mode_var.get()
+
         # 分割指令 - 使用設定中的間隔符號
         separator = self.setup.get('DUT_Control', {}).get('Command_Separator', '|')
         cmd_list = cmd_content.split(separator)
@@ -1461,10 +1466,14 @@ class UIHandlers(UIHandlersCore):
         print(f"[DEBUG] 原始指令: {cmd_content}")
         print(f"[DEBUG] 分隔符: '{separator}'")
         print(f"[DEBUG] 分割後指令列表: {cmd_list}")
+        print(f"[DEBUG] 傳輸模式: {transport_mode}")
 
         # 顯示執行信息
         self.parent.components.add_to_buffer(f"\n=== 執行指令: {selected_command} ===\n", "purple")
-        self.parent.components.add_to_buffer(f"COM 口: {com_port}, 超時: {timeout} 秒, 結束字串: {end_string}\n", "purple")
+        if transport_mode == "ADB":
+            self.parent.components.add_to_buffer(f"傳輸模式: ADB, 超時: {timeout} 秒, 結束字串: {end_string}\n", "purple")
+        else:
+            self.parent.components.add_to_buffer(f"COM 口: {com_port}, 超時: {timeout} 秒, 結束字串: {end_string}\n", "purple")
 
         # 如果有多個指令，顯示分割信息
         if len(cmd_list) > 1:
@@ -1479,18 +1488,36 @@ class UIHandlers(UIHandlersCore):
         # 重置停止事件
         self.parent.stop_event = threading.Event()
 
-        # 創建並啟動線程
-        self.parent.thread = SerialWorker(
-            com_port, cmd_list, end_string, timeout,
-            on_data=lambda text, tag: self.on_data(text, tag),
-            on_status=lambda connected: self.parent.root.after(0, lambda: self.update_status_light(connected)),
-            on_progress=lambda p: self.parent.root.after(0, lambda: self.parent.components.update_progress(p)),
-            on_finish=lambda: self.parent.root.after(0, self.on_command_finish),
-            stop_event=self.parent.stop_event
-        )
+        # 根據傳輸模式創建對應的工作器
+        if transport_mode == "ADB":
+            # 導入 ADB 工作器
+            from adb_worker import ADBWorker
+
+            # 創建並啟動 ADB 線程
+            self.parent.thread = ADBWorker(
+                cmd_list, end_string, timeout,
+                on_data=lambda text, tag: self.on_data(text, tag),
+                on_status=lambda connected: self.parent.root.after(0, lambda: self.update_status_light(connected)),
+                on_progress=lambda p: self.parent.root.after(0, lambda: self.parent.components.update_progress(p)),
+                on_finish=lambda: self.parent.root.after(0, self.on_command_finish),
+                stop_event=self.parent.stop_event
+            )
+        else:
+            # 創建並啟動串口線程
+            self.parent.thread = SerialWorker(
+                com_port, cmd_list, end_string, timeout,
+                on_data=lambda text, tag: self.on_data(text, tag),
+                on_status=lambda connected: self.parent.root.after(0, lambda: self.update_status_light(connected)),
+                on_progress=lambda p: self.parent.root.after(0, lambda: self.parent.components.update_progress(p)),
+                on_finish=lambda: self.parent.root.after(0, self.on_command_finish),
+                stop_event=self.parent.stop_event
+            )
 
         # 設置顯示消息的回調
-        self.parent.thread.show_message_callback = self._show_messagebox_and_callback
+        if hasattr(self.parent.thread, 'show_message_callback'):
+            self.parent.thread.show_message_callback = self._show_messagebox_and_callback
+        elif hasattr(self.parent.thread, 'set_show_message_callback'):
+            self.parent.thread.set_show_message_callback(self._show_messagebox_and_callback)
 
         # 開始啟動標籤閃爍
         if hasattr(self.parent.components, 'startup_label_manager'):
