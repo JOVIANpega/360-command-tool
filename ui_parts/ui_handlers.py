@@ -1576,9 +1576,18 @@ class UIHandlers(UIHandlersCore):
         try:
             import webbrowser
             import os
+            import sys
+
+            # 獲取 EXE 所在目錄（支援打包後的路徑）
+            if getattr(sys, 'frozen', False):
+                # 打包後的 EXE 環境
+                exe_dir = os.path.dirname(sys.executable)
+            else:
+                # 開發環境
+                exe_dir = os.path.dirname(os.path.dirname(__file__))
 
             # HTML 說明檔案路徑
-            html_guide_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'VALO360 指令通使用指南.html')
+            html_guide_path = os.path.join(exe_dir, 'VALO360 指令通使用指南.html')
 
             # 檢查檔案是否存在
             if os.path.exists(html_guide_path):
@@ -1586,17 +1595,16 @@ class UIHandlers(UIHandlersCore):
                 webbrowser.open(f'file:///{html_guide_path.replace(os.sep, "/")}')
 
                 # 顯示通知
-                self.parent.components.show_notification("已開啟使用說明檔案", "green", 2000)
+                self.parent.components.show_notification("已開啟使用說明檔案", "success", 2000)
                 print(f"[DEBUG] 開啟 HTML 使用說明: {html_guide_path}")
             else:
-                # 如果 HTML 檔案不存在，回退到原來的文字說明
-                self._show_text_guide()
+                # 如果 HTML 檔案不存在，顯示錯誤訊息
+                self.parent.components.show_notification(f"找不到使用說明檔案：VALO360 指令通使用指南.html", "error", 3000)
                 print(f"[WARNING] HTML 使用說明檔案不存在: {html_guide_path}")
 
         except Exception as e:
             print(f"[ERROR] 開啟使用說明時發生錯誤: {e}")
-            # 發生錯誤時回退到原來的文字說明
-            self._show_text_guide()
+            self.parent.components.show_notification(f"開啟使用說明時發生錯誤: {str(e)}", "error", 3000)
 
     def _show_text_guide(self):
         """顯示文字版使用說明（回退方案）"""

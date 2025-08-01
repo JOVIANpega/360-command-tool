@@ -490,9 +490,9 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.btn_open_script = ttk.Button(btn_frame, text='open CMD table', command=self.on_open_command_script, style='Orange.TButton')
         self.btn_open_script.grid(row=0, column=3, padx=2, sticky='ew')
         
-        # 設備標籤顯示區域 - 放在使用說明按鈕下方
+        # 設備標籤顯示區域 - 放在按鈕區下方
         device_label_frame = ttk.Frame(self.left_panel, style="TFrame")
-        device_label_frame.grid(row=7, column=0, sticky='ew', pady=5)
+        device_label_frame.grid(row=8, column=0, sticky='ew', pady=5)
         device_label_frame.columnconfigure(0, weight=1)
         
         # 從設定檔讀取設備標籤文字，預設顯示設備信息
