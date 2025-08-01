@@ -505,6 +505,15 @@ class SettingsTab(ttk.Frame):
                         settings_dict['DUT_Control']['Window_Height'] = str(height)
                         print(f"[DEBUG] 手動保存：視窗大小 {width}x{height}")
 
+                        # 通知DUT控制標籤頁更新分割位置
+                        try:
+                            if hasattr(root, 'tab_manager') and hasattr(root.tab_manager, 'dut_ui'):
+                                if hasattr(root.tab_manager.dut_ui, 'components') and hasattr(root.tab_manager.dut_ui.components, 'restore_pane_position'):
+                                    root.after(100, root.tab_manager.dut_ui.components.restore_pane_position)
+                                    print("[DEBUG] 已通知DUT控制標籤頁更新分割位置")
+                        except Exception as e:
+                            print(f"[DEBUG] 通知DUT控制標籤頁更新分割位置失敗: {e}")
+
                     # 獲取當前視窗標題（去除版本號）
                     current_title = root.title()
                     window_title = current_title

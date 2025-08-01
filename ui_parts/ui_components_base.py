@@ -90,7 +90,7 @@ class UIComponentsBase:
         # 控制下拉列表最大顯示項目數
 
 
-        self.max_dropdown_items = 20  # 將下拉菜單最大顯示項目數從10改為20
+        self.max_dropdown_items = 15  # 設定下拉菜單最大顯示項目數為15
 
 
         # 下拉列表字典
