@@ -117,19 +117,16 @@ class TabManager:
             self.dut_frame = ttk.Frame(self.notebook)
             self.settings_frame = ttk.Frame(self.notebook)
             self.dos_frame = ttk.Frame(self.notebook)
-            self.guide_frame = ttk.Frame(self.notebook)
-            
+
             # 添加標籤頁到 Notebook
             self.notebook.add(self.dut_frame, text='DUT 控制')
             self.notebook.add(self.settings_frame, text='設定')
             self.notebook.add(self.dos_frame, text='DOS 視窗')
-            self.notebook.add(self.guide_frame, text='使用說明')
             
             # 初始化各個標籤頁的內容
             self.init_dut_tab()
             self.init_settings_tab()
             self.init_dos_tab()
-            self.init_guide_tab()
             
             print("[DEBUG] 所有標籤頁初始化完成")
         except Exception as e:
@@ -165,16 +162,7 @@ class TabManager:
             # 創建簡單的 DOS 標籤頁
             ttk.Label(self.dos_frame, text="DOS 視窗功能").pack(pady=20)
 
-    def init_guide_tab(self):
-        """初始化使用說明標籤頁"""
-        try:
-            from ui_parts.ui_guide_tab import GuideTab
-            self.guide_ui = GuideTab(self.guide_frame)
-            print("[DEBUG] 使用說明標籤頁初始化完成")
-        except Exception as e:
-            print(f"[ERROR] 初始化使用說明標籤頁時發生錯誤: {e}")
-            # 創建簡單的使用說明標籤頁
-            ttk.Label(self.guide_frame, text="使用說明內容").pack(pady=20)
+
 
 
     

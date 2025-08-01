@@ -589,10 +589,6 @@
    'D:\\((Python '
    'TOOL\\指令工具-20250428T020034Z-001\\CODE_HERE2\\ui_parts\\ui_dos_tab.py',
    'PYMODULE'),
-  ('ui_parts.ui_guide_tab',
-   'D:\\((Python '
-   'TOOL\\指令工具-20250428T020034Z-001\\CODE_HERE2\\ui_parts\\ui_guide_tab.py',
-   'PYMODULE'),
   ('ui_parts.ui_handlers',
    'D:\\((Python '
    'TOOL\\指令工具-20250428T020034Z-001\\CODE_HERE2\\ui_parts\\ui_handlers.py',

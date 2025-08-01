@@ -205,8 +205,8 @@ class TabManager:
         # 創建分頁
         self.dut_frame = ttk.Frame(self.notebook, style='Main.TFrame')
         self.fixture_frame = ttk.Frame(self.notebook, style='Main.TFrame')
-        self.handover_frame = ttk.Frame(self.notebook, style='Main.TFrame')  # 使用說明 tab
-        self.dos_frame = ttk.Frame(self.notebook, style='Main.TFrame')  # 新增 DOS tab
+        self.dos_frame = ttk.Frame(self.notebook, style='Main.TFrame')  # DOS tab
+        self.settings_frame = ttk.Frame(self.notebook, style='Main.TFrame')  # 設定 tab
 
 
         
@@ -226,12 +226,6 @@ class TabManager:
 
         self.fixture_frame.grid_columnconfigure(0, weight=1)
 
-
-        self.handover_frame.grid_rowconfigure(0, weight=1)
-
-
-        self.handover_frame.grid_columnconfigure(0, weight=1)
-
         # 從設定檔讀取標籤名稱
         from config_core import load_setup
         setup = load_setup()
@@ -240,9 +234,8 @@ class TabManager:
         # 使用從設定檔中讀取的標籤名稱，如果不存在則使用預設值
         tab0_name = tab_names.get('tab0', 'DUT 控制')
         tab1_name = tab_names.get('tab1', '治具控制')
-        tab2_name = tab_names.get('tab2', '使用說明')
-        tab3_name = tab_names.get('tab3', 'DOS 工具')
-        tab4_name = tab_names.get('tab4', '設定')
+        tab2_name = tab_names.get('tab2', 'DOS 工具')
+        tab3_name = tab_names.get('tab3', '設定')
         
         print(f"[DEBUG] 從設定檔讀取的標籤名稱: {tab_names}")
         
@@ -253,12 +246,8 @@ class TabManager:
 
         self.notebook.add(self.dut_frame, text=tab0_name)
         self.notebook.add(self.fixture_frame, text=tab1_name)
-        self.notebook.add(self.handover_frame, text=tab2_name)  # 使用說明
-        self.notebook.add(self.dos_frame, text=tab3_name)  # DOS 工具
-
-        # 新增設定分頁
-        self.settings_frame = ttk.Frame(self.notebook, style='Main.TFrame')
-        self.notebook.add(self.settings_frame, text=tab4_name)
+        self.notebook.add(self.dos_frame, text=tab2_name)  # DOS 工具
+        self.notebook.add(self.settings_frame, text=tab3_name)  # 設定
 
         # 設置分頁切換事件
         self.notebook.bind('<<NotebookTabChanged>>', self.on_tab_changed)
@@ -274,7 +263,7 @@ class TabManager:
 
         self.init_dut_tab()
         self.init_fixture_tab()
-        self.init_guide_tab()  # 使用說明
+
         self.init_dos_tab()  # DOS 工具
         self.init_settings_tab() # 設定
         
@@ -460,8 +449,8 @@ class TabManager:
             tab_names = setup.get('tab_names', {})
             
             # 預設的 TAB 按鈕名稱
-            default_tab_names = ['DUT 控制', '治具控制', '使用說明', '設定']
-            
+            default_tab_names = ['DUT 控制', '治具控制', 'DOS 工具', '設定']
+
             # 更新標籤名稱
             for i in range(4):  # 目前有4個標籤頁
                 tab_key = f'tab{i}'
@@ -704,11 +693,12 @@ class TabManager:
             self.update_startup_label_from_settings(fresh_setup)
 
             # 顯示綜合更新通知
-            self.show_global_notification(
-                "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱\n✓ 視窗標題", 
-                "success", 
-                5000
-            )
+            print("[NOTIFICATION] 所有設定已更新並同步")
+            print("[NOTIFICATION] ✓ DUT控制設定")
+            print("[NOTIFICATION] ✓ 治具控制設定")
+            print("[NOTIFICATION] ✓ 界面設定")
+            print("[NOTIFICATION] ✓ 標籤頁名稱")
+            print("[NOTIFICATION] ✓ 視窗標題")
             
             print("[DEBUG] 所有設定更新完成")
             
@@ -716,7 +706,7 @@ class TabManager:
             print(f"[ERROR] 更新所有設定時發生錯誤：{e}")
             import traceback
             traceback.print_exc()
-            self.show_global_notification(f"設定更新失敗：{str(e)}", "error", 5000)
+            print(f"[NOTIFICATION] 設定更新失敗：{str(e)}")
 
     def update_startup_label_from_settings(self, setup):
         """從設定更新啟動標籤"""
@@ -913,7 +903,7 @@ class TabManager:
             tab_names = setup.get('tab_names', {})
             
             # 預設的標籤頁名稱
-            default_tab_names = ['DUT 控制', '治具控制', '使用說明', '設定']
+            default_tab_names = ['DUT 控制', '治具控制', 'DOS 工具', '設定']
             
             # 更新每個標籤頁的名稱
             for i in range(min(4, self.notebook.index('end'))):
@@ -929,8 +919,8 @@ class TabManager:
                     self.notebook.tab(i, text=new_name)
                     print(f"[DEBUG] 標籤頁 {i} 名稱已更新: {current_name} → {new_name}")
             
-            # 使用全域通知管理器顯示更新訊息
-            self.show_global_notification("標籤頁名稱已同步更新", "success", 2000)
+            # 顯示更新訊息
+            print("[NOTIFICATION] 標籤頁名稱已同步更新")
             
         except Exception as e:
             print(f"[ERROR] 更新標籤頁名稱時發生錯誤：{e}")
@@ -959,7 +949,7 @@ class TabManager:
             self.notebook.tab(tab_index, text=new_name)
             
             # 顯示更新通知
-            self.show_global_notification(f"標籤頁 {tab_index + 1} 名稱已更新為: {new_name}", "info", 3000)
+            print(f"[NOTIFICATION] 標籤頁 {tab_index + 1} 名稱已更新為: {new_name}")
             
         except Exception as e:
             print(f"[ERROR] 更新標籤頁名稱時發生錯誤：{e}")
@@ -1078,10 +1068,7 @@ class TabManager:
         self.settings_ui = SettingsTab(self.settings_frame, on_save_callback=self.update_all_settings)
         self.settings_ui.pack(fill='both', expand=True)
     
-    def init_guide_tab(self):
-        # 初始化使用說明分頁 - 使用新的GuideTab類
-        from ui_parts.ui_guide_tab import GuideTab
-        self.guide_tab = GuideTab(self.handover_frame)
+
 
     def init_dos_tab(self):
         # 初始化DOS工具分頁

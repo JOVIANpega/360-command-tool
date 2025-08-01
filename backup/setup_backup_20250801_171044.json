@@ -1,5 +1,5 @@
 {
-  "version": "1.8.3",
+  "version": "1.8.2",
   "Window_Title": "指令通",
   "Window_Width": "1536",
   "Window_Height": "793",
@@ -18,12 +18,12 @@
     ],
     "Default_IP_Address": "192.168.11.143",
     "IP_History": [],
-    "Window_Width": "1522",
-    "Window_Height": "741",
+    "Window_Width": "1508",
+    "Window_Height": "639",
     "Last_Selected_Command_Section": "全部指令",
     "Pane_Sash_Position": "636",
     "Auto_Execute": false,
-    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/CODE_HERE2/Command_TABLE/MU310_command.txt",
+    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/CODE_HERE2/Command_TABLE/command_360.txt",
     "Notification_Font_Size": "10"
   },
   "Fixture_Control": {
