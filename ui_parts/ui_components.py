@@ -168,12 +168,13 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             traceback.print_exc()
 
     def init_cmd_components(self):
+        # 分類按鈕區域（row=2）
         self.section_frame = ttk.Frame(self.left_panel, style="TFrame")
         self.section_frame.grid(row=2, column=0, sticky='ew', pady=5)
         for i in range(4):
             self.section_frame.columnconfigure(i, weight=1)
         self.section_var = tk.StringVar()
-        
+
         # 從 command.txt 動態讀取分類
         self.sections = []
         try:
@@ -188,22 +189,22 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                             self.sections.append(section_name)
         except Exception as e:
             print(f"[ERROR] 讀取分類時發生錯誤: {e}")
-            
+
         if not self.sections:
             self.sections = ['全部指令']
-        
+
         if self.sections:
             self.section_var.set(self.sections[0])
-        
+
         max_buttons_per_row = 4
         self.section_radiobuttons = []
-        
+
         for i, sec in enumerate(self.sections):
             row, col = i // max_buttons_per_row, i % max_buttons_per_row
             rb = tk.Radiobutton(
-                self.section_frame, text=sec, variable=self.section_var, value=sec, 
-                command=self.update_cmd_list, bg='#d9d9d9', fg='black', selectcolor='#d9d9d9', 
-                activebackground='#2196f3', activeforeground='white', indicatoron=0, relief='flat', 
+                self.section_frame, text=sec, variable=self.section_var, value=sec,
+                command=self.update_cmd_list, bg='#d9d9d9', fg='black', selectcolor='#d9d9d9',
+                activebackground='#2196f3', activeforeground='white', indicatoron=0, relief='flat',
                 borderwidth=1, width=8, height=1, font=('Microsoft JhengHei UI', int(self.parent.setup.get('UI_Font_Size', '12')))
             )
             rb.grid(row=row, column=col, padx=1, pady=1, sticky='ew')
@@ -211,15 +212,16 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             rb.bind("<Leave>", lambda e, b=rb: self.update_radio_bg())
             self.section_radiobuttons.append(rb)
             self.section_frame.columnconfigure(col, weight=1)
-        
+
         self.update_radio_bg()
 
         self.section_description = ttk.Label(self.section_frame, text=self.get_section_description(self.section_var.get()), style="TLabel", wraplength=300)
         last_row = (len(self.sections) - 1) // max_buttons_per_row + 1
         self.section_description.grid(row=last_row, column=0, columnspan=max_buttons_per_row, pady=2, sticky='w')
-        
+
+        # 指令下拉選單區域（row=3，避免與分類按鈕重疊）
         cmd_frame = ttk.Frame(self.left_panel, style="TFrame")
-        cmd_frame.grid(row=2, column=0, sticky='ew', pady=3)
+        cmd_frame.grid(row=3, column=0, sticky='ew', pady=3)
         cmd_frame.columnconfigure(1, weight=1)  # 讓指令下拉選單擴展
         cmd_frame.columnconfigure(2, weight=0)  # 執行指令按鈕固定大小
         
@@ -333,7 +335,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
     def init_ping_components(self):
         print('[DEBUG] handlers in init_ping_components:', self.parent.handlers)
         ping_frame = ttk.LabelFrame(self.left_panel, text='Ping 檢查', padding=5, style="TLabelframe")
-        ping_frame.grid(row=4, column=0, sticky='ew', pady=5)  # 減少間距
+        ping_frame.grid(row=5, column=0, sticky='ew', pady=5)  # 調整 row 位置
         
         # IP輸入區域
         ip_frame = ttk.Frame(ping_frame, style="TFrame")
@@ -378,7 +380,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
 
     def init_settings_components(self):
         settings_frame = ttk.LabelFrame(self.left_panel, text='設定', padding=5, style="TLabelframe")
-        settings_frame.grid(row=5, column=0, sticky='ew', pady=5)  # 減少間距
+        settings_frame.grid(row=6, column=0, sticky='ew', pady=5)  # 調整 row 位置
         
         # 結束字串設定
         end_frame = ttk.Frame(settings_frame, style="TFrame")
@@ -469,7 +471,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         
         # 按鈕區 - 改為水平排列
         btn_frame = ttk.Frame(self.left_panel, style="TFrame")
-        btn_frame.grid(row=6, column=0, sticky='ew', pady=5)  # 減少間距
+        btn_frame.grid(row=7, column=0, sticky='ew', pady=5)  # 調整 row 位置
         btn_frame.columnconfigure(0, weight=1)
         btn_frame.columnconfigure(1, weight=1)
         btn_frame.columnconfigure(2, weight=1)

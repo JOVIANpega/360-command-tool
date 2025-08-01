@@ -1,6 +1,6 @@
 {
-  "version": "1.7.9",
-  "Startup_Label": "VALO360",
+  "version": "1.8.0",
+  "Startup_Label": "VALO36022",
   "notification_messages": {
     "app_started": "指令通 已啟動",
     "settings_updated": "設定已更新！",
@@ -157,7 +157,7 @@
     "Last_Selected_Command_Section": "MB指令==>",
     "Pane_Sash_Position": "526",
     "Auto_Execute": true,
-    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/CODE_HERE2/Command_TABLE/command.txt",
+    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/CODE_HERE2/Command_TABLE/MU310_command.txt",
     "Notification_Font_Size": "10",
     "Section_Titles": [
       "全部指令",
@@ -303,8 +303,8 @@
     "tab3": "DOS 工具",
     "tab4": "設定"
   },
-  "Window_Width": "1536",
-  "Window_Height": "793",
+  "Window_Width": "1522",
+  "Window_Height": "716",
   "ContentFontSize": "12",
   "UIFontSize": "12",
   "test_key": "test_value_123"
