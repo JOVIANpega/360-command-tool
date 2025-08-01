@@ -202,6 +202,23 @@ class SettingsTab(ttk.Frame):
 
         dut_row += 1
 
+        # 自訂啟動名稱設定
+        ttk.Label(info_frame, text="自訂啟動名稱:").grid(row=dut_row, column=0, sticky="nw", pady=2)
+        startup_label_container = ttk.Frame(info_frame)
+        startup_label_container.grid(row=dut_row, column=1, sticky="ew", padx=(10, 0), pady=2)
+        startup_label_container.columnconfigure(0, weight=1)
+
+        self.vars["Startup_Label"] = tk.StringVar(value=self.setup_data.get("Startup_Label", "TEST"))
+        startup_label_entry = ttk.Entry(startup_label_container, textvariable=self.vars["Startup_Label"])
+        startup_label_entry.grid(row=0, column=0, sticky="ew")
+
+        # 添加說明標籤
+        startup_help_label = ttk.Label(startup_label_container, text="此名稱將顯示在DUT控制頁面的綠色標籤中",
+                                     font=('Microsoft JhengHei UI', 9), foreground='#666666')
+        startup_help_label.grid(row=1, column=0, sticky="w", pady=(2, 0))
+
+        dut_row += 1
+
         # 添加手動保存按鈕
         save_button_frame = ttk.Frame(info_frame)
         save_button_frame.grid(row=dut_row, column=0, columnspan=2, sticky="ew", pady=(10, 5))
@@ -452,6 +469,9 @@ class SettingsTab(ttk.Frame):
 
         # 更新設備標籤設定
         current_setup["Device_Label"] = self.vars["Device_Label"].get()
+
+        # 更新啟動標籤設定
+        current_setup["Startup_Label"] = self.vars["Startup_Label"].get()
 
         return current_setup
 

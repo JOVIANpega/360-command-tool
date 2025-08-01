@@ -1,5 +1,5 @@
 {
-  "version": "1.7.8",
+  "version": "1.7.7",
   "Startup_Label": "VALO360",
   "notification_messages": {
     "app_started": "指令通 已啟動",
@@ -142,7 +142,7 @@
   },
   "DUT_Control": {
     "Serial_COM_Port": "COM5",
-    "Command_Timeout_Seconds": "100",
+    "Command_Timeout_Seconds": "30",
     "Command_End_String": "root",
     "Command_Separator": "|",
     "UI_Font_Size": "12",

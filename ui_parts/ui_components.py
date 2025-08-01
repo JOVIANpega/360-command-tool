@@ -20,6 +20,7 @@ from ui_parts.ui_components_input import UIComponentsInput
 from ui_parts.ui_components_output import UIComponentsOutput
 from ui_parts.ui_components_settings import UIComponentsSettings
 from ui_parts.tooltip import ToolTipManager
+from ui_parts.ui_startup_label import StartupLabelManager
 from config_utils import get_notification_text, get_app_version
 
 
@@ -71,7 +72,10 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         # 從設定中讀取 ToolTip 啟用狀態，預設為啟用
         tooltip_enabled = self.parent.setup.get("UI_Settings", {}).get("ToolTip_Enabled", True)
         self.tooltip_manager.set_all_enabled(tooltip_enabled)
-        
+
+        # 初始化啟動標籤管理器
+        self.startup_label_manager = StartupLabelManager(self)
+
         # 初始化各個元件
         self.init_com_components()
         self.init_cmd_components()
@@ -119,11 +123,15 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.btn_refresh = tk.Button(com_frame, text='刷新', command=refresh_command,
                                    bg='#e0e0e0', fg='black', activebackground='#2196f3', activeforeground='black')
         self.btn_refresh.grid(row=0, column=2, padx=3, sticky='ew')
-        self.status_canvas = tk.Canvas(com_frame, width=40, height=40, bg='white', highlightthickness=0)
-        self.status_canvas.grid(row=0, column=3, padx=3, sticky='ew')
-        self.status_light = self.status_canvas.create_oval(5, 5, 35, 35, fill='black')
-        self.led_blinking = False
-        
+        # 移除 COM 口旁的圓形閃爍功能 - 改用啟動標籤閃爍
+        # self.status_canvas = tk.Canvas(com_frame, width=40, height=40, bg='white', highlightthickness=0)
+        # self.status_canvas.grid(row=0, column=3, padx=3, sticky='ew')
+        # self.status_light = self.status_canvas.create_oval(5, 5, 35, 35, fill='black')
+        # self.led_blinking = False
+
+        # 在 COM 組件後添加啟動標籤（僅在 DUT 控制頁面顯示）
+        self.init_startup_label()
+
     def on_com_port_changed(self, event=None):
         """當 COM 口選擇變更時，立即更新顯示但延遲保存"""
         try:
@@ -147,9 +155,21 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             import traceback
             traceback.print_exc()
 
+    def init_startup_label(self):
+        """初始化啟動標籤（僅在 DUT 控制頁面顯示）"""
+        try:
+            # 在 COM 組件下方（row=1）創建啟動標籤
+            # 需要調整其他組件的 row 位置
+            self.startup_label_manager.create_startup_label(self.left_panel, 1)
+            print("[DEBUG] 啟動標籤已初始化")
+        except Exception as e:
+            print(f"[ERROR] 初始化啟動標籤失敗: {e}")
+            import traceback
+            traceback.print_exc()
+
     def init_cmd_components(self):
         self.section_frame = ttk.Frame(self.left_panel, style="TFrame")
-        self.section_frame.grid(row=1, column=0, sticky='ew', pady=5)
+        self.section_frame.grid(row=2, column=0, sticky='ew', pady=5)
         for i in range(4):
             self.section_frame.columnconfigure(i, weight=1)
         self.section_var = tk.StringVar()
@@ -313,7 +333,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
     def init_ping_components(self):
         print('[DEBUG] handlers in init_ping_components:', self.parent.handlers)
         ping_frame = ttk.LabelFrame(self.left_panel, text='Ping 檢查', padding=5, style="TLabelframe")
-        ping_frame.grid(row=3, column=0, sticky='ew', pady=5)  # 減少間距
+        ping_frame.grid(row=4, column=0, sticky='ew', pady=5)  # 減少間距
         
         # IP輸入區域
         ip_frame = ttk.Frame(ping_frame, style="TFrame")
@@ -358,7 +378,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
 
     def init_settings_components(self):
         settings_frame = ttk.LabelFrame(self.left_panel, text='設定', padding=5, style="TLabelframe")
-        settings_frame.grid(row=4, column=0, sticky='ew', pady=5)  # 減少間距
+        settings_frame.grid(row=5, column=0, sticky='ew', pady=5)  # 減少間距
         
         # 結束字串設定
         end_frame = ttk.Frame(settings_frame, style="TFrame")
@@ -449,7 +469,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         
         # 按鈕區 - 改為水平排列
         btn_frame = ttk.Frame(self.left_panel, style="TFrame")
-        btn_frame.grid(row=5, column=0, sticky='ew', pady=5)  # 減少間距
+        btn_frame.grid(row=6, column=0, sticky='ew', pady=5)  # 減少間距
         btn_frame.columnconfigure(0, weight=1)
         btn_frame.columnconfigure(1, weight=1)
         btn_frame.columnconfigure(2, weight=1)
@@ -470,7 +490,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         
         # 設備標籤顯示區域 - 放在使用說明按鈕下方
         device_label_frame = ttk.Frame(self.left_panel, style="TFrame")
-        device_label_frame.grid(row=6, column=0, sticky='ew', pady=5)
+        device_label_frame.grid(row=7, column=0, sticky='ew', pady=5)
         device_label_frame.columnconfigure(0, weight=1)
         
         # 從設定檔讀取設備標籤文字，預設顯示設備信息
@@ -997,22 +1017,23 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         except Exception as e:
             print(f"[ERROR] 保存視窗大小時發生錯誤: {e}")
 
-    def start_led_blink(self):
-        self.led_blinking = True
-        self._blink_led()
+    # 移除 LED 閃爍功能 - 改用啟動標籤閃爍
+    # def start_led_blink(self):
+    #     self.led_blinking = True
+    #     self._blink_led()
 
-    def _blink_led(self):
-        if not self.led_blinking:
-            return
-        current_color = self.status_canvas.itemcget(self.status_light, 'fill')
-        next_color = 'lime' if current_color == 'red' else 'red'
-        self.status_canvas.itemconfig(self.status_light, fill=next_color)
-        self.status_canvas.after(300, self._blink_led)
+    # def _blink_led(self):
+    #     if not self.led_blinking:
+    #         return
+    #     current_color = self.status_canvas.itemcget(self.status_light, 'fill')
+    #     next_color = 'lime' if current_color == 'red' else 'red'
+    #     self.status_canvas.itemconfig(self.status_light, fill=next_color)
+    #     self.status_canvas.after(300, self._blink_led)
 
-    def stop_led_blink(self):
-        self.led_blinking = False
-        # 恢復為黑色，表示待命狀態
-        self.status_canvas.itemconfig(self.status_light, fill='black')
+    # def stop_led_blink(self):
+    #     self.led_blinking = False
+    #     # 恢復為黑色，表示待命狀態
+    #     self.status_canvas.itemconfig(self.status_light, fill='black')
 
     def on_pane_drag_start(self, event):
         self.main_frame.start_x = event.x
@@ -1485,3 +1506,21 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         """設定 ToolTip 的啟用狀態"""
         if hasattr(self, 'tooltip_manager'):
             self.tooltip_manager.set_all_enabled(enabled)
+
+    def update_startup_label(self, new_text):
+        """更新啟動標籤文字"""
+        try:
+            if hasattr(self, 'startup_label_manager'):
+                self.startup_label_manager.update_label_text(new_text)
+                print(f"[DEBUG] 啟動標籤已更新: {new_text}")
+        except Exception as e:
+            print(f"[ERROR] 更新啟動標籤失敗: {e}")
+
+    def save_startup_label(self, new_text):
+        """保存啟動標籤設定"""
+        try:
+            if hasattr(self, 'startup_label_manager'):
+                return self.startup_label_manager.save_startup_label_setting(new_text)
+        except Exception as e:
+            print(f"[ERROR] 保存啟動標籤設定失敗: {e}")
+            return False

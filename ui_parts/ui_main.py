@@ -737,7 +737,10 @@ class TabManager:
             
             # 同步通知設定
             self.sync_notification_settings(fresh_setup)
-            
+
+            # 更新啟動標籤
+            self.update_startup_label_from_settings(fresh_setup)
+
             # 顯示綜合更新通知
             self.show_global_notification(
                 "所有設定已更新並同步\n✓ DUT控制設定\n✓ 治具控制設定\n✓ 界面設定\n✓ 標籤頁名稱\n✓ 視窗標題", 
@@ -752,7 +755,28 @@ class TabManager:
             import traceback
             traceback.print_exc()
             self.show_global_notification(f"設定更新失敗：{str(e)}", "error", 5000)
-    
+
+    def update_startup_label_from_settings(self, setup):
+        """從設定更新啟動標籤"""
+        try:
+            startup_label_text = setup.get("Startup_Label", "TEST")
+            print(f"[DEBUG] 更新啟動標籤: {startup_label_text}")
+
+            # 更新 DUT 控制頁面的啟動標籤
+            if hasattr(self, 'dut_ui') and hasattr(self.dut_ui, 'components'):
+                if hasattr(self.dut_ui.components, 'update_startup_label'):
+                    self.dut_ui.components.update_startup_label(startup_label_text)
+                    print(f"[DEBUG] DUT 控制頁面啟動標籤已更新: {startup_label_text}")
+                else:
+                    print("[WARNING] DUT 控制頁面沒有 update_startup_label 方法")
+            else:
+                print("[WARNING] DUT UI 或 components 不存在")
+
+        except Exception as e:
+            print(f"[ERROR] 更新啟動標籤時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
+
     def sync_font_settings(self, setup):
         """同步字體設定"""
         try:

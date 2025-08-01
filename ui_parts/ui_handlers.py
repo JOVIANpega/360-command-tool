@@ -1381,13 +1381,166 @@ class UIHandlers(UIHandlersCore):
 
 
     def _validate_execution_parameters(self):
-        """驗證執行參數 - 重構輔助函數"""
-        # 檢查是否正在執行
-        if hasattr(self.parent, 'thread') and self.parent.thread is not None and self.parent.thread.is_alive():
-            self.parent.stop_event.set()
-            self.parent.components.add_to_buffer("\n[已中止執行]\n", "error")
+        """驗證執行參數"""
+        # 獲取 COM 口
+        com = self.parent.components.combobox_com.get()
+        if not com:
+            self.parent.components.add_to_buffer("\n[錯誤] 請選擇 COM 口\n", "error")
+            return False
+
+        # 獲取指令
+        cmd = self.parent.components.combobox_cmd.get()
+        if not cmd:
+            self.parent.components.add_to_buffer("\n[錯誤] 請選擇指令\n", "error")
+            return False
+
+        # 獲取指令內容
+        section = self.parent.components.section_var.get()
+        cmd_content = self.parent.commands_by_section.get(section, {}).get(cmd, "")
+        if not cmd_content:
+            self.parent.components.add_to_buffer(f"\n[錯誤] 找不到指令 '{cmd}' 的內容\n", "error")
+            return False
+
+        # 獲取結束字串
+        end_str = self.parent.components.combobox_end.get()
+        if not end_str:
+            self.parent.components.add_to_buffer("\n[錯誤] 請輸入結束字串\n", "error")
+            return False
+
+        # 獲取超時時間
+        try:
+            timeout = int(self.parent.components.entry_timeout.get())
+        except ValueError:
+            self.parent.components.add_to_buffer("\n[錯誤] 超時時間必須是整數\n", "error")
+            return False
+
+        return True
+
+    def _get_execution_parameters(self):
+        """獲取執行參數"""
+        # 獲取 COM 口
+        com_port = self.parent.components.combobox_com.get()
+
+        # 獲取指令
+        selected_command = self.parent.components.combobox_cmd.get()
+
+        # 獲取結束字串
+        end_string = self.parent.components.combobox_end.get()
+
+        # 獲取超時時間
+        timeout = int(self.parent.components.entry_timeout.get())
+
+        return selected_command, com_port, timeout, end_string
+
+    def _start_execution(self, selected_command, com_port, timeout, end_string):
+        """開始執行指令"""
+        # 獲取指令內容
+        section = self.parent.components.section_var.get()
+        cmd_content = self.parent.commands_by_section.get(section, {}).get(selected_command, "")
+
+        # 分割指令 - 使用設定中的間隔符號
+        separator = self.setup.get('DUT_Control', {}).get('Command_Separator', '|')
+        cmd_list = cmd_content.split(separator)
+
+        # 調試信息：顯示分割後的指令
+        print(f"[DEBUG] 原始指令: {cmd_content}")
+        print(f"[DEBUG] 分隔符: '{separator}'")
+        print(f"[DEBUG] 分割後指令列表: {cmd_list}")
+
+        # 顯示執行信息
+        self.parent.components.add_to_buffer(f"\n=== 執行指令: {selected_command} ===\n", "purple")
+        self.parent.components.add_to_buffer(f"COM 口: {com_port}, 超時: {timeout} 秒, 結束字串: {end_string}\n", "purple")
+
+        # 如果有多個指令，顯示分割信息
+        if len(cmd_list) > 1:
+            self.parent.components.add_to_buffer(f"多重指令模式: 將執行 {len(cmd_list)} 個指令\n", "purple")
+            for i, cmd in enumerate(cmd_list, 1):
+                self.parent.components.add_to_buffer(f"  {i}. {cmd.strip()}\n", "purple")
+
+        # 重置進度條並顯示
+        self.parent.components.reset_progress()
+        self.parent.components.show_progress()
+
+        # 重置停止事件
+        self.parent.stop_event = threading.Event()
+
+        # 創建並啟動線程
+        self.parent.thread = SerialWorker(
+            com_port, cmd_list, end_string, timeout,
+            on_data=lambda text, tag: self.on_data(text, tag),
+            on_status=lambda connected: self.parent.root.after(0, lambda: self.update_status_light(connected)),
+            on_progress=lambda p: self.parent.root.after(0, lambda: self.parent.components.update_progress(p)),
+            on_finish=lambda: self.parent.root.after(0, self.on_command_finish),
+            stop_event=self.parent.stop_event
+        )
+
+        # 設置顯示消息的回調
+        self.parent.thread.show_message_callback = self._show_messagebox_and_callback
+
+        # 開始啟動標籤閃爍
+        if hasattr(self.parent.components, 'startup_label_manager'):
+            self.parent.components.startup_label_manager.start_blink()
+
+        # 啟動線程
+        self.parent.thread.start()
+
+    def _force_stop_execution(self):
+        """強制停止當前執行"""
+        try:
+            if hasattr(self.parent, 'thread') and self.parent.thread is not None and self.parent.thread.is_alive():
+                print("[DEBUG] 強制停止執行")
+
+                # 設置停止事件
+                self.parent.stop_event.set()
+
+                # 強制停止 SerialWorker
+                if hasattr(self.parent.thread, 'force_stop'):
+                    success = self.parent.thread.force_stop()
+                    print(f"[DEBUG] SerialWorker force_stop 結果: {success}")
+
+                # 等待線程結束（最多等待 3 秒）
+                print("[DEBUG] 等待線程結束...")
+                self.parent.thread.join(timeout=3.0)
+
+                # 檢查線程是否真的結束了
+                if self.parent.thread.is_alive():
+                    print("[WARNING] 線程在 3 秒後仍在運行")
+                else:
+                    print("[DEBUG] 線程已成功結束")
+
+                # 清理線程引用
+                self.parent.thread = None
+
+                # 立即更新按鈕文字
+                self.parent.components.btn_execute.config(text='執行指令')
+
+                # 立即停止進度條並重置
+                self.parent.components.reset_progress()
+                self.parent.components.hide_progress()
+
+                # 立即停止啟動標籤閃爍
+                if hasattr(self.parent.components, 'startup_label_manager'):
+                    self.parent.components.startup_label_manager.stop_blink()
+
+                # 顯示停止訊息
+                self.parent.components.add_to_buffer("\n[已強制停止執行]\n", "error")
+
+                print("[DEBUG] 強制停止完成")
+                return True
+            else:
+                print("[DEBUG] 沒有正在執行的任務")
+                return False
+
+        except Exception as e:
+            print(f"[ERROR] 強制停止執行時發生錯誤: {e}")
+            # 確保按鈕狀態正確
+            self.parent.components.btn_execute.config(text='執行指令')
+            # 確保進度條重置
             self.parent.components.reset_progress()
-            return False, "正在執行中，已中止"
+            self.parent.components.hide_progress()
+            # 清理線程引用
+            self.parent.thread = None
+            return False
 
         # 獲取 COM 口
         com = self.parent.components.combobox_com.get()
@@ -1466,15 +1619,42 @@ class UIHandlers(UIHandlersCore):
         # 設置顯示消息的回調
         self.parent.thread.show_message_callback = self._show_messagebox_and_callback
 
+        # 開始啟動標籤閃爍
+        if hasattr(self.parent.components, 'startup_label_manager'):
+            self.parent.components.startup_label_manager.start_blink()
+
         # 啟動線程
         self.parent.thread.start()
 
     def toggle_guide(self):
+        """開啟 HTML 使用說明檔案"""
+        try:
+            import webbrowser
+            import os
 
+            # HTML 說明檔案路徑
+            html_guide_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'VALO360 指令通使用指南.html')
 
-        """在回應內容視窗中顯示使用說明，而不是開啟新視窗"""
+            # 檢查檔案是否存在
+            if os.path.exists(html_guide_path):
+                # 使用預設瀏覽器開啟 HTML 檔案
+                webbrowser.open(f'file:///{html_guide_path.replace(os.sep, "/")}')
 
+                # 顯示通知
+                self.parent.components.show_notification("已開啟使用說明檔案", "green", 2000)
+                print(f"[DEBUG] 開啟 HTML 使用說明: {html_guide_path}")
+            else:
+                # 如果 HTML 檔案不存在，回退到原來的文字說明
+                self._show_text_guide()
+                print(f"[WARNING] HTML 使用說明檔案不存在: {html_guide_path}")
 
+        except Exception as e:
+            print(f"[ERROR] 開啟使用說明時發生錯誤: {e}")
+            # 發生錯誤時回退到原來的文字說明
+            self._show_text_guide()
+
+    def _show_text_guide(self):
+        """顯示文字版使用說明（回退方案）"""
         try:
 
 
@@ -1571,207 +1751,46 @@ class UIHandlers(UIHandlersCore):
 
 
     def on_execute(self):
-
-
-        """執行指令 - 重構版本"""
-        # 驗證執行參數
-        is_valid, result = self._validate_execution_parameters()
-        if not is_valid:
-            return
-
-        # 準備指令執行
-        cmd_list = self._prepare_command_execution(result)
-
-        # 創建並啟動工作線程
-        self._create_and_start_worker(result, cmd_list)
-
-
-
-
-
-        # 獲取 COM 口
-
-
-        com = self.parent.components.combobox_com.get()
-
-
-        if not com:
-
-
-            self.parent.components.add_to_buffer("\n[錯誤] 請選擇 COM 口\n", "error")
-
-
-            return
-
-
-
-
-
-        # 獲取指令
-
-
-        cmd = self.parent.components.combobox_cmd.get()
-
-
-        if not cmd:
-
-
-            self.parent.components.add_to_buffer("\n[錯誤] 請選擇指令\n", "error")
-
-
-            return
-
-
-
-
-
-        # 獲取指令內容
-
-
-        section = self.parent.components.section_var.get()
-
-
-        cmd_content = self.parent.commands_by_section.get(section, {}).get(cmd, "")
-
-
-        if not cmd_content:
-
-
-            self.parent.components.add_to_buffer(f"\n[錯誤] 找不到指令 '{cmd}' 的內容\n", "error")
-
-
-            return
-
-
-
-
-
-        # 獲取結束字串
-
-
-        end_str = self.parent.components.combobox_end.get()
-
-
-        if not end_str:
-
-
-            self.parent.components.add_to_buffer("\n[錯誤] 請輸入結束字串\n", "error")
-
-
-            return
-
-
-
-
-
-        # 獲取超時時間
-
-
+        """執行指令按鈕點擊事件 - 二段式邏輯"""
         try:
-
-
-            timeout = int(self.parent.components.entry_timeout.get())
-
-
-        except ValueError:
-
-
-            self.parent.components.add_to_buffer("\n[錯誤] 超時時間必須是整數\n", "error")
-
-
-            return
-
-
-
-
-
-        # 分割指令
-
-
-        # 分割指令 - 使用設定中的間隔符號
-        separator = self.setup.get('DUT_Control', {}).get('Command_Separator', '|')
-        cmd_list = cmd_content.split(separator)
-
-
-
-
-
-        # 顯示執行信息
-
-
-        self.parent.components.add_to_buffer(f"\n=== 執行指令: {cmd} ===\n", "purple")
-
-
-        self.parent.components.add_to_buffer(f"COM 口: {com}, 超時: {timeout} 秒, 結束字串: {end_str}\n", "purple")
-
-
-
-
-
-        # 重置進度條並顯示
-
-
-        self.parent.components.reset_progress()
-
-
-        self.parent.components.show_progress()
-
-
-
-
-
-        # 重置停止事件
-
-
-        self.parent.stop_event = threading.Event()
-
-
-
-
-
-        # 創建並啟動線程
-
-
-        self.parent.thread = SerialWorker(
-
-
-            com, cmd_list, end_str, timeout,
-
-
-            on_data=lambda text, tag: self.on_data(text, tag),
-
-
-            on_status=lambda connected: self.parent.root.after(0, lambda: self.update_status_light(connected)),
-
-
-            on_progress=lambda p: self.parent.root.after(0, lambda: self.parent.components.update_progress(p)),
-
-
-            on_finish=lambda: self.parent.root.after(0, self.on_command_finish),
-
-
-            stop_event=self.parent.stop_event
-
-
-        )
-
-
-
-
-
-        # 設置顯示消息的回調
-
-
-        self.parent.thread.show_message_callback = self._show_messagebox_and_callback
-
-
-
-
-
-        # 啟動線程
-
-
-        self.parent.thread.start()
+            # 檢查當前是否正在執行中
+            is_executing = (hasattr(self.parent, 'thread') and
+                          self.parent.thread is not None and
+                          self.parent.thread.is_alive())
+
+            if is_executing:
+                # 第二次點擊：停止執行
+                print("[DEBUG] 用戶點擊停止執行")
+                self._force_stop_execution()
+                return
+            else:
+                # 第一次點擊：開始執行
+                print("[DEBUG] 用戶點擊開始執行")
+
+                # 驗證執行參數
+                if not self._validate_execution_parameters():
+                    return
+
+                # 獲取執行參數
+                selected_command, com_port, timeout, end_string = self._get_execution_parameters()
+                if not selected_command:
+                    return
+
+                # 立即更新按鈕文字為停止
+                self.parent.components.btn_execute.config(text='停止執行')
+
+                # 立即重置進度條
+                print("[DEBUG] 新指令開始，立即重置進度條")
+                self.parent.components.reset_progress()
+
+                # 開始執行
+                self._start_execution(selected_command, com_port, timeout, end_string)
+
+        except Exception as e:
+            print(f"[ERROR] 執行指令時發生錯誤: {e}")
+            self.parent.components.add_to_buffer(f"\n[錯誤] 執行指令時發生錯誤: {e}\n", "error")
+            # 確保按鈕狀態正確
+            self.parent.components.btn_execute.config(text='執行指令')
 
 
 
@@ -1867,25 +1886,23 @@ class UIHandlers(UIHandlersCore):
             # 立即更新按鈕文字
 
 
-            self.parent.components.btn_exec.config(text='執行指令')
+            self.parent.components.btn_execute.config(text='執行指令')
 
 
 
 
 
-            # 立即停止進度條並重置
-
-
+            # 立即停止進度條並隱藏
             self.parent.components.reset_progress()
+            self.parent.components.hide_progress()
 
 
 
 
 
-            # 立即停止 LED 閃爍
-
-
-            self.parent.components.stop_led_blink()
+            # 立即停止啟動標籤閃爍
+            if hasattr(self.parent.components, 'startup_label_manager'):
+                self.parent.components.startup_label_manager.stop_blink()
 
 
 
@@ -1917,6 +1934,11 @@ class UIHandlers(UIHandlersCore):
 
 
 
+
+            # 清理線程引用
+            if hasattr(self.parent, 'thread'):
+                self.parent.thread = None
+                print("[DEBUG] 線程引用已清理")
 
             # 添加指令完成通知
 
@@ -1959,6 +1981,10 @@ class UIHandlers(UIHandlersCore):
 
             traceback.print_exc()
 
+            # 確保在錯誤情況下也清理線程引用
+            if hasattr(self.parent, 'thread'):
+                self.parent.thread = None
+
 
 
 
@@ -1972,48 +1998,20 @@ class UIHandlers(UIHandlersCore):
         try:
 
 
-            # 如果 LED 正在閃爍，則不更新其顏色
+            # 移除 LED 狀態燈更新邏輯 - 已改用啟動標籤閃爍
+            # 連接狀態現在通過啟動標籤閃爍來顯示
+            pass
 
 
-            if not hasattr(self.parent.components, 'led_blinking') or not self.parent.components.led_blinking:
-
-
-                color = 'green' if connected else 'black'
-
-
-                if hasattr(self.parent.components, 'status_canvas') and hasattr(self.parent.components, 'status_light'):
-
-
-                    self.parent.components.status_canvas.itemconfig(self.parent.components.status_light, fill=color)
-
-
-
-
-
-                # 添加連接狀態通知
-
-
-                if connected:
-
-
-                    self.parent.components.show_notification(get_notification_text("connected", self.parent.components.combobox_com.get()), "green", 3000)
-
-
-                else:
-
-
-                    self.parent.components.show_notification(get_notification_text("disconnected"), "red", 3000)
-
+            # 添加連接狀態通知
+            if connected:
+                self.parent.components.show_notification(get_notification_text("connected", self.parent.components.combobox_com.get()), "green", 3000)
+            else:
+                self.parent.components.show_notification(get_notification_text("disconnected"), "red", 3000)
 
         except Exception as e:
-
-
             print(f"[ERROR] 更新狀態指示燈時發生錯誤: {e}")
-
-
             import traceback
-
-
             traceback.print_exc()
 
 

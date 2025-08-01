@@ -81,7 +81,7 @@ class UIComponentsOutput:
             self.right_panel.grid_columnconfigure(0, weight=1)
 
 
-            
+
 
 
             # 設定 tag
@@ -111,7 +111,7 @@ class UIComponentsOutput:
             self.text_output.tag_configure("warning", foreground="orange")  # 警告訊息為橙色
 
 
-            
+
 
 
             # 為高亮關鍵字定義標籤，使用特殊前綴確保優先權
@@ -132,7 +132,7 @@ class UIComponentsOutput:
                 self.keyword_tag_map = {}
 
 
-                
+
 
 
                 for keyword, color in self.parent.highlight_keywords.items():
@@ -201,7 +201,7 @@ class UIComponentsOutput:
                 print(f"[WARNING] parent 沒有 highlight_keywords 屬性")
 
 
-            
+
 
 
             # 設定唯讀
@@ -210,7 +210,7 @@ class UIComponentsOutput:
             self.text_output.config(state='disabled')
 
 
-            
+
 
 
             # 添加右鍵菜單
@@ -234,7 +234,7 @@ class UIComponentsOutput:
             self.text_output.bind("<Button-3>", self.show_output_context_menu)
 
 
-            
+
 
 
         except Exception as e:
@@ -354,10 +354,10 @@ class UIComponentsOutput:
             self.progress['value'] = 0
 
 
-            self.show_progress(False)  # 隱藏進度條
+            self.hide_progress()  # 隱藏進度條
 
 
-            
+
 
 
             # 取消所有與進度條相關的定時器
@@ -405,6 +405,13 @@ class UIComponentsOutput:
 
 
 
+    def hide_progress(self):
+        """隱藏進度條"""
+        try:
+            self.show_progress(False)
+            print("[DEBUG] 進度條已隱藏")
+        except Exception as e:
+            print(f"[ERROR] 隱藏進度條時發生錯誤: {e}")
     def add_to_buffer(self, text, tag=None):
 
 
@@ -417,7 +424,7 @@ class UIComponentsOutput:
             return
 
 
-            
+
 
 
         # 設為可編輯狀態
@@ -426,7 +433,7 @@ class UIComponentsOutput:
         self.text_output.configure(state='normal')
 
 
-        
+
 
 
         # 若是 [送出] 開頭自動用 send tag
@@ -480,7 +487,7 @@ class UIComponentsOutput:
                 self.text_output.insert(tk.END, text)
 
 
-                
+
 
 
                 # 按關鍵字長度降序排列，讓較長的關鍵字優先匹配
@@ -489,13 +496,13 @@ class UIComponentsOutput:
                 sorted_keywords = sorted(self.keyword_tag_map.items(), key=lambda x: len(x[0]), reverse=True)
 
 
-                
+
 
 
                 found_keywords = []  # 記錄找到的關鍵字，用於調試
 
 
-                
+
 
 
                 for keyword, tag_name in sorted_keywords:
@@ -519,7 +526,7 @@ class UIComponentsOutput:
                             break
 
 
-                            
+
 
 
                         end_idx = f"{idx}+{len(keyword)}c"
@@ -540,13 +547,13 @@ class UIComponentsOutput:
                                     self.text_output.tag_remove(tag, idx, end_idx)
 
 
-                            
+
 
 
                             self.text_output.tag_add(tag_name, idx, end_idx)
 
 
-                            
+
 
 
                             if not keyword_found:
@@ -558,7 +565,7 @@ class UIComponentsOutput:
                                 keyword_found = True
 
 
-                                
+
 
 
                             print(f"[DEBUG] 成功應用關鍵字高亮: '{keyword}' 於位置 {idx}-{end_idx}, 標籤: {tag_name}")
@@ -570,13 +577,13 @@ class UIComponentsOutput:
                             print(f"[ERROR] tag_add 失敗: {e}")
 
 
-                            
+
 
 
                         search_start = end_idx
 
 
-                
+
 
 
                 if found_keywords:
@@ -594,7 +601,7 @@ class UIComponentsOutput:
                 self.text_output.insert(tk.END, text)
 
 
-                
+
 
 
         # 自動捲到最底
@@ -624,7 +631,7 @@ class UIComponentsOutput:
             return
 
 
-            
+
 
 
         if not hasattr(self, 'text_output'):
@@ -636,7 +643,7 @@ class UIComponentsOutput:
             return
 
 
-            
+
 
 
         try:
@@ -750,4 +757,4 @@ class UIComponentsOutput:
         finally:
 
 
-            self.output_context_menu.grab_release() 
+            self.output_context_menu.grab_release()
