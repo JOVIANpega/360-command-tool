@@ -1484,63 +1484,8 @@ class UIHandlers(UIHandlersCore):
         # 啟動線程
         self.parent.thread.start()
 
-    def _force_stop_execution(self):
-        """強制停止當前執行"""
-        try:
-            if hasattr(self.parent, 'thread') and self.parent.thread is not None and self.parent.thread.is_alive():
-                print("[DEBUG] 強制停止執行")
-
-                # 設置停止事件
-                self.parent.stop_event.set()
-
-                # 強制停止 SerialWorker
-                if hasattr(self.parent.thread, 'force_stop'):
-                    success = self.parent.thread.force_stop()
-                    print(f"[DEBUG] SerialWorker force_stop 結果: {success}")
-
-                # 等待線程結束（最多等待 3 秒）
-                print("[DEBUG] 等待線程結束...")
-                self.parent.thread.join(timeout=3.0)
-
-                # 檢查線程是否真的結束了
-                if self.parent.thread.is_alive():
-                    print("[WARNING] 線程在 3 秒後仍在運行")
-                else:
-                    print("[DEBUG] 線程已成功結束")
-
-                # 清理線程引用
-                self.parent.thread = None
-
-                # 立即更新按鈕文字
-                self.parent.components.btn_execute.config(text='執行指令')
-
-                # 立即停止進度條並重置
-                self.parent.components.reset_progress()
-                self.parent.components.hide_progress()
-
-                # 立即停止啟動標籤閃爍
-                if hasattr(self.parent.components, 'startup_label_manager'):
-                    self.parent.components.startup_label_manager.stop_blink()
-
-                # 顯示停止訊息
-                self.parent.components.add_to_buffer("\n[已強制停止執行]\n", "error")
-
-                print("[DEBUG] 強制停止完成")
-                return True
-            else:
-                print("[DEBUG] 沒有正在執行的任務")
-                return False
-
-        except Exception as e:
-            print(f"[ERROR] 強制停止執行時發生錯誤: {e}")
-            # 確保按鈕狀態正確
-            self.parent.components.btn_execute.config(text='執行指令')
-            # 確保進度條重置
-            self.parent.components.reset_progress()
-            self.parent.components.hide_progress()
-            # 清理線程引用
-            self.parent.thread = None
-            return False
+    # 移除複雜的 _force_stop_execution 方法
+    # 現在使用簡化的停止邏輯，直接在 on_execute 中處理
 
         # 獲取 COM 口
         com = self.parent.components.combobox_com.get()
@@ -1751,40 +1696,43 @@ class UIHandlers(UIHandlersCore):
 
 
     def on_execute(self):
-        """執行指令按鈕點擊事件 - 二段式邏輯"""
+        """執行指令按鈕點擊事件 - 簡化版本（回到穩定邏輯）"""
         try:
-            # 檢查當前是否正在執行中
-            is_executing = (hasattr(self.parent, 'thread') and
-                          self.parent.thread is not None and
-                          self.parent.thread.is_alive())
-
-            if is_executing:
-                # 第二次點擊：停止執行
-                print("[DEBUG] 用戶點擊停止執行")
-                self._force_stop_execution()
-                return
-            else:
-                # 第一次點擊：開始執行
-                print("[DEBUG] 用戶點擊開始執行")
-
-                # 驗證執行參數
-                if not self._validate_execution_parameters():
-                    return
-
-                # 獲取執行參數
-                selected_command, com_port, timeout, end_string = self._get_execution_parameters()
-                if not selected_command:
-                    return
-
-                # 立即更新按鈕文字為停止
-                self.parent.components.btn_execute.config(text='停止執行')
-
-                # 立即重置進度條
-                print("[DEBUG] 新指令開始，立即重置進度條")
+            # 如果正在執行，則中止（舊版穩定邏輯）
+            if hasattr(self.parent, 'thread') and self.parent.thread is not None and self.parent.thread.is_alive():
+                print("[DEBUG] 用戶點擊停止執行 - 使用簡化停止邏輯")
+                # 只設置停止事件，讓線程自然結束
+                self.parent.stop_event.set()
+                self.parent.components.add_to_buffer("\n[已中止執行]\n", "error")
                 self.parent.components.reset_progress()
+                # 立即更新按鈕文字
+                self.parent.components.btn_execute.config(text='執行指令')
+                # 立即停止啟動標籤閃爍
+                if hasattr(self.parent.components, 'startup_label_manager'):
+                    self.parent.components.startup_label_manager.stop_blink()
+                return
 
-                # 開始執行
-                self._start_execution(selected_command, com_port, timeout, end_string)
+            # 第一次點擊：開始執行
+            print("[DEBUG] 用戶點擊開始執行")
+
+            # 驗證執行參數
+            if not self._validate_execution_parameters():
+                return
+
+            # 獲取執行參數
+            selected_command, com_port, timeout, end_string = self._get_execution_parameters()
+            if not selected_command:
+                return
+
+            # 立即更新按鈕文字為停止
+            self.parent.components.btn_execute.config(text='停止執行')
+
+            # 立即重置進度條
+            print("[DEBUG] 新指令開始，立即重置進度條")
+            self.parent.components.reset_progress()
+
+            # 開始執行
+            self._start_execution(selected_command, com_port, timeout, end_string)
 
         except Exception as e:
             print(f"[ERROR] 執行指令時發生錯誤: {e}")

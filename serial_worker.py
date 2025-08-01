@@ -50,79 +50,16 @@ class SerialWorker(threading.Thread):
         # 用於顯示訊息的回調函數
         self.show_message_callback: Optional[Callable] = None
 
-        # 序列埠連接
+        # 序列埠連接（簡化版本）
         self.serial_connection: Optional[serial.Serial] = None
-
-        # COM 口關閉鎖，防止重複關閉
-        self._close_lock = threading.Lock()
-        self._is_closed = False
 
         log_debug(f"SerialWorker 初始化: COM={com}, 指令數={len(cmd_list)}, 超時={timeout}s")
 
-    def force_stop(self):
-        """強制停止執行並關閉 COM 口"""
-        try:
-            # 設置停止事件
-            self.stop_event.set()
-            log_debug("SerialWorker 已設置停止事件")
+    # 移除複雜的 force_stop 方法，回到簡單的停止邏輯
+    # 舊版本只需要設置 stop_event，線程會自然結束
 
-            # 等待一小段時間讓主線程有機會正常關閉
-            time.sleep(0.2)
-
-            # 使用鎖來安全關閉 COM 口
-            self._safe_close_serial()
-
-            log_debug("SerialWorker 已強制停止")
-            return True
-        except Exception as e:
-            log_error(f"強制停止時發生錯誤: {e}")
-            return False
-
-    def _safe_close_serial(self):
-        """安全關閉序列埠連接，防止重複關閉"""
-        with self._close_lock:
-            if self._is_closed:
-                log_debug(f"COM 口 {self.com} 已經關閉，跳過")
-                return
-
-            if self.serial_connection is not None:
-                try:
-                    # 檢查 serial_connection 是否仍然有效
-                    if hasattr(self.serial_connection, 'is_open'):
-                        if self.serial_connection.is_open:
-                            # 先嘗試清空緩衝區
-                            try:
-                                if hasattr(self.serial_connection, 'reset_input_buffer'):
-                                    self.serial_connection.reset_input_buffer()
-                                if hasattr(self.serial_connection, 'reset_output_buffer'):
-                                    self.serial_connection.reset_output_buffer()
-                            except:
-                                pass  # 忽略緩衝區清空錯誤
-
-                            # 關閉連接
-                            self.serial_connection.close()
-                            log_debug(f"安全關閉 COM 口 {self.com}")
-                        else:
-                            log_debug(f"COM 口 {self.com} 已經關閉")
-                    else:
-                        log_debug(f"COM 口 {self.com} 連接對象無效")
-                except (OSError, AttributeError, ValueError) as e:
-                    # 特別處理各種關閉錯誤
-                    error_msg = str(e).lower()
-                    if any(keyword in error_msg for keyword in ['控制代碼無效', 'invalid handle', 'handle is invalid', 'bad file descriptor']):
-                        log_debug(f"COM 口 {self.com} 控制代碼已無效，跳過關閉")
-                    else:
-                        log_debug(f"關閉 COM 口時發生錯誤（已忽略）: {e}")
-                except Exception as e:
-                    # 忽略其他關閉時的錯誤，這些通常是無害的
-                    log_debug(f"關閉 COM 口時發生錯誤（已忽略）: {e}")
-                finally:
-                    # 無論如何都要清理引用和設置狀態
-                    try:
-                        self.serial_connection = None
-                    except:
-                        pass
-                    self._is_closed = True
+    # 移除複雜的 _safe_close_serial 方法
+    # 舊版本使用簡單的 ser.close() 就足夠了
 
 
 
@@ -426,8 +363,17 @@ class SerialWorker(threading.Thread):
             self.on_data(f'\n[錯誤] {e}\n', "error")
 
         finally:
-            # 使用安全關閉方法
-            self._safe_close_serial()
+            # 使用簡化的關閉邏輯（回到舊版穩定做法）
+            try:
+                if hasattr(self, 'serial_connection') and self.serial_connection is not None:
+                    self.serial_connection.close()
+                    log_debug(f"簡單關閉 COM 口 {self.com}")
+            except Exception as e:
+                # 忽略關閉時的錯誤，這些通常是無害的
+                log_debug(f"關閉 COM 口時發生錯誤（已忽略）: {e}")
+
+            # 確保 thread 狀態重設（舊版邏輯）
+            self.stop_event.set()
 
             # 更新狀態
             self.on_status(False)
