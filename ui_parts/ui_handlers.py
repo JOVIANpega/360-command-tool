@@ -447,6 +447,14 @@ class UIHandlers(UIHandlersCore):
 
             self.parent.components.reset_progress()
 
+            # 停止startup label閃爍
+            try:
+                if hasattr(self.parent.components, 'startup_label_manager'):
+                    self.parent.components.startup_label_manager.stop_blink()
+                    print("[DEBUG] PING中止時停止啟動標籤閃爍")
+            except Exception as e:
+                print(f"[ERROR] 停止啟動標籤閃爍失敗: {e}")
+
 
             return
 
@@ -496,6 +504,14 @@ class UIHandlers(UIHandlersCore):
 
 
 
+
+                # 開始startup label閃爍
+                try:
+                    if hasattr(self.parent.components, 'startup_label_manager'):
+                        self.parent.components.startup_label_manager.start_blink()
+                        print("[DEBUG] PING開始時啟動標籤開始閃爍")
+                except Exception as e:
+                    print(f"[ERROR] 啟動標籤閃爍失敗: {e}")
                 # 根據作業系統設定 ping 參數
 
 
@@ -725,6 +741,17 @@ class UIHandlers(UIHandlersCore):
 
 
                 self.parent.root.after(0, lambda: self.parent.components.btn_ping.config(text='Ping'))
+
+                # 停止startup label閃爍
+                def stop_startup_blink():
+                    try:
+                        if hasattr(self.parent.components, 'startup_label_manager'):
+                            self.parent.components.startup_label_manager.stop_blink()
+                            print("[DEBUG] PING結束時停止啟動標籤閃爍")
+                    except Exception as e:
+                        print(f"[ERROR] 停止啟動標籤閃爍失敗: {e}")
+
+                self.parent.root.after(0, stop_startup_blink)
 
 
                 self.ping_process = None

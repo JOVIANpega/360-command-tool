@@ -163,6 +163,17 @@ def initialize_application():
         # 創建主視窗
         root = tk.Tk()
 
+        # 設定應用程式圖標
+        try:
+            icon_path = os.path.join(current_dir, 'assets', 'icon.ico')
+            if os.path.exists(icon_path):
+                root.iconbitmap(icon_path)
+                log_info(f"應用程式圖標已設定: {icon_path}")
+            else:
+                log_info("圖標文件不存在，使用預設圖標")
+        except Exception as e:
+            log_error("設定應用程式圖標失敗", e)
+
         # 初始化統一設定管理器
         from ui_parts.shared_config import get_shared_config
         shared_config = get_shared_config(root)
