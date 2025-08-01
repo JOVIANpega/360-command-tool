@@ -442,6 +442,11 @@ class UIHandlers(UIHandlersCore):
             self.ping_process = None
 
 
+            # 停止啟動標籤閃爍
+            if hasattr(self.parent.components, 'startup_label_manager'):
+                self.parent.components.startup_label_manager.stop_blink()
+
+
             # ping 結束時重置進度條
 
 
@@ -515,6 +520,11 @@ class UIHandlers(UIHandlersCore):
 
 
                 self.parent.components.add_to_buffer(f"\n=== 開始 Ping {ip} ===\n", "success")
+
+
+                # 開始啟動標籤閃爍
+                if hasattr(self.parent.components, 'startup_label_manager'):
+                    self.parent.components.startup_label_manager.start_blink()
 
 
                 self.parent.root.update_idletasks()
@@ -725,6 +735,11 @@ class UIHandlers(UIHandlersCore):
 
 
                 self.parent.root.after(0, lambda: self.parent.components.btn_ping.config(text='Ping'))
+
+
+                # 停止啟動標籤閃爍
+                if hasattr(self.parent.components, 'startup_label_manager'):
+                    self.parent.root.after(0, lambda: self.parent.components.startup_label_manager.stop_blink())
 
 
                 self.ping_process = None

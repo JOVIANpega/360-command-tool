@@ -90,11 +90,20 @@ class SettingsTab(ttk.Frame):
         
         ttk.Label(size_frame, text="視窗寬度:").grid(row=0, column=0, sticky="w")
         self.vars["Window_Width"] = tk.StringVar(value=self.setup_data.get("Window_Width", "1536"))
-        ttk.Entry(size_frame, textvariable=self.vars["Window_Width"], width=20).grid(row=0, column=1, sticky="w", padx=(5, 10))
-        
+        self.width_entry = ttk.Entry(size_frame, textvariable=self.vars["Window_Width"], width=20)
+        self.width_entry.grid(row=0, column=1, sticky="w", padx=(5, 10))
+
         ttk.Label(size_frame, text="高度:").grid(row=0, column=2, sticky="w")
         self.vars["Window_Height"] = tk.StringVar(value=self.setup_data.get("Window_Height", "793"))
-        ttk.Entry(size_frame, textvariable=self.vars["Window_Height"], width=20).grid(row=0, column=3, sticky="w", padx=(5, 0))
+        self.height_entry = ttk.Entry(size_frame, textvariable=self.vars["Window_Height"], width=20)
+        self.height_entry.grid(row=0, column=3, sticky="w", padx=(5, 0))
+
+        # 添加同步當前視窗大小按鈕
+        sync_button = ttk.Button(size_frame, text="同步當前", command=self.sync_current_window_size)
+        sync_button.grid(row=0, column=4, sticky="w", padx=(10, 0))
+
+        # 啟動定時更新視窗大小
+        self.start_window_size_sync()
         
         # DUT 控制設定
         dut_frame = ttk.LabelFrame(left_container, text="DUT 控制設定", padding=(10, 4))
@@ -270,20 +279,7 @@ class SettingsTab(ttk.Frame):
 
     # 字體設定函式已移至DUT控制標籤頁
 
-    def on_notification_font_changed(self, event=None):
-        """通知字體大小即時更新（僅更新顯示，不自動保存）"""
-        try:
-            new_size = self.vars["DUT_Notification_Font_Size"].get()
-            if new_size.isdigit():
-                size = int(new_size)
-                if 8 <= size <= 20:
-                    # 只更新UI顯示，不自動保存到檔案
-                    print(f"[DEBUG] 通知字體大小已變更為 {size}，請點擊保存按鈕以儲存變更")
 
-                    # 通知其他元件更新字體顯示
-                    self.apply_font_changes_immediately()
-        except Exception as e:
-            print(f"更新通知字體時發生錯誤: {e}")
 
     def on_fixture_font_changed(self, event=None):
         """治具字體大小即時更新（僅更新顯示，不自動保存）"""
@@ -377,14 +373,6 @@ class SettingsTab(ttk.Frame):
                     dut_ui.update_from_config()
                 
                 # 字體設定已移至DUT控制標籤頁，此處不再處理
-                    if hasattr(components, 'notification_font_size') and notification_font_size.isdigit():
-                        components.notification_font_size = int(notification_font_size)
-                        
-                        # 更新通知相關的 UI 元件
-                        if hasattr(components, 'label_countdown'):
-                            components.label_countdown.config(
-                                font=('Microsoft JhengHei UI', int(notification_font_size), 'bold')
-                            )
                     
                     # 觸發字體更新
                     if hasattr(components, 'update_fonts'):
@@ -696,6 +684,49 @@ class SettingsTab(ttk.Frame):
         self.update_ui_from_settings()
         
         print("[DEBUG] 設定分頁已激活並更新")
+
+    def sync_current_window_size(self):
+        """同步當前視窗大小到設定欄位"""
+        try:
+            # 獲取主視窗
+            root = self.winfo_toplevel()
+            if root and hasattr(root, 'winfo_exists') and root.winfo_exists():
+                width = root.winfo_width()
+                height = root.winfo_height()
+
+                # 更新設定欄位
+                self.vars["Window_Width"].set(str(width))
+                self.vars["Window_Height"].set(str(height))
+                print(f"[DEBUG] 已同步當前視窗大小: {width}x{height}")
+        except Exception as e:
+            print(f"[ERROR] 同步視窗大小失敗: {e}")
+
+    def start_window_size_sync(self):
+        """啟動定時同步視窗大小"""
+        def update_window_size():
+            try:
+                # 獲取主視窗
+                root = self.winfo_toplevel()
+                if root and hasattr(root, 'winfo_exists') and root.winfo_exists():
+                    width = root.winfo_width()
+                    height = root.winfo_height()
+
+                    # 只有當值真正改變時才更新，避免無限循環
+                    current_width = self.vars["Window_Width"].get()
+                    current_height = self.vars["Window_Height"].get()
+
+                    if current_width != str(width) or current_height != str(height):
+                        self.vars["Window_Width"].set(str(width))
+                        self.vars["Window_Height"].set(str(height))
+
+                # 每秒更新一次
+                self.after(1000, update_window_size)
+            except Exception as e:
+                # 靜默處理錯誤，避免干擾用戶操作
+                self.after(1000, update_window_size)
+
+        # 啟動定時更新
+        self.after(1000, update_window_size)
 
     def update_ui_from_settings(self):
         """從設定更新 UI 控件的值"""

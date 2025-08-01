@@ -1,0 +1,39 @@
+
+=== 執行指令: 1. 取得MB序號 Get 360 SN States ===
+COM 口: COM5, 超時: 30 秒, 結束字串: root
+多重指令模式: 將執行 4 個指令
+  1. diag -g sn mb
+  2. diag -g hwver
+  3. diag -g sku
+  4. pegacmd version
+
+[發送] diag -g sn mb
+diag -g sn mb
+diag: mb sn 2560844800010
+root@NOKIA360Camera-WE251400017:/root$ 
+root@NOKIA360Camera-WE251400017:/root$ 
+[發送] diag -g hwver
+diag -g hwver
+diag: hwver R110
+root@NOKIA360Camera-WE251400017:/root$ 
+root@NOKIA360Camera-WE251400017:/root$ 
+[發送] diag -g sku
+diag -g sku
+diag: sku N3C2401C
+root@NOKIA360Camera-WE251400017:/root$ 
+root@NOKIA360Camera-WE251400017:/root$ 
+[發送] pegacmd version
+pegacmd version
+0.5.16.52.0_9cb5411
+root@NOKIA360Camera-WE251400017:/root$ 
+root@NOKIA360Camera-WE251400017:/root$ 
+[結束] 收到指定結束字串 root
+
+=== 開始 Ping 192.168.11.143 ===
+
+Ping 192.168.11.143 (使用 32 位元組的資料):
+回覆自 192.168.11.143: 位元組=32 時間=3ms TTL=64
+回覆自 192.168.11.143: 位元組=32 時間=2ms TTL=64
+
+[Ping 已中止]
+

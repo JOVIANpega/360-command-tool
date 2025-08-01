@@ -92,8 +92,7 @@ class TabManager:
         # 初始化各個標籤頁
         self.init_tabs()
         
-        # 初始化全域通知管理器
-        self.init_global_notification()
+
         
         # 設定視窗關閉事件
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -177,26 +176,7 @@ class TabManager:
             # 創建簡單的使用說明標籤頁
             ttk.Label(self.guide_frame, text="使用說明內容").pack(pady=20)
 
-    def init_global_notification(self):
-        """初始化全域通知管理器"""
-        try:
-            from ui_parts.notification_manager import NotificationManager
 
-            # 創建通知區域框架
-            notification_frame = ttk.Frame(self.root)
-            notification_frame.grid(row=1, column=0, sticky='ew', padx=5, pady=(0, 5))
-            notification_frame.grid_columnconfigure(0, weight=1)
-
-            # 初始化通知管理器
-            setup = load_setup()
-            self.notification_manager = NotificationManager(notification_frame, setup)
-
-            # 設定為全域通知管理器
-            self.root.notification_manager = self.notification_manager
-
-            print("[DEBUG] 全域通知管理器初始化完成")
-        except Exception as e:
-            print(f"[ERROR] 初始化全域通知管理器時發生錯誤: {e}")
     
     def on_closing(self):
         """視窗關閉事件處理"""

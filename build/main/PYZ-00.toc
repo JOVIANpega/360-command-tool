@@ -557,10 +557,6 @@
    'D:\\((Python '
    'TOOL\\指令工具-20250428T020034Z-001\\CODE_HERE2\\ui_parts\\font_manager.py',
    'PYMODULE'),
-  ('ui_parts.notification_manager',
-   'D:\\((Python '
-   'TOOL\\指令工具-20250428T020034Z-001\\CODE_HERE2\\ui_parts\\notification_manager.py',
-   'PYMODULE'),
   ('ui_parts.shared_config',
    'D:\\((Python '
    'TOOL\\指令工具-20250428T020034Z-001\\CODE_HERE2\\ui_parts\\shared_config.py',

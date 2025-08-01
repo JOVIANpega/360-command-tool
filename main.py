@@ -100,6 +100,24 @@ def setup_window_properties(root):
         root.title(full_title)
         root.geometry(f"{width}x{height}")
 
+        # 設置應用程式圖示
+        try:
+            # 獲取圖示路徑
+            if getattr(sys, 'frozen', False):
+                # 打包後的環境
+                icon_path = os.path.join(sys._MEIPASS, 'assets', 'icon.ico')
+            else:
+                # 開發環境
+                icon_path = os.path.join(os.path.dirname(__file__), 'assets', 'icon.ico')
+
+            if os.path.exists(icon_path):
+                root.iconbitmap(icon_path)
+                log_info(f"應用程式圖示設置成功: {icon_path}")
+            else:
+                log_info(f"圖示檔案不存在: {icon_path}")
+        except Exception as e:
+            log_error("設置應用程式圖示失敗", e)
+
         log_info(f"視窗設置完成: {full_title} ({width}x{height})")
 
         # 設置視窗大小變動事件

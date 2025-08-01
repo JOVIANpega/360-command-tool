@@ -267,8 +267,7 @@ class TabManager:
         
 
 
-        # 先創建全域通知區域 - 放在整個GUI的最底部
-        self.init_global_notification_area(root, setup)
+
         
         # 初始化分頁內容（此時通知管理器已經可用）
 
@@ -282,44 +281,7 @@ class TabManager:
         # 綁定關閉事件
         self.root.protocol("WM_DELETE_WINDOW", self.on_close)
         
-    def init_global_notification_area(self, parent, setup):
-        """初始化全域通知區域"""
-        try:
-            # 導入NotificationManager
-            from ui_parts.notification_manager import NotificationManager
-            
-            # 創建通知管理器
-            self.notification_manager = NotificationManager(parent, setup)
 
-            # 創建全域變數方便其他模組使用（NotificationManager沒有notification_text屬性）
-            self.notification_text = None  # 簡化版本的NotificationManager不需要這個屬性
-            
-            # 顯示啟動訊息
-            app_version = config_utils.get_app_version()
-            app_name = setup.get('Window_Title', setup.get('DUT_Control', {}).get('Window_Title', '指令通'))
-            
-            # 延遲1秒顯示啟動訊息
-            self.root.after(1000, lambda: self.notification_manager.show_notification(
-                f"{app_name} 已啟動 (版本：V{app_version})", "success"
-            ))
-            
-            print("[DEBUG] 全域通知區域初始化完成")
-            
-        except Exception as e:
-            print(f"[ERROR] 初始化全域通知區域失敗: {e}")
-            import traceback
-            traceback.print_exc()
-    
-    def show_global_notification(self, message, message_type="info", duration=2000, callback=None):
-        """顯示全域通知的快捷方法"""
-        if hasattr(self, 'notification_manager'):
-            self.notification_manager.show_notification(message, message_type)
-        else:
-            print(f"[WARNING] 通知管理器未初始化: {message}")
-    
-    def update_notification(self, message, message_type="info", duration=2000):
-        """更新全域通知區域的內容（統一管理所有提示訊息）"""
-        self.show_global_notification(message, message_type, duration)
 
 
     def update_dut_settings(self):
@@ -786,10 +748,9 @@ class TabManager:
             # 同步各種字體設定
             ui_font_size = dut_settings.get('UI_Font_Size', '13')
             content_font_size = dut_settings.get('Content_Font_Size', '11')
-            notification_font_size = dut_settings.get('Notification_Font_Size', '10')
             fixture_font_size = fixture_settings.get('Fixture_Font_Size', '11')
-            
-            print(f"[DEBUG] 字體設定同步 - UI:{ui_font_size}, 內容:{content_font_size}, 通知:{notification_font_size}, 治具:{fixture_font_size}")
+
+            print(f"[DEBUG] 字體設定同步 - UI:{ui_font_size}, 內容:{content_font_size}, 治具:{fixture_font_size}")
             
             # 更新DUT UI的字體設定
             if hasattr(self, 'dut_ui') and hasattr(self.dut_ui, 'components'):
@@ -826,23 +787,7 @@ class TabManager:
                 except Exception as e:
                     print(f"[WARNING] 更新治具字體時發生錯誤: {e}")
             
-            # 同步系統字體設定到全域通知管理器
-            if hasattr(self, 'notification_manager'):
-                system_settings = setup.get('System', {})
-                global_font_size = system_settings.get('Notification_Font_Size', notification_font_size)
-                # NotificationManager使用brief_message而不是notification_text
-                if hasattr(self.notification_manager, 'brief_message'):
-                    try:
-                        current_font = self.notification_manager.brief_message.cget("font")
-                        if isinstance(current_font, tuple):
-                            family, size, style = current_font
-                        else:
-                            family, size, style = 'Microsoft JhengHei UI', 9, 'normal'
 
-                        new_font = (family, int(global_font_size), style)
-                        self.notification_manager.brief_message.config(font=new_font)
-                    except Exception as e:
-                        print(f"[WARNING] 更新全域通知字體時發生錯誤: {e}")
                     
         except Exception as e:
             print(f"[ERROR] 同步字體設定時發生錯誤：{e}")
@@ -1107,13 +1052,7 @@ class TabManager:
     def init_dut_tab(self):
         # 初始化 DUT 控制分頁
         self.dut_ui = SerialUI(self.dut_frame, self.root, self.highlight_keywords)
-        
-        # 將全域通知管理器傳遞給DUT UI
-        if hasattr(self, 'notification_manager'):
-            self.dut_ui.global_notification_manager = self.notification_manager
-            if hasattr(self.dut_ui, 'components'):
-                self.dut_ui.components.global_notification_manager = self.notification_manager
-        
+
         # 初始化完成後立即更新 DUT 按鈕
         self.update_dut_buttons()
         print("[DEBUG] DUT 控制分頁初始化完成，已更新按鈕")

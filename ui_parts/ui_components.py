@@ -50,9 +50,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.handlers = handlers
         self.current_left_row = 0
         
-        # 獲取全域通知管理器的引用
-        self.global_notification_manager = None
-        # 會在init_dut_tab中被設定
+
 
         # 初始化腳本檢視模式標記
         if not hasattr(self.parent, 'script_view_mode'):
@@ -94,12 +92,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         # 恢復 PanedWindow 分割位置（延遲執行，確保視窗已完全載入）
         self.parent.root.after(200, self.restore_pane_position)
         
-        # 使用全域通知管理器顯示歡迎訊息（單行）
-        welcome_message = "歡迎使用指令通！選擇COM口和指令後點擊「執行指令」按鈕。"
-        self.parent.root.after(3000, lambda: self.show_notification(welcome_message, "success", 5000))
-        
-        # 顯示系統狀態
-        self.parent.root.after(8000, self.show_system_status)
+
 
     def init_com_components(self):
         com_frame = ttk.Frame(self.left_panel, style="TFrame")
@@ -1110,59 +1103,9 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
 
     def show_notification(self, message, color="info", duration=2000, callback=None):
         """
-        統一的通知顯示方法，優先使用全域通知管理器
-        
-        參數:
-            message: 要顯示的消息
-            color: 訊息類型 ("info", "success", "warning", "error") 或顏色名稱
-            duration: 顯示時間(毫秒)，默認2秒
-            callback: 通知結束後要調用的回調函數
+        簡化的通知方法，只輸出到控制台
         """
-        # 轉換顏色名稱到訊息類型
-        color_mapping = {
-            "blue": "info",
-            "green": "success", 
-            "orange": "warning",
-            "red": "error",
-            "purple": "info",
-            "black": "default"
-        }
-        
-        message_type = color_mapping.get(color, color)
-        
-        # 優先使用全域通知管理器
-        try:
-            if self.global_notification_manager:
-                self.global_notification_manager.show_notification(message, message_type)
-                return
-            
-            # 嘗試尋找TabManager並使用其通知管理器
-            current_widget = self.root
-            while current_widget:
-                if hasattr(current_widget, 'notification_manager'):
-                    current_widget.notification_manager.show_notification(message, message_type)
-                    return
-                current_widget = getattr(current_widget, 'master', None)
-            
-            # 如果找不到全域通知管理器，使用本地通知（備用方案）
-            print(f"[INFO] 未找到全域通知管理器，使用本地通知: {message}")
-            self._show_local_notification(message, color, duration, callback)
-            
-        except Exception as e:
-            print(f"[ERROR] 顯示全域通知失敗，使用本地通知: {e}")
-            self._show_local_notification(message, color, duration, callback)
-    
-    def _show_local_notification(self, message, color="red", duration=5000, callback=None):
-        """
-        本地通知顯示方法（備用方案）
-        """
-        # 原本的通知區域已被全域通知管理器取代，不再需要
-        pass
-
-    def _restore_after_notification(self, original_fg, callback=None):
-        """通知結束後恢復"""
-        # 原本的通知區域已被全域通知管理器取代，不再需要
-        pass
+        print(f"[NOTIFICATION] {message}")
 
     def on_cmd_selected(self):
         """當選擇指令時的回調函數"""
@@ -1184,37 +1127,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                 message = cmd.split(":")[1]
                 self.show_notification(get_notification_text("show_msg", message), "green", 3000)
 
-    def show_system_status(self):
-        """顯示系統狀態信息"""
-        try:
-            # 獲取 COM 口
-            com = self.combobox_com.get() or "未選擇"
-            
-            # 獲取當前選擇的分類
-            section = self.section_var.get()
-            
-            # 獲取指令數量
-            cmd_count = len(self.parent.commands_by_section.get(section, {}))
-            
-            # 獲取超時設定
-            timeout = self.entry_timeout.get() or "30"
-            
-            # 顯示系統狀態
-            self.show_notification(get_notification_text("system_status", com, section, cmd_count, timeout), "blue", 5000)
-        except Exception as e:
-            print(f"[ERROR] 顯示系統狀態時發生錯誤: {e}")
-            import traceback
-            traceback.print_exc()
 
-    def change_notification_font_size(self, delta):
-        """修改通知區域字體大小"""
-        try:
-            # 原本的通知區域已被全域通知管理器取代，不再需要
-            pass
-        except Exception as e:
-            print(f"[ERROR] 修改通知區域字體大小時發生錯誤: {e}")
-            import traceback
-            traceback.print_exc()
 
     def copy_selected_text(self):
         # 實現複製選中文字的功能
