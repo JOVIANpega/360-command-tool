@@ -146,21 +146,25 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
     def on_com_port_changed(self, event=None):
         """當 COM 口選擇變更時，立即更新顯示但延遲保存"""
         try:
-            selected_com = self.combobox_com.get()
-            if selected_com:
-                print(f"[DEBUG] COM 口已變更為: {selected_com}")
+            selected_display_name = self.combobox_com.get()
+            if selected_display_name:
+                # 從顯示名稱中提取實際的 COM 口名稱
+                from config_core import extract_com_port_name
+                actual_com_port = extract_com_port_name(selected_display_name)
+
+                print(f"[DEBUG] COM 口已變更為: {actual_com_port} (顯示: {selected_display_name})")
 
                 # 立即更新設定到 parent.setup（用於UI顯示）
                 if 'DUT_Control' not in self.parent.setup:
                     self.parent.setup['DUT_Control'] = {}
-                self.parent.setup['DUT_Control']['Serial_COM_Port'] = selected_com
+                self.parent.setup['DUT_Control']['Serial_COM_Port'] = actual_com_port
 
                 # 使用統一設定管理器的延遲保存機制
                 if hasattr(self.parent, 'shared_config'):
                     self.parent.shared_config._schedule_delayed_save()
 
-                # 顯示通知
-                self.show_notification(f"COM 口已更新為 {selected_com}", "blue", 3000)
+                # 顯示通知（顯示完整資訊）
+                self.show_notification(f"COM 口已更新為 {selected_display_name}", "blue", 3000)
         except Exception as e:
             print(f"[ERROR] 更新 COM 口設定時發生錯誤: {e}")
             import traceback
@@ -198,11 +202,15 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         try:
             current_mode = self.transport_mode_var.get()
             if current_mode == 'ADB':
-                # ADB 模式下禁用 COM 口相關組件
-                self.combobox_com.config(state='disabled')
-                self.btn_refresh.config(state='disabled')
-                self.label_com.config(foreground='gray')
-                print("[DEBUG] ADB 模式：COM 口組件已禁用")
+                # ADB 模式下讓 COM 口可見但顯示為灰色，表示不會被使用
+                self.combobox_com.config(state='readonly')  # 保持可讀但不強調
+                self.btn_refresh.config(state='normal')     # 保持刷新功能
+                self.label_com.config(foreground='gray')    # 灰色表示不會被使用
+                print("[DEBUG] ADB 模式：COM 口組件可見但不會被使用")
+
+                # 顯示提示信息
+                if hasattr(self, 'show_notification'):
+                    self.show_notification("ADB 模式：COM 口僅供參考，不會被使用", "orange", 2000)
             else:
                 # Console 模式下啟用 COM 口相關組件
                 self.combobox_com.config(state='readonly')

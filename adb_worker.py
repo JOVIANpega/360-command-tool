@@ -52,8 +52,16 @@ class ADBWorker(threading.Thread):
     def check_adb_connection(self):
         """檢查 ADB 連接狀態"""
         try:
-            result = subprocess.run(['adb', 'devices'], 
-                                  capture_output=True, text=True, timeout=5)
+            # 在 Windows 上隱藏 DOS 視窗
+            startupinfo = None
+            if subprocess.sys.platform == "win32":
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                startupinfo.wShowWindow = subprocess.SW_HIDE
+
+            result = subprocess.run(['adb', 'devices'],
+                                  capture_output=True, text=True, timeout=5,
+                                  startupinfo=startupinfo)
             if result.returncode == 0:
                 devices = result.stdout.strip().split('\n')[1:]  # 跳過標題行
                 connected_devices = [line for line in devices if line.strip() and 'device' in line]
@@ -68,12 +76,20 @@ class ADBWorker(threading.Thread):
         try:
             # 構建 adb shell 指令
             adb_cmd = ['adb', 'shell', command]
-            
+
+            # 在 Windows 上隱藏 DOS 視窗
+            startupinfo = None
+            if subprocess.sys.platform == "win32":
+                startupinfo = subprocess.STARTUPINFO()
+                startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+                startupinfo.wShowWindow = subprocess.SW_HIDE
+
             # 執行指令
-            result = subprocess.run(adb_cmd, capture_output=True, text=True, timeout=30)
-            
+            result = subprocess.run(adb_cmd, capture_output=True, text=True, timeout=30,
+                                  startupinfo=startupinfo)
+
             return result.returncode, result.stdout, result.stderr
-            
+
         except subprocess.TimeoutExpired:
             return -1, "", "指令執行超時"
         except Exception as e:

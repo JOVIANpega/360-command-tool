@@ -129,16 +129,45 @@ def save_setup(setup_data: Dict[str, Any], manual_save=False) -> bool:
 
 @safe_execute(error_handler)
 def list_com_ports() -> List[str]:
-    """列出可用的COM口，包含更好的錯誤處理"""
+    """列出可用的COM口，只對特定類型顯示描述"""
     try:
         import serial.tools.list_ports
         ports = serial.tools.list_ports.comports()
-        com_ports = [port.device for port in ports]
+        com_ports = []
+
+        for port in ports:
+            # 基本 COM 口名稱
+            port_name = port.device
+
+            # 獲取描述信息
+            description = port.description.upper() if port.description else ""
+
+            # 只對特定類型的 COM 口顯示描述
+            display_name = port_name  # 預設只顯示 COM 口名稱
+
+            # 檢查是否包含特定的描述關鍵字
+            if "USB DM PORT" in description or "DM PORT" in description:
+                display_name = f"{port_name} - DM PORT"
+            elif "USB AT PORT" in description or "AT PORT" in description:
+                display_name = f"{port_name} - AT PORT"
+            elif "USB NMEA PORT" in description or "NMEA PORT" in description:
+                display_name = f"{port_name} - NMEA PORT"
+            # 其他類型的 COM 口只顯示名稱，不顯示描述
+
+            com_ports.append(display_name)
+
         log_debug(f"找到 {len(com_ports)} 個COM口: {com_ports}")
         return com_ports
     except Exception as e:
         log_error("獲取COM口列表時發生錯誤", e)
         return []
+
+
+def extract_com_port_name(display_name: str) -> str:
+    """從顯示名稱中提取實際的 COM 口名稱"""
+    if " - " in display_name:
+        return display_name.split(" - ")[0]
+    return display_name
 
 
 

@@ -799,13 +799,24 @@ class UIHandlers(UIHandlersCore):
             # 如果當前選擇仍在新列表中，保持選擇
 
 
-            if current_selection and current_selection in new_ports:
+            # 從顯示名稱中提取實際的 COM 口名稱進行比較
+            from config_core import extract_com_port_name
+            current_actual_port = extract_com_port_name(current_selection) if current_selection else ""
+
+            # 找到匹配的顯示名稱
+            matching_display_name = None
+            for display_name in new_ports:
+                if extract_com_port_name(display_name) == current_actual_port:
+                    matching_display_name = display_name
+                    break
+
+            if matching_display_name:
 
 
-                self.parent.components.combobox_com.set(current_selection)
+                self.parent.components.combobox_com.set(matching_display_name)
 
 
-                print(f"[DEBUG] refresh_com_ports: 保持選擇 {current_selection}")
+                print(f"[DEBUG] refresh_com_ports: 保持選擇 {matching_display_name}")
 
 
             elif new_ports:  # 如果有可用的COM口但當前選擇不在列表中
@@ -814,16 +825,19 @@ class UIHandlers(UIHandlersCore):
                 # 選擇第一個可用的COM口，而不是清空選擇
 
 
-                self.parent.components.combobox_com.set(new_ports[0])
+                # 選擇第一個可用的COM口，而不是清空選擇
+                selected_display_name = new_ports[0]
+                actual_com_port = extract_com_port_name(selected_display_name)
+                self.parent.components.combobox_com.set(selected_display_name)
 
 
-                print(f"[DEBUG] refresh_com_ports: 當前選擇 '{current_selection}' 不可用，選擇新的COM口 {new_ports[0]}")
+                print(f"[DEBUG] refresh_com_ports: 當前選擇 '{current_selection}' 不可用，選擇新的COM口 {selected_display_name}")
 
 
 
 
 
-                # 自動保存新選擇的COM口到設定檔
+                # 自動保存新選擇的COM口到設定檔（保存實際的 COM 口名稱）
 
 
                 if 'DUT_Control' not in self.parent.setup:
@@ -832,7 +846,7 @@ class UIHandlers(UIHandlersCore):
                     self.parent.setup['DUT_Control'] = {}
 
 
-                self.parent.setup['DUT_Control']['Serial_COM_Port'] = new_ports[0]
+                self.parent.setup['DUT_Control']['Serial_COM_Port'] = actual_com_port
 
 
 
@@ -853,7 +867,7 @@ class UIHandlers(UIHandlersCore):
                     full_setup['DUT_Control'] = {}
 
 
-                full_setup['DUT_Control']['Serial_COM_Port'] = new_ports[0]
+                full_setup['DUT_Control']['Serial_COM_Port'] = actual_com_port
 
 
                 save_setup(full_setup)
@@ -1472,8 +1486,24 @@ class UIHandlers(UIHandlersCore):
         self.parent.components.add_to_buffer(f"\n=== 執行指令: {selected_command} ===\n", "purple")
         if transport_mode == "ADB":
             self.parent.components.add_to_buffer(f"傳輸模式: ADB, 超時: {timeout} 秒, 結束字串: {end_string}\n", "purple")
+            # 顯示多重指令模式信息
+            if len(cmd_list) > 1:
+                self.parent.components.add_to_buffer(f"多重指令模式: 將執行 {len(cmd_list)} 個指令\n", "purple")
+                for i, cmd in enumerate(cmd_list, 1):
+                    cmd = cmd.strip()
+                    if cmd:
+                        self.parent.components.add_to_buffer(f"  {i}. {cmd}\n", "purple")
+                self.parent.components.add_to_buffer("\n", "purple")
         else:
             self.parent.components.add_to_buffer(f"COM 口: {com_port}, 超時: {timeout} 秒, 結束字串: {end_string}\n", "purple")
+            # 顯示多重指令模式信息
+            if len(cmd_list) > 1:
+                self.parent.components.add_to_buffer(f"多重指令模式: 將執行 {len(cmd_list)} 個指令\n", "purple")
+                for i, cmd in enumerate(cmd_list, 1):
+                    cmd = cmd.strip()
+                    if cmd:
+                        self.parent.components.add_to_buffer(f"  {i}. {cmd}\n", "purple")
+                self.parent.components.add_to_buffer("\n", "purple")
 
         # 如果有多個指令，顯示分割信息
         if len(cmd_list) > 1:
@@ -1529,11 +1559,14 @@ class UIHandlers(UIHandlersCore):
     # 移除複雜的 _force_stop_execution 方法
     # 現在使用簡化的停止邏輯，直接在 on_execute 中處理
 
-        # 獲取 COM 口
-        com = self.parent.components.combobox_com.get()
-        if not com:
+        # 獲取 COM 口（從顯示名稱中提取實際的 COM 口名稱）
+        com_display_name = self.parent.components.combobox_com.get()
+        if not com_display_name:
             self.parent.components.add_to_buffer("\n[錯誤] 請選擇 COM 口\n", "error")
             return False, "未選擇 COM 口"
+
+        from config_core import extract_com_port_name
+        com = extract_com_port_name(com_display_name)
 
         # 獲取指令
         cmd = self.parent.components.combobox_cmd.get()

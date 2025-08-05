@@ -1,8 +1,8 @@
 # UTF-8
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(1, 7, 6, 0),
-    prodvers=(1, 7, 6, 0),
+    filevers=(1, 9, 2, 0),
+    prodvers=(1, 9, 2, 0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -17,13 +17,13 @@ VSVersionInfo(
           u'040904B0',
           [StringStruct(u'CompanyName', u'VALO360 開發團隊'),
           StringStruct(u'FileDescription', u'VALO360 指令通 - 串口指令執行工具'),
-          StringStruct(u'FileVersion', u'1.7.6.0'),
+          StringStruct(u'FileVersion', u'1.9.2.0'),
           StringStruct(u'InternalName', u'VALO360_CommandTool'),
           StringStruct(u'LegalCopyright', u'Copyright © 2024-2025 VALO360'),
-          StringStruct(u'OriginalFilename', u'指令通_v1.7.6.exe'),
+          StringStruct(u'OriginalFilename', u'指令通_v1.9.2.exe'),
           StringStruct(u'ProductName', u'VALO360 指令通'),
-          StringStruct(u'ProductVersion', u'1.7.6.0'),
-          StringStruct(u'Comments', u'漸進式重構版本 - 改善代碼結構，提升維護性')])
+          StringStruct(u'ProductVersion', u'1.9.2.0'),
+          StringStruct(u'Comments', u'ADB 優化3：COM口顯示增強 + 指令列表顯示')])
       ]),
     VarFileInfo([VarStruct(u'Translation', [1028, 1200])])
   ]
@@ -31,46 +31,49 @@ VSVersionInfo(
 
 # 應用程式信息
 APP_NAME = "VALO360 指令通"
-APP_VERSION = "1.7.6"
-APP_DESCRIPTION = "串口指令執行工具 - 漸進式重構版本"
+APP_VERSION = "1.9.2"
+APP_DESCRIPTION = "串口指令執行工具 - ADB 優化3：COM口顯示增強 + 指令列表顯示"
 APP_AUTHOR = "VALO360 開發團隊"
 APP_COPYRIGHT = "Copyright © 2024-2025 VALO360"
 
 # 更新日誌
-CHANGELOG_V1_7_6 = """
-版本 1.7.6 更新內容：
+CHANGELOG_V1_9_2 = """
+版本 1.9.2 更新內容：
 
-🔧 代碼重構改進：
-• 漸進式重構 ui_handlers.py，將大函數拆分為更小的輔助函數
-• 漸進式重構 ui_main.py，改善代碼結構和可維護性
-• 添加了 13 個重構輔助函數，提升代碼可讀性
-• 保持所有原有功能完全不變，確保穩定性
+🔍 COM 口顯示增強：
+• 智能 COM 口識別：自動識別 AT PORT、DM PORT、NMEA PORT
+• 選擇性描述顯示：只對特定類型的 COM 口顯示描述信息
+• 其他 COM 口簡潔顯示：普通 COM 口只顯示名稱（如 COM3）
+• 正確指令傳遞：確保後續指令只使用 COM 口名稱，不包含描述
 
-✨ 重構輔助函數：
-• _get_command_file_path() - 獲取指令檔路徑
-• _parse_command_line() - 解析單行指令
-• _print_commands_summary() - 輸出指令摘要
-• _validate_execution_parameters() - 驗證執行參數
-• _prepare_command_execution() - 準備指令執行
-• _create_and_start_worker() - 創建並啟動工作線程
-• _read_section_titles_from_file() - 從指令檔案中讀取區段標題
-• _get_section_titles() - 獲取區段標題列表
-• _create_section_radiobutton() - 創建區段單選按鈕
-• _update_basic_settings() - 更新基本設定
-• _update_end_string_settings() - 更新結束字串設定
-• _update_font_settings() - 更新字體設定
-• _update_device_and_command_settings() - 更新設備和指令設定
+📋 ADB 指令列表顯示：
+• ADB 模式指令預覽：執行前顯示完整的指令列表
+• 多重指令模式：清楚顯示將執行的指令數量和內容
+• 統一顯示格式：ADB 和 Console 模式使用相同的指令列表顯示
+• 改善用戶體驗：用戶可以在執行前確認所有指令
 
-🎯 改進效果：
-• 大函數從 200+ 行拆分為多個 20-50 行的小函數
-• 提升代碼可讀性和維護性
-• 降低代碼複雜度，便於後續開發
-• 保持 100% 向後兼容性
+🛠️ ADB 模式優化：
+• ADB 模式下 COM 口可見：COM 口顯示為灰色，表示僅供參考
+• 智能狀態提示：自動提示 ADB 模式下 COM 口不會被使用
+• 保持功能完整：所有 ADB 功能保持正常運作
+
+🔧 技術改進：
+• 修改 list_com_ports()：增強 COM 口類型識別邏輯
+• 新增 extract_com_port_name()：從顯示名稱提取實際 COM 口名稱
+• 更新 ui_handlers.py：統一 ADB 和 Console 模式的指令顯示
+• 改進 COM 口狀態管理：ADB 模式下的智能狀態控制
+
+✨ 使用者體驗提升：
+• 更清楚的 COM 口資訊：一目了然的 COM 口類型
+• 更好的指令預覽：執行前可確認所有指令
+• 更智能的模式切換：ADB 和 Console 模式的無縫切換
+• 更專業的界面顯示：保持簡潔但資訊豐富的顯示
 
 📊 技術指標：
 • 程式啟動時間：< 3 秒
 • 記憶體使用：< 50MB
-• 支援 COM 口：自動檢測
+• 支援 COM 口：自動檢測並智能分類
+• 支援 ADB 模式：完全隱藏 DOS 視窗 + 指令列表顯示
 • 指令解析：94+ 個指令
 • GUI 響應：即時更新
 """
