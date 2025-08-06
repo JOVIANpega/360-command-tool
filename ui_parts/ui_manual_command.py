@@ -44,6 +44,9 @@ class ManualCommandUI:
         self.serial_connection = None  # 串口連接
         self.notepad_process = None  # 記事本程序
         
+        # 創建自定義樣式
+        self.create_custom_styles()
+        
         # 創建 UI 元件
         self.create_widgets()
         
@@ -56,15 +59,15 @@ class ManualCommandUI:
     def create_widgets(self):
         """創建 UI 元件"""
         # 創建主分割視窗
-        self.paned_window = ttk.PanedWindow(self.parent, orient='horizontal')
+        self.paned_window = ttk.PanedWindow(self.parent, orient='horizontal', style='Main.TPanedwindow')
         self.paned_window.pack(fill='both', expand=True, padx=5, pady=5)
         
         # 左側控制面板
-        self.left_frame = ttk.Frame(self.paned_window)
+        self.left_frame = ttk.Frame(self.paned_window, style='Main.TFrame')
         self.paned_window.add(self.left_frame, weight=1)
         
         # 右側輸出面板
-        self.right_frame = ttk.Frame(self.paned_window)
+        self.right_frame = ttk.Frame(self.paned_window, style='Main.TFrame')
         self.paned_window.add(self.right_frame, weight=2)
         
         # 創建左側元件
@@ -80,60 +83,66 @@ class ManualCommandUI:
     def create_left_panel(self):
         """創建左側控制面板"""
         # 通訊設定區域（最上方）
-        settings_frame = ttk.LabelFrame(self.left_frame, text="通訊設定", padding="5")
+        settings_frame = ttk.LabelFrame(self.left_frame, text="通訊設定", padding="5", style='Main.TLabelframe')
         settings_frame.pack(fill='x', padx=5, pady=5)
         
-        # COM Port 選擇
-        com_frame = ttk.Frame(settings_frame)
-        com_frame.pack(fill='x', pady=(0, 5))
-        com_frame.columnconfigure(0, weight=1)
+        # 水平排列的設定區域
+        horizontal_frame = ttk.Frame(settings_frame, style='Main.TFrame')
+        horizontal_frame.pack(fill='x', pady=(0, 5))
+        horizontal_frame.columnconfigure(0, weight=1)
+        horizontal_frame.columnconfigure(1, weight=1)
+        horizontal_frame.columnconfigure(2, weight=1)
         
-        ttk.Label(com_frame, text="COM Port:").pack(anchor='w')
+        # COM Port 選擇
+        com_frame = ttk.Frame(horizontal_frame, style='Main.TFrame')
+        com_frame.grid(row=0, column=0, sticky='ew', padx=(0, 5))
+        
+        ttk.Label(com_frame, text="COM Port:", style='Main.TLabel').pack(anchor='w')
+        com_input_frame = ttk.Frame(com_frame, style='Main.TFrame')
+        com_input_frame.pack(fill='x')
+        
         self.com_port_var = tk.StringVar(value=self.manual_setup.get('Serial_COM_Port', ''))
-        self.com_port_combo = ttk.Combobox(com_frame, textvariable=self.com_port_var, state='readonly')
+        self.com_port_combo = ttk.Combobox(com_input_frame, textvariable=self.com_port_var, 
+                                          state='readonly', width=20)
         self.com_port_combo.pack(side='left', fill='x', expand=True)
+        self.com_port_combo.bind("<<ComboboxSelected>>", self.on_com_port_changed)
         
         # 刷新 COM Port 按鈕
-        self.refresh_com_button = ttk.Button(com_frame, text="🔄", width=3, command=self.refresh_com_ports)
-        self.refresh_com_button.pack(side='right', padx=(5, 0))
+        self.refresh_com_button = ttk.Button(com_input_frame, text="🔄", width=3, command=self.refresh_com_ports)
+        self.refresh_com_button.pack(side='right', padx=(2, 0))
         
-        # 傳輸方式（只顯示 Console 和 ADB）
-        ttk.Label(settings_frame, text="傳輸方式:").pack(anchor='w')
+        # 傳輸方式
+        transport_frame = ttk.Frame(horizontal_frame, style='Main.TFrame')
+        transport_frame.grid(row=0, column=1, sticky='ew', padx=(5, 5))
+        
+        ttk.Label(transport_frame, text="傳輸方式:", style='Main.TLabel').pack(anchor='w')
         self.transport_mode_var = tk.StringVar(value=self.manual_setup.get('Command_Transport_Mode', 'Console'))
-        transport_combo = ttk.Combobox(settings_frame, textvariable=self.transport_mode_var, 
-                                     values=['Console', 'ADB'], state='readonly')
-        transport_combo.pack(fill='x', pady=(0, 5))
+        transport_combo = ttk.Combobox(transport_frame, textvariable=self.transport_mode_var, 
+                                     values=['Console', 'ADB'], state='readonly', width=20)
+        transport_combo.pack(fill='x')
+        transport_combo.bind("<<ComboboxSelected>>", self.on_transport_mode_changed)
         
         # 結束字串設定
-        end_string_frame = ttk.Frame(settings_frame)
-        end_string_frame.pack(fill='x', pady=(0, 5))
-        end_string_frame.columnconfigure(1, weight=1)
+        end_string_frame = ttk.Frame(horizontal_frame, style='Main.TFrame')
+        end_string_frame.grid(row=0, column=2, sticky='ew', padx=(5, 0))
         
-        ttk.Label(end_string_frame, text="結束字串:").pack(side='left')
+        ttk.Label(end_string_frame, text="結束字串:", style='Main.TLabel').pack(anchor='w')
         self.end_string_var = tk.StringVar(value=self.manual_setup.get('Command_End_String', 'root'))
-        self.end_string_entry = ttk.Entry(end_string_frame, textvariable=self.end_string_var, width=15)
-        self.end_string_entry.pack(side='left', fill='x', expand=True, padx=(5, 0))
+        self.end_string_entry = ttk.Entry(end_string_frame, textvariable=self.end_string_var, width=20)
+        self.end_string_entry.pack(fill='x')
         
-        # Timeout 設定
-        timeout_frame = ttk.Frame(settings_frame)
-        timeout_frame.pack(fill='x', pady=(0, 5))
-        timeout_frame.columnconfigure(1, weight=1)
-        
-        ttk.Label(timeout_frame, text="Timeout (秒):").pack(side='left')
-        self.timeout_var = tk.StringVar(value=self.manual_setup.get('Command_Timeout_Seconds', '3'))
-        timeout_entry = ttk.Entry(timeout_frame, textvariable=self.timeout_var, width=10)
-        timeout_entry.pack(side='right')
         
         # 指令輸入區域
-        input_frame = ttk.LabelFrame(self.left_frame, text="指令輸入", padding="5")
+        input_frame = ttk.LabelFrame(self.left_frame, text="指令輸入", padding="5", style='Main.TLabelframe')
         input_frame.pack(fill='x', padx=5, pady=5)
         
-        # 指令輸入框（淺綠色背景）
-        self.command_entry = ttk.Entry(input_frame, font=('Consolas', 11))
+        # 指令輸入框（兩行高度，淺綠色背景）
+        self.command_entry = tk.Text(input_frame, font=('Consolas', 11), height=2, wrap='none',
+                                    bg='#e8f5e8', fg='black', insertbackground='black')
         self.command_entry.pack(fill='x', pady=(0, 5))
         
-        # 設置淺綠色背景
-        self.command_entry.configure(style='LightGreen.TEntry')
+        # 綁定 ENTER 鍵執行指令（空白時也能送出）
+        self.command_entry.bind('<Return>', self.on_entry_enter)
         
         # 按鈕框架
         button_frame = ttk.Frame(input_frame)
@@ -156,21 +165,26 @@ class ManualCommandUI:
         self.open_file_button.pack(side='left')
         
         # 提示文字區域
-        hint_frame = ttk.LabelFrame(self.left_frame, text="提示", padding="5")
+        hint_frame = ttk.LabelFrame(self.left_frame, text="提示", padding="5", style='Main.TLabelframe')
         hint_frame.pack(fill='x', padx=5, pady=5)
         
-        self.hint_label = ttk.Label(hint_frame, text=self.manual_setup.get('Hint_Text', '請輸入指令並按執行'))
+        self.hint_label = tk.Label(hint_frame, text=self.manual_setup.get('Hint_Text', '請輸入指令並按執行'),
+                                  background='lightblue', foreground='black', wraplength=300, justify='left')
         self.hint_label.pack(fill='x')
         
         # 初始化 COM Port 列表
         self.refresh_com_ports()
-        
-        # 創建淺綠色輸入框樣式
-        self.create_custom_styles()
     
     def create_custom_styles(self):
         """創建自定義樣式"""
         style = ttk.Style()
+        
+        # 設定白色背景樣式，模仿 DUT 控制頁面
+        style.configure('Main.TFrame', background='white')
+        style.configure('Main.TLabel', background='white', foreground='black')
+        style.configure('Main.TLabelframe', background='white', foreground='black')
+        style.configure('Main.TLabelframe.Label', background='white', foreground='black')
+        style.configure('Main.TPanedwindow', background='white')
         
         # 淺綠色輸入框樣式
         style.configure('LightGreen.TEntry', 
@@ -186,6 +200,13 @@ class ManualCommandUI:
         # 藍色 hover 樣式
         style.map('Green.TButton',
                  background=[('active', '#2196F3')])  # hover 時變藍色
+        
+        # 藍色按鈕樣式
+        style.configure('Blue.TButton', 
+                       background='#2196F3', 
+                       foreground='white')
+        style.map('Blue.TButton',
+                 background=[('active', '#1976D2')])
     
     def create_right_panel(self):
         """創建右側輸出面板"""
@@ -208,18 +229,31 @@ class ManualCommandUI:
             output_container,
             font=content_font,
             wrap='word',
-            bg='black',
-            fg='white',
-            insertbackground='white'
+            bg='white',
+            fg='black',
+            insertbackground='black'
         )
         self.output_text.pack(fill='both', expand=True)
+        
+        # 設定彩色顯示標籤，完全複製 DUT 控制頁的顏色配置
+        self.output_text.tag_configure("send", foreground="blue")        # [發送] 藍色
+        self.output_text.tag_configure("error", foreground="red")        # [錯誤] 紅色
+        self.output_text.tag_configure("end", foreground="green")        # [結束] 綠色
+        self.output_text.tag_configure("purple", foreground="#800080")   # 標題紫色
+        self.output_text.tag_configure("success", foreground="green")    # 成功訊息為綠色
+        self.output_text.tag_configure("warning", foreground="orange")   # 警告訊息為橙色
+        
+        # 為高亮關鍵字定義標籤
+        if hasattr(self, 'highlight_keywords'):
+            for keyword, color in self.highlight_keywords.items():
+                self.output_text.tag_configure(color, foreground=color)
         
         # 綁定 Enter 鍵事件
         self.output_text.bind('<Return>', self.on_output_enter)
         self.output_text.bind('<Control-v>', self.on_paste_command)
         
         # 清除輸出按鈕
-        clear_output_button = ttk.Button(output_container, text="清除輸出", command=self.clear_output)
+        clear_output_button = ttk.Button(output_container, text="清除輸出", command=self.clear_output, style='Blue.TButton')
         clear_output_button.pack(pady=(5, 0))
         
         # 狀態列
@@ -238,7 +272,7 @@ class ManualCommandUI:
         self.add_prompt()
     
     def update_fonts_from_config(self):
-        """從設定檔更新字體大小，並套用到所有主要元件"""
+        """從設定檔更新字體大小，並套用到所有主要元件，與 DUT 控制設定完全同步"""
         try:
             dut_settings = self.setup.get('DUT_Control', {})
             ui_font_size = int(dut_settings.get('UI_Font_Size', 12))
@@ -246,46 +280,67 @@ class ManualCommandUI:
             ui_font = ('Microsoft JhengHei UI', ui_font_size)
             content_font = ('Consolas', content_font_size)
 
-            # 標籤
-            for widget in [self.hint_label, self.status_label]:
-                if widget.winfo_exists():
-                    widget.configure(font=ui_font)
-            # 輸出區
-            if hasattr(self, 'output_text'):
-                self.output_text.configure(font=content_font)
-            # 指令輸入框
-            if hasattr(self, 'command_entry'):
-                self.command_entry.configure(font=content_font)
-            # COM Port 下拉選單
-            if hasattr(self, 'com_port_combo'):
-                self.com_port_combo.configure(font=ui_font)
-            # 傳輸模式下拉選單
-            if hasattr(self, 'transport_mode_var'): # Changed from transport_mode_combo to transport_mode_var
-                self.transport_mode_var.set(self.manual_setup.get('Command_Transport_Mode', 'Console')) # Ensure it's a StringVar
-                self.transport_mode_var.configure(font=ui_font)
-            # 超時時間輸入框
-            if hasattr(self, 'timeout_var'): # Changed from timeout_entry to timeout_var
-                self.timeout_var.set(self.manual_setup.get('Command_Timeout_Seconds', '3')) # Ensure it's a StringVar
-                self.timeout_var.configure(font=ui_font)
-            # 結束字串輸入框
-            if hasattr(self, 'end_string_var'): # Changed from end_string_entry to end_string_var
-                self.end_string_var.set(self.manual_setup.get('Command_End_String', 'root')) # Ensure it's a StringVar
-                self.end_string_var.configure(font=ui_font)
-            # 執行按鈕
-            if hasattr(self, 'execute_button'):
-                self.execute_button.configure(font=ui_font)
-            # 清除按鈕
-            if hasattr(self, 'clear_button'):
-                self.clear_button.configure(font=ui_font)
-            # 開啟指令檔案按鈕
-            if hasattr(self, 'open_file_button'):
-                self.open_file_button.configure(font=ui_font)
-            # 連線狀態燈（如有文字）
-            if hasattr(self, 'connection_light') and hasattr(self.connection_light, 'configure'):
+            # 更新所有 Label 元件
+            labels_to_update = []
+            if hasattr(self, 'hint_label') and self.hint_label.winfo_exists():
+                labels_to_update.append(self.hint_label)
+            if hasattr(self, 'status_label') and self.status_label.winfo_exists():
+                labels_to_update.append(self.status_label)
+            
+            for widget in labels_to_update:
                 try:
-                    self.connection_light.configure(font=ui_font)
-                except Exception:
-                    pass
+                    widget.configure(font=ui_font)
+                except Exception as e:
+                    print(f"[WARNING] 更新標籤字體失敗: {e}")
+
+            # 更新所有 Entry 元件
+            entries_to_update = []
+            if hasattr(self, 'command_entry') and self.command_entry.winfo_exists():
+                entries_to_update.append(self.command_entry)
+            if hasattr(self, 'end_string_entry') and self.end_string_entry.winfo_exists():
+                entries_to_update.append(self.end_string_entry)
+            
+            for widget in entries_to_update:
+                try:
+                    widget.configure(font=content_font)
+                except Exception as e:
+                    print(f"[WARNING] 更新輸入框字體失敗: {e}")
+
+            # 更新所有 Combobox 元件
+            combos_to_update = []
+            if hasattr(self, 'com_port_combo') and self.com_port_combo.winfo_exists():
+                combos_to_update.append(self.com_port_combo)
+            
+            for widget in combos_to_update:
+                try:
+                    widget.configure(font=content_font)
+                except Exception as e:
+                    print(f"[WARNING] 更新下拉選單字體失敗: {e}")
+
+            # 更新所有 Button 元件
+            buttons_to_update = []
+            if hasattr(self, 'execute_button') and self.execute_button.winfo_exists():
+                buttons_to_update.append(self.execute_button)
+            if hasattr(self, 'clear_button') and self.clear_button.winfo_exists():
+                buttons_to_update.append(self.clear_button)
+            if hasattr(self, 'open_file_button') and self.open_file_button.winfo_exists():
+                buttons_to_update.append(self.open_file_button)
+            if hasattr(self, 'refresh_com_button') and self.refresh_com_button.winfo_exists():
+                buttons_to_update.append(self.refresh_com_button)
+            
+            for widget in buttons_to_update:
+                try:
+                    widget.configure(font=ui_font)
+                except Exception as e:
+                    print(f"[WARNING] 更新按鈕字體失敗: {e}")
+
+            # 更新 Text 輸出區域
+            if hasattr(self, 'output_text') and self.output_text.winfo_exists():
+                try:
+                    self.output_text.configure(font=content_font)
+                except Exception as e:
+                    print(f"[WARNING] 更新輸出區域字體失敗: {e}")
+
             print(f"[DEBUG] 手動輸入指令頁面字體已更新 - UI: {ui_font_size}, 內容: {content_font_size}")
         except Exception as e:
             print(f"[ERROR] 更新字體大小失敗: {e}")
@@ -368,6 +423,47 @@ class ManualCommandUI:
                 self.output_text.insert(tk.END, f"{line}\n")
         
         self.output_text.see(tk.END)
+    
+    def add_colored_output(self, text, tag=None):
+        """添加彩色輸出文字，完全複製 DUT 控制頁的顯示邏輯"""
+        self.output_text.configure(state='normal')
+        
+        if text.startswith('[發送]'):
+            self.output_text.insert(tk.END, text, "send")
+        elif text.startswith('[錯誤]'):
+            self.output_text.insert(tk.END, text, "error")
+        elif text.startswith('[結束]'):
+            self.output_text.insert(tk.END, text, "end")
+        elif text.startswith('===') or "執行指令:" in text:
+            self.output_text.insert(tk.END, text, "purple")
+        elif tag:
+            self.output_text.insert(tk.END, text, tag)
+        else:
+            # 自動檢測關鍵字並應用顏色
+            if hasattr(self, 'highlight_keywords') and self.highlight_keywords:
+                start_pos = self.output_text.index(tk.END)
+                self.output_text.insert(tk.END, text)
+                
+                # 按關鍵字長度降序排列，讓較長的關鍵字優先匹配
+                sorted_keywords = sorted(self.highlight_keywords.items(), key=lambda x: len(x[0]), reverse=True)
+                
+                for keyword, color in sorted_keywords:
+                    search_start = start_pos
+                    while True:
+                        idx = self.output_text.search(keyword, search_start, tk.END)
+                        if not idx:
+                            break
+                        end_idx = f"{idx}+{len(keyword)}c"
+                        try:
+                            self.output_text.tag_add(color, idx, end_idx)
+                        except Exception as e:
+                            print(f"[ERROR] tag_add 失敗: {e}")
+                        search_start = end_idx
+            else:
+                self.output_text.insert(tk.END, text)
+        
+        self.output_text.see(tk.END)
+        self.output_text.configure(state='disabled')
     
     def show_error(self, message):
         """顯示錯誤訊息"""
@@ -458,27 +554,32 @@ class ManualCommandUI:
     
     def clear_input(self):
         """清除輸入框"""
-        self.command_entry.delete(0, tk.END)
+        self.command_entry.delete("1.0", tk.END)
     
     def clear_output(self):
         """清除輸出區域"""
+        self.output_text.configure(state='normal')
         self.output_text.delete(1.0, tk.END)
+        self.output_text.configure(state='disabled')
         self.add_prompt()
+    
+    def on_entry_enter(self, event):
+        """輸入欄位按 ENTER 鍵時執行指令（空白時也能送出，如 Tera Term）"""
+        self.on_manual_command_click()
+        return 'break'  # 阻止預設行為
     
     def on_manual_command_click(self):
         """執行手動指令按鈕點擊事件"""
-        command = self.command_entry.get().strip()
-        if not command:
-            return
+        command = self.command_entry.get("1.0", tk.END).rstrip('\n')  # 從Text widget獲取內容
         
         # 獲取設定
         com_port = extract_com_port_name(self.com_port_var.get())
-        timeout = int(self.timeout_var.get())
+        timeout = 30  # 固定超時時間
         transport_mode = self.transport_mode_var.get()
         end_string = self.end_string_var.get()
         
-        # 檢查 COM Port
-        if not com_port:
+        # 檢查 COM Port（僅在 Console 模式下檢查）
+        if transport_mode == "Console" and not com_port:
             messagebox.showerror("錯誤", "請選擇 COM Port")
             return
         
@@ -487,12 +588,13 @@ class ManualCommandUI:
         self.execute_button.config(state='disabled')
         self.update_connection_light('yellow')
         
-        # 清空輸入框
-        self.command_entry.delete(0, tk.END)
+        # 不清空輸入框，保留使用者輸入
         
-        # 在輸出區域顯示指令
-        self.output_text.insert(tk.END, f"{command}\n")
-        self.output_text.see(tk.END)
+        # 在輸出區域顯示指令（使用彩色顯示）
+        if command.strip():
+            self.add_colored_output(f"=== 執行指令: {command} ===\n", "purple")
+        else:
+            self.add_colored_output("=== 執行空白指令 ===\n", "purple")
         
         # 執行指令
         self.execute_command_thread(command, com_port, timeout, transport_mode, end_string)
@@ -500,42 +602,17 @@ class ManualCommandUI:
     def execute_command_thread(self, command, com_port, timeout, transport_mode, end_string):
         """
         在執行緒中執行指令，並即時顯示回應內容
+        支援 Console 和 ADB 兩種傳輸模式
         """
         def run():
             try:
-                ser = serial.Serial(
-                    port=com_port,
-                    baudrate=115200,
-                    timeout=timeout,
-                    bytesize=serial.EIGHTBITS,
-                    parity=serial.PARITY_NONE,
-                    stopbits=serial.STOPBITS_ONE
-                )
-
-                ser.write(f"{command}\r\n".encode('utf-8'))
-
-                response = ""
-                start_time = time.time()
-                end_string_found = False
-
-                while time.time() - start_time < timeout and not end_string_found:
-                    if ser.in_waiting:
-                        data = ser.read(ser.in_waiting)
-                        decoded = data.decode('utf-8', errors='ignore')
-                        response += decoded
-                        # 即時顯示新收到的資料
-                        self.root.after(0, lambda text=decoded: self.append_output(text))
-                        if end_string and end_string in response:
-                            print(f"[DEBUG] 找到結束字串: {end_string}")
-                            end_string_found = True
-                            break
-                    time.sleep(0.01)
-
-                ser.close()
-
-                if end_string_found:
-                    self.root.after(0, lambda: self.append_output(f"[結束] 找到結束字串 '{end_string}'，停止讀取\n"))
-                # 不再一次性 append_output(response)，因為已即時顯示
+                if transport_mode == "ADB":
+                    # 使用 ADB 模式執行指令
+                    self.execute_adb_command(command, timeout, end_string)
+                else:
+                    # 使用 Console 模式執行指令
+                    self.execute_console_command(command, com_port, timeout, end_string)
+                
                 self.root.after(0, self.command_finished)
 
             except Exception as e:
@@ -546,13 +623,113 @@ class ManualCommandUI:
         thread.daemon = True
         thread.start()
     
+    def execute_console_command(self, command, com_port, timeout, end_string):
+        """執行 Console 模式指令"""
+        try:
+            ser = serial.Serial(
+                port=com_port,
+                baudrate=115200,
+                timeout=timeout,
+                bytesize=serial.EIGHTBITS,
+                parity=serial.PARITY_NONE,
+                stopbits=serial.STOPBITS_ONE
+            )
+
+            # 顯示發送的指令（藍色）
+            self.root.after(0, lambda: self.add_colored_output(f"[發送] {command}\n", "send"))
+            
+            ser.write(f"{command}\r\n".encode('utf-8'))
+
+            response = ""
+            start_time = time.time()
+            end_string_found = False
+
+            while time.time() - start_time < timeout and not end_string_found:
+                if ser.in_waiting:
+                    data = ser.read(ser.in_waiting)
+                    decoded = data.decode('utf-8', errors='ignore')
+                    response += decoded
+                    # 即時顯示新收到的資料
+                    self.root.after(0, lambda text=decoded: self.add_colored_output(text, None))
+                    if end_string and end_string in response:
+                        print(f"[DEBUG] 找到結束字串: {end_string}")
+                        end_string_found = True
+                        break
+                time.sleep(0.01)
+
+            ser.close()
+
+            if end_string_found:
+                self.root.after(0, lambda: self.add_colored_output(f"[結束] 找到結束字串 '{end_string}'，停止讀取\n", "end"))
+
+        except Exception as e:
+            raise e
+    
+    def execute_adb_command(self, command, timeout, end_string):
+        """執行 ADB 模式指令"""
+        try:
+            from adb_worker import ADBWorker
+            
+            # 顯示發送的指令（藍色）
+            self.root.after(0, lambda: self.add_colored_output(f"[發送] {command}\n", "send"))
+            
+            # 創建 ADB Worker 並執行指令
+            def on_data_callback(text, tag):
+                self.root.after(0, lambda: self.add_colored_output(text, tag))
+            
+            def on_status_callback(connected):
+                pass  # 不需要處理狀態變化
+            
+            def on_progress_callback(progress):
+                pass  # 不需要處理進度
+            
+            def on_finish_callback():
+                pass  # 完成回調在主執行緒中處理
+            
+            # 創建停止事件
+            import threading
+            stop_event = threading.Event()
+            
+            # 創建 ADB Worker
+            adb_worker = ADBWorker(
+                [command], end_string, timeout,
+                on_data=on_data_callback,
+                on_status=on_status_callback,
+                on_progress=on_progress_callback,
+                on_finish=on_finish_callback,
+                stop_event=stop_event
+            )
+            
+            # 執行 ADB 指令
+            adb_worker.run()
+            
+        except Exception as e:
+            raise e
+    
+    def on_com_port_changed(self, event=None):
+        """COM口變更時保存設定"""
+        try:
+            self.manual_setup['Serial_COM_Port'] = extract_com_port_name(self.com_port_var.get())
+            self.setup['Manual_Command'] = self.manual_setup
+            save_setup(self.setup)
+        except Exception as e:
+            print(f"保存COM口設定失敗: {e}")
+    
+    def on_transport_mode_changed(self, event=None):
+        """傳輸方式變更時保存設定"""
+        try:
+            self.manual_setup['Command_Transport_Mode'] = self.transport_mode_var.get()
+            self.setup['Manual_Command'] = self.manual_setup
+            save_setup(self.setup)
+        except Exception as e:
+            print(f"保存傳輸方式設定失敗: {e}")
+    
     def save_manual_settings(self):
         """保存手動指令設定"""
         try:
             # 更新設定
             self.manual_setup['Serial_COM_Port'] = extract_com_port_name(self.com_port_var.get())
             self.manual_setup['Command_Transport_Mode'] = self.transport_mode_var.get()
-            self.manual_setup['Command_Timeout_Seconds'] = self.timeout_var.get()
             self.manual_setup['Command_End_String'] = self.end_string_var.get()
             
             # 保存到設定檔
@@ -585,7 +762,6 @@ class ManualCommandUI:
             
             # 更新其他設定
             self.transport_mode_var.set(self.manual_setup.get('Command_Transport_Mode', 'Console'))
-            self.timeout_var.set(self.manual_setup.get('Command_Timeout_Seconds', '3'))
             self.end_string_var.set(self.manual_setup.get('Command_End_String', 'root'))
             
             # 更新字體大小

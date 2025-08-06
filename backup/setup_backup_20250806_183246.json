@@ -41,7 +41,7 @@
     "Command_Transport_Mode": "Console",
     "Manual_Command_File_Path": "Command_TABLE/test_manual_commands.txt",
     "Pane_Sash_Position": "400",
-    "Hint_Text": "請輸入指令並按執行",
+    "Hint_Text": "請輸入指令並按執行 可以用快捷鍵123",
     "Last_Used_COM_Port": "COM3",
     "Last_Used_Timeout": "3",
     "Last_Loaded_Command_File": "",

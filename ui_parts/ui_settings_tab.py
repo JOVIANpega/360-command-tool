@@ -609,6 +609,13 @@ class SettingsTab(ttk.Frame):
                     if hasattr(tab_manager, 'update_manual_settings'):
                         tab_manager.update_manual_settings()
                         print("[DEBUG] 手動輸入指令設定已更新")
+                    
+                    # 即時更新手動輸入頁面的提示文字
+                    if hasattr(tab_manager, 'manual_ui'):
+                        hint_text = self.vars["Manual_Hint_Text"].get()
+                        tab_manager.manual_ui.update_hint_text(hint_text)
+                        print(f"[DEBUG] 手動輸入頁面提示文字已更新為: {hint_text}")
+                        
             except Exception as e:
                 print(f"[WARNING] 更新手動輸入指令設定失敗: {e}")
 
