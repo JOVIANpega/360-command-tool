@@ -39,7 +39,7 @@
     "Serial_COM_Port": "",
     "Command_Timeout_Seconds": "3",
     "Command_Transport_Mode": "Console",
-    "Manual_Command_File_Path": "Command_TABLE/test_manual_commands.txt",
+    "Manual_Command_File_Path": "",
     "Pane_Sash_Position": "400",
     "Hint_Text": "請輸入指令並按執行",
     "Last_Used_COM_Port": "COM3",

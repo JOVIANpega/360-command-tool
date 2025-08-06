@@ -205,6 +205,7 @@ class TabManager:
         # 創建分頁
         self.dut_frame = ttk.Frame(self.notebook, style='Main.TFrame')
         self.fixture_frame = ttk.Frame(self.notebook, style='Main.TFrame')
+        self.manual_frame = ttk.Frame(self.notebook, style='Main.TFrame')  # 手動輸入指令 tab
         self.dos_frame = ttk.Frame(self.notebook, style='Main.TFrame')  # DOS tab
         self.settings_frame = ttk.Frame(self.notebook, style='Main.TFrame')  # 設定 tab
 
@@ -225,6 +226,9 @@ class TabManager:
 
 
         self.fixture_frame.grid_columnconfigure(0, weight=1)
+        
+        self.manual_frame.grid_rowconfigure(0, weight=1)
+        self.manual_frame.grid_columnconfigure(0, weight=1)
 
         # 從設定檔讀取標籤名稱
         from config_core import load_setup
@@ -234,8 +238,9 @@ class TabManager:
         # 使用從設定檔中讀取的標籤名稱，如果不存在則使用預設值
         tab0_name = tab_names.get('tab0', 'DUT 控制')
         tab1_name = tab_names.get('tab1', '治具控制')
-        tab2_name = tab_names.get('tab2', 'DOS 工具')
-        tab3_name = tab_names.get('tab3', '設定')
+        tab2_name = tab_names.get('tab2', '手動輸入指令')
+        tab3_name = tab_names.get('tab3', 'DOS 工具')
+        tab4_name = tab_names.get('tab4', '設定')
         
         print(f"[DEBUG] 從設定檔讀取的標籤名稱: {tab_names}")
         
@@ -246,8 +251,9 @@ class TabManager:
 
         self.notebook.add(self.dut_frame, text=tab0_name)
         self.notebook.add(self.fixture_frame, text=tab1_name)
-        self.notebook.add(self.dos_frame, text=tab2_name)  # DOS 工具
-        self.notebook.add(self.settings_frame, text=tab3_name)  # 設定
+        self.notebook.add(self.manual_frame, text=tab2_name)  # 手動輸入指令
+        self.notebook.add(self.dos_frame, text=tab3_name)  # DOS 工具
+        self.notebook.add(self.settings_frame, text=tab4_name)  # 設定
 
         # 設置分頁切換事件
         self.notebook.bind('<<NotebookTabChanged>>', self.on_tab_changed)
@@ -263,7 +269,7 @@ class TabManager:
 
         self.init_dut_tab()
         self.init_fixture_tab()
-
+        self.init_manual_tab()  # 手動輸入指令
         self.init_dos_tab()  # DOS 工具
         self.init_settings_tab() # 設定
         
@@ -591,7 +597,18 @@ class TabManager:
                     pass
 
 
-
+    def update_manual_settings(self):
+        """Callback function to update manual command tab settings."""
+        print("[DEBUG] Received callback to update manual command settings.")
+        if hasattr(self, 'manual_ui'):
+            # 重新載入設定並更新所有 UI 元件
+            self.manual_ui.update_from_config()
+            
+            # 顯示通知給用戶
+            if hasattr(self, 'notification_manager') and self.notification_manager:
+                self.notification_manager.show_notification("手動輸入指令設定已更新！", duration=8)
+            else:
+                print("[DEBUG] 手動輸入指令設定已更新！")
 
 
     def update_window_title(self):
@@ -1061,6 +1078,12 @@ class TabManager:
 
 
         self.fixture_ui.pack(fill='both', expand=True)
+    
+    
+    def init_manual_tab(self):
+        # 初始化手動輸入指令分頁
+        from ui_parts.ui_manual_command import ManualCommandUI
+        self.manual_ui = ManualCommandUI(self.manual_frame, self.root, self.highlight_keywords)
 
 
     def init_settings_tab(self):
@@ -1432,6 +1455,10 @@ class TabManager:
             # 關閉其他組件
             if hasattr(self, 'dut_ui') and hasattr(self.dut_ui, 'on_close'):
                 self.dut_ui.on_close()
+            
+            # 關閉手動輸入指令模組
+            if hasattr(self, 'manual_ui') and hasattr(self.manual_ui, 'on_close'):
+                self.manual_ui.on_close()
             
             # 如果有串口連接，斷開它
             try:

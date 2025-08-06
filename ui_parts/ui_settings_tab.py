@@ -269,15 +269,30 @@ class SettingsTab(ttk.Frame):
         
         # 獲取當前的標籤頁名稱
         tab_names = self.setup_data.get('tab_names', {})
-        default_tab_names = ['DUT 控制', '治具控制', 'DOS 工具', '設定']
+        default_tab_names = ['DUT 控制', '治具控制', '手動輸入指令', 'DOS 工具', '設定']
 
-        # 創建標籤頁名稱輸入框 - 標籤頁1~4 width=20
-        for i in range(4):
+        # 創建標籤頁名稱輸入框 - 標籤頁1~5 width=20
+        for i in range(5):
             tab_key = f'tab{i}'
-            tab_name = tab_names.get(tab_key, default_tab_names[i])
+            tab_name = tab_names.get(tab_key, default_tab_names[i] if i < len(default_tab_names) else f'標籤頁 {i+1}')
             ttk.Label(tab_frame, text=f"標籤頁 {i+1}:").grid(row=i, column=0, sticky="w", pady=4)
             self.vars[f"tab_names_{tab_key}"] = tk.StringVar(value=tab_name)
             ttk.Entry(tab_frame, textvariable=self.vars[f"tab_names_{tab_key}"], width=20).grid(row=i, column=1, sticky="ew", padx=(10, 0), pady=4)
+        
+        # 手動輸入指令提示文字設定
+        manual_frame = ttk.LabelFrame(right_container, text="手動輸入指令設定", padding=(10, 4))
+        manual_frame.pack(fill='x', pady=(8, 8))
+        manual_frame.columnconfigure(1, weight=1)
+        
+        ttk.Label(manual_frame, text="提示文字:").grid(row=0, column=0, sticky="w", pady=4)
+        self.vars["Manual_Hint_Text"] = tk.StringVar(value=self.setup_data.get("Manual_Command", {}).get("Hint_Text", "請輸入指令並按執行"))
+        manual_hint_entry = ttk.Entry(manual_frame, textvariable=self.vars["Manual_Hint_Text"], width=30)
+        manual_hint_entry.grid(row=0, column=1, sticky="ew", padx=(10, 0), pady=4)
+        
+        # 添加說明標籤
+        manual_help_label = ttk.Label(manual_frame, text="此文字將顯示在手動輸入指令頁面的提示區域",
+                                     font=('Microsoft JhengHei UI', 9), foreground='#666666')
+        manual_help_label.grid(row=1, column=0, columnspan=2, sticky="w", pady=(2, 0))
         
         # 注意：治具控制設定已移動至「TAB 測試治具」的指令控制區塊中
 
@@ -434,6 +449,7 @@ class SettingsTab(ttk.Frame):
         current_setup["tab_names"]["tab1"] = self.vars["tab_names_tab1"].get()
         current_setup["tab_names"]["tab2"] = self.vars["tab_names_tab2"].get()
         current_setup["tab_names"]["tab3"] = self.vars["tab_names_tab3"].get()
+        current_setup["tab_names"]["tab4"] = self.vars["tab_names_tab4"].get()
         
         # 更新DUT_Control設定
         if "DUT_Control" not in current_setup:
@@ -466,6 +482,11 @@ class SettingsTab(ttk.Frame):
 
         # 更新啟動標籤設定
         current_setup["Startup_Label"] = self.vars["Startup_Label"].get()
+        
+        # 更新手動輸入指令設定
+        if "Manual_Command" not in current_setup:
+            current_setup["Manual_Command"] = {}
+        current_setup["Manual_Command"]["Hint_Text"] = self.vars["Manual_Hint_Text"].get()
 
         return current_setup
 
@@ -575,6 +596,21 @@ class SettingsTab(ttk.Frame):
             if self.on_save_callback:
                 # 傳遞最新的設定資料
                 self.on_save_callback(updated_setup)
+            
+            # 更新手動輸入指令設定
+            try:
+                # 找到主視窗的 TabManager
+                root = self.parent
+                while root and not hasattr(root, 'tab_manager'):
+                    root = getattr(root, 'master', None) or getattr(root, 'parent', None)
+                
+                if root and hasattr(root, 'tab_manager'):
+                    tab_manager = root.tab_manager
+                    if hasattr(tab_manager, 'update_manual_settings'):
+                        tab_manager.update_manual_settings()
+                        print("[DEBUG] 手動輸入指令設定已更新")
+            except Exception as e:
+                print(f"[WARNING] 更新手動輸入指令設定失敗: {e}")
 
             # 立即更新標籤頁名稱
             self.update_tab_names_immediately()
@@ -607,7 +643,7 @@ class SettingsTab(ttk.Frame):
                 tab_names = updated_setup.get('tab_names', {})
 
                 # 更新每個標籤頁的名稱
-                for i in range(4):  # 現在有4個標籤頁
+                for i in range(5):  # 現在有5個標籤頁
                     tab_key = f'tab{i}'
                     if tab_key in tab_names:
                         try:

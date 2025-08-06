@@ -604,6 +604,10 @@
    'D:\\((Python '
    'TOOL\\指令工具-20250428T020034Z-001\\CODE_HERE2\\ui_parts\\ui_main.py',
    'PYMODULE'),
+  ('ui_parts.ui_manual_command',
+   'D:\\((Python '
+   'TOOL\\指令工具-20250428T020034Z-001\\CODE_HERE2\\ui_parts\\ui_manual_command.py',
+   'PYMODULE'),
   ('ui_parts.ui_settings_tab',
    'D:\\((Python '
    'TOOL\\指令工具-20250428T020034Z-001\\CODE_HERE2\\ui_parts\\ui_settings_tab.py',
