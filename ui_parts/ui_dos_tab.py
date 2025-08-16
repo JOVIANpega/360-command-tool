@@ -12,8 +12,9 @@ import subprocess
 class DosTab:
     """DOS標籤頁類"""
     
-    def __init__(self, parent_frame):
+    def __init__(self, parent_frame, tooltip_manager=None):
         self.parent_frame = parent_frame
+        self.tooltip_manager = tooltip_manager
         self.dos_process = None
         self.init_dos_tab()
     
@@ -56,17 +57,21 @@ class DosTab:
         # DOS視窗說明
         dos_desc_label = ttk.Label(
             dos_window_frame,
-            text="開啟 DOS 命令提示字元視窗，方便執行系統指令",
+            text="開啟命令提示字元或PowerShell視窗，方便執行系統指令",
             font=('Microsoft JhengHei UI', 11),
             style="TLabel"
         )
-        dos_desc_label.grid(row=0, column=0, pady=(0, 15))
+        dos_desc_label.grid(row=0, column=0, columnspan=2, pady=(0, 15))
         
-        # 開啟DOS視窗按鈕
-        dos_button = tk.Button(
-            dos_window_frame,
-            text="開啟 DOS 視窗",
-            command=self.open_dos_window,
+        # 按鈕框架
+        button_frame = ttk.Frame(dos_window_frame)
+        button_frame.grid(row=1, column=0, columnspan=2, pady=15)
+        
+        # 開啟CMD按鈕
+        cmd_button = tk.Button(
+            button_frame,
+            text="開啟 CMD",
+            command=self.open_cmd_window,
             font=('Microsoft JhengHei UI', 14, 'bold'),
             width=20,
             height=2,
@@ -76,11 +81,29 @@ class DosTab:
             borderwidth=2,
             highlightthickness=0
         )
-        dos_button.grid(row=1, column=0, pady=10)
+        cmd_button.pack(side=tk.LEFT, padx=(0, 10))
+        
+        # 開啟PowerShell按鈕
+        powershell_button = tk.Button(
+            button_frame,
+            text="開啟 PowerShell",
+            command=self.open_powershell_window,
+            font=('Microsoft JhengHei UI', 14, 'bold'),
+            width=20,
+            height=2,
+            bg='#2196F3',
+            fg='white',
+            relief='groove',
+            borderwidth=2,
+            highlightthickness=0
+        )
+        powershell_button.pack(side=tk.LEFT)
         
         # 按鈕 hover 效果
-        dos_button.bind("<Enter>", lambda e: dos_button.config(bg="#45a049"))
-        dos_button.bind("<Leave>", lambda e: dos_button.config(bg="#4CAF50"))
+        cmd_button.bind("<Enter>", lambda e: cmd_button.config(bg="#45a049"))
+        cmd_button.bind("<Leave>", lambda e: cmd_button.config(bg="#4CAF50"))
+        powershell_button.bind("<Enter>", lambda e: powershell_button.config(bg="#1976D2"))
+        powershell_button.bind("<Leave>", lambda e: powershell_button.config(bg="#2196F3"))
         
         # 批次檔執行區域
         batch_frame = ttk.LabelFrame(dos_main_frame, text="批次檔執行", padding=15)
@@ -114,13 +137,13 @@ class DosTab:
         execute_frame = ttk.Frame(batch_frame)
         execute_frame.grid(row=2, column=0, columnspan=3, pady=15)
         
-        # 執行批次檔按鈕
+        # 執行批次檔按鈕（統一改為新視窗執行）
         execute_button = tk.Button(
             execute_frame,
             text="執行批次檔",
-            command=self.execute_batch_file,
+            command=self.execute_batch_file_new_window,
             font=('Microsoft JhengHei UI', 12, 'bold'),
-            width=15,
+            width=20,
             height=2,
             bg='#FF9800',
             fg='white',
@@ -128,31 +151,11 @@ class DosTab:
             borderwidth=2,
             highlightthickness=0
         )
-        execute_button.pack(side=tk.LEFT, padx=(0, 10))
+        execute_button.pack()
         
         # 按鈕 hover 效果
         execute_button.bind("<Enter>", lambda e: execute_button.config(bg="#F57C00"))
         execute_button.bind("<Leave>", lambda e: execute_button.config(bg="#FF9800"))
-        
-        # 在新視窗執行按鈕
-        execute_new_window_button = tk.Button(
-            execute_frame,
-            text="在新視窗執行",
-            command=self.execute_batch_file_new_window,
-            font=('Microsoft JhengHei UI', 12, 'bold'),
-            width=15,
-            height=2,
-            bg='#2196F3',
-            fg='white',
-            relief='groove',
-            borderwidth=2,
-            highlightthickness=0
-        )
-        execute_new_window_button.pack(side=tk.LEFT)
-        
-        # 按鈕 hover 效果
-        execute_new_window_button.bind("<Enter>", lambda e: execute_new_window_button.config(bg="#1976D2"))
-        execute_new_window_button.bind("<Leave>", lambda e: execute_new_window_button.config(bg="#2196F3"))
         
         # 狀態顯示區域
         status_frame = ttk.LabelFrame(dos_main_frame, text="執行狀態", padding=10)
@@ -166,22 +169,41 @@ class DosTab:
             foreground='#2E8B57'
         )
         self.status_label.grid(row=0, column=0, sticky='w')
+        
+        # 為按鈕添加tooltip
+        if hasattr(self, 'tooltip_manager') and self.tooltip_manager:
+            self.tooltip_manager.add_tooltip(cmd_button, "btn_open_cmd")
+            self.tooltip_manager.add_tooltip(powershell_button, "btn_open_powershell")
+            self.tooltip_manager.add_tooltip(execute_button, "btn_execute_batch")
+            self.tooltip_manager.add_tooltip(browse_button, "btn_browse_batch")
     
-    def open_dos_window(self):
-        """開啟DOS視窗"""
+    def open_cmd_window(self):
+        """開啟CMD視窗"""
         try:
-            # 檢查是否已經開啟 DOS 視窗
+            # 檢查是否已經開啟 CMD 視窗
             if self.dos_process is None or self.dos_process.poll() is not None:
-                # 如果沒有開啟或已關閉，則開啟新的 DOS 視窗
+                # 如果沒有開啟或已關閉，則開啟新的 CMD 視窗
                 self.dos_process = subprocess.Popen(["cmd"], creationflags=subprocess.CREATE_NEW_CONSOLE)
-                self.update_status("DOS 視窗已開啟", "success")
-                print("[DEBUG] 已開啟 DOS 視窗")
+                self.update_status("CMD 視窗已開啟", "success")
+                print("[DEBUG] 已開啟 CMD 視窗")
             else:
                 # 如果已經開啟，則顯示提示訊息
-                messagebox.showinfo("提示", "DOS 視窗已經開啟")
-                self.update_status("DOS 視窗已經在運行中", "info")
+                messagebox.showinfo("提示", "CMD 視窗已經開啟")
+                self.update_status("CMD 視窗已經在運行中", "info")
         except Exception as e:
-            error_msg = f"開啟DOS視窗時發生錯誤：{str(e)}"
+            error_msg = f"開啟CMD視窗時發生錯誤：{str(e)}"
+            messagebox.showerror("錯誤", error_msg)
+            self.update_status(f"錯誤：{str(e)}", "error")
+    
+    def open_powershell_window(self):
+        """開啟PowerShell視窗"""
+        try:
+            # 開啟新的 PowerShell 視窗
+            subprocess.Popen(["powershell"], creationflags=subprocess.CREATE_NEW_CONSOLE)
+            self.update_status("PowerShell 視窗已開啟", "success")
+            print("[DEBUG] 已開啟 PowerShell 視窗")
+        except Exception as e:
+            error_msg = f"開啟PowerShell視窗時發生錯誤：{str(e)}"
             messagebox.showerror("錯誤", error_msg)
             self.update_status(f"錯誤：{str(e)}", "error")
     
@@ -204,33 +226,7 @@ class DosTab:
             messagebox.showerror("錯誤", error_msg)
             self.update_status(f"錯誤：{str(e)}", "error")
     
-    def execute_batch_file(self):
-        """執行批次檔（在當前視窗）"""
-        batch_path = self.batch_path_var.get().strip()
-        if not batch_path:
-            messagebox.showwarning("警告", "請先選擇批次檔")
-            self.update_status("請先選擇批次檔", "warning")
-            return
-        
-        if not os.path.exists(batch_path):
-            messagebox.showerror("錯誤", "批次檔不存在")
-            self.update_status("批次檔不存在", "error")
-            return
-        
-        try:
-            # 在當前視窗執行批次檔
-            result = subprocess.run([batch_path], capture_output=True, text=True, shell=True)
-            if result.returncode == 0:
-                self.update_status("批次檔執行完成", "success")
-                messagebox.showinfo("完成", f"批次檔執行完成\n返回碼：{result.returncode}")
-            else:
-                self.update_status(f"批次檔執行失敗，返回碼：{result.returncode}", "error")
-                messagebox.showerror("錯誤", f"批次檔執行失敗\n返回碼：{result.returncode}\n錯誤訊息：{result.stderr}")
-        except Exception as e:
-            error_msg = f"執行批次檔時發生錯誤：{str(e)}"
-            messagebox.showerror("錯誤", error_msg)
-            self.update_status(f"錯誤：{str(e)}", "error")
-    
+
     def execute_batch_file_new_window(self):
         """在新視窗執行批次檔"""
         batch_path = self.batch_path_var.get().strip()

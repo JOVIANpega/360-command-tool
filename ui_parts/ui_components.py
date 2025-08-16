@@ -43,7 +43,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
     - UIComponentsOutput: 輸出相關元件
     - UIComponentsSettings: 設定相關元件
     """
-    def __init__(self, parent, handlers, root):
+    def __init__(self, parent, handlers, root, tooltip_manager=None):
         # Call the __init__ of the base class (UIComponentsBase) which sets up the UI structure
         super().__init__(parent)
         self.root = root
@@ -66,10 +66,27 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             print(f"[WARNING] UIComponents: 無法載入統一設定管理器: {e}")
         
         # 初始化 ToolTip 管理器
-        self.tooltip_manager = ToolTipManager()
+        if tooltip_manager:
+            self.tooltip_manager = tooltip_manager
+            print(f"[DEBUG] UIComponents: 使用傳遞進來的 tooltip_manager")
+        else:
+            try:
+                self.tooltip_manager = ToolTipManager()
+                print(f"[DEBUG] UIComponents: 創建新的 ToolTipManager")
+            except Exception as e:
+                print(f"[ERROR] UIComponents: 無法創建 ToolTipManager: {e}")
+                self.tooltip_manager = None
+        
         # 從設定中讀取 ToolTip 啟用狀態，預設為啟用
-        tooltip_enabled = self.parent.setup.get("UI_Settings", {}).get("ToolTip_Enabled", True)
-        self.tooltip_manager.set_all_enabled(tooltip_enabled)
+        if self.tooltip_manager:
+            try:
+                tooltip_enabled = self.parent.setup.get("UI_Settings", {}).get("ToolTip_Enabled", True)
+                self.tooltip_manager.set_all_enabled(tooltip_enabled)
+                print(f"[DEBUG] UIComponents: 設定 ToolTip 啟用狀態: {tooltip_enabled}")
+            except Exception as e:
+                print(f"[ERROR] UIComponents: 設定 ToolTip 啟用狀態失敗: {e}")
+        else:
+            print("[WARNING] UIComponents: tooltip_manager 不可用")
 
         # 初始化啟動標籤管理器
         self.startup_label_manager = StartupLabelManager(self)
@@ -326,7 +343,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
 
 
     def on_open_command_script(self):
-        """打開指令腳本文件並顯示內容"""
+        """打開指令腳本文件編輯器視窗"""
         try:
             # 獲取指令檔案路徑
             command_file_path = self.parent.setup.get("DUT_Control", {}).get("Command_File_Path", "")
@@ -341,44 +358,155 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                 self.show_notification(f"指令檔案不存在: {command_file_path}", "error", 5000)
                 return
 
-            # 讀取檔案內容
-            try:
-                with open(command_file_path, 'r', encoding='utf-8') as f:
-                    content = f.read()
-            except UnicodeDecodeError:
-                # 如果 UTF-8 解碼失敗，嘗試其他編碼
-                try:
-                    with open(command_file_path, 'r', encoding='big5') as f:
-                        content = f.read()
-                except UnicodeDecodeError:
-                    with open(command_file_path, 'r', encoding='gbk') as f:
-                        content = f.read()
-
-            # 清空輸出區域並顯示檔案內容
-            self.text_output.configure(state='normal')
-            self.text_output.delete(1.0, tk.END)
-
-            # 添加標題
-            title = f"=== 指令腳本檔案內容 ===\n檔案路徑: {command_file_path}\n檔案大小: {len(content)} 字元\n{'='*50}\n\n"
-            self.text_output.insert(tk.END, title, "guide_title")
-
-            # 添加檔案內容
-            self.text_output.insert(tk.END, content)
-
-            self.text_output.configure(state='disabled')
-            self.text_output.see(1.0)  # 捲動到頂部
-
-            # 顯示成功通知
-            self.show_notification(f"已載入指令腳本: {os.path.basename(command_file_path)}", "success", 3000)
-
-            # 設定標記，表示目前在腳本檢視模式
-            self.parent.script_view_mode = True
-
+            # 創建編輯器視窗
+            self.create_command_editor_window(command_file_path)
+            
         except Exception as e:
             print(f"[ERROR] 打開指令腳本時發生錯誤: {e}")
             import traceback
             traceback.print_exc()
             self.show_notification(f"打開指令腳本失敗: {str(e)}", "error", 5000)
+    
+    def create_command_editor_window(self, file_path):
+        """創建指令檔案編輯器視窗"""
+        # 檢查是否已經開啟編輯器視窗
+        if hasattr(self, 'editor_window') and self.editor_window and self.editor_window.winfo_exists():
+            self.editor_window.lift()  # 將視窗提到前面
+            return
+        
+        # 創建新視窗
+        self.editor_window = tk.Toplevel(self.parent.root)
+        self.editor_window.title(f"指令檔案編輯器 - {os.path.basename(file_path)}")
+        self.editor_window.geometry("800x600")
+        
+        # 創建主框架
+        main_frame = ttk.Frame(self.editor_window)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        
+        # 頂部資訊框架
+        info_frame = ttk.Frame(main_frame)
+        info_frame.pack(fill=tk.X, pady=(0, 10))
+        
+        ttk.Label(info_frame, text=f"檔案路徑: {file_path}", font=('Microsoft JhengHei UI', 10, 'bold')).pack(anchor='w')
+        
+        # 文字編輯區域
+        text_frame = ttk.Frame(main_frame)
+        text_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+        
+        # 創建帶滾動條的文字編輯器
+        self.editor_text = tk.Text(
+            text_frame,
+            wrap=tk.NONE,
+            font=('Consolas', 11),
+            undo=True,
+            maxundo=50
+        )
+        
+        # 垂直滾動條
+        v_scrollbar = ttk.Scrollbar(text_frame, orient=tk.VERTICAL, command=self.editor_text.yview)
+        self.editor_text.configure(yscrollcommand=v_scrollbar.set)
+        
+        # 水平滾動條
+        h_scrollbar = ttk.Scrollbar(text_frame, orient=tk.HORIZONTAL, command=self.editor_text.xview)
+        self.editor_text.configure(xscrollcommand=h_scrollbar.set)
+        
+        # 排列組件
+        self.editor_text.grid(row=0, column=0, sticky='nsew')
+        v_scrollbar.grid(row=0, column=1, sticky='ns')
+        h_scrollbar.grid(row=1, column=0, sticky='ew')
+        
+        text_frame.grid_rowconfigure(0, weight=1)
+        text_frame.grid_columnconfigure(0, weight=1)
+        
+        # 按鈕框架
+        button_frame = ttk.Frame(main_frame)
+        button_frame.pack(fill=tk.X)
+        
+        # 儲存按鈕
+        save_button = ttk.Button(
+            button_frame,
+            text="💾 儲存檔案",
+            command=lambda: self.save_command_file(file_path)
+        )
+        save_button.pack(side=tk.LEFT, padx=(0, 10))
+        
+        # 重新載入按鈕
+        reload_button = ttk.Button(
+            button_frame,
+            text="🔄 重新載入",
+            command=lambda: self.reload_command_file(file_path)
+        )
+        reload_button.pack(side=tk.LEFT, padx=(0, 10))
+        
+        # 關閉按鈕
+        close_button = ttk.Button(
+            button_frame,
+            text="❌ 關閉",
+            command=self.editor_window.destroy
+        )
+        close_button.pack(side=tk.RIGHT)
+        
+        # 載入檔案內容
+        self.reload_command_file(file_path)
+        
+        # 設定快捷鍵
+        self.editor_window.bind('<Control-s>', lambda e: self.save_command_file(file_path))
+        
+        # 顯示通知
+        self.show_notification(f"已開啟指令檔案編輯器", "success")
+    
+    def reload_command_file(self, file_path):
+        """重新載入指令檔案內容"""
+        try:
+            # 讀取檔案內容
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+            except UnicodeDecodeError:
+                # 如果 UTF-8 解碼失敗，嘗試其他編碼
+                try:
+                    with open(file_path, 'r', encoding='big5') as f:
+                        content = f.read()
+                except UnicodeDecodeError:
+                    with open(file_path, 'r', encoding='gbk') as f:
+                        content = f.read()
+            
+            # 清空並插入內容
+            self.editor_text.delete(1.0, tk.END)
+            self.editor_text.insert(1.0, content)
+            
+            # 移動游標到開始位置
+            self.editor_text.mark_set(tk.INSERT, 1.0)
+            self.editor_text.see(1.0)
+            
+        except Exception as e:
+            messagebox.showerror("錯誤", f"載入檔案失敗：{str(e)}")
+    
+    def save_command_file(self, file_path):
+        """儲存指令檔案"""
+        try:
+            # 獲取編輯器內容
+            content = self.editor_text.get(1.0, tk.END)
+            
+            # 移除最後的換行符（Text widget會自動添加）
+            if content.endswith('\n'):
+                content = content[:-1]
+            
+            # 儲存到檔案
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+            
+            # 重新載入指令按鈕（如果需要的話）
+            if hasattr(self.parent, 'update_dut_buttons'):
+                self.parent.update_dut_buttons()
+            
+            self.show_notification("檔案已儲存並重新載入指令按鈕", "success")
+            messagebox.showinfo("成功", "檔案已成功儲存！")
+            
+        except Exception as e:
+            error_msg = f"儲存檔案失敗：{str(e)}"
+            self.show_notification(error_msg, "error")
+            messagebox.showerror("錯誤", error_msg)
 
 
 
@@ -1440,51 +1568,158 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
 
     def init_tooltips(self):
         """為所有按鈕添加 ToolTip 提示說明"""
+        if not hasattr(self, 'tooltip_manager') or not self.tooltip_manager:
+            print("[WARNING] init_tooltips: tooltip_manager 不可用，跳過 tooltip 初始化")
+            return
+            
+        print(f"[DEBUG] init_tooltips: 開始初始化 tooltips，使用 tooltip_manager")
+        
         try:
             # 執行指令按鈕
             if hasattr(self, 'btn_execute'):
-                self.tooltip_manager.add_tooltip(self.btn_execute, "執行所選指令區塊的命令序列")
+                self.tooltip_manager.add_tooltip(self.btn_execute, "btn_execute")
             
             # 清空回應按鈕
             if hasattr(self, 'btn_clear'):
-                self.tooltip_manager.add_tooltip(self.btn_clear, "清除下方的執行結果顯示區域")
+                self.tooltip_manager.add_tooltip(self.btn_clear, "btn_clear")
             
             # 備份Log按鈕
             if hasattr(self, 'btn_backup'):
-                self.tooltip_manager.add_tooltip(self.btn_backup, "將執行記錄匯出為備份檔案")
+                self.tooltip_manager.add_tooltip(self.btn_backup, "btn_backup")
             
             # 使用說明按鈕
             if hasattr(self, 'btn_guide'):
-                self.tooltip_manager.add_tooltip(self.btn_guide, "開啟說明文件或說明視窗")
+                self.tooltip_manager.add_tooltip(self.btn_guide, "btn_guide")
             
             # 刷新按鈕
             if hasattr(self, 'btn_refresh'):
-                self.tooltip_manager.add_tooltip(self.btn_refresh, "重新取得可用的 COM 埠")
+                self.tooltip_manager.add_tooltip(self.btn_refresh, "btn_refresh")
             
             # Ping按鈕
             if hasattr(self, 'btn_ping'):
-                self.tooltip_manager.add_tooltip(self.btn_ping, "執行與指定 IP 的 Ping 檢查")
+                self.tooltip_manager.add_tooltip(self.btn_ping, "btn_ping")
             
             # 保存IP按鈕
             if hasattr(self, 'btn_save_ip'):
-                self.tooltip_manager.add_tooltip(self.btn_save_ip, "將當前 IP 地址保存到記錄")
+                self.tooltip_manager.add_tooltip(self.btn_save_ip, "btn_save_ip")
+            
+            # 刪除IP按鈕
+            if hasattr(self, 'btn_delete_ip'):
+                self.tooltip_manager.add_tooltip(self.btn_delete_ip, "btn_delete_ip")
+            
+            # 移除結束字串按鈕
+            if hasattr(self, 'btn_remove_end'):
+                self.tooltip_manager.add_tooltip(self.btn_remove_end, "btn_remove_end")
             
             # 清除IP記錄按鈕
             if hasattr(self, 'btn_clear_ip'):
-                self.tooltip_manager.add_tooltip(self.btn_clear_ip, "清除所有已保存的 IP 記錄")
+                self.tooltip_manager.add_tooltip(self.btn_clear_ip, "btn_clear_ip")
             
             # 字體調整按鈕
             if hasattr(self, 'btn_ui_font_minus'):
-                self.tooltip_manager.add_tooltip(self.btn_ui_font_minus, "減小介面字體大小")
+                self.tooltip_manager.add_tooltip(self.btn_ui_font_minus, "btn_ui_font_minus")
             
             if hasattr(self, 'btn_ui_font_plus'):
-                self.tooltip_manager.add_tooltip(self.btn_ui_font_plus, "增大介面字體大小")
+                self.tooltip_manager.add_tooltip(self.btn_ui_font_plus, "btn_ui_font_plus")
             
             if hasattr(self, 'btn_content_font_minus'):
-                self.tooltip_manager.add_tooltip(self.btn_content_font_minus, "減小內容字體大小")
+                self.tooltip_manager.add_tooltip(self.btn_content_font_minus, "btn_content_font_minus")
             
             if hasattr(self, 'btn_content_font_plus'):
-                self.tooltip_manager.add_tooltip(self.btn_content_font_plus, "增大內容字體大小")
+                self.tooltip_manager.add_tooltip(self.btn_content_font_plus, "btn_content_font_plus")
+            
+            # open cmd table按鈕
+            if hasattr(self, 'btn_open_script'):
+                self.tooltip_manager.add_tooltip(self.btn_open_script, "btn_open_cmd_table")
+            
+            # 為combobox組件添加tooltip
+            if hasattr(self, 'combobox_com'):
+                self.tooltip_manager.add_tooltip(self.combobox_com, "combobox_com")
+            
+            if hasattr(self, 'combobox_cmd'):
+                self.tooltip_manager.add_tooltip(self.combobox_cmd, "combobox_cmd")
+            
+            if hasattr(self, 'combobox_end'):
+                self.tooltip_manager.add_tooltip(self.combobox_end, "combobox_end")
+            
+            if hasattr(self, 'combobox_transport'):
+                self.tooltip_manager.add_tooltip(self.combobox_transport, "combobox_transport")
+            
+            # 為entry組件添加tooltip
+            if hasattr(self, 'entry_ip'):
+                self.tooltip_manager.add_tooltip(self.entry_ip, "entry_ip")
+            
+            if hasattr(self, 'entry_timeout'):
+                self.tooltip_manager.add_tooltip(self.entry_timeout, "entry_timeout")
+            
+            # 為checkbox組件添加tooltip
+            if hasattr(self, 'auto_exec_checkbox'):
+                self.tooltip_manager.add_tooltip(self.auto_exec_checkbox, "auto_exec_checkbox")
+            
+            # 為label組件添加tooltip
+            if hasattr(self, 'label_com'):
+                self.tooltip_manager.add_tooltip(self.label_com, "label_com")
+            
+            if hasattr(self, 'label_cmd'):
+                self.tooltip_manager.add_tooltip(self.label_cmd, "label_cmd")
+            
+            if hasattr(self, 'label_ip'):
+                self.tooltip_manager.add_tooltip(self.label_ip, "label_ip")
+            
+            if hasattr(self, 'label_end'):
+                self.tooltip_manager.add_tooltip(self.label_end, "label_end")
+            
+            if hasattr(self, 'label_timeout'):
+                self.tooltip_manager.add_tooltip(self.label_timeout, "label_timeout")
+            
+            if hasattr(self, 'label_ui_font'):
+                self.tooltip_manager.add_tooltip(self.label_ui_font, "label_ui_font")
+            
+            if hasattr(self, 'label_content_font'):
+                self.tooltip_manager.add_tooltip(self.label_content_font, "label_content_font")
+            
+            # 為scale組件添加tooltip
+            if hasattr(self, 'ui_font_scale'):
+                self.tooltip_manager.add_tooltip(self.ui_font_scale, "ui_font_scale")
+            
+            if hasattr(self, 'content_font_scale'):
+                self.tooltip_manager.add_tooltip(self.content_font_scale, "content_font_scale")
+            
+            # 為text組件添加tooltip
+            if hasattr(self, 'text_output'):
+                self.tooltip_manager.add_tooltip(self.text_output, "text_output")
+            
+            # 為progress組件添加tooltip
+            if hasattr(self, 'progress'):
+                self.tooltip_manager.add_tooltip(self.progress, "progress")
+            
+            # 為主要的frame和panel組件添加tooltip
+            if hasattr(self, 'left_panel'):
+                self.tooltip_manager.add_tooltip(self.left_panel, "left_panel")
+            
+            if hasattr(self, 'right_panel'):
+                self.tooltip_manager.add_tooltip(self.right_panel, "right_panel")
+            
+            if hasattr(self, 'main_frame'):
+                self.tooltip_manager.add_tooltip(self.main_frame, "main_frame")
+            
+            # 為section_description組件添加tooltip
+            if hasattr(self, 'section_description'):
+                self.tooltip_manager.add_tooltip(self.section_description, "section_description")
+            
+            # 為editor_text組件添加tooltip
+            if hasattr(self, 'editor_text'):
+                self.tooltip_manager.add_tooltip(self.editor_text, "editor_text")
+            
+            # 為editor_window中的按鈕添加tooltip
+            if hasattr(self, 'save_button'):
+                self.tooltip_manager.add_tooltip(self.save_button, "save_button")
+            
+            if hasattr(self, 'reload_button'):
+                self.tooltip_manager.add_tooltip(self.reload_button, "reload_button")
+            
+            if hasattr(self, 'close_button'):
+                self.tooltip_manager.add_tooltip(self.close_button, "close_button")
             
             print("[INFO] ToolTip 提示已初始化完成")
             

@@ -98,6 +98,19 @@ except Exception as e:
 
 
 
+# 導入 tooltip 模組
+
+
+try:
+    from ui_parts.tooltip import ToolTipManager
+    print("[DEBUG] ToolTipManager 導入成功")
+except ImportError as e:
+    print(f"[ERROR] 導入 tooltip 模組失敗: {e}")
+    ToolTipManager = None
+
+
+
+
 
 try:
 
@@ -261,6 +274,24 @@ class TabManager:
 
         
 
+
+        # 初始化 tooltip 管理器
+        print("[DEBUG] 開始初始化 ToolTipManager...")
+        try:
+            if ToolTipManager is None:
+                print("[ERROR] ToolTipManager 類別不可用")
+                self.tooltip_manager = None
+            else:
+                self.tooltip_manager = ToolTipManager()
+                print(f"[DEBUG] ToolTipManager 初始化成功，enabled={self.tooltip_manager.enabled}")
+        except Exception as e:
+            print(f"[ERROR] ToolTipManager 初始化失敗: {e}")
+            import traceback
+            traceback.print_exc()
+            self.tooltip_manager = None
+
+
+        
 
 
         
@@ -1058,7 +1089,7 @@ class TabManager:
 
     def init_dut_tab(self):
         # 初始化 DUT 控制分頁
-        self.dut_ui = SerialUI(self.dut_frame, self.root, self.highlight_keywords)
+        self.dut_ui = SerialUI(self.dut_frame, self.root, self.highlight_keywords, self.tooltip_manager)
 
         # 初始化完成後立即更新 DUT 按鈕
         self.update_dut_buttons()
@@ -1066,29 +1097,21 @@ class TabManager:
 
 
     def init_fixture_tab(self):
-
-
         # 初始化治具控制分頁
-
-
         from FIXTURE.fixture13 import FixtureFrame
-
-
-        self.fixture_ui = FixtureFrame(self.fixture_frame)
-
-
+        self.fixture_ui = FixtureFrame(self.fixture_frame, tooltip_manager=self.tooltip_manager)
         self.fixture_ui.pack(fill='both', expand=True)
     
     
     def init_manual_tab(self):
         # 初始化手動輸入指令分頁
         from ui_parts.ui_manual_command import ManualCommandUI
-        self.manual_ui = ManualCommandUI(self.manual_frame, self.root, self.highlight_keywords)
+        self.manual_ui = ManualCommandUI(self.manual_frame, self.root, self.highlight_keywords, tooltip_manager=self.tooltip_manager)
 
 
     def init_settings_tab(self):
         # 初始化設定分頁
-        self.settings_ui = SettingsTab(self.settings_frame, on_save_callback=self.update_all_settings)
+        self.settings_ui = SettingsTab(self.settings_frame, on_save_callback=self.update_all_settings, tooltip_manager=self.tooltip_manager)
         self.settings_ui.pack(fill='both', expand=True)
     
 
@@ -1096,7 +1119,7 @@ class TabManager:
     def init_dos_tab(self):
         # 初始化DOS工具分頁
         from ui_parts.ui_dos_tab import DosTab
-        self.dos_tab = DosTab(self.dos_frame)
+        self.dos_tab = DosTab(self.dos_frame, self.tooltip_manager)
 
 
         
@@ -1492,15 +1515,17 @@ class TabManager:
 
 class SerialUI:
     """主應用程式的序列通訊 UI 框架"""
-    def __init__(self, parent, root, highlight_keywords=None):
+    def __init__(self, parent, root, highlight_keywords=None, tooltip_manager=None):
         """
         初始化 SerialUI。
         parent: 父級 tk 元件。
         root: 根 tk 視窗。
         highlight_keywords: 要高亮的關鍵字字典。
+        tooltip_manager: 工具提示管理器。
         """
         self.parent = parent
         self.root = root
+        self.tooltip_manager = tooltip_manager
         logging.debug(f"[DEBUG] SerialUI 初始化，highlight_keywords={highlight_keywords}")
 
         # 初始化設定和處理器
@@ -1513,7 +1538,7 @@ class SerialUI:
         
         # 初始化處理器和元件
         self.handlers = UIHandlers(self, self.setup, highlight_keywords=highlight_keywords)
-        self.components = UIComponents(self, self.handlers, self.root)
+        self.components = UIComponents(self, self.handlers, self.root, tooltip_manager=self.tooltip_manager)
 
         # 初始化樣式
         self.init_styles()

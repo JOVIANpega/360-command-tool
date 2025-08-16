@@ -22,16 +22,18 @@ from ui_parts.ui_handlers_core import UIHandlersCore
 class ManualCommandUI:
     """手動輸入指令 UI 類別"""
     
-    def __init__(self, parent, root, highlight_keywords=None):
+    def __init__(self, parent, root, highlight_keywords=None, tooltip_manager=None):
         """
         初始化手動輸入指令 UI
         parent: 父級 tk 元件
         root: 根 tk 視窗
         highlight_keywords: 要高亮的關鍵字字典
+        tooltip_manager: 工具提示管理器
         """
         self.parent = parent
         self.root = root
         self.highlight_keywords = highlight_keywords or {}
+        self.tooltip_manager = tooltip_manager
         
         # 載入設定
         self.setup = load_setup()

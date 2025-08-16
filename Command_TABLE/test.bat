@@ -10,5 +10,7 @@ echo ===============================================
 echo.
 echo TEST BAT done
 
-    pause
+pause
+pause
+
 

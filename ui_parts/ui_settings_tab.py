@@ -13,7 +13,7 @@ from config_core import load_setup, save_setup
 from ui_parts.tooltip import ToolTipManager
 
 class SettingsTab(ttk.Frame):
-    def __init__(self, parent, on_save_callback=None, **kwargs):
+    def __init__(self, parent, on_save_callback=None, tooltip_manager=None, **kwargs):
         super().__init__(parent, **kwargs)
         self.parent = parent
         self.parent_frame = self  # 設置parent_frame屬性供字體更新使用
@@ -25,11 +25,14 @@ class SettingsTab(ttk.Frame):
         self.font_size_trace_active = False
         
         # 初始化 ToolTip 管理器
-        try:
-            self.tooltip_manager = ToolTipManager()
-        except Exception as e:
-            print(f"初始化 ToolTip 管理器失敗: {e}")
-            self.tooltip_manager = None
+        if tooltip_manager:
+            self.tooltip_manager = tooltip_manager
+        else:
+            try:
+                self.tooltip_manager = ToolTipManager()
+            except Exception as e:
+                print(f"初始化 ToolTip 管理器失敗: {e}")
+                self.tooltip_manager = None
         
         self.create_widgets()
         self.setup_tooltips()
@@ -112,6 +115,20 @@ class SettingsTab(ttk.Frame):
         # 啟動定時更新視窗大小
         self.start_window_size_sync()
         
+        # 使用者介面設定
+        ui_frame = ttk.LabelFrame(left_container, text="使用者介面設定", padding=(10, 4))
+        ui_frame.pack(fill='x', pady=(0, 8))
+        ui_frame.columnconfigure(1, weight=1)
+        
+        # 初始化 UI_ToolTip_Enabled 變數
+        self.vars["UI_ToolTip_Enabled"] = tk.BooleanVar(value=self.setup_data.get('UI_Settings', {}).get("ToolTip_Enabled", True))
+        
+        # ToolTip 提示功能開關
+        tooltip_checkbutton = ttk.Checkbutton(ui_frame, text="啟用按鈕提示 (ToolTip)", 
+                                            variable=self.vars["UI_ToolTip_Enabled"],
+                                            command=self.on_tooltip_setting_changed)
+        tooltip_checkbutton.grid(row=0, column=0, columnspan=2, sticky="w", pady=4)
+        
         # DUT 控制設定
         dut_frame = ttk.LabelFrame(left_container, text="DUT 控制設定", padding=(10, 4))
         dut_frame.pack(fill='both', expand=True, pady=(0, 8))
@@ -168,7 +185,6 @@ class SettingsTab(ttk.Frame):
 
         self.vars["DUT_Pane_Sash_Position"] = tk.StringVar(value=dut_settings.get("Pane_Sash_Position", "633"))
         self.vars["DUT_Auto_Execute"] = tk.BooleanVar(value=dut_settings.get("Auto_Execute", False))
-        self.vars["UI_ToolTip_Enabled"] = tk.BooleanVar(value=self.setup_data.get('UI_Settings', {}).get("ToolTip_Enabled", True))
 
         # 字體設定已移至DUT控制標籤頁，此處不再顯示
         # 保留註解以說明字體設定位置
@@ -704,25 +720,25 @@ class SettingsTab(ttk.Frame):
             
         # 儲存按鈕 - 移除了重新載入按鈕的 tooltip
         if hasattr(self, 'save_button'):
-            self.tooltip_manager.add_tooltip(self.save_button, "儲存所有設定到檔案")
+            self.tooltip_manager.add_tooltip(self.save_button, "btn_manual_save")
         
         # 字體設定
         if hasattr(self, 'ui_font_spinbox'):
-            self.tooltip_manager.add_tooltip(self.ui_font_spinbox, "調整使用者介面文字大小（即時生效）")
+            self.tooltip_manager.add_tooltip(self.ui_font_spinbox, "btn_ui_font_plus")
         if hasattr(self, 'content_font_spinbox'):
-            self.tooltip_manager.add_tooltip(self.content_font_spinbox, "調整內容區域文字大小（即時生效）")
+            self.tooltip_manager.add_tooltip(self.content_font_spinbox, "btn_content_font_plus")
         if hasattr(self, 'notification_font_spinbox'):
-            self.tooltip_manager.add_tooltip(self.notification_font_spinbox, "調整通知區域文字大小（即時生效）")
+            self.tooltip_manager.add_tooltip(self.notification_font_spinbox, "btn_ui_font_plus")
         if hasattr(self, 'fixture_font_spinbox'):
-            self.tooltip_manager.add_tooltip(self.fixture_font_spinbox, "調整治具控制頁面文字大小（即時生效）")
+            self.tooltip_manager.add_tooltip(self.fixture_font_spinbox, "btn_ui_font_plus")
         
         # 瀏覽按鈕
         if hasattr(self, 'browse_button'):
-            self.tooltip_manager.add_tooltip(self.browse_button, "瀏覽並選擇指令檔案")
+            self.tooltip_manager.add_tooltip(self.browse_button, "btn_browse_file")
         
         # 指令間隔符號
         if hasattr(self, 'command_separator_entry'):
-            self.tooltip_manager.add_tooltip(self.command_separator_entry, "設定指令間的分隔符號（如 |、||、$$），修改後立即生效")
+            self.tooltip_manager.add_tooltip(self.command_separator_entry, "btn_ui_font_plus")
 
     def activate(self):
         """當分頁被選中時調用"""

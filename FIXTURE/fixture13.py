@@ -821,9 +821,10 @@ class FixtureControlWindow:
 
 # 為主程式相容性建立 FixtureFrame 類別
 class FixtureFrame(ttk.Frame):
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent, tooltip_manager=None, **kwargs):
         super().__init__(parent, **kwargs)
         self.parent_frame = self  # 設置parent_frame屬性供字體更新使用
+        self.tooltip_manager = tooltip_manager
 
         # 建立制具控制視窗
         self.fixture_window = FixtureControlWindow(self)
