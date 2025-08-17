@@ -6,7 +6,7 @@ UI事件處理器模組 - 重構版本
 
 import subprocess
 import platform
-from tkinter import messagebox, scrolledtext
+from tkinter import messagebox, scrolledtext, simpledialog
 import json
 from datetime import datetime
 import os
@@ -471,7 +471,8 @@ class UIHandlers(UIHandlersCore):
                 # 從設定中獲取預設IP地址，使用正確的鍵名
 
 
-                default_ip = self.parent.setup.get('Default_IP_Address', '192.168.11.143')
+                dut_control = self.parent.setup.get('DUT_Control', {})
+                default_ip = dut_control.get('Default_IP_Address', '192.168.11.143')
 
 
                 ip = self.parent.components.entry_ip.get().strip() or default_ip
@@ -2259,100 +2260,110 @@ class UIHandlers(UIHandlersCore):
 
 
     def remove_end_string(self):
-
-
+        """從結束字串列表中移除當前選擇的項目"""
         try:
-
-
             # 獲取當前選擇的結束字串
-
-
             current_value = self.parent.components.combobox_end.get()
-
-
             if not current_value:
-
-
                 return
 
-
-
-
-
             # 從 combobox 的值列表中移除
-
-
             values = list(self.parent.components.combobox_end['values'])
-
-
             if current_value in values:
-
-
                 values.remove(current_value)
-
-
                 self.parent.components.combobox_end['values'] = values
 
-
-
-
-
-                # 更新 setup.json 中的兩個位置
-
-
-                if 'DUT' not in self.parent.setup:
-
-
-                    self.parent.setup['DUT'] = {}
-
-
-                self.parent.setup['DUT']['EndStrings'] = values
-
-
-                self.parent.setup['EndStrings'] = values
-
-
-
-
+                # 更新 setup.json 中的正確路徑
+                if 'DUT_Control' not in self.parent.setup:
+                    self.parent.setup['DUT_Control'] = {}
+                self.parent.setup['DUT_Control']['Available_End_Strings'] = values
+                
+                # 如果當前選擇的結束字串被刪除了，設定為第一個可用的
+                if current_value == self.parent.setup.get('Command_End_String', 'root'):
+                    if values:
+                        self.parent.setup['DUT_Control']['Command_End_String'] = values[0]
+                        self.parent.components.combobox_end.set(values[0])
+                    else:
+                        # 如果沒有可用的結束字串，設定為預設值
+                        self.parent.setup['DUT_Control']['Command_End_String'] = 'root'
+                        self.parent.components.combobox_end.set('root')
 
                 # 保存到文件
-
-
-                with open('setup.json', 'w', encoding='utf-8') as f:
-
-
-                    json.dump(self.parent.setup, f, indent=4, ensure_ascii=False)
-
-
-
-
-
-                # 更新 combobox 的顯示
-
-
-                if values:
-
-
-                    self.parent.components.combobox_end.set(values[0])
-
-
-                else:
-
-
-                    self.parent.components.combobox_end.set('')
-
-
-
-
-
+                from config_core import save_setup
+                save_setup(self.parent.setup)
+                
+                # 通知設定標籤頁更新
+                self.notify_settings_tab_update()
+                
+                print(f"[INFO] 已移除結束字串: {current_value}")
+                
         except Exception as e:
+            print(f"[ERROR] 移除結束字串時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
 
+    def add_end_string(self):
+        """添加新的結束字串到列表中"""
+        try:
+            from tkinter import simpledialog
+            
+            # 彈出輸入對話框
+            new_end_string = simpledialog.askstring("添加結束字串", "請輸入新的結束字串:")
+            if not new_end_string or not new_end_string.strip():
+                return
+                
+            new_end_string = new_end_string.strip()
+            
+            # 檢查是否已存在
+            current_values = list(self.parent.components.combobox_end['values'])
+            if new_end_string in current_values:
+                from tkinter import messagebox
+                messagebox.showwarning("警告", "該結束字串已存在")
+                return
+            
+            # 添加到列表
+            current_values.append(new_end_string)
+            self.parent.components.combobox_end['values'] = current_values
+            
+            # 更新設定檔
+            if 'DUT_Control' not in self.parent.setup:
+                self.parent.setup['DUT_Control'] = {}
+            self.parent.setup['DUT_Control']['Available_End_Strings'] = current_values
+            
+            # 保存到文件
+            from config_core import save_setup
+            save_setup(self.parent.setup)
+            
+            # 設定為當前選擇
+            self.parent.components.combobox_end.set(new_end_string)
+            
+            # 通知設定標籤頁更新
+            self.notify_settings_tab_update()
+            
+            print(f"[INFO] 已添加結束字串: {new_end_string}")
+            
+        except Exception as e:
+            print(f"[ERROR] 添加結束字串時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
 
-            print(f"Error in remove_end_string: {e}")
-
-
-
-
+    def notify_settings_tab_update(self):
+        """通知設定標籤頁更新 IP 地址和結束字串列表"""
+        try:
+            # 獲取主視窗
+            root = self.parent.root
+            if root and hasattr(root, 'tab_manager'):
+                tab_manager = root.tab_manager
+                if hasattr(tab_manager, 'settings_ui'):
+                    # 調用設定標籤頁的刷新方法
+                    tab_manager.settings_ui.refresh_from_dut_control()
+                    print("[DEBUG] 已通知設定標籤頁更新")
+                else:
+                    print("[DEBUG] 設定標籤頁未找到")
+            else:
+                print("[DEBUG] 主視窗或標籤管理器未找到")
+        except Exception as e:
+            print(f"[ERROR] 通知設定標籤頁更新時發生錯誤: {e}")
 
     def apply_font_size(self):
 

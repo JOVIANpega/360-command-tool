@@ -16,13 +16,13 @@ version_info = {
     'version': '1.6.0.3',
     'file_version': (1, 6, 0, 3),
     'product_version': (1, 6, 0, 3),
-    'company_name': 'VALO360指令通',
-    'file_description': 'VALO360指令通 - 序列埠通訊工具',
-    'internal_name': 'VALO360指令通',
-    'legal_copyright': '© 2024 VALO360指令通',
+    'company_name': 'PEGA指令通',
+    'file_description': 'PEGA指令通 - 序列埠通訊工具',
+    'internal_name': 'PEGA指令通',
+    'legal_copyright': '© 2024 PEGA指令通',
     'original_filename': 'main.exe',
-    'product_name': 'VALO360指令通',
-    'comments': '用於VALO360設備的序列埠通訊控制工具'
+    'product_name': 'PEGA指令通',
+    'comments': '用於PEGA設備的序列埠通訊控制工具'
 }
 
 # 版本更新記錄
@@ -181,13 +181,13 @@ with open("version_info_zh.txt", "w", encoding="utf-8") as f:
     f.write("      [\n")
     f.write("        StringTable(\n")
     f.write("          u'040904B0',\n")
-    f.write("          [StringStruct(u'CompanyName', u'VALO360'),\n")
-    f.write("           StringStruct(u'FileDescription', u'VALO360指令通'),\n")
+    f.write("          [StringStruct(u'CompanyName', u'PEGA'),\n")
+    f.write("           StringStruct(u'FileDescription', u'PEGA指令通'),\n")
     f.write("           StringStruct(u'FileVersion', u'" + VERSION + "'),\n")
-    f.write("           StringStruct(u'InternalName', u'VALO360指令通'),\n")
-    f.write("           StringStruct(u'LegalCopyright', u'Copyright (C) 2025 VALO360'),\n")
-    f.write("           StringStruct(u'OriginalFilename', u'VALO360指令通.exe'),\n")
-    f.write("           StringStruct(u'ProductName', u'VALO360指令通'),\n")
+    f.write("           StringStruct(u'InternalName', u'PEGA指令通'),\n")
+    f.write("           StringStruct(u'LegalCopyright', u'Copyright (C) 2025 PEGA'),\n")
+    f.write("           StringStruct(u'OriginalFilename', u'PEGA指令通.exe'),\n")
+    f.write("           StringStruct(u'ProductName', u'PEGA指令通'),\n")
     f.write("           StringStruct(u'ProductVersion', u'" + VERSION + "')]\n")
     f.write("        )\n")
     f.write("      ]),\n")

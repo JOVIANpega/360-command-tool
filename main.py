@@ -87,7 +87,7 @@ def setup_window_properties(root):
         # 設置視窗標題
         base_title = setup.get('Window_Title')
         if not base_title:
-            base_title = dut_setup.get('Window_Title', '指令通')
+            base_title = dut_setup.get('Window_Title', 'PEGA指令通')
 
         app_version = setup.get('version', '')
         full_title = f"{base_title}_{app_version}" if app_version else base_title

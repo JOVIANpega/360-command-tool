@@ -24,18 +24,31 @@ class SettingsTab(ttk.Frame):
         # 字體大小追蹤變數 (用於即時更新)
         self.font_size_trace_active = False
         
-        # 初始化 ToolTip 管理器
+        # 初始化 ToolTip 管理器 - 使用超級簡單的版本
         if tooltip_manager:
             self.tooltip_manager = tooltip_manager
         else:
             try:
-                self.tooltip_manager = ToolTipManager()
+                # 優先使用超級簡單的 tooltip 管理器
+                from ui_parts.simple_tooltip import get_simple_tooltip_manager
+                self.tooltip_manager = get_simple_tooltip_manager()
+                print("[DEBUG] 使用超級簡單的 tooltip 管理器")
             except Exception as e:
-                print(f"初始化 ToolTip 管理器失敗: {e}")
-                self.tooltip_manager = None
+                print(f"[DEBUG] 超級簡單 tooltip 管理器失敗，嘗試使用原版: {e}")
+                try:
+                    # 備用：使用原版 tooltip 管理器
+                    from ui_parts.tooltip import get_tooltip_manager
+                    self.tooltip_manager = get_tooltip_manager()
+                    print("[DEBUG] 使用原版 tooltip 管理器")
+                except Exception as e2:
+                    print(f"[DEBUG] 原版 tooltip 管理器也失敗: {e2}")
+                    self.tooltip_manager = None
         
         self.create_widgets()
         self.setup_tooltips()
+
+        # 初始化間隔符號下拉選單
+        self.update_separator_combo()
 
     def create_widgets(self):
         # 創建主容器，使用 PanedWindow 來提供可調整的左右分隔
@@ -137,44 +150,41 @@ class SettingsTab(ttk.Frame):
         dut_settings = self.setup_data.get('DUT_Control', {})
         dut_row = 0
         
-        # 串口設定 - width=20
-        ttk.Label(dut_frame, text="串口:").grid(row=dut_row, column=0, sticky="w", pady=4)
-        self.vars["DUT_Serial_COM_Port"] = tk.StringVar(value=dut_settings.get("Serial_COM_Port", "COM5"))
-        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Serial_COM_Port"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
-        dut_row += 1
+        # 移除串口、指令超時、指令結束字串設定 - 這些設定已移至其他頁面
         
-        # 指令超時(秒) - width=20
-        ttk.Label(dut_frame, text="指令超時(秒):").grid(row=dut_row, column=0, sticky="w", pady=4)
-        self.vars["DUT_Command_Timeout_Seconds"] = tk.StringVar(value=dut_settings.get("Command_Timeout_Seconds", "30"))
-        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Command_Timeout_Seconds"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
-        dut_row += 1
+        # 指令間隔符號管理
+        separator_frame = ttk.LabelFrame(dut_frame, text="指令間隔符號管理", padding=(5, 2))
+        separator_frame.grid(row=dut_row, column=0, columnspan=2, sticky="ew", pady=4)
+        separator_frame.columnconfigure(1, weight=1)
         
-        # 指令結束字串 - width=20
-        ttk.Label(dut_frame, text="指令結束字串:").grid(row=dut_row, column=0, sticky="w", pady=4)
-        self.vars["DUT_Command_End_String"] = tk.StringVar(value=dut_settings.get("Command_End_String", "root"))
-        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Command_End_String"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
-        dut_row += 1
-        
-        # 指令間隔符號 - width=20，淡黃色底色
-        ttk.Label(dut_frame, text="指令間隔符號:").grid(row=dut_row, column=0, sticky="w", pady=4)
-
-        # 創建一個容器來放置輸入框和說明標籤
-        separator_container = ttk.Frame(dut_frame)
-        separator_container.grid(row=dut_row, column=1, columnspan=2, sticky="ew", padx=(10, 0), pady=4)
-        separator_container.columnconfigure(0, weight=0)
-        separator_container.columnconfigure(1, weight=1)
-
+        # 當前選擇的間隔符號
+        ttk.Label(separator_frame, text="當前選擇:").grid(row=0, column=0, sticky="w", pady=2)
         self.vars["DUT_Command_Separator"] = tk.StringVar(value=dut_settings.get("Command_Separator", "|"))
-        self.command_separator_entry = tk.Entry(separator_container, textvariable=self.vars["DUT_Command_Separator"],
-                                               width=20, bg='#FFFACD', relief='solid', borderwidth=1)
-        self.command_separator_entry.grid(row=0, column=0, sticky="w")
-        self.command_separator_entry.bind('<KeyRelease>', self.on_command_separator_changed)
-        self.command_separator_entry.bind('<FocusOut>', self.on_command_separator_changed)
-
-        # 添加說明標籤
-        separator_label = ttk.Label(separator_container, text="<-- 從 command.txt 中決定多重指令的分隔符號",
+        self.separator_combo = ttk.Combobox(separator_frame, textvariable=self.vars["DUT_Command_Separator"], 
+                                           values=["|", "||", "==>"], state="readonly", width=15)
+        self.separator_combo.grid(row=0, column=1, sticky="w", padx=(5, 10), pady=2)
+        self.separator_combo.bind('<<ComboboxSelected>>', self.on_separator_changed)
+        
+        # 新增自訂間隔符號
+        ttk.Label(separator_frame, text="新增自訂:").grid(row=1, column=0, sticky="w", pady=2)
+        
+        # 輸入框和按鈕的容器，讓它們緊密排列
+        input_buttons_container = ttk.Frame(separator_frame)
+        input_buttons_container.grid(row=1, column=1, sticky="w", pady=2)
+        
+        # 輸入框
+        self.custom_separator_entry = ttk.Entry(input_buttons_container, width=15)
+        self.custom_separator_entry.grid(row=0, column=0, sticky="w")
+        
+        # +/- 按鈕緊貼輸入框
+        ttk.Button(input_buttons_container, text="+", width=2, command=self.add_custom_separator).grid(row=0, column=1, padx=(2, 1))
+        ttk.Button(input_buttons_container, text="-", width=2, command=self.remove_custom_separator).grid(row=0, column=2, padx=(1, 0))
+        
+        # 說明標籤
+        separator_help_label = ttk.Label(separator_frame, text="選擇或自訂多重指令的分隔符號，用於 command.txt 中的指令分割",
                                    font=('Microsoft JhengHei UI', 9), foreground='#666666')
-        separator_label.grid(row=0, column=1, sticky="w", padx=(10, 0))
+        separator_help_label.grid(row=2, column=0, columnspan=3, sticky="w", pady=(2, 0))
+        
         dut_row += 1
         
         # 預設IP地址 - width=20
@@ -182,6 +192,12 @@ class SettingsTab(ttk.Frame):
         self.vars["DUT_Default_IP_Address"] = tk.StringVar(value=dut_settings.get("Default_IP_Address", "192.168.11.143"))
         ttk.Entry(dut_frame, textvariable=self.vars["DUT_Default_IP_Address"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
         dut_row += 1
+        
+
+        
+
+        
+
 
         self.vars["DUT_Pane_Sash_Position"] = tk.StringVar(value=dut_settings.get("Pane_Sash_Position", "633"))
         self.vars["DUT_Auto_Execute"] = tk.BooleanVar(value=dut_settings.get("Auto_Execute", False))
@@ -189,9 +205,48 @@ class SettingsTab(ttk.Frame):
         # 字體設定已移至DUT控制標籤頁，此處不再顯示
         # 保留註解以說明字體設定位置
         
-        # 版本與路徑資訊區塊 - 放在一起顯示
-        info_frame = ttk.LabelFrame(dut_frame, text="版本與路徑資訊", padding=(10, 4))
-        info_frame.grid(row=dut_row, column=0, columnspan=3, sticky="ew", pady=4)
+        # 移除版本與路徑資訊區塊 - 將移動到右側
+        dut_row += 1
+        
+        # === 右側內容 ===
+        right_container = ttk.Frame(right_frame)
+        right_container.pack(fill='both', expand=True, padx=(5, 0))
+        
+        # 標籤頁名稱設定
+        tab_frame = ttk.LabelFrame(right_container, text="標籤頁名稱設定", padding=(10, 4))
+        tab_frame.pack(fill='x', pady=(0, 8))
+        tab_frame.columnconfigure(1, weight=1)
+        
+        # 獲取當前的標籤頁名稱
+        tab_names = self.setup_data.get('tab_names', {})
+        default_tab_names = ['DUT 控制', '治具控制', '手動輸入指令', 'DOS 工具', '設定']
+
+        # 創建標籤頁名稱輸入框 - 標籤頁1~5 width=20
+        for i in range(5):
+            tab_key = f'tab{i}'
+            tab_name = tab_names.get(tab_key, default_tab_names[i] if i < len(default_tab_names) else f'標籤頁 {i+1}')
+            ttk.Label(tab_frame, text=f"標籤頁 {i+1}:").grid(row=i, column=0, sticky="w", pady=4)
+            self.vars[f"tab_names_{tab_key}"] = tk.StringVar(value=tab_name)
+            ttk.Entry(tab_frame, textvariable=self.vars[f"tab_names_{tab_key}"], width=20).grid(row=i, column=1, sticky="ew", padx=(10, 0), pady=4)
+        
+        # 手動輸入指令提示文字設定
+        manual_frame = ttk.LabelFrame(right_container, text="手動輸入指令設定", padding=(10, 4))
+        manual_frame.pack(fill='x', pady=(8, 8))
+        manual_frame.columnconfigure(1, weight=1)
+        
+        ttk.Label(manual_frame, text="提示文字:").grid(row=0, column=0, sticky="w", pady=4)
+        self.vars["Manual_Hint_Text"] = tk.StringVar(value=self.setup_data.get("Manual_Command", {}).get("Hint_Text", "請輸入指令並按執行"))
+        manual_hint_entry = ttk.Entry(manual_frame, textvariable=self.vars["Manual_Hint_Text"], width=30)
+        manual_hint_entry.grid(row=0, column=1, sticky="ew", padx=(10, 0), pady=4)
+        
+        # 添加說明標籤
+        manual_help_label = ttk.Label(manual_frame, text="此文字將顯示在手動輸入指令頁面的提示區域",
+                                     font=('Microsoft JhengHei UI', 9), foreground='#666666')
+        manual_help_label.grid(row=1, column=0, columnspan=2, sticky="w", pady=(2, 0))
+        
+        # 版本與路徑資訊區塊 - 移動到右側
+        info_frame = ttk.LabelFrame(right_container, text="版本與路徑資訊", padding=(10, 4))
+        info_frame.pack(fill='x', pady=(8, 8))
         info_frame.columnconfigure(1, weight=1)
 
         # 應用程式版本（移到這裡，改為可編輯）
@@ -232,12 +287,10 @@ class SettingsTab(ttk.Frame):
                                      font=('Microsoft JhengHei UI', 9), foreground='#666666')
         device_help_label.grid(row=1, column=0, sticky="w", pady=(2, 0))
 
-        dut_row += 1
-
         # 自訂啟動名稱設定
-        ttk.Label(info_frame, text="自訂啟動名稱:").grid(row=dut_row, column=0, sticky="nw", pady=2)
+        ttk.Label(info_frame, text="自訂啟動名稱:").grid(row=3, column=0, sticky="nw", pady=2)
         startup_label_container = ttk.Frame(info_frame)
-        startup_label_container.grid(row=dut_row, column=1, sticky="ew", padx=(10, 0), pady=2)
+        startup_label_container.grid(row=3, column=1, sticky="ew", padx=(10, 0), pady=2)
         startup_label_container.columnconfigure(0, weight=1)
 
         self.vars["Startup_Label"] = tk.StringVar(value=self.setup_data.get("Startup_Label", "TEST"))
@@ -249,11 +302,9 @@ class SettingsTab(ttk.Frame):
                                      font=('Microsoft JhengHei UI', 9), foreground='#666666')
         startup_help_label.grid(row=1, column=0, sticky="w", pady=(2, 0))
 
-        dut_row += 1
-
         # 添加手動保存按鈕
         save_button_frame = ttk.Frame(info_frame)
-        save_button_frame.grid(row=dut_row, column=0, columnspan=2, sticky="ew", pady=(10, 5))
+        save_button_frame.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(10, 5))
 
         self.manual_save_button = ttk.Button(
             save_button_frame,
@@ -271,44 +322,6 @@ class SettingsTab(ttk.Frame):
             foreground='#0066CC'
         )
         save_help_label.pack(side="left", padx=(10, 0))
-
-        dut_row += 1
-        
-        # === 右側內容 ===
-        right_container = ttk.Frame(right_frame)
-        right_container.pack(fill='both', expand=True, padx=(5, 0))
-        
-        # 標籤頁名稱設定
-        tab_frame = ttk.LabelFrame(right_container, text="標籤頁名稱設定", padding=(10, 4))
-        tab_frame.pack(fill='x', pady=(0, 8))
-        tab_frame.columnconfigure(1, weight=1)
-        
-        # 獲取當前的標籤頁名稱
-        tab_names = self.setup_data.get('tab_names', {})
-        default_tab_names = ['DUT 控制', '治具控制', '手動輸入指令', 'DOS 工具', '設定']
-
-        # 創建標籤頁名稱輸入框 - 標籤頁1~5 width=20
-        for i in range(5):
-            tab_key = f'tab{i}'
-            tab_name = tab_names.get(tab_key, default_tab_names[i] if i < len(default_tab_names) else f'標籤頁 {i+1}')
-            ttk.Label(tab_frame, text=f"標籤頁 {i+1}:").grid(row=i, column=0, sticky="w", pady=4)
-            self.vars[f"tab_names_{tab_key}"] = tk.StringVar(value=tab_name)
-            ttk.Entry(tab_frame, textvariable=self.vars[f"tab_names_{tab_key}"], width=20).grid(row=i, column=1, sticky="ew", padx=(10, 0), pady=4)
-        
-        # 手動輸入指令提示文字設定
-        manual_frame = ttk.LabelFrame(right_container, text="手動輸入指令設定", padding=(10, 4))
-        manual_frame.pack(fill='x', pady=(8, 8))
-        manual_frame.columnconfigure(1, weight=1)
-        
-        ttk.Label(manual_frame, text="提示文字:").grid(row=0, column=0, sticky="w", pady=4)
-        self.vars["Manual_Hint_Text"] = tk.StringVar(value=self.setup_data.get("Manual_Command", {}).get("Hint_Text", "請輸入指令並按執行"))
-        manual_hint_entry = ttk.Entry(manual_frame, textvariable=self.vars["Manual_Hint_Text"], width=30)
-        manual_hint_entry.grid(row=0, column=1, sticky="ew", padx=(10, 0), pady=4)
-        
-        # 添加說明標籤
-        manual_help_label = ttk.Label(manual_frame, text="此文字將顯示在手動輸入指令頁面的提示區域",
-                                     font=('Microsoft JhengHei UI', 9), foreground='#666666')
-        manual_help_label.grid(row=1, column=0, columnspan=2, sticky="w", pady=(2, 0))
         
         # 注意：治具控制設定已移動至「TAB 測試治具」的指令控制區塊中
 
@@ -357,24 +370,159 @@ class SettingsTab(ttk.Frame):
         except Exception as e:
             print(f"[ERROR] 處理視窗標題變更時發生錯誤: {e}")
 
-    def on_command_separator_changed(self, event=None):
-        """指令間隔符號即時更新"""
+    def on_separator_changed(self, event=None):
+        """指令間隔符號選擇變更時的處理"""
         try:
             new_separator = self.vars["DUT_Command_Separator"].get()
             if new_separator:  # 確保不為空
+                print(f"[DEBUG] 間隔符號變更為: '{new_separator}'")
+                
                 # 立即更新設定檔
                 settings = load_setup()
                 if 'DUT_Control' not in settings:
                     settings['DUT_Control'] = {}
-                settings['DUT_Control']['Command_Separator'] = new_separator
-                save_setup(settings)
                 
-                print(f"[INFO] 指令間隔符號已更新為: '{new_separator}'")
+                # 保存當前選擇的間隔符號
+                settings['DUT_Control']['Command_Separator'] = new_separator
+                
+                # 確保自訂間隔符號列表存在
+                if 'Custom_Separators' not in settings['DUT_Control']:
+                    settings['DUT_Control']['Custom_Separators'] = ["|", "||", "==>"]
+                
+                # 如果新選擇的符號不在自訂列表中，添加它
+                custom_separators = settings['DUT_Control']['Custom_Separators']
+                if new_separator not in custom_separators:
+                    custom_separators.append(new_separator)
+                    settings['DUT_Control']['Custom_Separators'] = custom_separators
+                    print(f"[DEBUG] 已將新選擇的間隔符號 '{new_separator}' 添加到自訂列表")
+                
+                # 保存設定
+                save_setup(settings)
+                print(f"[INFO] 指令間隔符號已保存到 setup.json: '{new_separator}'")
                 
                 # 通知其他元件更新
                 self.apply_separator_changes_immediately()
+                
         except Exception as e:
             print(f"更新指令間隔符號時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def add_custom_separator(self):
+        """新增自訂間隔符號"""
+        try:
+            new_separator = self.custom_separator_entry.get().strip()
+            if not new_separator:
+                messagebox.showwarning("警告", "請輸入間隔符號")
+                return
+            
+            # 讀取當前設定
+            settings = load_setup()
+            if 'DUT_Control' not in settings:
+                settings['DUT_Control'] = {}
+            if 'Custom_Separators' not in settings['DUT_Control']:
+                settings['DUT_Control']['Custom_Separators'] = ["|", "||", "==>"]
+            
+            custom_separators = settings['DUT_Control']['Custom_Separators']
+            
+            # 檢查是否已存在
+            if new_separator in custom_separators:
+                messagebox.showwarning("警告", "該間隔符號已存在")
+                return
+            
+            # 添加到列表
+            custom_separators.append(new_separator)
+            settings['DUT_Control']['Custom_Separators'] = custom_separators
+            
+            # 保存設定
+            save_setup(settings)
+            
+            # 更新下拉選單
+            self.update_separator_combo()
+            
+            # 清空輸入框
+            self.custom_separator_entry.delete(0, tk.END)
+            
+            print(f"[INFO] 已新增自訂間隔符號: {new_separator}")
+            messagebox.showinfo("成功", f"已新增間隔符號: {new_separator}")
+            
+        except Exception as e:
+            print(f"新增自訂間隔符號時發生錯誤: {e}")
+            messagebox.showerror("錯誤", f"新增間隔符號失敗: {e}")
+
+    def remove_custom_separator(self):
+        """移除選中的自訂間隔符號"""
+        try:
+            current_separator = self.vars["DUT_Command_Separator"].get()
+            
+            # 讀取當前設定
+            settings = load_setup()
+            if 'DUT_Control' not in settings:
+                settings['DUT_Control'] = {}
+            if 'Custom_Separators' not in settings['DUT_Control']:
+                settings['DUT_Control']['Custom_Separators'] = ["|", "||", "==>"]
+            
+            custom_separators = settings['DUT_Control']['Custom_Separators']
+            
+            # 檢查是否為內建符號
+            built_in_separators = ["|", "||", "==>"]
+            if current_separator in built_in_separators:
+                messagebox.showwarning("警告", "無法移除內建的間隔符號")
+                return
+            
+            # 詢問確認
+            result = messagebox.askyesno("確認移除", f"確定要移除間隔符號 '{current_separator}' 嗎？")
+            if not result:
+                return
+            
+            # 從列表中移除
+            if current_separator in custom_separators:
+                custom_separators.remove(current_separator)
+                settings['DUT_Control']['Custom_Separators'] = custom_separators
+                
+                # 保存設定
+                save_setup(settings)
+                
+                # 重置為預設值
+                self.vars["DUT_Command_Separator"].set("|")
+                
+                # 更新下拉選單
+                self.update_separator_combo()
+                
+                print(f"[INFO] 已移除間隔符號: {current_separator}")
+                messagebox.showinfo("成功", f"已移除間隔符號: {current_separator}")
+            else:
+                messagebox.showwarning("警告", "找不到要移除的間隔符號")
+                
+        except Exception as e:
+            print(f"移除自訂間隔符號時發生錯誤: {e}")
+            messagebox.showerror("錯誤", f"移除間隔符號失敗: {e}")
+
+    def update_separator_combo(self):
+        """更新間隔符號下拉選單"""
+        try:
+            # 讀取當前設定
+            settings = load_setup()
+            if 'DUT_Control' not in settings:
+                settings['DUT_Control'] = {}
+            if 'Custom_Separators' not in settings['DUT_Control']:
+                settings['DUT_Control']['Custom_Separators'] = ["|", "||", "==>"]
+            
+            custom_separators = settings['DUT_Control']['Custom_Separators']
+            
+            # 更新下拉選單的值
+            self.separator_combo['values'] = custom_separators
+            
+            print(f"[DEBUG] 間隔符號下拉選單已更新，共 {len(custom_separators)} 個選項")
+            
+        except Exception as e:
+            print(f"更新間隔符號下拉選單時發生錯誤: {e}")
+
+    def on_command_separator_changed(self, event=None):
+        """指令間隔符號即時更新（保留原有函式以維持相容性）"""
+        self.on_separator_changed(event)
+
+
 
     def apply_separator_changes_immediately(self):
         """立即套用間隔符號變更到所有相關元件"""
@@ -471,9 +619,10 @@ class SettingsTab(ttk.Frame):
         if "DUT_Control" not in current_setup:
             current_setup["DUT_Control"] = {}
         
-        current_setup["DUT_Control"]["Serial_COM_Port"] = self.vars["DUT_Serial_COM_Port"].get()
-        current_setup["DUT_Control"]["Command_Timeout_Seconds"] = self.vars["DUT_Command_Timeout_Seconds"].get()
-        current_setup["DUT_Control"]["Command_End_String"] = self.vars["DUT_Command_End_String"].get()
+        # 移除已刪除的欄位設定
+        # current_setup["DUT_Control"]["Serial_COM_Port"] = self.vars["DUT_Serial_COM_Port"].get()
+        # current_setup["DUT_Control"]["Command_Timeout_Seconds"] = self.vars["DUT_Command_Timeout_Seconds"].get()
+        # current_setup["DUT_Command_End_String"] = self.vars["DUT_Command_End_String"].get()
         current_setup["DUT_Control"]["Command_Separator"] = self.vars["DUT_Command_Separator"].get()
         current_setup["DUT_Control"]["Default_IP_Address"] = self.vars["DUT_Default_IP_Address"].get()
         # 字體設定已移至DUT控制標籤頁，此處不再處理
@@ -714,31 +863,119 @@ class SettingsTab(ttk.Frame):
             print(f"[ERROR] 更新 ToolTip 設定失敗: {e}")
 
     def setup_tooltips(self):
-        """設定工具提示"""
+        """設定所有元件的 tooltip"""
         if not self.tooltip_manager:
+            print("[DEBUG] tooltip_manager 為空，跳過 tooltip 設定")
             return
             
-        # 儲存按鈕 - 移除了重新載入按鈕的 tooltip
-        if hasattr(self, 'save_button'):
-            self.tooltip_manager.add_tooltip(self.save_button, "btn_manual_save")
+        print("[DEBUG] 開始設定設定標籤頁的 tooltip...")
         
-        # 字體設定
-        if hasattr(self, 'ui_font_spinbox'):
-            self.tooltip_manager.add_tooltip(self.ui_font_spinbox, "btn_ui_font_plus")
-        if hasattr(self, 'content_font_spinbox'):
-            self.tooltip_manager.add_tooltip(self.content_font_spinbox, "btn_content_font_plus")
-        if hasattr(self, 'notification_font_spinbox'):
-            self.tooltip_manager.add_tooltip(self.notification_font_spinbox, "btn_ui_font_plus")
-        if hasattr(self, 'fixture_font_spinbox'):
-            self.tooltip_manager.add_tooltip(self.fixture_font_spinbox, "btn_ui_font_plus")
+        # 儲存按鈕
+        if hasattr(self, 'manual_save_button'):
+            self.tooltip_manager.add_tooltip(self.manual_save_button, "btn_manual_save")
+            print("[DEBUG] 已為手動儲存按鈕添加 tooltip")
+        
+        # 基本設定元件
+        if hasattr(self, 'title_entry'):
+            self.tooltip_manager.add_tooltip(self.title_entry, "entry_window_title")
+            print("[DEBUG] 已為視窗標題輸入框添加 tooltip")
+        if hasattr(self, 'transport_mode_combo'):
+            self.tooltip_manager.add_tooltip(self.transport_mode_combo, "combobox_transport")
+            print("[DEBUG] 已為傳輸方式下拉選單添加 tooltip")
+        if hasattr(self, 'width_entry'):
+            self.tooltip_manager.add_tooltip(self.width_entry, "entry_window_width")
+            print("[DEBUG] 已為視窗寬度輸入框添加 tooltip")
+        if hasattr(self, 'height_entry'):
+            self.tooltip_manager.add_tooltip(self.height_entry, "entry_window_height")
+            print("[DEBUG] 已為視窗高度輸入框添加 tooltip")
+        
+        # UI設定元件
+        if hasattr(self, 'tooltip_checkbutton'):
+            self.tooltip_manager.add_tooltip(self.tooltip_checkbutton, "checkbox_tooltip")
+            print("[DEBUG] 已為 tooltip 開關添加 tooltip")
+        
+        # DUT控制設定元件
+        if hasattr(self, 'separator_combo'):
+            self.tooltip_manager.add_tooltip(self.separator_combo, "combobox_separator")
+            print("[DEBUG] 已為指令分隔符號下拉選單添加 tooltip")
+        if hasattr(self, 'custom_separator_entry'):
+            self.tooltip_manager.add_tooltip(self.custom_separator_entry, "entry_custom_separator")
+            print("[DEBUG] 已為自訂間隔符號輸入框添加 tooltip")
         
         # 瀏覽按鈕
         if hasattr(self, 'browse_button'):
             self.tooltip_manager.add_tooltip(self.browse_button, "btn_browse_file")
+            print("[DEBUG] 已為瀏覽按鈕添加 tooltip")
         
-        # 指令間隔符號
-        if hasattr(self, 'command_separator_entry'):
-            self.tooltip_manager.add_tooltip(self.command_separator_entry, "btn_ui_font_plus")
+        # 為其他重要元件添加 tooltip（使用直接文字）
+        try:
+            # 找到所有 Entry 元件並添加 tooltip
+            for widget in self.winfo_children():
+                if hasattr(widget, 'winfo_children'):
+                    for child in widget.winfo_children():
+                        if hasattr(child, 'winfo_children'):
+                            for grandchild in child.winfo_children():
+                                if isinstance(grandchild, tk.Entry) or isinstance(grandchild, ttk.Entry):
+                                    # 根據父元件或標籤來判斷這是什麼輸入框
+                                    parent_text = ""
+                                    try:
+                                        # 尋找相鄰的標籤
+                                        for sibling in grandchild.master.winfo_children():
+                                            if isinstance(sibling, tk.Label) or isinstance(sibling, ttk.Label):
+                                                parent_text = sibling.cget("text")
+                                                break
+                                    except:
+                                        pass
+                                    
+                                    # 根據標籤文字添加相應的 tooltip
+                                    if "視窗標題" in parent_text:
+                                        self.tooltip_manager.add_tooltip(grandchild, "entry_window_title")
+                                        print(f"[DEBUG] 為視窗標題輸入框添加 tooltip: {parent_text}")
+                                    elif "視窗寬度" in parent_text:
+                                        self.tooltip_manager.add_tooltip(grandchild, "entry_window_width")
+                                        print(f"[DEBUG] 為視窗寬度輸入框添加 tooltip: {parent_text}")
+                                    elif "視窗高度" in parent_text:
+                                        self.tooltip_manager.add_tooltip(grandchild, "entry_window_height")
+                                        print(f"[DEBUG] 為視窗高度輸入框添加 tooltip: {parent_text}")
+                                    elif "串口" in parent_text:
+                                        self.tooltip_manager.add_tooltip(grandchild, "entry_com_port")
+                                        print(f"[DEBUG] 為串口輸入框添加 tooltip: {parent_text}")
+                                    elif "指令超時" in parent_text:
+                                        self.tooltip_manager.add_tooltip(grandchild, "entry_timeout")
+                                        print(f"[DEBUG] 為指令超時輸入框添加 tooltip: {parent_text}")
+                                    elif "指令結束字串" in parent_text:
+                                        self.tooltip_manager.add_tooltip(grandchild, "entry_end_string")
+                                        print(f"[DEBUG] 為指令結束字串輸入框添加 tooltip: {parent_text}")
+                                    elif "指令間隔符號" in parent_text:
+                                        self.tooltip_manager.add_tooltip(grandchild, "entry_separator")
+                                        print(f"[DEBUG] 為指令間隔符號輸入框添加 tooltip: {parent_text}")
+                                    elif "預設IP地址" in parent_text:
+                                        self.tooltip_manager.add_tooltip(grandchild, "entry_ip_address")
+                                        print(f"[DEBUG] 為預設IP地址輸入框添加 tooltip: {parent_text}")
+                                    elif "應用程式版本" in parent_text:
+                                        self.tooltip_manager.add_tooltip(grandchild, "entry_version")
+                                        print(f"[DEBUG] 為應用程式版本輸入框添加 tooltip: {parent_text}")
+                                    elif "指令檔案路徑" in parent_text:
+                                        self.tooltip_manager.add_tooltip(grandchild, "entry_command_file")
+                                        print(f"[DEBUG] 為指令檔案路徑輸入框添加 tooltip: {parent_text}")
+                                    elif "設備標籤內容" in parent_text:
+                                        self.tooltip_manager.add_tooltip(grandchild, "entry_device_label")
+                                        print(f"[DEBUG] 為設備標籤內容輸入框添加 tooltip: {parent_text}")
+                                    elif "自訂啟動名稱" in parent_text:
+                                        self.tooltip_manager.add_tooltip(grandchild, "entry_startup_label")
+                                        print(f"[DEBUG] 為自訂啟動名稱輸入框添加 tooltip: {parent_text}")
+                                    elif "提示文字" in parent_text:
+                                        self.tooltip_manager.add_tooltip(grandchild, "entry_manual_hint")
+                                        print(f"[DEBUG] 為提示文字輸入框添加 tooltip: {parent_text}")
+                                    else:
+                                        # 為其他輸入框添加通用 tooltip
+                                        self.tooltip_manager.add_tooltip_with_text(grandchild, "輸入框")
+                                        print(f"[DEBUG] 為未知輸入框添加通用 tooltip: {parent_text}")
+                                        
+        except Exception as e:
+            print(f"[WARNING] 自動添加 tooltip 時發生錯誤: {e}")
+        
+        print(f"[DEBUG] 設定標籤頁 tooltip 設定完成，共處理了 {len(self.tooltip_manager.tooltips)} 個元件")
 
     def activate(self):
         """當分頁被選中時調用"""
@@ -820,9 +1057,10 @@ class SettingsTab(ttk.Frame):
             
             # 更新 DUT 控制設定
             dut_settings = self.setup_data.get('DUT_Control', {})
-            self.vars["DUT_Serial_COM_Port"].set(dut_settings.get("Serial_COM_Port", "COM5"))
-            self.vars["DUT_Command_Timeout_Seconds"].set(dut_settings.get("Command_Timeout_Seconds", "30"))
-            self.vars["DUT_Command_End_String"].set(dut_settings.get("Command_End_String", "root"))
+            # 移除已刪除的欄位設定
+            # self.vars["DUT_Serial_COM_Port"].set(dut_settings.get("Serial_COM_Port", "COM5"))
+            # self.vars["DUT_Command_Timeout_Seconds"].set(dut_settings.get("Command_Timeout_Seconds", "30"))
+            # self.vars["DUT_Command_End_String"].set(dut_settings.get("Command_End_String", "root"))
             self.vars["DUT_Command_Separator"].set(dut_settings.get("Command_Separator", "|"))
             self.vars["DUT_Default_IP_Address"].set(dut_settings.get("Default_IP_Address", "192.168.11.143"))
             # 字體設定已移至DUT控制標籤頁，此處不再處理
@@ -837,4 +1075,18 @@ class SettingsTab(ttk.Frame):
             self.vars["UI_ToolTip_Enabled"].set(ui_settings.get("ToolTip_Enabled", True))
             
         except Exception as e:
-            print(f"[ERROR] 更新 UI 設定時發生錯誤: {e}") 
+            print(f"[ERROR] 更新 UI 設定時發生錯誤: {e}")
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 

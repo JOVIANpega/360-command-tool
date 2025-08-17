@@ -71,10 +71,12 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             print(f"[DEBUG] UIComponents: 使用傳遞進來的 tooltip_manager")
         else:
             try:
-                self.tooltip_manager = ToolTipManager()
-                print(f"[DEBUG] UIComponents: 創建新的 ToolTipManager")
+                # 使用全域 tooltip 管理器實例
+                from ui_parts.tooltip import get_tooltip_manager
+                self.tooltip_manager = get_tooltip_manager()
+                print(f"[DEBUG] UIComponents: 使用全域 ToolTipManager")
             except Exception as e:
-                print(f"[ERROR] UIComponents: 無法創建 ToolTipManager: {e}")
+                print(f"[ERROR] UIComponents: 無法獲取全域 ToolTipManager: {e}")
                 self.tooltip_manager = None
         
         # 從設定中讀取 ToolTip 啟用狀態，預設為啟用
@@ -568,10 +570,10 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                                       bg='#ffe6e6', fg='black', width=8)
         self.btn_delete_ip.grid(row=0, column=1, padx=2)
         
-        # 清空記錄按鈕
-        self.btn_clear_ip = tk.Button(ip_mgmt_frame, text='清空記錄', command=self.clear_ip_history, 
-                                     bg='#fff0e6', fg='black', width=8)
-        self.btn_clear_ip.grid(row=0, column=2, padx=2)
+        # 移除清空記錄按鈕 - 根據用戶要求
+        # self.btn_clear_ip = tk.Button(ip_mgmt_frame, text='清空記錄', command=self.clear_ip_history, 
+        #                              bg='#fff0e6', fg='black', width=8)
+        # self.btn_clear_ip.grid(row=0, column=2, padx=2)
 
     def init_settings_components(self):
         settings_frame = ttk.LabelFrame(self.left_panel, text='設定', padding=5, style="TLabelframe")
@@ -586,9 +588,14 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.combobox_end.grid(row=0, column=1, padx=5, sticky='ew')
         self.update_end_strings()
         self.combobox_end.set(self.parent.setup.get('Command_End_String', 'root'))
-        # 加入刪除按鈕
+        
+        # 添加按鈕
+        self.btn_add_end = tk.Button(end_frame, text='+', command=self.parent.handlers.add_end_string, width=2, bg='#ccffcc', fg='black')
+        self.btn_add_end.grid(row=0, column=2, padx=2)
+        
+        # 刪除按鈕
         self.btn_remove_end = tk.Button(end_frame, text='-', command=self.parent.handlers.remove_end_string, width=2, bg='#ffcccc', fg='black')
-        self.btn_remove_end.grid(row=0, column=2, padx=2)
+        self.btn_remove_end.grid(row=0, column=3, padx=2)
         
         # 超時設定
         timeout_frame = ttk.Frame(settings_frame, style="TFrame")
@@ -1427,9 +1434,15 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             # 重新載入下拉選單
             self.load_ip_history()
             
+            # 設定當前值為新保存的IP
+            self.entry_ip.set(current_ip)
+            
+            # 通知設定標籤頁更新
+            self.notify_settings_tab_update()
+            
             from tkinter import messagebox
             messagebox.showinfo("成功", f"IP地址 {current_ip} 已保存到記錄中")
-            print(f"[INFO] IP {current_ip} 已保存到記錄")
+            print(f"[INFO] IP {current_ip} 已保存到記錄，下拉選單已更新")
             
         except Exception as e:
             print(f"[ERROR] 保存IP記錄時發生錯誤: {e}")
@@ -1470,6 +1483,9 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             
             # 清空輸入框
             self.entry_ip.set("")
+            
+            # 通知設定標籤頁更新
+            self.notify_settings_tab_update()
             
             messagebox.showinfo("成功", f"IP地址 {current_ip} 已從記錄中刪除")
             print(f"[INFO] IP {current_ip} 已從記錄中刪除")
@@ -1558,7 +1574,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             setup['DUT_Control']['IP_History'] = ip_history
             save_setup(setup)
             
-            # 重新載入下拉選單
+            # 重新載入下拉選單並更新當前值
             self.load_ip_history()
             
             print(f"[INFO] IP {current_ip} 已自動保存到記錄")
@@ -1748,3 +1764,21 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         except Exception as e:
             print(f"[ERROR] 保存啟動標籤設定失敗: {e}")
             return False
+
+    def notify_settings_tab_update(self):
+        """通知設定標籤頁更新 IP 地址和結束字串列表"""
+        try:
+            # 獲取主視窗
+            root = self.winfo_toplevel()
+            if root and hasattr(root, 'tab_manager'):
+                tab_manager = root.tab_manager
+                if hasattr(tab_manager, 'settings_ui'):
+                    # 調用設定標籤頁的刷新方法
+                    tab_manager.settings_ui.refresh_from_dut_control()
+                    print("[DEBUG] 已通知設定標籤頁更新")
+                else:
+                    print("[DEBUG] 設定標籤頁未找到")
+            else:
+                print("[DEBUG] 主視窗或標籤管理器未找到")
+        except Exception as e:
+            print(f"[ERROR] 通知設定標籤頁更新時發生錯誤: {e}")

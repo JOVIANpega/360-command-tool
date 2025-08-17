@@ -1,0 +1,49 @@
+ 新功能
+- **完整 ToolTip 系統**：為所有按鈕、下拉選單、輸入框等 UI 元件添加提示功能
+- **設定頁面新增 ToolTip 開關**：可在設定頁面啟用/禁用按鈕提示功能
+- **全新 tooltips.ini 配置**：支援自訂每個元件的提示文字
+
+### 🔧 改進
+- **重構 ToolTip 類別**：改善跨平台顯示相容性，特別針對 Windows 系統優化
+- **事件綁定優化**：支援 `<Enter>`/`<Leave>`/`<Motion>`/`<ButtonPress>` 事件
+- **延遲顯示控制**：預設 500ms 延遲，離開元件立即關閉
+- **支援所有元件類型**：Button、Label、Entry、Combobox、Checkbutton、Frame 等
+
+### 🐛 修復
+- 修復 DOS 標籤頁 tooltip_manager 初始化問題
+- 修復設定頁面 UI_ToolTip_Enabled 變數順序問題
+- 改善 tooltip 系統的記憶體管理和事件處理
+- 修正跨標籤頁切換時的 tooltip 功能
+
+### 📝 技術細節
+- 新增 `ui_parts/tooltip.py` 模組
+- 完善所有標籤頁的 tooltip 綁定
+- 支援從 `tooltips.ini` 動態載入提示文字
+- 改進錯誤處理和調試輸出
+
+
+PS M:\PYTHON\360-command-toola_HOME> python main.py
+[INFO] 已載入 7 個通知訊息
+[DEBUG] 環境檢查: frozen=False
+[DEBUG] 方法1 - 資源管理器路徑: M:\PYTHON\360-command-toola_HOME\tooltips.ini
+[DEBUG] 方法1 成功找到配置文件
+[DEBUG] 最終使用配置文件: M:\PYTHON\360-command-toola_HOME\tooltips.ini     
+[DEBUG] 成功載入 67 個tooltip配置
+[DEBUG] ToolTipManager 初始化完成，enabled=True
+2025-08-17 09:45:59,277 - VALO360 - INFO - 成功載入 94 個指令
+[DEBUG] ToolTipManager 導入成功
+Traceback (most recent call last):
+  File "M:\PYTHON\360-command-toola_HOME\main.py", line 20, in <module>     
+    from ui_parts.ui_main import SerialUI, TabManager
+  File "M:\PYTHON\360-command-toola_HOME\ui_parts\__init__.py", line 8, in <module>
+    from ui_parts.ui_main import TabManager, SerialUI
+  File "M:\PYTHON\360-command-toola_HOME\ui_parts\ui_main.py", line 127, in 
+<module>
+    from ui_parts.ui_settings_tab import SettingsTab # 新增
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "M:\PYTHON\360-command-toola_HOME\ui_parts\ui_settings_tab.py", line 
+412
+    現在讓我編譯檢查是否有語法錯誤：
+                   ^
+SyntaxError: invalid character '：' (U+FF1A)
+PS M:\PYTHON\360-command-toola_HOME> 

@@ -86,7 +86,9 @@ class FixtureControlWindow:
         
         # 初始化 ToolTip
         try:
-            self.tooltip_manager = ToolTipManager(self.root)
+            # 使用全域 tooltip 管理器實例
+            from ui_parts.tooltip import get_tooltip_manager
+            self.tooltip_manager = get_tooltip_manager()
         except:
             self.tooltip_manager = None
         

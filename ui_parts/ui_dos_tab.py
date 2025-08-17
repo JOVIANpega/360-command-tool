@@ -14,7 +14,16 @@ class DosTab:
     
     def __init__(self, parent_frame, tooltip_manager=None):
         self.parent_frame = parent_frame
-        self.tooltip_manager = tooltip_manager
+        if tooltip_manager:
+            self.tooltip_manager = tooltip_manager
+        else:
+            try:
+                # 使用全域 tooltip 管理器實例
+                from ui_parts.tooltip import get_tooltip_manager
+                self.tooltip_manager = get_tooltip_manager()
+            except Exception as e:
+                print(f"初始化 ToolTip 管理器失敗: {e}")
+                self.tooltip_manager = None
         self.dos_process = None
         self.init_dos_tab()
     

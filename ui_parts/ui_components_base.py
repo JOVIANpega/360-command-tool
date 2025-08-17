@@ -208,12 +208,36 @@ class UIComponentsBase:
 
 
         # --- 左側控制面板 ---
-
-
-        # 直接使用 Frame 而非滾動區域，因為我們已經優化佈局使其不需要滾動
-
-
-        self.left_panel = ttk.LabelFrame(self.main_frame, text='控制面板', padding=5, style="Main.TLabelframe")
+        # 創建一個可滾動的左側面板容器
+        left_container = ttk.Frame(self.main_frame)
+        
+        # 創建 Canvas 和滾動條
+        self.left_canvas = tk.Canvas(left_container, highlightthickness=0)
+        self.left_scrollbar = ttk.Scrollbar(left_container, orient="vertical", command=self.left_canvas.yview)
+        
+        # 創建實際的左側面板（放在 Canvas 內）
+        self.left_panel = ttk.LabelFrame(self.left_canvas, text='控制面板', padding=5, style="Main.TLabelframe")
+        
+        # 配置滾動
+        self.left_canvas.configure(yscrollcommand=self.left_scrollbar.set)
+        
+        # 將左側面板放入 Canvas
+        self.left_canvas.create_window((0, 0), window=self.left_panel, anchor="nw")
+        
+        # 綁定滾動事件
+        self.left_panel.bind("<Configure>", self.on_left_panel_configure)
+        self.left_canvas.bind("<Configure>", self.on_left_canvas_configure)
+        
+        # 綁定滑鼠滾輪事件
+        self.left_canvas.bind("<MouseWheel>", self.on_mousewheel)
+        self.left_canvas.bind("<Button-4>", self.on_mousewheel)
+        self.left_canvas.bind("<Button-5>", self.on_mousewheel)
+        
+        # 配置滾動區域的 grid
+        left_container.grid_rowconfigure(0, weight=1)
+        left_container.grid_columnconfigure(0, weight=1)
+        self.left_canvas.grid(row=0, column=0, sticky="nsew")
+        self.left_scrollbar.grid(row=0, column=1, sticky="ns")
 
 
 
@@ -231,7 +255,7 @@ class UIComponentsBase:
         # 將左右面板加入 PanedWindow
 
 
-        self.main_frame.add(self.left_panel, weight=1)
+        self.main_frame.add(left_container, weight=1)
 
 
         self.main_frame.add(self.right_panel, weight=2)
@@ -290,6 +314,9 @@ class UIComponentsBase:
 
         app_version = get_app_version()
         self.parent.root.after(500, lambda: self.show_notification(get_notification_text("app_started"), "blue", 5000))
+        
+        # 在元件初始化完成後更新滾動狀態
+        self.parent.root.after(500, self.update_left_panel_scroll)
 
 
 
@@ -331,64 +358,133 @@ class UIComponentsBase:
 
 
 
-    def on_window_resize(self, event):
-
-
-        # 只在主視窗且尺寸真的有變時記錄
-
-
-        if event.widget == self.parent.root:
-
-
-            new_size = (self.parent.root.winfo_width(), self.parent.root.winfo_height())
-
-
-            if new_size != self.last_size and new_size[0] > 100 and new_size[1] > 100:
-
-
-                self.last_size = new_size
-
-
-                print(f"[DEBUG] 視窗大小變更為: {new_size}")
-
-
-                # 更新設定中的視窗大小
-
-
-                self.parent.setup['Window_Width'] = str(new_size[0])
-
-
-                self.parent.setup['Window_Height'] = str(new_size[1])
-
-
-
-
-
     def on_pane_position_changed(self, event):
-        """當分割位置變更時儲存位置"""
+        """當 PanedWindow 分割位置變更時的處理"""
         try:
-            # 防止在程式啟動階段觸發保存
-            if not hasattr(self, '_startup_complete') or not self._startup_complete:
-                return
-
-            # 獲取當前分割位置
-            sash_position = self.main_frame.sashpos(0)
-
-            # 如果位置有效（大於0），則保存到設定
-            if sash_position > 0:
-                # 更新內存中的設定（同時更新兩個位置）
-                self.parent.setup['Pane_Sash_Position'] = str(sash_position)
-                if 'DUT_Control' not in self.parent.setup:
-                    self.parent.setup['DUT_Control'] = {}
-                self.parent.setup['DUT_Control']['Pane_Sash_Position'] = str(sash_position)
-                print(f"[DEBUG] 分割位置已更新: {sash_position}")
-
+            if hasattr(self, 'main_frame') and self.main_frame:
+                # 獲取新的分割位置
+                sash_position = self.main_frame.sashpos(0)
+                
                 # 延遲保存，避免頻繁寫入
-                if hasattr(self, '_save_timer'):
-                    self.parent.root.after_cancel(self._save_timer)
-                self._save_timer = self.parent.root.after(1000, self._delayed_save_pane_position, sash_position)
+                if hasattr(self, '_pane_timer'):
+                    self.parent.root.after_cancel(self._pane_timer)
+                self._pane_timer = self.parent.root.after(1000, self._delayed_save_pane_position, sash_position)
+                
+                print(f"[DEBUG] 分割位置已變更: {sash_position}")
+                
         except Exception as e:
-            print(f"[ERROR] 更新分割位置時發生錯誤: {e}")
+            print(f"[ERROR] 處理分割位置變更時發生錯誤: {e}")
+
+    def on_window_resize(self, event):
+        """當視窗大小變更時的處理"""
+        try:
+            # 只在主視窗且尺寸真的有變時記錄
+            if event.widget == self.parent.root:
+                w, h = event.width, event.height
+                if (w, h) != self.last_size and w > 200 and h > 200:
+                    self.last_size = (w, h)
+                    
+                    # 更新當前設定
+                    if 'DUT_Control' not in self.parent.setup:
+                        self.parent.setup['DUT_Control'] = {}
+                    self.parent.setup['DUT_Control']['Window_Width'] = str(w)
+                    self.parent.setup['DUT_Control']['Window_Height'] = str(h)
+                    
+                    # 延遲保存，避免頻繁寫入
+                    if hasattr(self, '_resize_timer'):
+                        self.parent.root.after_cancel(self._resize_timer)
+                    self._resize_timer = self.parent.root.after(2000, self._delayed_save_window_size, w, h)
+                    
+                    # 更新左側面板滾動狀態
+                    self.parent.root.after(100, self.update_left_panel_scroll)
+                    
+        except Exception as e:
+            print(f"[ERROR] 處理視窗大小變更時發生錯誤: {e}")
+
+    def on_left_panel_configure(self, event):
+        """當左側面板大小變更時，更新 Canvas 的滾動區域"""
+        try:
+            # 更新 Canvas 的滾動區域
+            self.left_canvas.configure(scrollregion=self.left_canvas.bbox("all"))
+        except Exception as e:
+            print(f"[DEBUG] 更新左側面板滾動區域時發生錯誤: {e}")
+
+    def on_left_canvas_configure(self, event):
+        """當 Canvas 大小變更時，調整內部面板的寬度"""
+        try:
+            # 調整內部面板的寬度以匹配 Canvas
+            canvas_width = event.width
+            self.left_canvas.itemconfig(self.left_canvas.find_withtag("all")[0], width=canvas_width)
+        except Exception as e:
+            print(f"[DEBUG] 調整左側面板寬度時發生錯誤: {e}")
+
+    def on_mousewheel(self, event):
+        """處理滑鼠滾輪事件"""
+        try:
+            if platform.system() == "Windows":
+                # Windows 使用 delta
+                delta = event.delta
+            else:
+                # Linux 使用 num
+                if event.num == 4:
+                    delta = 120
+                elif event.num == 5:
+                    delta = -120
+                else:
+                    delta = 0
+            
+            # 滾動 Canvas
+            self.left_canvas.yview_scroll(int(-1 * (delta / 120)), "units")
+        except Exception as e:
+            print(f"[DEBUG] 處理滑鼠滾輪事件時發生錯誤: {e}")
+
+    def update_left_panel_scroll(self):
+        """更新左側面板的滾動狀態"""
+        try:
+            # 檢查是否需要滾動條
+            panel_height = self.left_panel.winfo_reqheight()
+            canvas_height = self.left_canvas.winfo_height()
+            
+            if panel_height > canvas_height:
+                # 需要滾動條
+                self.left_scrollbar.grid()
+                # 更新滾動區域
+                self.left_canvas.configure(scrollregion=self.left_canvas.bbox("all"))
+            else:
+                # 不需要滾動條
+                self.left_scrollbar.grid_remove()
+                
+        except Exception as e:
+            print(f"[DEBUG] 更新左側面板滾動狀態時發生錯誤: {e}")
+
+    def scroll_to_top(self):
+        """滾動到頂部"""
+        try:
+            self.left_canvas.yview_moveto(0)
+        except Exception as e:
+            print(f"[DEBUG] 滾動到頂部時發生錯誤: {e}")
+
+    def scroll_to_bottom(self):
+        """滾動到底部"""
+        try:
+            self.left_canvas.yview_moveto(1)
+        except Exception as e:
+            print(f"[DEBUG] 滾動到底部時發生錯誤: {e}")
+
+    def scroll_to_widget(self, widget):
+        """滾動到指定元件"""
+        try:
+            # 獲取元件在 Canvas 中的位置
+            bbox = self.left_canvas.bbox(widget)
+            if bbox:
+                # 計算元件應該在視窗中的位置
+                widget_y = bbox[1]
+                canvas_height = self.left_canvas.winfo_height()
+                
+                # 滾動到元件位置
+                self.left_canvas.yview_moveto(widget_y / self.left_panel.winfo_reqheight())
+        except Exception as e:
+            print(f"[DEBUG] 滾動到指定元件時發生錯誤: {e}")
 
     def _delayed_save_pane_position(self, sash_position):
         """延遲保存分割位置"""
@@ -412,54 +508,29 @@ class UIComponentsBase:
 
 
     def restore_pane_position(self):
-        """恢復上次保存的分割位置"""
+        """恢復 PanedWindow 分割位置"""
         try:
-            # 從設定中獲取分割位置（優先從 DUT_Control 中獲取）
-            dut_control = self.parent.setup.get('DUT_Control', {})
-            sash_position = dut_control.get('Pane_Sash_Position')
-
-            # 如果 DUT_Control 中沒有，則從頂層獲取
-            if not sash_position:
-                sash_position = self.parent.setup.get('Pane_Sash_Position', '400')
-
-            # 確保是整數
-            if sash_position and sash_position.isdigit():
+            # 獲取保存的分割位置
+            sash_position = self.parent.setup.get('DUT_Control', {}).get('Pane_Sash_Position', 633)
+            
+            # 確保 sash_position 是有效的數字
+            try:
                 sash_position = int(sash_position)
-
-                # 獲取當前窗口寬度
-                window_width = self.parent.root.winfo_width()
-
-                # 確保分割位置在合理範圍內 (10% ~ 90% 窗口寬度)
-                min_pos = int(window_width * 0.1)
-                max_pos = int(window_width * 0.9)
-
-                if sash_position < min_pos:
-                    sash_position = min_pos
-                elif sash_position > max_pos:
-                    sash_position = max_pos
-
-                # 設置分割位置
-                self.main_frame.update_idletasks()  # 確保UI元素已經完成佈局
+                if sash_position < 100:  # 最小值檢查
+                    sash_position = 633
+            except (ValueError, TypeError):
+                sash_position = 633
+            
+            # 設定分割位置
+            if hasattr(self, 'main_frame') and self.main_frame:
                 self.main_frame.sashpos(0, sash_position)
-                print(f"[DEBUG] 已恢復分割位置: {sash_position}, 窗口寬度: {window_width}")
-
-                # 再次確認分割位置是否設置成功
-                actual_pos = self.main_frame.sashpos(0)
-                if actual_pos != sash_position:
-                    print(f"[WARNING] 分割位置設置不成功，嘗試再次設置。預期: {sash_position}, 實際: {actual_pos}")
-                    # 延遲500毫秒後再次嘗試設置
-                    self.parent.root.after(500, lambda: self.main_frame.sashpos(0, sash_position))
-            else:
-                print(f"[DEBUG] 無效的分割位置值: {sash_position}，使用預設值")
-                # 使用預設值 (窗口寬度的40%)
-                window_width = self.parent.root.winfo_width()
-                default_pos = int(window_width * 0.4)
-                self.main_frame.sashpos(0, default_pos)
-
+                print(f"[DEBUG] 已恢復分割位置: {sash_position}")
+                
+                # 更新左側面板滾動狀態
+                self.parent.root.after(100, self.update_left_panel_scroll)
+                
         except Exception as e:
             print(f"[ERROR] 恢復分割位置時發生錯誤: {e}")
-            import traceback
-            traceback.print_exc()
 
 
 

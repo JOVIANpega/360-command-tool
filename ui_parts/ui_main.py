@@ -282,8 +282,10 @@ class TabManager:
                 print("[ERROR] ToolTipManager 類別不可用")
                 self.tooltip_manager = None
             else:
-                self.tooltip_manager = ToolTipManager()
-                print(f"[DEBUG] ToolTipManager 初始化成功，enabled={self.tooltip_manager.enabled}")
+                # 使用全域 tooltip 管理器實例
+                from ui_parts.tooltip import get_tooltip_manager
+                self.tooltip_manager = get_tooltip_manager()
+                print(f"[DEBUG] 使用全域 ToolTipManager，enabled={self.tooltip_manager.enabled}")
         except Exception as e:
             print(f"[ERROR] ToolTipManager 初始化失敗: {e}")
             import traceback

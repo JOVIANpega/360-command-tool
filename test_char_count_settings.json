@@ -1,0 +1,6 @@
+{
+  "DUT_Control": {
+    "IP_Char_Count": "192.168.11.3",
+    "End_String_Char_Count": "15"
+  }
+}
