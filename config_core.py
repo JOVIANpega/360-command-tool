@@ -98,6 +98,14 @@ def load_commands() -> Dict[str, str]:
 
 
 
+def load_settings(path="setup.json") -> Dict[str, Any]:
+    """新的設定載入函數，符合新需求規格"""
+    return load_setup()
+
+def save_settings(cfg: dict, path="setup.json") -> None:
+    """新的設定保存函數，符合新需求規格"""
+    save_setup(cfg, manual_save=True)
+
 def load_setup() -> Dict[str, Any]:
     """載入設定檔 - 使用新的配置管理器"""
     return config_manager.load_config()
@@ -328,4 +336,36 @@ def open_color_word_editor():
         return True
     except Exception as e:
         print(f"[ERROR] 無法開啟關鍵字設定檔：{e}")
-        return False 
+        return False
+
+def ensure_default_settings():
+    """確保設定檔包含所需的預設值"""
+    settings = load_settings()
+    
+    # 確保 DUT_Control 區段
+    if "DUT_Control" not in settings:
+        settings["DUT_Control"] = {}
+    
+    dut = settings["DUT_Control"]
+    
+    # 確保預設值
+    if "Default_IP_Address" not in dut:
+        dut["Default_IP_Address"] = "192.168.11.143"
+    if "Command_End_String" not in dut:
+        dut["Command_End_String"] = "root"
+    if "Pane_Sash_Position" not in dut:
+        dut["Pane_Sash_Position"] = "420"
+    if "Available_End_Strings" not in dut:
+        dut["Available_End_Strings"] = ["root", "admin", "$"]
+    
+    # 確保 UI_Settings 區段（暫時保留以供兼容）
+    if "UI_Settings" not in settings:
+        settings["UI_Settings"] = {}
+    
+    ui = settings["UI_Settings"]
+    if "left_pane_width" not in ui:
+        ui["left_pane_width"] = 420
+    
+    save_settings(settings)
+    print("[INFO] 預設設定已確保完整")
+    return settings 

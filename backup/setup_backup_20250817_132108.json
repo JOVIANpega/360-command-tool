@@ -54,7 +54,7 @@
     "timeout_updated": "• 超時設定已更新"
   },
   "Command_Transport_Mode": "Console",
-  "Device_Label": "MU310 : root/oelinux123",
+  "Device_Label": "MU310 : root/oelinux1233",
   "Startup_Label": "VALO360 and MU310 TOOL",
   "Manual_Command": {
     "Hint_Text": "請輸入指令並按執行"

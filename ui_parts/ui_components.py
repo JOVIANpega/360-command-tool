@@ -12,6 +12,7 @@ import sys
 import re
 import threading
 import time
+import json
 from datetime import datetime
 
 # 導入拆分後的模組
@@ -93,6 +94,14 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         # 初始化啟動標籤管理器
         self.startup_label_manager = StartupLabelManager(self)
 
+        # 確保預設設定
+        try:
+            from config_core import ensure_default_settings
+            ensure_default_settings()
+            print("[DEBUG] 預設設定確保完成")
+        except Exception as e:
+            print(f"[ERROR] 確保預設設定失敗: {e}")
+        
         # 初始化各個元件
         self.init_com_components()
         self.init_cmd_components()
@@ -541,18 +550,30 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.label_ip = ttk.Label(ip_frame, text='IP地址:', style="TLabel")
         self.label_ip.grid(row=0, column=0, sticky='w')
         
+        # 使用StringVar來追蹤IP地址變化
+        self.ip_var = tk.StringVar()
+        default_ip = self.parent.setup.get('DUT_Control', {}).get('Default_IP_Address', '192.168.11.143')
+        self.ip_var.set(default_ip)
+        
         # 使用Combobox替代Entry，支援IP記錄
-        self.entry_ip = ttk.Combobox(ip_frame, width=15)
+        self.entry_ip = ttk.Combobox(ip_frame, textvariable=self.ip_var, width=15)
         self.entry_ip.grid(row=0, column=1, padx=5, sticky='ew')
+        
+        # IP +/- 按鈕 - 與輸入框間隔4px，按鈕間間隔3px
+        self.btn_ip_plus = tk.Button(ip_frame, text='+', width=2, command=lambda: self.bump_ip(+1), 
+                                    bg='#ccffcc', fg='black')
+        self.btn_ip_plus.grid(row=0, column=2, padx=(4, 0))
+        
+        self.btn_ip_minus = tk.Button(ip_frame, text='-', width=2, command=lambda: self.bump_ip(-1), 
+                                     bg='#ffcccc', fg='black')
+        self.btn_ip_minus.grid(row=0, column=3, padx=(3, 0))
         
         # 載入並設定IP記錄
         self.load_ip_history()
-        default_ip = self.parent.setup.get('DUT_Control', {}).get('Default_IP_Address', '192.168.11.143')
-        self.entry_ip.set(default_ip)
         
         # Ping按鈕
         self.btn_ping = tk.Button(ip_frame, text='Ping', command=self.on_ping_with_save, bg='white', fg='black')
-        self.btn_ping.grid(row=0, column=2, padx=5)
+        self.btn_ping.grid(row=0, column=4, padx=5)
         self.btn_ping.bind("<Enter>", lambda e: self.btn_ping.config(bg="#ff9999"))
         self.btn_ping.bind("<Leave>", lambda e: self.btn_ping.config(bg="white"))
         
@@ -579,52 +600,45 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         settings_frame = ttk.LabelFrame(self.left_panel, text='設定', padding=5, style="TLabelframe")
         settings_frame.grid(row=6, column=0, sticky='ew', pady=5)  # 調整 row 位置
         
-        # 結束字串設定
+        # 第一行：結束字串設定
         end_frame = ttk.Frame(settings_frame, style="TFrame")
-        end_frame.grid(row=0, column=0, sticky='ew', pady=2)  # 減少間距
+        end_frame.grid(row=0, column=0, sticky='ew', pady=2)
+        end_frame.columnconfigure(1, weight=1)  # 讓下拉選單可擴展
+        
         self.label_end = ttk.Label(end_frame, text='結束字串:', style="TLabel")
         self.label_end.grid(row=0, column=0, sticky='w')
-        self.combobox_end = ttk.Combobox(end_frame, width=15)
-        self.combobox_end.grid(row=0, column=1, padx=5, sticky='ew')
+        
+        # 使用StringVar來追蹤結束字串變化
+        self.end_string_var = tk.StringVar()
+        default_end = self.parent.setup.get('Command_End_String', 'root')
+        self.end_string_var.set(default_end)
+        
+        # 綁定變化事件進行即時保存
+        self.end_string_var.trace_add("write", self.on_end_string_changed)
+        
+        self.combobox_end = ttk.Combobox(end_frame, textvariable=self.end_string_var, width=15)
+        self.combobox_end.grid(row=0, column=1, padx=(5, 4), sticky='ew')
         self.update_end_strings()
-        self.combobox_end.set(self.parent.setup.get('Command_End_String', 'root'))
         
-        # 添加按鈕
-        self.btn_add_end = tk.Button(end_frame, text='+', command=self.parent.handlers.add_end_string, width=2, bg='#ccffcc', fg='black')
-        self.btn_add_end.grid(row=0, column=2, padx=2)
+        # +/- 按鈕組合 - 與輸入框適當間距
+        self.btn_add_end = tk.Button(end_frame, text='+', command=self.on_add_end_string, width=2, bg='#ccffcc', fg='black')
+        self.btn_add_end.grid(row=0, column=2, padx=(0, 3))
         
-        # 刪除按鈕
-        self.btn_remove_end = tk.Button(end_frame, text='-', command=self.parent.handlers.remove_end_string, width=2, bg='#ffcccc', fg='black')
-        self.btn_remove_end.grid(row=0, column=3, padx=2)
+        self.btn_remove_end = tk.Button(end_frame, text='-', command=self.on_remove_end_string, width=2, bg='#ffcccc', fg='black')
+        self.btn_remove_end.grid(row=0, column=3, padx=0)
         
-        # 超時設定
+        # 第二行：超時設定
         timeout_frame = ttk.Frame(settings_frame, style="TFrame")
-        timeout_frame.grid(row=1, column=0, sticky='ew', pady=2)  # 減少間距
+        timeout_frame.grid(row=1, column=0, sticky='ew', pady=2)
         self.label_timeout = ttk.Label(timeout_frame, text='超時(秒):', style="TLabel")
         self.label_timeout.grid(row=0, column=0, sticky='w')
         self.entry_timeout = ttk.Entry(timeout_frame, width=8)
         self.entry_timeout.grid(row=0, column=1, padx=5, sticky='ew')
         self.entry_timeout.insert(0, self.parent.setup.get('Command_Timeout_Seconds', '30'))
         
-        # 添加自動執行勾選框
-        auto_exec_frame = ttk.Frame(settings_frame, style="TFrame")
-        auto_exec_frame.grid(row=2, column=0, sticky='ew', pady=2)  # 減少間距
-        self.auto_exec_var = tk.BooleanVar(value=self.parent.setup.get('Auto_Execute', False))
-        self.auto_exec_checkbox = tk.Checkbutton(
-            auto_exec_frame, 
-            text='啟動時自動執行指令',
-            variable=self.auto_exec_var,
-            command=self.on_auto_exec_changed,
-            bg='white',
-            activebackground='white',
-            highlightthickness=0,
-            font=('Microsoft JhengHei UI', int(self.parent.setup.get('UI_Font_Size', '12')))
-        )
-        self.auto_exec_checkbox.grid(row=0, column=0, sticky='w', padx=5)
-        
-        # 字體大小設定 - 將兩個字體設定合併到一行
+        # 第三行：字體大小設定
         font_frame = ttk.Frame(settings_frame, style="TFrame")
-        font_frame.grid(row=3, column=0, sticky='ew', pady=2)  # 減少間距
+        font_frame.grid(row=2, column=0, sticky='ew', pady=2)
         font_frame.columnconfigure(1, weight=1)
         font_frame.columnconfigure(3, weight=1)
         
@@ -651,11 +665,9 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.label_content_font = ttk.Label(font_frame, text='內容字體:', style="TLabel")
         self.label_content_font.grid(row=0, column=2, sticky='w', padx=(10,2))
         
-        # 添加內容字體的控制框架
         content_font_controls_frame = ttk.Frame(font_frame, style="TFrame")
         content_font_controls_frame.grid(row=0, column=3, sticky='ew')
         
-        # 添加減號按鈕
         self.btn_content_font_minus = tk.Button(content_font_controls_frame, text='－', width=2, 
                                               command=lambda: self.content_font_scale.set(self.content_font_scale.get()-1))
         self.btn_content_font_minus.grid(row=0, column=0, padx=1)
@@ -666,14 +678,13 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.content_font_scale.grid(row=0, column=1, padx=1)
         self.content_font_scale.set(int(self.parent.setup.get('Content_Font_Size', '12')))
         
-        # 添加加號按鈕
         self.btn_content_font_plus = tk.Button(content_font_controls_frame, text='＋', width=2, 
                                              command=lambda: self.content_font_scale.set(self.content_font_scale.get()+1))
         self.btn_content_font_plus.grid(row=0, column=2, padx=1)
         
-        # 按鈕區 - 改為水平排列
-        btn_frame = ttk.Frame(self.left_panel, style="TFrame")
-        btn_frame.grid(row=7, column=0, sticky='ew', pady=5)  # 調整 row 位置
+        # 第四行：功能按鈕區 - 獨立區域，與設定區分開
+        btn_frame = ttk.Frame(settings_frame, style="TFrame")
+        btn_frame.grid(row=3, column=0, sticky='ew', pady=(5, 2))  # 上方間距大一些，分隔設定和按鈕
         btn_frame.columnconfigure(0, weight=1)
         btn_frame.columnconfigure(1, weight=1)
         btn_frame.columnconfigure(2, weight=1)
@@ -688,13 +699,12 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.btn_guide = ttk.Button(btn_frame, text='使用說明', command=self.parent.handlers.toggle_guide, style='Blue.TButton')
         self.btn_guide.grid(row=0, column=2, padx=2, sticky='ew')
 
-        # 添加「open CMD table」按鈕
         self.btn_open_script = ttk.Button(btn_frame, text='open CMD table', command=self.on_open_command_script, style='Orange.TButton')
         self.btn_open_script.grid(row=0, column=3, padx=2, sticky='ew')
         
         # 設備標籤顯示區域 - 放在按鈕區下方
         device_label_frame = ttk.Frame(self.left_panel, style="TFrame")
-        device_label_frame.grid(row=8, column=0, sticky='ew', pady=5)
+        device_label_frame.grid(row=7, column=0, sticky='ew', pady=5)
         device_label_frame.columnconfigure(0, weight=1)
         
         # 從設定檔讀取設備標籤文字，預設顯示設備信息
@@ -1275,40 +1285,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             import traceback
             traceback.print_exc()
 
-    def on_auto_exec_changed(self):
-        """當自動執行勾選框狀態變更時，保存設置"""
-        try:
-            # 獲取當前勾選狀態
-            auto_exec = self.auto_exec_var.get()
-            print(f"[DEBUG] 自動執行設置已變更為: {auto_exec}")
-            
-            # 更新設置到 parent.setup
-            if 'DUT_Control' not in self.parent.setup:
-                self.parent.setup['DUT_Control'] = {}
-            self.parent.setup['DUT_Control']['Auto_Execute'] = auto_exec
-            
-            # 保存完整的設定結構到檔案
-            from config_core import load_setup, save_setup
-            full_setup = load_setup()
-            if 'DUT_Control' not in full_setup:
-                full_setup['DUT_Control'] = {}
-            full_setup['DUT_Control']['Auto_Execute'] = auto_exec
-            save_setup(full_setup)
-            
-            # 顯示通知給使用者
-            message_key = "auto_exec_enabled" if auto_exec else "auto_exec_disabled"
-            self.show_notification(
-                get_notification_text(message_key),
-                "green" if auto_exec else "blue",
-                3000
-            )
-            
-            print(f"[DEBUG] 自動執行設置已保存: {auto_exec}")
-        except Exception as e:
-            print(f"[ERROR] 保存自動執行設置時發生錯誤: {e}")
-            import traceback
-            traceback.print_exc()
-            self.show_notification(get_notification_text("save_failed", str(e)), "red", 5000)
+    # 移除自動執行相關方法 - 功能已不需要
 
     def show_notification(self, message, color="info", duration=2000, callback=None):
         """
@@ -1395,7 +1372,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
     def save_current_ip(self):
         """保存當前IP到記錄中"""
         try:
-            current_ip = self.entry_ip.get().strip()
+            current_ip = self.ip_var.get().strip()
             if not current_ip:
                 from tkinter import messagebox
                 messagebox.showwarning("警告", "請輸入IP地址")
@@ -1435,7 +1412,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             self.load_ip_history()
             
             # 設定當前值為新保存的IP
-            self.entry_ip.set(current_ip)
+            self.ip_var.set(current_ip)
             
             # 通知設定標籤頁更新
             self.notify_settings_tab_update()
@@ -1452,7 +1429,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
     def delete_current_ip(self):
         """從記錄中刪除當前選中的IP"""
         try:
-            current_ip = self.entry_ip.get().strip()
+            current_ip = self.ip_var.get().strip()
             if not current_ip:
                 from tkinter import messagebox
                 messagebox.showwarning("警告", "請選擇要刪除的IP地址")
@@ -1482,7 +1459,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             self.load_ip_history()
             
             # 清空輸入框
-            self.entry_ip.set("")
+            self.ip_var.set("")
             
             # 通知設定標籤頁更新
             self.notify_settings_tab_update()
@@ -1522,15 +1499,39 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             from tkinter import messagebox
             messagebox.showerror("錯誤", f"清空IP記錄失敗: {e}")
 
-    def on_ping_with_save(self):
-        """執行Ping並自動保存IP到記錄"""
+    def bump_ip(self, delta):
+        """調整IP地址的最後一段 +1 或 -1"""
         try:
-            current_ip = self.entry_ip.get().strip()
+            current_ip = self.ip_var.get().strip()
+            parts = current_ip.split(".")
+            if len(parts) == 4:
+                last_octet = int(parts[-1])
+                new_octet = max(0, min(255, last_octet + delta))
+                parts[-1] = str(new_octet)
+                new_ip = ".".join(parts)
+                self.ip_var.set(new_ip)
+                print(f"[INFO] IP地址已調整: {current_ip} -> {new_ip}")
+        except (ValueError, IndexError):
+            print(f"[WARNING] IP格式錯誤，無法調整: {current_ip}")
+
+    def on_ping_with_save(self):
+        """Ping時立即保存IP地址到設定檔"""
+        try:
+            current_ip = self.ip_var.get().strip()
             if current_ip:
-                # 執行Ping前自動保存IP到記錄
+                # 立即更新設定並保存
+                from config_core import load_settings, save_settings
+                settings = load_settings()
+                if 'DUT_Control' not in settings:
+                    settings['DUT_Control'] = {}
+                settings['DUT_Control']['Default_IP_Address'] = current_ip
+                save_settings(settings)
+                print(f"[INFO] IP地址已保存到設定檔: {current_ip}")
+                
+                # 也保存到IP記錄中
                 self.save_current_ip_silent()
             
-            # 執行Ping操作
+            # 執行原有的Ping邏輯
             if hasattr(self.parent, 'handlers') and hasattr(self.parent.handlers, 'on_ping'):
                 self.parent.handlers.on_ping()
             else:
@@ -1542,7 +1543,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
     def save_current_ip_silent(self):
         """靜默保存當前IP（不顯示訊息框）"""
         try:
-            current_ip = self.entry_ip.get().strip()
+            current_ip = self.ip_var.get().strip()
             if not current_ip:
                 return
                 
@@ -1623,6 +1624,13 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             if hasattr(self, 'btn_delete_ip'):
                 self.tooltip_manager.add_tooltip(self.btn_delete_ip, "btn_delete_ip")
             
+            # IP +/- 按鈕
+            if hasattr(self, 'btn_ip_plus'):
+                self.tooltip_manager.add_tooltip(self.btn_ip_plus, "btn_ip_plus")
+            
+            if hasattr(self, 'btn_ip_minus'):
+                self.tooltip_manager.add_tooltip(self.btn_ip_minus, "btn_ip_minus")
+            
             # 移除結束字串按鈕
             if hasattr(self, 'btn_remove_end'):
                 self.tooltip_manager.add_tooltip(self.btn_remove_end, "btn_remove_end")
@@ -1668,9 +1676,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             if hasattr(self, 'entry_timeout'):
                 self.tooltip_manager.add_tooltip(self.entry_timeout, "entry_timeout")
             
-            # 為checkbox組件添加tooltip
-            if hasattr(self, 'auto_exec_checkbox'):
-                self.tooltip_manager.add_tooltip(self.auto_exec_checkbox, "auto_exec_checkbox")
+            # 自動執行checkbox已移除
             
             # 為label組件添加tooltip
             if hasattr(self, 'label_com'):
@@ -1782,3 +1788,94 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                 print("[DEBUG] 主視窗或標籤管理器未找到")
         except Exception as e:
             print(f"[ERROR] 通知設定標籤頁更新時發生錯誤: {e}")
+    
+    def on_end_string_changed(self, *args):
+        """結束字串變化時即時保存"""
+        try:
+            current_end = self.end_string_var.get().strip()
+            if current_end:
+                from config_core import load_settings, save_settings
+                settings = load_settings()
+                if 'DUT_Control' not in settings:
+                    settings['DUT_Control'] = {}
+                settings['DUT_Control']['Command_End_String'] = current_end
+                save_settings(settings)
+                print(f"[INFO] 結束字串已保存: {current_end}")
+        except Exception as e:
+            print(f"[ERROR] 保存結束字串失敗: {e}")
+    
+    def on_add_end_string(self):
+        """添加新結束字串並即時保存"""
+        try:
+            from tkinter import simpledialog
+            new_end_string = simpledialog.askstring("添加結束字串", "請輸入新的結束字串:")
+            if not new_end_string or not new_end_string.strip():
+                return
+                
+            new_end_string = new_end_string.strip()
+            
+            # 檢查是否已存在
+            current_values = list(self.combobox_end['values'])
+            if new_end_string in current_values:
+                from tkinter import messagebox
+                messagebox.showwarning("警告", "該結束字串已存在")
+                return
+            
+            # 添加到列表
+            current_values.append(new_end_string)
+            self.combobox_end['values'] = current_values
+            
+            # 立即保存到設定檔
+            from config_core import load_settings, save_settings
+            settings = load_settings()
+            if 'DUT_Control' not in settings:
+                settings['DUT_Control'] = {}
+            settings['DUT_Control']['Available_End_Strings'] = current_values
+            settings['DUT_Control']['Command_End_String'] = new_end_string
+            save_settings(settings)
+            
+            # 設定為當前選擇
+            self.end_string_var.set(new_end_string)
+            
+            print(f"[INFO] 已添加並保存結束字串: {new_end_string}")
+            
+        except Exception as e:
+            print(f"[ERROR] 添加結束字串失敗: {e}")
+    
+    def on_remove_end_string(self):
+        """移除結束字串並即時保存"""
+        try:
+            current_end = self.end_string_var.get().strip()
+            current_values = list(self.combobox_end['values'])
+            
+            if current_end not in current_values:
+                return
+                
+            if len(current_values) <= 1:
+                from tkinter import messagebox
+                messagebox.showwarning("警告", "至少需要保留一個結束字串")
+                return
+            
+            # 從列表中移除
+            current_values.remove(current_end)
+            self.combobox_end['values'] = current_values
+            
+            # 設定為第一個可用的結束字串
+            if current_values:
+                new_end = current_values[0]
+                self.end_string_var.set(new_end)
+            
+            # 立即保存到設定檔
+            from config_core import load_settings, save_settings
+            settings = load_settings()
+            if 'DUT_Control' not in settings:
+                settings['DUT_Control'] = {}
+            settings['DUT_Control']['Available_End_Strings'] = current_values
+            if current_values:
+                settings['DUT_Control']['Command_End_String'] = current_values[0]
+            save_settings(settings)
+            
+            print(f"[INFO] 已移除並保存結束字串: {current_end}")
+            
+        except Exception as e:
+            print(f"[ERROR] 移除結束字串失敗: {e}")

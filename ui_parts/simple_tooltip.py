@@ -124,6 +124,8 @@ class SimpleToolTipManager:
             'btn_save_ip': '將目前位址加入常用清單',
             'btn_delete_ip': '從常用清單中移除目前位址',
             'btn_clear_ip': '清空所有常用位址記錄',
+            'btn_ip_plus': 'IP地址最後一段數字+1（範圍0-255）',
+            'btn_ip_minus': 'IP地址最後一段數字-1（範圍0-255）',
             'btn_clear': '清空回應內容',
             'btn_backup': '將回應內容儲存為檔案',
             'btn_guide': '顯示使用說明',

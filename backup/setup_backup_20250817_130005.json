@@ -2,7 +2,7 @@
   "version": "1.9.4",
   "Window_Title": "PEGA指令通",
   "Window_Width": "1536",
-  "Window_Height": "801",
+  "Window_Height": "749",
   "UIFontSize": "13",
   "ContentFontSize": "11",
   "DUT_Control": {
@@ -54,7 +54,7 @@
     "timeout_updated": "• 超時設定已更新"
   },
   "Command_Transport_Mode": "Console",
-  "Device_Label": "MU310 : root/oelinux123",
+  "Device_Label": "MU310 : root/oelinux1233",
   "Startup_Label": "VALO360 and MU310 TOOL",
   "Manual_Command": {
     "Hint_Text": "請輸入指令並按執行"

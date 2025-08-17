@@ -400,6 +400,78 @@ class UIHandlers(UIHandlersCore):
 
 
 
+    def save_ip_to_history(self):
+        """保存當前IP地址到歷史記錄並寫入setup.json"""
+        try:
+            current_ip = self.parent.components.entry_ip.get().strip()
+            if not current_ip:
+                self.parent.components.show_notification("請先輸入IP地址", "warning", 3000)
+                return
+            
+            # 載入當前設定
+            from config_core import load_setup, save_setup
+            setup = load_setup()
+            
+            # 確保DUT_Control存在
+            if 'DUT_Control' not in setup:
+                setup['DUT_Control'] = {}
+            
+            # 獲取IP歷史記錄
+            ip_history = setup['DUT_Control'].get('IP_History', [])
+            
+            # 如果IP不在歷史中，添加到開頭
+            if current_ip not in ip_history:
+                ip_history.insert(0, current_ip)
+                # 限制歷史記錄數量為10個
+                if len(ip_history) > 10:
+                    ip_history = ip_history[:10]
+                
+                setup['DUT_Control']['IP_History'] = ip_history
+                save_setup(setup)
+                
+                self.parent.components.show_notification(f"IP地址 {current_ip} 已保存到歷史", "green", 3000)
+                print(f"[INFO] IP地址已保存: {current_ip}")
+            else:
+                self.parent.components.show_notification("IP地址已存在於歷史中", "info", 3000)
+                
+        except Exception as e:
+            print(f"[ERROR] 保存IP地址時發生錯誤: {e}")
+            self.parent.components.show_notification("保存IP地址失敗", "error", 3000)
+
+    def remove_ip_from_history(self):
+        """從歷史記錄中移除當前IP地址"""
+        try:
+            current_ip = self.parent.components.entry_ip.get().strip()
+            if not current_ip:
+                self.parent.components.show_notification("請先輸入要移除的IP地址", "warning", 3000)
+                return
+            
+            # 載入當前設定
+            from config_core import load_setup, save_setup
+            setup = load_setup()
+            
+            # 確保DUT_Control存在
+            if 'DUT_Control' not in setup:
+                setup['DUT_Control'] = {}
+            
+            # 獲取IP歷史記錄
+            ip_history = setup['DUT_Control'].get('IP_History', [])
+            
+            # 如果IP在歷史中，移除它
+            if current_ip in ip_history:
+                ip_history.remove(current_ip)
+                setup['DUT_Control']['IP_History'] = ip_history
+                save_setup(setup)
+                
+                self.parent.components.show_notification(f"IP地址 {current_ip} 已從歷史中移除", "green", 3000)
+                print(f"[INFO] IP地址已移除: {current_ip}")
+            else:
+                self.parent.components.show_notification("IP地址不在歷史記錄中", "info", 3000)
+                
+        except Exception as e:
+            print(f"[ERROR] 移除IP地址時發生錯誤: {e}")
+            self.parent.components.show_notification("移除IP地址失敗", "error", 3000)
+
     def check_ping(self):
 
 
@@ -1506,11 +1578,7 @@ class UIHandlers(UIHandlersCore):
                         self.parent.components.add_to_buffer(f"  {i}. {cmd}\n", "purple")
                 self.parent.components.add_to_buffer("\n", "purple")
 
-        # 如果有多個指令，顯示分割信息
-        if len(cmd_list) > 1:
-            self.parent.components.add_to_buffer(f"多重指令模式: 將執行 {len(cmd_list)} 個指令\n", "purple")
-            for i, cmd in enumerate(cmd_list, 1):
-                self.parent.components.add_to_buffer(f"  {i}. {cmd.strip()}\n", "purple")
+        # 多重指令模式信息已在上面顯示，這裡不再重複
 
         # 重置進度條並顯示
         self.parent.components.reset_progress()

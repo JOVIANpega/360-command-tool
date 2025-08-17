@@ -132,6 +132,6 @@
 
 //指令可以自行修改
 
-指令通_V2  created by JOVIAN
+指令通_V2  created by JOVIAN2
 
 

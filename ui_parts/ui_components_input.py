@@ -431,6 +431,77 @@ class UIComponentsInput:
 
 
         self.combobox_end.bind("<Return>", self.parent.handlers.on_end_string_entered)
+        self.combobox_end.bind("<<ComboboxSelected>>", self.on_end_string_changed)
+        self.combobox_end.bind("<KeyRelease>", self.on_end_string_changed)
+
+    def on_end_string_changed(self, event=None):
+        """結束字串變更時立即保存到setup.json"""
+        try:
+            current_end_string = self.combobox_end.get().strip()
+            if current_end_string:
+                # 載入設定
+                from config_core import load_settings, save_settings
+                settings = load_settings()
+                
+                # 確保DUT區段存在
+                if "DUT" not in settings:
+                    settings["DUT"] = {}
+                
+                # 保存結束字串
+                settings["DUT"]["end_prompt"] = current_end_string
+                
+                # 立即寫回setup.json
+                save_settings(settings)
+                print(f"[INFO] 結束字串已保存到setup.json: {current_end_string}")
+                
+        except Exception as e:
+            print(f"[ERROR] 保存結束字串時發生錯誤: {e}")
+
+    def load_ip_from_settings(self):
+        """從setup.json載入IP地址設定"""
+        try:
+            from config_core import load_settings
+            settings = load_settings()
+            
+            # 確保有預設值
+            if "DUT" not in settings:
+                settings["DUT"] = {}
+            if "ip_address" not in settings["DUT"]:
+                settings["DUT"]["ip_address"] = "192.168.11.143"
+            
+            # 設定IP地址到輸入框
+            ip_address = settings["DUT"].get("ip_address", "192.168.11.143")
+            self.entry_ip.delete(0, tk.END)
+            self.entry_ip.insert(0, ip_address)
+            print(f"[INFO] 已載入IP地址設定: {ip_address}")
+            
+        except Exception as e:
+            print(f"[ERROR] 載入IP地址設定時發生錯誤: {e}")
+            # 使用預設值
+            self.entry_ip.delete(0, tk.END)
+            self.entry_ip.insert(0, "192.168.11.143")
+
+    def load_end_string_from_settings(self):
+        """從setup.json載入結束字串設定"""
+        try:
+            from config_core import load_settings
+            settings = load_settings()
+            
+            # 確保有預設值
+            if "DUT" not in settings:
+                settings["DUT"] = {}
+            if "end_prompt" not in settings["DUT"]:
+                settings["DUT"]["end_prompt"] = "root"
+            
+            # 設定結束字串到下拉選單
+            end_prompt = settings["DUT"].get("end_prompt", "root")
+            self.combobox_end.set(end_prompt)
+            print(f"[INFO] 已載入結束字串設定: {end_prompt}")
+            
+        except Exception as e:
+            print(f"[ERROR] 載入結束字串設定時發生錯誤: {e}")
+            # 使用預設值
+            self.combobox_end.set("root")
 
 
 
@@ -481,7 +552,9 @@ class UIComponentsInput:
         ping_frame.columnconfigure(1, weight=1)  # 輸入框擴展
 
 
-        ping_frame.columnconfigure(2, weight=0)  # 按鈕不需要擴展
+        ping_frame.columnconfigure(2, weight=0)  # + 按鈕不需要擴展
+        ping_frame.columnconfigure(3, weight=0)  # - 按鈕不需要擴展
+        ping_frame.columnconfigure(4, weight=0)  # Ping 按鈕不需要擴展
 
 
         
@@ -505,10 +578,68 @@ class UIComponentsInput:
         
 
 
-        self.btn_ping = tk.Button(ping_frame, text='Ping', command=self.parent.handlers.check_ping,
+        # 新增 + 按鈕（IP最後一段+1）
+        self.btn_ip_add = tk.Button(ping_frame, text='+', command=lambda: self.bump_ip(+1),
+                                   bg='#4CAF50', fg='white', activebackground='#45a049', activeforeground='white',
+                                   width=2, height=1, font=('Microsoft JhengHei UI', 12, 'bold'))
+        self.btn_ip_add.grid(row=0, column=2, padx=(4, 2))
+
+        # 新增 - 按鈕（IP最後一段-1）
+        self.btn_ip_remove = tk.Button(ping_frame, text='-', command=lambda: self.bump_ip(-1),
+                                      bg='#f44336', fg='white', activebackground='#da190b', activeforeground='white',
+                                      width=2, height=1, font=('Microsoft JhengHei UI', 12, 'bold'))
+        self.btn_ip_remove.grid(row=0, column=3, padx=(2, 4))
+
+        self.btn_ping = tk.Button(ping_frame, text='Ping', command=self.on_ping_with_save,
                                 bg='#e0e0e0', fg='black', activebackground='#2196f3', activeforeground='black',
                                 width=8, height=2, font=('Microsoft JhengHei UI', 11, 'bold'))
-        self.btn_ping.grid(row=0, column=2, padx=3)
+        self.btn_ping.grid(row=0, column=4, padx=3)
+
+    def bump_ip(self, delta: int):
+        """調整IP地址最後一段的數值"""
+        try:
+            current_ip = self.entry_ip.get().strip()
+            parts = current_ip.split(".")
+            if len(parts) == 4:
+                # 調整最後一段，範圍0-255
+                last_octet = max(0, min(255, int(parts[-1]) + delta))
+                parts[-1] = str(last_octet)
+                new_ip = ".".join(parts)
+                self.entry_ip.delete(0, tk.END)
+                self.entry_ip.insert(0, new_ip)
+                print(f"[DEBUG] IP調整: {current_ip} -> {new_ip}")
+        except (ValueError, IndexError) as e:
+            print(f"[ERROR] IP調整失敗: {e}")
+
+    def on_ping_with_save(self):
+        """執行Ping並立即保存IP到setup.json"""
+        try:
+            # 取得當前IP
+            current_ip = self.entry_ip.get().strip()
+            if current_ip:
+                # 載入設定
+                from config_core import load_settings, save_settings
+                settings = load_settings()
+                
+                # 確保DUT區段存在
+                if "DUT" not in settings:
+                    settings["DUT"] = {}
+                
+                # 保存IP地址
+                settings["DUT"]["ip_address"] = current_ip
+                
+                # 立即寫回setup.json
+                save_settings(settings)
+                print(f"[INFO] IP地址已保存到setup.json: {current_ip}")
+            
+            # 執行原本的Ping功能
+            if hasattr(self.parent, 'handlers') and hasattr(self.parent.handlers, 'check_ping'):
+                self.parent.handlers.check_ping()
+            else:
+                print("[ERROR] 找不到ping處理程序")
+                
+        except Exception as e:
+            print(f"[ERROR] Ping並保存IP時發生錯誤: {e}")
 
 
 
