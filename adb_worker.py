@@ -9,6 +9,7 @@ import threading
 import time
 import re
 from typing import List, Callable, Optional
+import sys
 
 # 導入核心模組
 from core import (
@@ -54,7 +55,7 @@ class ADBWorker(threading.Thread):
         try:
             # 在 Windows 上隱藏 DOS 視窗
             startupinfo = None
-            if subprocess.sys.platform == "win32":
+            if sys.platform == "win32":
                 startupinfo = subprocess.STARTUPINFO()
                 startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
                 startupinfo.wShowWindow = subprocess.SW_HIDE
@@ -79,7 +80,7 @@ class ADBWorker(threading.Thread):
 
             # 在 Windows 上隱藏 DOS 視窗
             startupinfo = None
-            if subprocess.sys.platform == "win32":
+            if sys.platform == "win32":
                 startupinfo = subprocess.STARTUPINFO()
                 startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
                 startupinfo.wShowWindow = subprocess.SW_HIDE

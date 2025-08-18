@@ -2,7 +2,7 @@
   "version": "1.9.4",
   "Window_Title": "PEGA指令通",
   "Window_Width": "1536",
-  "Window_Height": "801",
+  "Window_Height": "741",
   "UIFontSize": "13",
   "ContentFontSize": "11",
   "DUT_Control": {
@@ -19,11 +19,11 @@
     "Default_IP_Address": "192.168.11.143",
     "IP_History": [],
     "Window_Width": "1522",
-    "Window_Height": "749",
+    "Window_Height": "741",
     "Last_Selected_Command_Section": "全部指令",
     "Pane_Sash_Position": "636",
     "Auto_Execute": false,
-    "Command_File_Path": "M:/PYTHON/360-command-toola_HOME/Command_TABLE/command_360.txt",
+    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/360-command-tool/Command_TABLE/MU310_command.txt",
     "Notification_Font_Size": "10"
   },
   "Fixture_Control": {
