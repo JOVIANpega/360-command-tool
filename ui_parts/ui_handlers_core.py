@@ -364,7 +364,7 @@ class UIHandlersCore:
         self.parent.components.combobox_com['values'] = ports
         
         # 如果有保存的設定，使用設定中的 COM 口
-        saved_com = self.setup.get('Serial_COM_Port', '')
+        saved_com = self.setup.get('DUT_Control', {}).get('Serial_COM_Port', '')
         if saved_com and saved_com in ports:
             self.parent.components.combobox_com.set(saved_com)
             print(f"[DEBUG] refresh_com_ports: 保持選擇 {saved_com}")
@@ -372,8 +372,35 @@ class UIHandlersCore:
             # 選擇第一個 COM 口
             self.parent.components.combobox_com.set(ports[0])
             print(f"[DEBUG] refresh_com_ports: 選擇第一個 COM 口 {ports[0]}")
-            # 同時更新設定
-            self.setup['Serial_COM_Port'] = ports[0]
+            # 更新設定並立即保存
+            if 'DUT_Control' not in self.setup:
+                self.setup['DUT_Control'] = {}
+            self.setup['DUT_Control']['Serial_COM_Port'] = ports[0]
+            # 立即保存COM口設定
+            save_setup(self.setup, manual_save=True)
+            print(f"[DEBUG] refresh_com_ports: COM口設定已保存到 setup.json")
+    
+    def on_com_port_changed(self, event=None):
+        """當COM口選擇變更時立即保存設定"""
+        try:
+            selected_com = self.parent.components.combobox_com.get()
+            if selected_com and selected_com != '無可用COM口':
+                # 更新設定
+                if 'DUT_Control' not in self.setup:
+                    self.setup['DUT_Control'] = {}
+                self.setup['DUT_Control']['Serial_COM_Port'] = selected_com
+                
+                # 立即保存設定
+                save_setup(self.setup, manual_save=True)
+                print(f"[DEBUG] on_com_port_changed: COM口已變更為 {selected_com} 並保存到 setup.json")
+                
+                # 顯示通知
+                if hasattr(self.parent, 'components') and hasattr(self.parent.components, 'show_notification'):
+                    self.parent.components.show_notification(f"COM口已設定為: {selected_com}", "green", 2000)
+        except Exception as e:
+            print(f"[ERROR] 保存COM口設定時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
 
 
     def clear_output(self, event=None):

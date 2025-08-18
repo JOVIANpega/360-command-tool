@@ -205,12 +205,19 @@ class DosTab:
             self.update_status(f"錯誤：{str(e)}", "error")
     
     def open_powershell_window(self):
-        """開啟PowerShell視窗"""
+        """開啟PowerShell視窗（管理員權限）"""
         try:
-            # 開啟新的 PowerShell 視窗
-            subprocess.Popen(["powershell"], creationflags=subprocess.CREATE_NEW_CONSOLE)
-            self.update_status("PowerShell 視窗已開啟", "success")
-            print("[DEBUG] 已開啟 PowerShell 視窗")
+            # 使用 runas 開啟具有管理員權限的 PowerShell 視窗
+            subprocess.Popen([
+                "powershell", 
+                "-Command", 
+                "Start-Process", 
+                "powershell", 
+                "-Verb", 
+                "RunAs"
+            ], creationflags=subprocess.CREATE_NEW_CONSOLE)
+            self.update_status("PowerShell 視窗已開啟（管理員權限）", "success")
+            print("[DEBUG] 已開啟具有管理員權限的 PowerShell 視窗")
         except Exception as e:
             error_msg = f"開啟PowerShell視窗時發生錯誤：{str(e)}"
             messagebox.showerror("錯誤", error_msg)

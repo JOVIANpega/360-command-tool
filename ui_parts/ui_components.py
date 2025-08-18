@@ -136,7 +136,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         com_values = list_com_ports()
         self.combobox_com = ttk.Combobox(com_frame, values=com_values, state='readonly', width=15)
         self.combobox_com.grid(row=0, column=1, padx=5, sticky='ew')
-        self.combobox_com.bind("<<ComboboxSelected>>", self.on_com_port_changed)
+        self.combobox_com.bind("<<ComboboxSelected>>", self.handlers.on_com_port_changed)
         refresh_command = None
         if hasattr(self.parent, 'handlers') and hasattr(self.parent.handlers, 'refresh_com_ports'):
             refresh_command = self.parent.handlers.refresh_com_ports
@@ -151,8 +151,15 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.label_transport = ttk.Label(com_frame, text='傳輸方式:', style="TLabel")
         self.label_transport.grid(row=1, column=0, sticky='w', pady=(5, 0))
 
-        # 從設定檔讀取當前的傳輸方式
+        # 優先使用統一設定管理器的值
         current_mode = self.parent.setup.get('Command_Transport_Mode', 'Console')
+        try:
+            if hasattr(self, 'shared_config') and self.shared_config:
+                val = self.shared_config.get_data_value('command_transport_mode')
+                if val:
+                    current_mode = val
+        except Exception:
+            pass
         self.transport_mode_var = tk.StringVar(value=current_mode)
         self.combobox_transport = ttk.Combobox(com_frame, textvariable=self.transport_mode_var,
                                              values=['Console', 'ADB'], state='readonly', width=15)
@@ -187,9 +194,13 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                     self.parent.setup['DUT_Control'] = {}
                 self.parent.setup['DUT_Control']['Serial_COM_Port'] = actual_com_port
 
-                # 使用統一設定管理器的延遲保存機制
-                if hasattr(self.parent, 'shared_config'):
-                    self.parent.shared_config._schedule_delayed_save()
+                # 同步到 SharedConfig 並延遲保存
+                if hasattr(self.parent, 'shared_config') and self.parent.shared_config:
+                    try:
+                        self.parent.shared_config.set_var('dut_com_port', actual_com_port)
+                        self.parent.shared_config._schedule_delayed_save()
+                    except Exception:
+                        pass
 
                 # 顯示通知（顯示完整資訊）
                 self.show_notification(f"COM 口已更新為 {selected_display_name}", "blue", 3000)
@@ -207,10 +218,13 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             # 更新設定檔中的傳輸方式
             if hasattr(self.parent, 'setup'):
                 self.parent.setup['Command_Transport_Mode'] = selected_mode
-
-                # 使用統一設定管理器的延遲保存機制
-                if hasattr(self.parent, 'shared_config'):
-                    self.parent.shared_config._schedule_delayed_save()
+                # 同步到 SharedConfig 並延遲保存
+                if hasattr(self.parent, 'shared_config') and self.parent.shared_config:
+                    try:
+                        self.parent.shared_config.set_var('command_transport_mode', selected_mode)
+                        self.parent.shared_config._schedule_delayed_save()
+                    except Exception:
+                        pass
 
                 # 顯示通知
                 self.show_notification(f"指令傳輸方式已更新為 {selected_mode}", "blue", 3000)

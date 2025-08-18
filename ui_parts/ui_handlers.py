@@ -1731,7 +1731,7 @@ class UIHandlers(UIHandlersCore):
                 exe_dir = os.path.dirname(os.path.dirname(__file__))
 
             # HTML 說明檔案路徑
-            html_guide_path = os.path.join(exe_dir, 'VALO360 指令通使用指南.html')
+            html_guide_path = os.path.join(exe_dir, 'PEGA指令通使用指南.html')
 
             # 檢查檔案是否存在
             if os.path.exists(html_guide_path):
@@ -1743,7 +1743,7 @@ class UIHandlers(UIHandlersCore):
                 print(f"[DEBUG] 開啟 HTML 使用說明: {html_guide_path}")
             else:
                 # 如果 HTML 檔案不存在，顯示錯誤訊息
-                self.parent.components.show_notification(f"找不到使用說明檔案：VALO360 指令通使用指南.html", "error", 3000)
+                self.parent.components.show_notification(f"找不到使用說明檔案：PEGA指令通使用指南.html", "error", 3000)
                 print(f"[WARNING] HTML 使用說明檔案不存在: {html_guide_path}")
 
         except Exception as e:

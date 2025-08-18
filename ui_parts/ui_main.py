@@ -1540,6 +1540,14 @@ class SerialUI:
         
         # 初始化處理器和元件
         self.handlers = UIHandlers(self, self.setup, highlight_keywords=highlight_keywords)
+        # 初始化統一設定管理器並掛到 parent，供子元件使用
+        try:
+            from ui_parts.shared_config import get_shared_config
+            self.shared_config = get_shared_config(self.root)
+            print("[DEBUG] SerialUI: SharedConfigManager 已附加到 parent.shared_config")
+        except Exception as e:
+            self.shared_config = None
+            print(f"[WARNING] SerialUI: 無法初始化 SharedConfigManager: {e}")
         self.components = UIComponents(self, self.handlers, self.root, tooltip_manager=self.tooltip_manager)
 
         # 初始化樣式
@@ -1827,7 +1835,17 @@ class SerialUI:
         # 基本設定
 
 
-        settings['Serial_COM_Port'] = c.combobox_com.get()
+        # 確保COM口設定正確保存
+        selected_com_display = c.combobox_com.get()
+        if selected_com_display:
+            # 從顯示名稱中提取實際的COM口名稱
+            from config_core import extract_com_port_name
+            actual_com_port = extract_com_port_name(selected_com_display)
+            settings['Serial_COM_Port'] = actual_com_port
+            print(f"[DEBUG] 關閉時保存COM口: 顯示='{selected_com_display}' -> 實際='{actual_com_port}'")
+        else:
+            settings['Serial_COM_Port'] = ""
+            print("[DEBUG] 關閉時保存COM口: 空值")
 
 
         settings['Command_Timeout_Seconds'] = c.entry_timeout.get()
@@ -1938,11 +1956,37 @@ class SerialUI:
     
     def _update_basic_settings(self, c, dut_setup):
         """更新基本設定 - 重構輔助函數"""
-        # 1. 更新 COM 口設定
+        # 1. 更新 COM 口設定 - 修復讀取邏輯
         if hasattr(c, 'combobox_com'):
-            com_port = dut_setup.get('Serial_COM_Port', '')
-            if com_port and com_port in c.combobox_com['values']:
-                c.combobox_com.set(com_port)
+            saved_com_port = dut_setup.get('Serial_COM_Port', '')
+            print(f"[DEBUG] 從設定讀取的COM口: '{saved_com_port}'")
+            
+            if saved_com_port:
+                # 獲取當前可用的COM口列表
+                available_ports = list(c.combobox_com['values'])
+                print(f"[DEBUG] 可用的COM口列表: {available_ports}")
+                
+                # 尋找匹配的COM口（可能是顯示名稱或實際名稱）
+                matching_port = None
+                for port in available_ports:
+                    # 檢查是否直接匹配
+                    if port == saved_com_port:
+                        matching_port = port
+                        break
+                    # 檢查是否為顯示名稱中包含的實際COM口
+                    if saved_com_port in port and port.startswith(saved_com_port):
+                        matching_port = port
+                        break
+                
+                if matching_port:
+                    c.combobox_com.set(matching_port)
+                    print(f"[DEBUG] 已設定COM口為: {matching_port}")
+                else:
+                    print(f"[DEBUG] 未找到匹配的COM口，保存的: {saved_com_port}")
+                    # 如果沒有找到匹配的，但有可用的COM口，選擇第一個
+                    if available_ports and available_ports[0] != '無可用COM口':
+                        c.combobox_com.set(available_ports[0])
+                        print(f"[DEBUG] 使用第一個可用COM口: {available_ports[0]}")
 
         # 2. 更新超時設定
         if hasattr(c, 'entry_timeout'):

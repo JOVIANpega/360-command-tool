@@ -57,6 +57,8 @@ class SharedConfigManager:
         self.vars['dut_notification_font_size'] = tk.StringVar(root)
         self.vars['dut_command_file_path'] = tk.StringVar(root)
         self.vars['dut_auto_execute'] = tk.BooleanVar(root)
+        # 指令傳輸方式（Console/ADB）
+        self.vars['command_transport_mode'] = tk.StringVar(root)
         
         # 治具控制相關設定
         self.vars['fixture_com_port'] = tk.StringVar(root)
@@ -122,6 +124,8 @@ class SharedConfigManager:
             self.vars['dut_notification_font_size'].set(dut_settings.get('Notification_Font_Size', '10'))
             self.vars['dut_command_file_path'].set(dut_settings.get('Command_File_Path', ''))
             self.vars['dut_auto_execute'].set(dut_settings.get('Auto_Execute', False))
+            # 載入 指令傳輸方式（頂層）
+            self.vars['command_transport_mode'].set(self.setup_data.get('Command_Transport_Mode', 'Console'))
             
             # 載入治具控制設定
             fixture_settings = self.setup_data.get('Fixture_Control', {})
@@ -151,9 +155,7 @@ class SharedConfigManager:
             tab_names = self.setup_data.get('tab_names', {})
             default_tab_names = ['DUT 控制', '治具控制', '使用說明', '設定']
             for i in range(4):
-                tab_key = f'tab{i}'
-                tab_name = tab_names.get(tab_key, default_tab_names[i])
-                self.vars[f'tab_name_{i}'].set(tab_name)
+                self.vars[f'tab_name_{i}'].set(tab_names.get(f'tab{i}', default_tab_names[i]))
             
             # 載入UI設定
             ui_settings = self.setup_data.get('UI_Settings', {})
@@ -248,6 +250,8 @@ class SharedConfigManager:
                 dut_settings['Notification_Font_Size'] = self.vars['dut_notification_font_size'].get()
                 dut_settings['Command_File_Path'] = self.vars['dut_command_file_path'].get()
                 dut_settings['Auto_Execute'] = self.vars['dut_auto_execute'].get()
+                # 保存 指令傳輸方式（頂層）
+                setup['Command_Transport_Mode'] = self.vars['command_transport_mode'].get() or 'Console'
                 
                 # 更新治具控制設定
                 if 'Fixture_Control' not in setup:
@@ -282,8 +286,7 @@ class SharedConfigManager:
                     setup['tab_names'] = {}
                 
                 for i in range(4):
-                    tab_key = f'tab{i}'
-                    setup['tab_names'][tab_key] = self.vars[f'tab_name_{i}'].get()
+                    setup['tab_names'][f'tab{i}'] = self.vars[f'tab_name_{i}'].get()
                 
                 # 更新UI設定
                 if 'UI_Settings' not in setup:
@@ -319,6 +322,7 @@ class SharedConfigManager:
             'dut_notification_font_size': ('DUT_Control', 'Notification_Font_Size', '10'),
             'dut_command_file_path': ('DUT_Control', 'Command_File_Path', ''),
             'dut_auto_execute': ('DUT_Control', 'Auto_Execute', False),
+            'command_transport_mode': ('__TOP__', 'Command_Transport_Mode', 'Console'),
             'fixture_com_port': ('Fixture_Control', 'Fixture_COM_Port', 'COM5'),
             'fixture_font_size': ('Fixture_Control', 'Fixture_Font_Size', '11'),
             'fixture_test_function': ('Fixture_Control', 'Test_Category_FUNCTION', True),
@@ -333,6 +337,8 @@ class SharedConfigManager:
         
         if var_name in mapping:
             section, key, default = mapping[var_name]
+            if section == '__TOP__':
+                return self.setup_data.get(key, default)
             if '.' in section:  # 處理嵌套設定
                 main_section, sub_section = section.split('.')
                 return self.setup_data.get(main_section, {}).get(sub_section, {}).get(key, default)
@@ -415,7 +421,8 @@ class SharedConfigManager:
                     'app_version': 'version',
                     'window_title': 'Window_Title',
                     'window_width': 'Window_Width',
-                    'window_height': 'Window_Height'
+                    'window_height': 'Window_Height',
+                    'command_transport_mode': 'Command_Transport_Mode',
                 }
 
                 for var_name, setup_key in global_mapping.items():

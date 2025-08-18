@@ -6,6 +6,7 @@
 booting_state=uci -P /var/state get pega.led.booting_state
 get_model=atcli at+cgmm
 fw_version=uci -P /var/state get pega.fw.cur_ver
+Button=/etc/diag.sh resetBtnStatusGet
 run_mfg_script=manufacture.sh
 set_pega_model=fw_setenv pega_model MU310
 get_pega_model=fw_printenv -n pega_model

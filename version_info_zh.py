@@ -13,9 +13,9 @@ import sys
 import datetime
 
 version_info = {
-    'version': '1.9.4',
-    'file_version': (1, 9, 4, 0),
-    'product_version': (1, 9, 4, 0),
+    'version': '1.9.5',
+    'file_version': (1, 9, 5, 0),
+    'product_version': (1, 9, 5, 0),
     'company_name': 'PEGA指令通',
     'file_description': 'PEGA指令通 - 序列埠通訊工具',
     'internal_name': 'PEGA指令通',
@@ -160,15 +160,15 @@ v1.5.0.1 (2025-07-12)
 # 定義版本號
 VERSION = version_info['version']
 
-APP_VERSION = "V1.9.4"
-APP_VERSION_DETAIL = "\n【V1.9.4 主要更新】\n- 修復語法錯誤，確保程式穩定運行\n- 完整 ToolTip 系統實現\n- 全域通知系統優化\n- 設定頁面新增 ToolTip 開關\n- 支援自訂 tooltips.ini 配置\n- 提升整體穩定性和使用者體驗\n"
+APP_VERSION = "V1.9.5"
+APP_VERSION_DETAIL = "\n【V1.9.5 主要更新】\n- UI 排版優化\n- ADB 平台偵測修正（Windows 隱藏視窗）\n- 穩定性強化\n"
 
 # 生成版本資訊檔案
 with open("version_info_zh.txt", "w", encoding="utf-8") as f:
     f.write("VSVersionInfo(\n")
     f.write("  ffi=FixedFileInfo(\n")
-    f.write("    filevers=(1, 9, 4, 0),\n")
-    f.write("    prodvers=(1, 9, 4, 0),\n")
+    f.write("    filevers=(1, 9, 5, 0),\n")
+    f.write("    prodvers=(1, 9, 5, 0),\n")
     f.write("    mask=0x3f,\n")
     f.write("    flags=0x0,\n")
     f.write("    OS=0x40004,\n")
