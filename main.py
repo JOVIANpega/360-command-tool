@@ -253,6 +253,13 @@ if __name__ == "__main__":
                 config_manager.set_value('Window_Width', str(root.winfo_width()), manual_save=True)
                 config_manager.set_value('Window_Height', str(root.winfo_height()), manual_save=True)
 
+                # 先呼叫應用程式的關閉流程（會寫入 IP_History 等）
+                try:
+                    if 'app' in locals() and hasattr(app, 'on_close'):
+                        app.on_close()
+                except Exception as _e:
+                    log_warning(f"呼叫 app.on_close 時發生警告: {_e}")
+
                 # 強制保存所有待保存的設定
                 from ui_parts.shared_config import get_shared_config
                 shared_config = get_shared_config()

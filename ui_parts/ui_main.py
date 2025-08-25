@@ -1480,6 +1480,12 @@ class TabManager:
             # 關閉其他組件
             if hasattr(self, 'dut_ui') and hasattr(self.dut_ui, 'on_close'):
                 self.dut_ui.on_close()
+            # 保存當前 IP 到歷史與預設（DUT 控制區）
+            try:
+                if hasattr(self, 'dut_ui') and hasattr(self.dut_ui, 'components') and hasattr(self.dut_ui.components, 'on_close'):
+                    self.dut_ui.components.on_close()
+            except Exception:
+                pass
             
             # 關閉手動輸入指令模組
             if hasattr(self, 'manual_ui') and hasattr(self.manual_ui, 'on_close'):

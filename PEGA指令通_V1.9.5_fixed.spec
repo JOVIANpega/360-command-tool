@@ -1,15 +1,16 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_submodules
 
-hiddenimports = ['tkinter', 'tkinter.ttk', 'tkinter.messagebox', 'tkinter.filedialog', 'serial', 'serial.tools.list_ports', 'logging', 'threading', 'json', 'os', 'sys', 're', 'datetime']
+hiddenimports = ['serial']
 hiddenimports += collect_submodules('serial')
+hiddenimports += collect_submodules('ui_parts')
 
 
 a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('assets/icon.ico', 'assets'), ('tooltips.ini', '.'), ('setup.json', '.'), ('user_guide.txt', '.'), ('color_word.txt', '.'), ('command.txt', '.'), ('readROVO.txt', '.'), ('Command_TABLE', 'Command_TABLE'), ('core', 'core'), ('ui_parts', 'ui_parts')],
+    datas=[('Command_TABLE', 'Command_TABLE'), ('tooltips.ini', '.'), ('tooltip_config.txt', '.'), ('assets', 'assets')],
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},

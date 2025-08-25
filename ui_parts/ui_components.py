@@ -577,14 +577,16 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.ip_combobox = ttk.Combobox(ping_frame, width=20, state='readonly')
         self.ip_combobox.grid(row=0, column=1, sticky='ew', padx=5)
         self.ip_combobox.bind('<<ComboboxSelected>>', self.on_ip_selected)
+        # 與舊代碼相容：提供 entry_ip 別名供 handlers 使用
+        self.entry_ip = self.ip_combobox
         
-        # 新增 IP 按鈕
-        self.btn_add_ip = tk.Button(ping_frame, text='+', command=self.add_new_ip, 
-                                   width=2, bg='#90EE90', fg='black')
-        self.btn_add_ip.grid(row=0, column=2, padx=2)
+        # 新增 IP 按鈕（已停用，IP管理移至設定頁）
+        # self.btn_add_ip = tk.Button(ping_frame, text='+', command=self.add_new_ip, 
+        #                            width=2, bg='#90EE90', fg='black')
+        # self.btn_add_ip.grid(row=0, column=2, padx=2)
         
         # Ping 按鈕
-        self.btn_ping = tk.Button(ping_frame, text='Ping', command=self.on_ping, 
+        self.btn_ping = tk.Button(ping_frame, text='Ping', command=self.parent.handlers.on_ping, 
                                  width=6, bg='#87CEEB', fg='black')
         self.btn_ping.grid(row=0, column=3, padx=2)
         
@@ -592,21 +594,29 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.load_ip_history()
     
     def load_ip_history(self):
-        """載入 IP 歷史記錄到下拉選單"""
+        """載入 IP 歷史記錄到下拉選單（從檔案讀取最新設定）"""
         try:
-            ip_history = self.parent.setup.get('DUT_Control', {}).get('IP_History', [])
+            from config_core import load_setup
+            setup = load_setup()
+            dut = setup.get('DUT_Control', {})
+            ip_history = dut.get('IP_History', [])
             
             print(f"[DEBUG] 載入 IP 歷史記錄時發現 {len(ip_history)} 個 IP")
             
             # 更新下拉選單的值
             if ip_history:
                 self.ip_combobox['values'] = ip_history
-                # 選擇第一個 IP
-                self.ip_combobox.set(ip_history[0])
-                print(f"[DEBUG] 已選擇第一個 IP: {ip_history[0]}")
+                # 優先選擇 Default_IP_Address，否則選第一個
+                default_ip = dut.get('Default_IP_Address')
+                if default_ip and default_ip in ip_history:
+                    self.ip_combobox.set(default_ip)
+                    print(f"[DEBUG] 已選擇預設 IP: {default_ip}")
+                else:
+                    self.ip_combobox.set(ip_history[0])
+                    print(f"[DEBUG] 已選擇第一個 IP: {ip_history[0]}")
             else:
                 # 如果沒有歷史記錄，設定預設值
-                default_ip = self.parent.setup.get('DUT_Control', {}).get('Default_IP_Address', '192.168.11.143')
+                default_ip = dut.get('Default_IP_Address', '192.168.11.143')
                 self.ip_combobox['values'] = [default_ip]
                 self.ip_combobox.set(default_ip)
                 print(f"[DEBUG] 使用預設 IP: {default_ip}")
@@ -638,17 +648,27 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                 
                 # 如果 IP 不在歷史記錄中，則新增
                 if new_ip not in ip_history:
-                    ip_history.append(new_ip)
+                    ip_history.insert(0, new_ip)
                     # 限制歷史記錄數量（最多保留 20 個）
                     if len(ip_history) > 20:
-                        ip_history = ip_history[-20:]
+                        ip_history = ip_history[:20]
                     
                     # 保存設定
                     setup['DUT_Control']['IP_History'] = ip_history
                     save_setup(setup, manual_save=True)
                     
-                    # 更新下拉選單
+                    # 更新下拉選單並選中新增項，且更新 Default_IP_Address
                     self.load_ip_history()
+                    try:
+                        self.ip_combobox.set(new_ip)
+                    except Exception:
+                        pass
+                    try:
+                        # 同步更新 Default_IP_Address
+                        setup['DUT_Control']['Default_IP_Address'] = new_ip
+                        save_setup(setup, manual_save=True)
+                    except Exception:
+                        pass
                     
                     messagebox.showinfo("成功", f"IP 地址已新增: {new_ip}")
                     print(f"[INFO] IP 地址已新增: {new_ip}")
@@ -1764,3 +1784,27 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             
         except Exception as e:
             print(f"[ERROR] 移除結束字串失敗: {e}")
+
+    def on_close(self):
+        """關閉前保存當前 IP 到歷史與預設"""
+        try:
+            from config_core import load_setup, save_setup
+            setup = load_setup()
+            dut = setup.setdefault('DUT_Control', {})
+            current_ip = ''
+            try:
+                current_ip = self.ip_combobox.get().strip()
+            except Exception:
+                pass
+            if current_ip:
+                ip_history = dut.get('IP_History', [])
+                if current_ip in ip_history:
+                    ip_history.remove(current_ip)
+                ip_history.insert(0, current_ip)
+                if len(ip_history) > 20:
+                    ip_history = ip_history[:20]
+                dut['IP_History'] = ip_history
+                dut['Default_IP_Address'] = current_ip
+                save_setup(setup, manual_save=True)
+        except Exception:
+            pass

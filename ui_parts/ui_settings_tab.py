@@ -4,6 +4,7 @@ from tkinter import ttk, messagebox, filedialog
 import os
 import sys
 import json
+import re
 
 # 將當前目錄加入 Python 路徑
 current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -187,10 +188,35 @@ class SettingsTab(ttk.Frame):
         
         dut_row += 1
         
-        # 預設IP地址 - width=20
+        # 預設IP地址下拉清單（可編輯，來源 IP_History，限5筆）
         ttk.Label(dut_frame, text="預設IP地址:").grid(row=dut_row, column=0, sticky="w", pady=4)
         self.vars["DUT_Default_IP_Address"] = tk.StringVar(value=dut_settings.get("Default_IP_Address", "192.168.11.143"))
-        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Default_IP_Address"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
+        
+        # 載入 IP_History 到下拉清單（優先頂層，再從 DUT_Control）
+        ip_history = self.setup_data.get('IP_History')
+        if ip_history is None:
+            ip_history = dut_settings.get('IP_History', [])
+        
+        # 確保至少有一個預設值
+        if not ip_history:
+            current_default = dut_settings.get("Default_IP_Address", "192.168.11.143")
+            ip_history = [current_default]
+        
+        # 限制最多5筆
+        if len(ip_history) > 5:
+            ip_history = ip_history[:5]
+            
+        self.ip_combobox = ttk.Combobox(dut_frame, textvariable=self.vars["DUT_Default_IP_Address"], 
+                                       values=ip_history, width=20)
+        self.ip_combobox.grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
+        
+        # 設定當前值
+        current_ip = dut_settings.get("Default_IP_Address", "192.168.11.143")
+        if current_ip in ip_history:
+            self.ip_combobox.set(current_ip)
+        elif ip_history:
+            self.ip_combobox.set(ip_history[0])
+            
         dut_row += 1
         
 
@@ -663,6 +689,9 @@ class SettingsTab(ttk.Frame):
         try:
             print("[DEBUG] 開始手動保存設定...")
 
+            # 處理IP History（限制5筆、去重、置頂）
+            self.process_ip_history_save()
+
                     # 生成設定字典
             settings_dict = self.generate_settings_dict()
 
@@ -787,8 +816,11 @@ class SettingsTab(ttk.Frame):
             # 立即更新標籤頁名稱
             self.update_tab_names_immediately()
 
+            # 刷新所有頁面的IP下拉清單
+            self.refresh_all_ip_dropdowns()
+
             # 顯示成功訊息
-            messagebox.showinfo("成功", "設定已手動儲存並立即生效！\n包含視窗大小、分割位置等所有設定。")
+            messagebox.showinfo("成功", "設定已手動儲存並立即生效！\n包含視窗大小、分割位置、IP歷史等所有設定。")
             print("[DEBUG] 設定已手動儲存並重新載入完成")
 
         except Exception as e:
@@ -1076,6 +1108,113 @@ class SettingsTab(ttk.Frame):
             
         except Exception as e:
             print(f"[ERROR] 更新 UI 設定時發生錯誤: {e}")
+
+    def process_ip_history_save(self):
+        """處理IP歷史記錄的保存（限制5筆、去重、置頂）"""
+        try:
+            current_ip = self.vars["DUT_Default_IP_Address"].get().strip()
+            if not current_ip:
+                print("[DEBUG] IP地址為空，跳過IP歷史處理")
+                return
+            
+            # 簡單的IPv4格式驗證
+            ip_pattern = r'^(\d{1,3}\.){3}\d{1,3}$'
+            if not re.match(ip_pattern, current_ip):
+                print(f"[WARNING] IP地址格式可能不正確: {current_ip}，但仍然保存")
+                # 不阻止保存，只是記錄警告
+            else:
+                # 檢查每個數字是否在0-255範圍內
+                parts = current_ip.split('.')
+                for part in parts:
+                    if int(part) > 255:
+                        print(f"[WARNING] IP地址範圍可能不正確: {current_ip}，但仍然保存")
+                        break
+            
+            # 載入當前設定
+            setup = load_setup()
+            
+            # 讀取現有IP歷史（優先頂層）
+            ip_history = setup.get('IP_History')
+            if ip_history is None:
+                ip_history = setup.get('DUT_Control', {}).get('IP_History', [])
+            
+            # 去重並置頂當前IP
+            if current_ip in ip_history:
+                ip_history.remove(current_ip)
+                print(f"[DEBUG] IP {current_ip} 已存在於歷史中，移至頂部")
+            else:
+                print(f"[DEBUG] 新增IP {current_ip} 到歷史記錄")
+            
+            ip_history.insert(0, current_ip)
+            
+            # 限制最多5筆
+            if len(ip_history) > 5:
+                removed_ips = ip_history[5:]
+                ip_history = ip_history[:5]
+                print(f"[INFO] IP歷史記錄限制為5筆，已移除: {removed_ips}")
+                
+                # 可選：顯示提示給用戶
+                try:
+                    from tkinter import messagebox
+                    messagebox.showinfo("IP歷史記錄", 
+                                      f"IP歷史記錄已限制為最多5筆\n已移除較舊的記錄: {', '.join(removed_ips)}")
+                except:
+                    pass
+            
+            # 寫回頂層和DUT_Control（相容性）
+            setup['IP_History'] = ip_history
+            if 'DUT_Control' not in setup:
+                setup['DUT_Control'] = {}
+            setup['DUT_Control']['IP_History'] = ip_history
+            setup['DUT_Control']['Default_IP_Address'] = current_ip
+            
+            # 保存到檔案
+            save_setup(setup, manual_save=True)
+            
+            print(f"[INFO] IP歷史已保存成功: {ip_history}")
+            print(f"[INFO] 預設IP已設定為: {current_ip}")
+            
+        except Exception as e:
+            print(f"[ERROR] 處理IP歷史保存時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
+            try:
+                from tkinter import messagebox
+                messagebox.showerror("錯誤", f"保存IP設定時發生錯誤: {str(e)}")
+            except:
+                pass
+
+    def refresh_all_ip_dropdowns(self):
+        """刷新所有頁面的IP下拉清單"""
+        try:
+            # 重新載入設定獲取最新IP歷史
+            updated_setup = load_setup()
+            ip_history = updated_setup.get('IP_History', [])
+            
+            # 更新本頁面的IP下拉
+            if hasattr(self, 'ip_combobox'):
+                self.ip_combobox['values'] = ip_history
+                print(f"[DEBUG] 設定頁IP下拉已更新: {ip_history}")
+            
+            # 找到主視窗並刷新DUT控制頁的IP下拉
+            root = self.parent
+            while root and not hasattr(root, 'dut_ui'):
+                root = getattr(root, 'master', None) or getattr(root, 'parent', None)
+            
+            if root and hasattr(root, 'dut_ui'):
+                try:
+                    if hasattr(root.dut_ui, 'components') and hasattr(root.dut_ui.components, 'load_ip_history'):
+                        root.dut_ui.components.load_ip_history()
+                        print("[DEBUG] DUT控制頁IP下拉已刷新")
+                except Exception as e:
+                    print(f"[WARNING] 刷新DUT控制頁IP下拉失敗: {e}")
+            
+            print("[DEBUG] 所有IP下拉清單刷新完成")
+            
+        except Exception as e:
+            print(f"[ERROR] 刷新IP下拉清單時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
 
 
 

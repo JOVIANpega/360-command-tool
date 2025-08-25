@@ -391,11 +391,8 @@ class UIHandlers(UIHandlersCore):
 
 
     def on_ping(self):
-
-
-        """Ping 按鈕點擊事件處理，作為 check_ping 的別名"""
-
-
+        """Ping 按鈕點擊事件處理：只執行串流 Ping，不再保存IP歷史（IP管理已移至設定頁）"""
+        # 執行串流 Ping（輸出到右側視窗）
         self.check_ping()
 
 
@@ -414,27 +411,29 @@ class UIHandlers(UIHandlersCore):
             from config_core import load_setup, save_setup
             setup = load_setup()
             
-            # 確保DUT_Control存在
+            # 讀取頂層 IP_History（優先），相容舊版從 DUT_Control 讀取
+            ip_history = setup.get('IP_History')
+            if ip_history is None:
+                ip_history = setup.get('DUT_Control', {}).get('IP_History', [])
+            
+            # 去重並置頂
+            if current_ip in ip_history:
+                ip_history.remove(current_ip)
+            ip_history.insert(0, current_ip)
+            # 限制 20 筆
+            if len(ip_history) > 20:
+                ip_history = ip_history[:20]
+            
+            # 寫回頂層 IP_History，並相容性同步到 DUT_Control
+            setup['IP_History'] = ip_history
             if 'DUT_Control' not in setup:
                 setup['DUT_Control'] = {}
+            setup['DUT_Control']['IP_History'] = ip_history
             
-            # 獲取IP歷史記錄
-            ip_history = setup['DUT_Control'].get('IP_History', [])
+            save_setup(setup, manual_save=True)
             
-            # 如果IP不在歷史中，添加到開頭
-            if current_ip not in ip_history:
-                ip_history.insert(0, current_ip)
-                # 限制歷史記錄數量為20個
-                if len(ip_history) > 20:
-                    ip_history = ip_history[:20]
-                
-                setup['DUT_Control']['IP_History'] = ip_history
-                save_setup(setup, manual_save=True)
-                
-                self.parent.components.show_notification(f"IP地址 {current_ip} 已保存到歷史", "green", 3000)
-                print(f"[INFO] IP地址已保存: {current_ip}")
-            else:
-                self.parent.components.show_notification("IP地址已存在於歷史中", "info", 3000)
+            self.parent.components.show_notification(f"IP地址 {current_ip} 已保存到歷史", "green", 3000)
+            print(f"[INFO] IP地址已保存: {current_ip}")
                 
         except Exception as e:
             print(f"[ERROR] 保存IP地址時發生錯誤: {e}")
