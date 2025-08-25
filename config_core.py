@@ -1,48 +1,50 @@
 # -*- coding: utf-8 -*-
 """
-配置核心模組 - 重構版本
-使用新的核心模組提供更好的錯誤處理和性能
+配置管理核心模組
+提供設定檔案、指令檔案載入/保存功能和 COM 口管理
 """
-import json
+
 import os
 import sys
-import re
-import platform
-import time
-from datetime import datetime
+import json
+from typing import Dict, List, Any, Optional
 from tkinter import messagebox
-from typing import Dict, Any, List, Optional
 
-# 導入新的核心模組
-from core import (
-    get_error_handler, get_config_manager, get_resource_manager,
-    safe_execute, log_debug, log_info, log_warning, log_error
-)
+# 確保核心模組已正確導入
+from core.resource_manager import get_resource_manager
+from core.config_manager import get_config_manager
+from core.error_handler import get_error_handler
+from core.performance_monitor import safe_execute
+from core.error_handler import log_info, log_warning, log_error, log_debug
 
-# 初始化核心組件
-error_handler = get_error_handler()
-config_manager = get_config_manager()
+# 獲取核心模組實例
 resource_manager = get_resource_manager()
+config_manager = get_config_manager()
+error_handler = get_error_handler()
+
+# 定義重要檔案路徑
+SETUP_FILE = resource_manager.get_resource_path('setup.json')
+GUIDE_FILE = resource_manager.get_resource_path('user_guide.txt')
+COMMAND_FILE = resource_manager.get_resource_path('command.txt')
+
+# 取得今天的日期作為日誌檔名
+from datetime import datetime
+today = datetime.now().strftime('%Y%m%d')
+
+# 日誌檔案路徑
+TODAY_LOG_FILE = resource_manager.get_resource_path(f'logs/log_{today}.txt')
+
+
 
 # 確保必要的目錄存在
 resource_manager.ensure_directory('backup')
 resource_manager.ensure_directory('logs')
 
-# 定義檔案路徑 - 使用新的資源管理器
-COMMAND_FILE = resource_manager.get_resource_path('command.txt')
-SETUP_FILE = resource_manager.get_resource_path('setup.json')
-GUIDE_FILE = resource_manager.get_resource_path('user_guide.txt')
-ERROR_LOG_FILE = resource_manager.get_resource_path('error_log.txt')
-RUN_LOG_FILE = resource_manager.get_resource_path('run_log.txt')
-
-# 當前日期的日誌文件
-today = datetime.now().strftime('%Y%m%d')
-TODAY_LOG_FILE = resource_manager.get_resource_path(f'logs/log_{today}.txt')
-
-
 
 # 預設配置已移至 ConfigManager 中，這裡保留向後相容性
 default_setup = config_manager.default_config
+
+
 
 
 
@@ -64,6 +66,8 @@ def load_commands() -> Dict[str, str]:
             error_msg = f'無法讀取指令檔: {COMMAND_FILE}'
             log_error(error_msg, show_user=True)
             sys.exit(1)
+
+
 
         # 解析指令格式
         has_valid_commands = False
@@ -283,7 +287,7 @@ def load_color_word():
     檔案格式：keyword=color，每行一組。
     支援顏色名稱與 #HEX，遇到錯誤自動略過。
     """
-    color_word_file = resource_path('color_word.txt')
+    color_word_file = resource_manager.get_resource_path('color_word.txt')
     color_dict = {}
     valid_colors = [
         'red', 'blue', 'green', 'yellow', 'orange', 'purple', 'black', 'white', 'gray', 'pink', 'brown', 'cyan', 'magenta'
@@ -324,7 +328,7 @@ def open_color_word_editor():
     """
     開啟 color_word.txt 進行編輯
     """
-    color_word_file = resource_path('color_word.txt')
+    color_word_file = resource_manager.get_resource_path('color_word.txt')
     try:
         if platform.system() == 'Windows':
             os.startfile(color_word_file)

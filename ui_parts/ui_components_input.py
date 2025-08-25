@@ -1,34 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import tkinter as tk
-
-
-from tkinter import ttk
-
-
+from tkinter import ttk, messagebox
 import os
-
-
 import sys
-
-
 import json
 
-
-
-
-
 # 將當前目錄加入 Python 路徑
-
-
 current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-
 sys.path.append(current_dir)
-
-
-
-
 
 from config_core import list_com_ports, COMMAND_FILE
 
@@ -538,108 +518,214 @@ class UIComponentsInput:
 
 
     def init_ping_components(self):
-
-
         ping_frame = ttk.Frame(self.left_panel, style="TFrame")
-
-
         ping_frame.grid(row=4, column=0, sticky='ew', pady=3)
-
-
         ping_frame.columnconfigure(0, weight=0)  # 標籤不需要擴展
-
-
         ping_frame.columnconfigure(1, weight=1)  # 輸入框擴展
-
-
-        ping_frame.columnconfigure(2, weight=0)  # + 按鈕不需要擴展
-        ping_frame.columnconfigure(3, weight=0)  # - 按鈕不需要擴展
-        ping_frame.columnconfigure(4, weight=0)  # Ping 按鈕不需要擴展
-
-
+        ping_frame.columnconfigure(2, weight=0)  # 刪除按鈕不需要擴展
+        ping_frame.columnconfigure(3, weight=0)  # Ping 按鈕不需要擴展
         
-
-
+        # IP 位址標籤
         self.label_ip = ttk.Label(ping_frame, text='IP位址:', style="TLabel")
-
-
         self.label_ip.grid(row=0, column=0, sticky='w')
-
-
         
-
-
-        self.entry_ip = ttk.Entry(ping_frame, width=15)
-
-
-        self.entry_ip.grid(row=0, column=1, padx=5, sticky='ew')
-
-
+        # IP 區段容器框架
+        self.ip_container = ttk.Frame(ping_frame, style="TFrame")
+        self.ip_container.grid(row=0, column=1, sticky='ew', padx=5)
         
-
-
-        # 新增 + 按鈕（IP最後一段+1）
-        self.btn_ip_add = tk.Button(ping_frame, text='+', command=lambda: self.bump_ip(+1),
-                                   bg='#4CAF50', fg='white', activebackground='#45a049', activeforeground='white',
-                                   width=2, height=1, font=('Microsoft JhengHei UI', 12, 'bold'))
-        self.btn_ip_add.grid(row=0, column=2, padx=(4, 2))
-
-        # 新增 - 按鈕（IP最後一段-1）
-        self.btn_ip_remove = tk.Button(ping_frame, text='-', command=lambda: self.bump_ip(-1),
-                                      bg='#f44336', fg='white', activebackground='#da190b', activeforeground='white',
-                                      width=2, height=1, font=('Microsoft JhengHei UI', 12, 'bold'))
-        self.btn_ip_remove.grid(row=0, column=3, padx=(2, 4))
-
-        self.btn_ping = tk.Button(ping_frame, text='Ping', command=self.on_ping_with_save,
-                                bg='#e0e0e0', fg='black', activebackground='#2196f3', activeforeground='black',
-                                width=8, height=2, font=('Microsoft JhengHei UI', 11, 'bold'))
-        self.btn_ping.grid(row=0, column=4, padx=3)
-
-    def bump_ip(self, delta: int):
-        """調整IP地址最後一段的數值"""
+        # 初始化 IP 區段列表
+        self.ip_entries = []
+        self.ip_delete_buttons = []
+        
+        # 載入現有的 IP 區段
+        self.load_ip_segments()
+        
+        # 如果沒有 IP 區段，自動新增一個
+        if not self.ip_entries:
+            self.add_ip_segment_without_save()
+        
+        # 標記載入完成
+        self._loading_completed = True
+        
+        # 新增 IP 區段按鈕
+        self.btn_add_ip = tk.Button(ping_frame, text='+', command=self.add_ip_segment, 
+                                   width=2, bg='#90EE90', fg='black')
+        self.btn_add_ip.grid(row=0, column=2, padx=2)
+        
+        # Ping 按鈕
+        self.btn_ping = tk.Button(ping_frame, text='Ping', command=self.on_ping, 
+                                 width=6, bg='#87CEEB', fg='black')
+        self.btn_ping.grid(row=0, column=3, padx=2)
+    
+    def load_ip_segments(self):
+        """從設定檔載入 IP 區段"""
         try:
-            current_ip = self.entry_ip.get().strip()
-            parts = current_ip.split(".")
-            if len(parts) == 4:
-                # 調整最後一段，範圍0-255
-                last_octet = max(0, min(255, int(parts[-1]) + delta))
-                parts[-1] = str(last_octet)
-                new_ip = ".".join(parts)
-                self.entry_ip.delete(0, tk.END)
-                self.entry_ip.insert(0, new_ip)
-                print(f"[DEBUG] IP調整: {current_ip} -> {new_ip}")
-        except (ValueError, IndexError) as e:
-            print(f"[ERROR] IP調整失敗: {e}")
-
-    def on_ping_with_save(self):
-        """執行Ping並立即保存IP到setup.json"""
-        try:
-            # 取得當前IP
-            current_ip = self.entry_ip.get().strip()
-            if current_ip:
-                # 載入設定
-                from config_core import load_settings, save_settings
-                settings = load_settings()
-                
-                # 確保DUT區段存在
-                if "DUT" not in settings:
-                    settings["DUT"] = {}
-                
-                # 保存IP地址
-                settings["DUT"]["ip_address"] = current_ip
-                
-                # 立即寫回setup.json
-                save_settings(settings)
-                print(f"[INFO] IP地址已保存到setup.json: {current_ip}")
+            from config_core import load_setup
+            setup = load_setup()
+            ip_history = setup.get('DUT_Control', {}).get('IP_History', [])
             
-            # 執行原本的Ping功能
-            if hasattr(self.parent, 'handlers') and hasattr(self.parent.handlers, 'check_ping'):
-                self.parent.handlers.check_ping()
+            print(f"[DEBUG] 載入 IP 區段時發現 {len(ip_history)} 個 IP")
+            
+            # 載入現有的 IP 地址
+            for ip in ip_history:
+                if ip.strip():  # 確保 IP 不是空字串
+                    print(f"[DEBUG] 載入 IP: {ip}")
+                    self.add_ip_segment_without_save(ip)
+                    
+        except Exception as e:
+            print(f"[DEBUG] 載入 IP 區段時發生錯誤: {e}")
+    
+    def add_ip_segment_without_save(self, ip_address=""):
+        """新增一個 IP 區段輸入框（不觸發保存）"""
+        if len(self.ip_entries) >= 20:  # 最多 20 個 IP 區段
+            return
+        
+        # 計算新的行號
+        row_num = len(self.ip_entries)
+        
+        # 創建 IP 輸入框
+        ip_entry = ttk.Entry(self.ip_container, width=15)
+        ip_entry.grid(row=row_num, column=0, sticky='ew', pady=1)
+        if ip_address:
+            ip_entry.insert(0, ip_address)
+        
+        # 創建刪除按鈕
+        from functools import partial
+        delete_btn = tk.Button(self.ip_container, text='-', command=partial(self.remove_ip_segment, row_num), 
+                              width=2, bg='#ffcccc', fg='black')
+        delete_btn.grid(row=row_num, column=1, padx=2)
+        
+        # 儲存到列表中
+        self.ip_entries.append(ip_entry)
+        self.ip_delete_buttons.append(delete_btn)
+        
+        # 更新按鈕的命令（因為行號會改變）
+        self.update_delete_buttons()
+    
+    def add_ip_segment(self, ip_address=""):
+        """新增一個 IP 區段輸入框"""
+        if len(self.ip_entries) >= 20:  # 最多 20 個 IP 區段
+            messagebox.showwarning("警告", "最多只能新增 20 個 IP 區段")
+            return
+        
+        # 計算新的行號
+        row_num = len(self.ip_entries)
+        
+        # 創建 IP 輸入框
+        ip_entry = ttk.Entry(self.ip_container, width=15)
+        ip_entry.grid(row=row_num, column=0, sticky='ew', pady=1)
+        if ip_address:
+            ip_entry.insert(0, ip_address)
+        
+        # 創建刪除按鈕
+        from functools import partial
+        delete_btn = tk.Button(self.ip_container, text='-', command=partial(self.remove_ip_segment, row_num), 
+                              width=2, bg='#ffcccc', fg='black')
+        delete_btn.grid(row=row_num, column=1, padx=2)
+        
+        # 儲存到列表中
+        self.ip_entries.append(ip_entry)
+        self.ip_delete_buttons.append(delete_btn)
+        
+        # 更新按鈕的命令（因為行號會改變）
+        self.update_delete_buttons()
+        
+        # 只在手動新增時才保存（不是載入時）
+        if hasattr(self, '_loading_completed'):
+            self.save_ip_segments()
+    
+    def remove_ip_segment(self, row_index):
+        """刪除指定的 IP 區段"""
+        if len(self.ip_entries) <= 1:
+            messagebox.showwarning("警告", "至少需要保留一個 IP 區段")
+            return
+        
+        # 移除 UI 元件
+        self.ip_entries[row_index].destroy()
+        self.ip_delete_buttons[row_index].destroy()
+        
+        # 從列表中移除
+        del self.ip_entries[row_index]
+        del self.ip_delete_buttons[row_index]
+        
+        # 重新排列剩餘的元件
+        self.rearrange_ip_segments()
+        
+        # 更新按鈕的命令
+        self.update_delete_buttons()
+    
+    def rearrange_ip_segments(self):
+        """重新排列 IP 區段的位置"""
+        for i, (entry, btn) in enumerate(zip(self.ip_entries, self.ip_delete_buttons)):
+            entry.grid(row=i, column=0, sticky='ew', pady=1)
+            btn.grid(row=i, column=1, padx=2)
+    
+    def update_delete_buttons(self):
+        """更新所有刪除按鈕的命令"""
+        for i, btn in enumerate(self.ip_delete_buttons):
+            # 使用 functools.partial 來避免閉包問題
+            from functools import partial
+            btn.config(command=partial(self.remove_ip_segment, i))
+    
+    def get_all_ip_addresses(self):
+        """獲取所有 IP 地址"""
+        ip_list = []
+        for entry in self.ip_entries:
+            ip = entry.get().strip()
+            if ip:  # 只添加非空的 IP
+                ip_list.append(ip)
+        return ip_list
+    
+    def save_ip_segments(self):
+        """保存所有 IP 區段到設定檔"""
+        try:
+            from config_core import load_setup, save_setup
+            setup = load_setup()
+            
+            # 獲取所有 IP 地址
+            ip_list = self.get_all_ip_addresses()
+            
+            # 更新設定
+            setup['DUT_Control']['IP_History'] = ip_list
+            
+            # 保存設定
+            save_setup(setup, manual_save=True)
+            
+            print(f"[DEBUG] 已保存 {len(ip_list)} 個 IP 區段: {ip_list}")
+            
+        except Exception as e:
+            print(f"[ERROR] 保存 IP 區段時發生錯誤: {e}")
+    
+    def on_ping(self):
+        """執行 Ping 操作"""
+        # 獲取當前選中的 IP（第一個非空的 IP）
+        ip_list = self.get_all_ip_addresses()
+        if not ip_list:
+            messagebox.showwarning("警告", "請至少輸入一個 IP 地址")
+            return
+        
+        current_ip = ip_list[0]  # 使用第一個 IP
+        
+        # 執行 ping 操作
+        try:
+            import subprocess
+            import platform
+            
+            # 根據作業系統選擇 ping 命令
+            if platform.system().lower() == "windows":
+                cmd = ["ping", "-n", "1", current_ip]
             else:
-                print("[ERROR] 找不到ping處理程序")
+                cmd = ["ping", "-c", "1", current_ip]
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            
+            if result.returncode == 0:
+                messagebox.showinfo("Ping 結果", f"IP {current_ip} 可以連通")
+            else:
+                messagebox.showwarning("Ping 結果", f"IP {current_ip} 無法連通")
                 
         except Exception as e:
-            print(f"[ERROR] Ping並保存IP時發生錯誤: {e}")
+            messagebox.showerror("錯誤", f"Ping 操作失敗: {e}")
 
 
 

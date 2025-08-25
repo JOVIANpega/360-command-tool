@@ -1,0 +1,36 @@
+PEGA指令通 V1.9.5 完整打包指令
+========================================
+
+方法一：使用批次檔 (推薦)
+------------------------
+直接執行：build_complete_exe.bat
+
+方法二：使用 PowerShell
+---------------------
+直接執行：build_complete_exe.ps1
+
+方法三：手動執行指令
+------------------
+pyinstaller --onefile --noconsole --icon=assets/icon.ico --add-data "assets/icon.ico;assets" --add-data "tooltips.ini;." --add-data "Command_TABLE;Command_TABLE" --add-data "setup.json;." --add-data "user_guide.txt;." --add-data "color_word.txt;." --add-data "command.txt;." --add-data "readROVO.txt;." --add-data "config_utils.py;." --add-data "serial_worker.py;." --add-data "adb_worker.py;." --add-data "core;core" --add-data "ui_parts;ui_parts" --hidden-import tkinter --hidden-import tkinter.ttk --hidden-import tkinter.messagebox --hidden-import tkinter.filedialog --hidden-import serial --hidden-import threading --hidden-import json --hidden-import os --hidden-import sys --hidden-import re --hidden-import datetime --hidden-import logging --name "PEGA指令通_V1.9.5" main.py
+
+打包內容說明：
+==============
+✅ 圖示檔案：assets/icon.ico
+✅ 設定檔案：tooltips.ini, setup.json
+✅ 指令檔案：Command_TABLE/ 目錄下所有檔案
+✅ 說明檔案：user_guide.txt, color_word.txt, command.txt, readROVO.txt
+✅ 核心模組：core/, ui_parts/ 目錄
+✅ 工作模組：serial_worker.py, adb_worker.py, config_utils.py
+
+打包後檔案位置：
+===============
+📁 EXE 檔案：dist/PEGA指令通_V1.9.5.exe
+📁 建置檔案：build/ (可刪除)
+📁 規格檔案：PEGA指令通_V1.9.5.spec (可刪除)
+
+注意事項：
+=========
+1. 確保已安裝 PyInstaller：pip install pyinstaller
+2. 確保所有依賴模組已安裝：pip install -r requirements.txt
+3. 打包過程可能需要幾分鐘，請耐心等待
+4. 打包完成後，EXE 檔案會包含所有必要的資源檔案 

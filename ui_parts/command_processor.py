@@ -38,6 +38,8 @@ class CommandProcessor:
                 print(f"命令文件不存在: {COMMAND_FILE}")
                 return
             
+
+            
             with open(COMMAND_FILE, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
             

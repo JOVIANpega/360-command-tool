@@ -1,90 +1,93 @@
 //MU310 指令可以自行修改   LOVE JOVIAN
 
 
-==KANGAROO==
-
-booting_state=uci -P /var/state get pega.led.booting_state
-get_model=atcli at+cgmm
-fw_version=uci -P /var/state get pega.fw.cur_ver
-Button=/etc/diag.sh resetBtnStatusGet
-run_mfg_script=manufacture.sh
-set_pega_model=fw_setenv pega_model MU310
-get_pega_model=fw_printenv -n pega_model
-set_wifi_ssid=fw_setenv wifi0_ssid WIFI_SSIDName
-get_wifi_ssid=fw_printenv -n wifi0_ssid
-set_wifi_pw=fw_setenv wifi0_password 12345678
-get_wifi_pw=fw_printenv -n wifi0_password
-set_eth_mac=fw_setenv eth0_addr 11:22:33:44:55:66
-set_wifi_mac=fw_setenv wifi0_addr 22:33:44:55:66:77
-get_eth_mac=fw_printenv -n eth0_addr
-get_wifi_mac=fw_printenv -n wifi0_addr
-set_hwver=fw_setenv hwver SR3
-get_hwver=fw_printenv -n hwver
-set_mb_sn=fw_setenv mb_sn MU310_1234
-get_mb_sn=fw_printenv -n mb_sn
-get_imei=atcli at+gsn
-get_fw_ver2=atcli at+cgmr
-get_eth_info=ethtool eth0
-
-check_sim=atcli at+cpin?
-get_ccid=atcli at+ccid
-get_imsi=atcli at+cimi
-ledtest_lte_off=/etc/diag.sh ledtest lte_5g_off
-ledtest_wifi_off=/etc/diag.sh ledtest wifi_off
-ledtest_lte_weak=/etc/diag.sh ledtest lte_5g_weak
-ledtest_lte_moderate=/etc/diag.sh ledtest lte_5g_moderate
-ledtest_lte_strong=/etc/diag.sh ledtest lte_5g_strong
-ledtest_lte_off2=/etc/diag.sh ledtest lte_5g_off
-ledtest_wifi_red=/etc/diag.sh ledtest wifi_red
-ledtest_wifi_amber=/etc/diag.sh ledtest wifi_amber
-ledtest_wifi_green=/etc/diag.sh ledtest wifi_green
-ledtest_wifi_off2=/etc/diag.sh ledtest wifi_off
-reset_btn_check1=/etc/diag.sh resetBtnStatusGet
-reset_btn_check2=/etc/diag.sh resetBtnStatusGet
-set_usb_mode=atcli 'AT+QCFG="usbcfg",0x2C7C,0x0801,2,1,1,0,0,1,0'
-get_usb_mode=atcli 'AT+QCFG="usbcfg"'
-set_mfg_flag=fw_setenv mfg 1
-get_mfg_flag=fw_printenv -n mfg
-
-
+==MU310 1.1.0.0.1A==
+1.  MFG mode set = fw_setenv mfg 1
+2.  MFG mode get = fw_printenv -n mfg
+3.  Factory Reset reboot = pega_factory_default
+4.  Factory Reset no重啟 = pega_factory_default -n
+5.  SW ver get = uci -P /var/state get pega.fw.cur_ver
+6.  HW ver set = fw_setenv hwver ER_JOVIAN
+7.  HW ver get = fw_printenv -n hwver
+8.  Modem FW version get = atcli at+cgmr
+9.  Model Name set = fw_setenv pega_model MU310
+10. Model Name get = fw_printenv -n pega_model
+11. Unit SN set = fw_setenv sn A12345
+12. Unit SN get = fw_printenv -n sn
+13. MB SN set = fw_setenv mb_sn B12345
+14. MB SN get = fw_printenv -n mb_sn
+15. UUID set = fw_setenv uuid uuid12345
+16. UUID get = fw_printenv -n uuid
+17. 5G LED Red On set = /etc/diag.sh ledtest lte_5g_weak
+18. 5G LED Green On set = /etc/diag.sh ledtest lte_5g_strong
+19. 5G LED Blue On set = /etc/diag.sh ledtest lte_5g_moderate
+20. 5G LED Off set = /etc/diag.sh ledtest lte_5g_off
+21. Status LED Red On set = /etc/diag.sh ledtest status_red
+22. Status LED Green On set = /etc/diag.sh ledtest status_green
+23. Status LED Blue On set = /etc/diag.sh ledtest status_amber
+24. Status LED Off set = /etc/diag.sh ledtest status_off
+25. All LED On set = /etc/diag.sh ledtest allledon
+26. All LED Off set = /etc/diag.sh ledtest allledoff
+27. Reset button status get = /etc/diag.sh resetBtnStatusGet
+28. SIM detect CCID/CIMI= atcli at+cpin?==>atcli at+ccid==>atcli at+cimi
+29. SIM實體=atcli 'AT+QUIMSLOT=1'==>atcli 'AT+QUIMSLOT?'==>atcli 'AT+CPIN?'==>atcli 'AT+CREG?'==>atcli 'AT+COPS?'
+30. ESIM=atcli 'AT+QUIMSLOT=2'==>atcli 'AT+QUIMSLOT?'==>atcli 'AT+QESIM="lpa_enable",1'==>DELAY:3==>atcli 'AT+QESIM="eid"'==>atcli 'AT+QESIM="profile_brief"'
+31. SIM IMSI get = atcli at+cimi
+32. Modem IMEI get = atcli at+gsn
+33. MAC address set /get= fw_setenv eth0_addr 11:22:33:44:55:66==>fw_printenv -n eth0_addr
+34. 5G On set = atcli at+cfun=1
+35. 5G Off set = atcli at+cfun=0
+36. 5G status get = atcli at+cfun?
+37. 5G module Thermal get = atcli 'AT+QTHERMAL="thermal_level"'
+38. USB function set enable= atcli 'AT+QCFG="usbcfg",0x2C7C,0x0801,2,1,1,0,0,1,0'
+39. USB function get enable= atcli 'AT+QCFG="usbcfg"'
+40. USB function disabled set = atcli 'AT+QCFG="usbcfg",0x2C7C,0x0801,2,1,0,0,0,0,0'
+41. USB function get enable= atcli 'AT+QCFG="usbcfg"'
+42. IMS disable set = atcli 'AT+QCFG="ims",2'
+43. IMS status get = atcli 'AT+QCFG="ims"'
 
 
 
 
 
+==MU310 整理B==
+1.  build time=cat /etc/pega_fwinfo==>uci -P /var/state get pega.led.booting_state
+2.  EXIT=exit
+3.  Login=exit==>root==>oelinux123==>cat /etc/pega_fwinfo
+4.  pega_model set/get=fw_setenv pega_model MU310==>fw_printenv -n pega_model
+5.  MFG mode set/get = fw_setenv mfg 1==>fw_printenv -n mfg
+6.  Factory Reset reboot = pega_factory_default
+7.  SW/HW ver get = uci -P /var/state get pega.fw.cur_ver==> fw_setenv hwver ER_JOVIAN==>fw_printenv -n hwver
+8.  Modem FW version get = atcli at+cgmr
+9.  Model Name set/get = fw_setenv pega_model MU310==> fw_printenv -n pega_model
+10. Unit SN set/get = fw_setenv sn A12345==>fw_printenv -n sn
+11. MB SN set/get = fw_setenv mb_sn B12345==>fw_printenv -n mb_sn
+12. UUID set/get = fw_setenv uuid uuid12345==>fw_printenv -n uuid
+13. All LED On set = /etc/diag.sh ledtest allledon
+14. All LED Off set = /etc/diag.sh ledtest allledoff
+15. 5G LED On set = /etc/diag.sh ledtest status_off==>/etc/diag.sh ledtest lte_5g_weak==>/etc/diag.sh ledtest lte_5g_strong==>/etc/diag.sh ledtest lte_5g_moderate
+16. Status LED On set = /etc/diag.sh ledtest status_off==>/etc/diag.sh ledtest status_red==>/etc/diag.sh ledtest status_green==>/etc/diag.sh ledtest status_amber
+17. Reset button status get = /etc/diag.sh resetBtnStatusGet
+18. SIM Get 實體SIM_IMSI/CCID=atcli 'AT+QUIMSLOT=1'==>atcli at+cimi==>atcli 'AT+CCID'
+19. SIM Get ESIM_IMEI/EID/QCCID=atcli 'AT+QUIMSLOT=2'==>atcli 'AT+QESIM="lpa_enable",1'==>atcli at+gsn==>atcli 'AT+QESIM="eid"'==>atcli 'AT+QCCID'==>atcli 'AT+QESIM="profile_brief"'
+20. MAC address set /get= fw_setenv eth0_addr 11:22:33:44:55:66==>fw_printenv -n eth0_addr
+21. 5G On set = atcli at+cfun=1
+22. 5G Off set = atcli at+cfun=0
+23. 5G status get = atcli at+cfun?
+24. 5G module Thermal get = atcli 'AT+QTHERMAL="thermal_level"'
+25. USB function set enable= atcli 'AT+QCFG="usbcfg",0x2C7C,0x0801,2,1,1,0,0,1,0'
+26. USB function get enable= atcli 'AT+QCFG="usbcfg"'
+27. USB function disabled set = atcli 'AT+QCFG="usbcfg",0x2C7C,0x0801,2,1,0,0,0,0,0'
+28. USB function get enable= atcli 'AT+QCFG="usbcfg"'
+29. IMS disable set = atcli 'AT+QCFG="ims",2'
+30. IMS status get = atcli 'AT+QCFG="ims"'
 
-==MB指令==>==
-build time=cat /etc/pega_fwinfo
-EXIT=exit
-Login=root==>oelinux123==>cat /etc/pega_fwinfo
 
-HW_revision=uci -P /var/state show pega.board.model
-SW_Firmware_Version=uci -P /var/state show pega.fw.cur_ver
-SIM CARD狀態:=uci -c /var/etc show cellstatus.sim.status
-5G module 版本號碼:=atcli 'AT+GMM' ==> awk '{if(NR==2){print "module_sku=\047" $1 "\047"}}'
-Ethernet_link_speed=ethtool eth0 | grep Speed | awk '{print "ethernet_linkSpeed=\047" $2 "\047"}'
-固定IP=ifconfig eth0 192.168.225.1
 
-ping_ip_(IPv4)=ifconfig==>ping 192.168.225.1 -c 4
-ping_ip_(IPv6)=ifconfig==>ping -6 fe80::3016:ffff:fe76:6157/64 -c 4
 
-LED signal OFF=echo 0 > /sys/class/leds/signal\:blue/brightness==>echo 0 > /sys/class/leds/signal\:green/brightness==>echo 0 > /sys/class/leds/signal\:red/brightness
-LED status OFF=echo 0 > /sys/class/leds/status\:blue/brightness==>echo 0 > /sys/class/leds/status\:red/brightness==>echo 0 > /sys/class/leds/status\:green/brightness
 
-Check signal LED GREEN =echo 255 > /sys/class/leds/signal\:green/brightness==>DELAY:2==>echo 0 > /sys/class/leds/signal\:green/brightness
-Check signal LED RED=echo 255 > /sys/class/leds/signal\:red/brightness==>DELAY:2==>echo 0 > /sys/class/leds/signal\:red/brightness
-Check signal LED BLUE=echo 255 > /sys/class/leds/signal\:blue/brightness==>DELAY:2==>echo 0 > /sys/class/leds/signal\:blue/brightness
 
-Check status LED GREEN =echo 255 > /sys/class/leds/status\:green/brightness==>DELAY:2==>echo 0 > /sys/class/leds/status\:green/brightness
-Check status LED RED=echo 255 > /sys/class/leds/status\:red/brightness==>DELAY:2==>echo 0 > /sys/class/leds/status\:red/brightness
-Check status LED BLUE=echo 255 > /sys/class/leds/status\:blue/brightness==>DELAY:2==>echo 0 > /sys/class/leds/status\:blue/brightness
 
-檢查BT=systemctl stop pega-bluetooths==>echo 910 > /sys/class/gpio/exports==>echo out  > /sys/class/gpio/gpio910/directions
-檢查BT2=echo 1 > /sys/class/gpio/gpio910/values==>sleep 1s==>rtlbtmp==>sleep 1s
-檢查BT3=enable uart:/dev/ttyHS0
-
-設定按鍵=systemctl stop pu_resetBtn_monitor.service==>touch /tmp/MFG==>/usr/sbin/pu_resetBtn_monitor &
-檢查按鍵=cat /tmp/reset_button
 
 //指令可以自行修改
 

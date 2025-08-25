@@ -223,7 +223,11 @@ class ManualCommandUI:
 
         # 取得 Content_Font_Size 設定
         dut_settings = self.setup.get('DUT_Control', {})
-        content_font_size = int(dut_settings.get('Content_Font_Size', 12))
+        try:
+            content_font_size_value = dut_settings.get('Content_Font_Size', 12)
+            content_font_size = int(content_font_size_value) if content_font_size_value != '' else 12
+        except (ValueError, TypeError):
+            content_font_size = 12
         content_font = ('Consolas', content_font_size)
 
         # 輸出文字區域
@@ -277,8 +281,19 @@ class ManualCommandUI:
         """從設定檔更新字體大小，並套用到所有主要元件，與 DUT 控制設定完全同步"""
         try:
             dut_settings = self.setup.get('DUT_Control', {})
-            ui_font_size = int(dut_settings.get('UI_Font_Size', 12))
-            content_font_size = int(dut_settings.get('Content_Font_Size', 12))
+            
+            # 安全解析字體大小
+            try:
+                ui_font_size_value = dut_settings.get('UI_Font_Size', 12)
+                ui_font_size = int(ui_font_size_value) if ui_font_size_value != '' else 12
+            except (ValueError, TypeError):
+                ui_font_size = 12
+                
+            try:
+                content_font_size_value = dut_settings.get('Content_Font_Size', 12)
+                content_font_size = int(content_font_size_value) if content_font_size_value != '' else 12
+            except (ValueError, TypeError):
+                content_font_size = 12
             ui_font = ('Microsoft JhengHei UI', ui_font_size)
             content_font = ('Consolas', content_font_size)
 

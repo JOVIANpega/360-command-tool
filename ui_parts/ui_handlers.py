@@ -181,6 +181,8 @@ class UIHandlers(UIHandlersCore):
 
 
 
+
+
             with open(command_path, "r", encoding="utf-8") as file:
 
 
@@ -422,12 +424,12 @@ class UIHandlers(UIHandlersCore):
             # 如果IP不在歷史中，添加到開頭
             if current_ip not in ip_history:
                 ip_history.insert(0, current_ip)
-                # 限制歷史記錄數量為10個
-                if len(ip_history) > 10:
-                    ip_history = ip_history[:10]
+                # 限制歷史記錄數量為20個
+                if len(ip_history) > 20:
+                    ip_history = ip_history[:20]
                 
                 setup['DUT_Control']['IP_History'] = ip_history
-                save_setup(setup)
+                save_setup(setup, manual_save=True)
                 
                 self.parent.components.show_notification(f"IP地址 {current_ip} 已保存到歷史", "green", 3000)
                 print(f"[INFO] IP地址已保存: {current_ip}")
@@ -461,7 +463,7 @@ class UIHandlers(UIHandlersCore):
             if current_ip in ip_history:
                 ip_history.remove(current_ip)
                 setup['DUT_Control']['IP_History'] = ip_history
-                save_setup(setup)
+                save_setup(setup, manual_save=True)
                 
                 self.parent.components.show_notification(f"IP地址 {current_ip} 已從歷史中移除", "green", 3000)
                 print(f"[INFO] IP地址已移除: {current_ip}")

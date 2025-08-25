@@ -663,7 +663,7 @@ class SettingsTab(ttk.Frame):
         try:
             print("[DEBUG] 開始手動保存設定...")
 
-            # 生成設定字典
+                    # 生成設定字典
             settings_dict = self.generate_settings_dict()
 
             # 獲取當前視窗狀態並添加到設定中

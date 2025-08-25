@@ -16,7 +16,7 @@ import json
 from core import get_error_handler, get_config_manager, safe_execute, log_info, log_error
 
 # 導入配置和UI模組
-from config_core import load_commands, load_highlight_keywords, load_setup
+from config_core import load_highlight_keywords, load_setup
 from ui_parts.ui_main import SerialUI, TabManager
 
 
@@ -197,6 +197,42 @@ def initialize_application():
 
 if __name__ == "__main__":
     try:
+        # 在創建GUI前，檢查安全簽名檔案
+        log_info("程式啟動時檢查安全簽名...")
+        
+        # EXE 同一路徑（開發時則為檔案所在路徑）
+        if getattr(sys, 'frozen', False):
+            base_dir = os.path.dirname(sys.executable)
+        else:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+        signature_file = os.path.join(base_dir, 'sign_DOC.txt')
+        
+        # 檢查簽名檔案是否存在
+        if not os.path.exists(signature_file):
+            error_msg = '程式啟動失敗：缺少安全簽名檔案\n\n請將 sign_DOC.txt 與執行檔放在同一資料夾'
+            log_error(error_msg)
+            messagebox.showerror('錯誤', error_msg)
+            sys.exit(1)
+        
+        # 檢查簽名檔案內容是否包含 JOVIAN 字串
+        try:
+            with open(signature_file, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            if 'JOVIAN' not in content:
+                error_msg = '程式啟動失敗：安全簽名驗證失敗\n\n請確認 sign_DOC.txt 檔案包含有效的安全簽名'
+                log_error(error_msg)
+                messagebox.showerror('錯誤', error_msg)
+                sys.exit(1)
+                
+        except Exception as e:
+            error_msg = f'程式啟動失敗：讀取安全簽名檔案時發生錯誤\n\n錯誤詳情: {e}'
+            log_error(error_msg)
+            messagebox.showerror('錯誤', error_msg)
+            sys.exit(1)
+        
+        log_info("安全簽名驗證通過，開始創建GUI...")
+        
         # 初始化應用程式
         root, app = initialize_application()
 

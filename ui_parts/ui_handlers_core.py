@@ -149,10 +149,6 @@ class UIHandlersCore:
 
         print("[DEBUG] 開始解析指令文件")
 
-
-        
-
-
         try:
 
 
