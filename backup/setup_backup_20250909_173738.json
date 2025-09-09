@@ -16,11 +16,11 @@
     "Available_End_Strings": [
       "root"
     ],
-    "Default_IP_Address": "127.0.0.1",
+    "Default_IP_Address": "192.168.0.1",
     "IP_History": [
       "192.168.0.1",
       "192.168.11.3",
-      "192.168.11.31",
+      "192.168.11.143",
       "192.168.225.10"
     ],
     "Window_Width": "1522",

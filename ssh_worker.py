@@ -288,12 +288,31 @@ class SSHWorker(threading.Thread):
                 return -1, "", "SSH 未連線"
             
             log_debug(f"執行 SSH 指令: {command}")
-            
-            # 使用登入 shell 執行指令（像 Teraterm 一樣）
-            # 這樣可以載入完整的環境變數和 PATH 設定
-            # 轉義單引號以避免指令注入
-            escaped_command = command.replace("'", "'\"'\"'")
-            wrapped_command = f"bash -l -c '{escaped_command}' 2>&1 || sh -l -c '{escaped_command}' 2>&1"
+            # 背景執行支援：以 & 結尾的指令改為背景啟動並回傳 PID 與日誌路徑
+            stripped = command.strip()
+            is_background = stripped.endswith('&')
+            if is_background:
+                base_cmd = stripped[:-1].strip()
+                if not base_cmd:
+                    return -1, "", "背景指令為空"
+                escaped_base = base_cmd.replace("'", "'\"'\"'")
+                ts = int(time.time())
+                log_file = f"/tmp/pega_bg_{ts}.log"
+                pid_file = f"/tmp/pega_bg_{ts}.pid"
+                # 以登入 shell 啟動背景程序，輸出重定向至日誌，回傳 PID 標記
+                wrapped_command = (
+                    "bash -l -c "
+                    f"'{{ {escaped_base} >> {log_file} 2>&1 & pid=$!; echo PEGA_BG_STARTED:$pid; echo $pid > {pid_file}; echo PEGA_BG_LOG:{log_file}; }}' 2>&1 "
+                    "|| "
+                    "sh -l -c "
+                    f"'{{ {escaped_base} >> {log_file} 2>&1 & pid=$!; echo PEGA_BG_STARTED:$pid; echo $pid > {pid_file}; echo PEGA_BG_LOG:{log_file}; }}' 2>&1"
+                )
+            else:
+                # 使用登入 shell 執行指令（像 Teraterm 一樣）
+                # 這樣可以載入完整的環境變數和 PATH 設定
+                # 轉義單引號以避免指令注入
+                escaped_command = command.replace("'", "'\"'\"'")
+                wrapped_command = f"bash -l -c '{escaped_command}' 2>&1 || sh -l -c '{escaped_command}' 2>&1"
             
             log_debug(f"包裝後的指令: {wrapped_command}")
             
