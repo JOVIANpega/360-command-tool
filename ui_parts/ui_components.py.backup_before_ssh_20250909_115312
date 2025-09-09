@@ -167,7 +167,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             pass
         self.transport_mode_var = tk.StringVar(value=current_mode)
         self.combobox_transport = ttk.Combobox(com_frame, textvariable=self.transport_mode_var,
-                                             values=['Console', 'ADB', 'SSH'], state='readonly', width=15)
+                                             values=['Console', 'ADB'], state='readonly', width=15)
         self.combobox_transport.grid(row=1, column=1, padx=5, sticky='ew', pady=(5, 0))
         self.combobox_transport.bind("<<ComboboxSelected>>", self.on_transport_mode_changed)
 
@@ -612,8 +612,8 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                     self.ip_combobox.set(default_ip)
                     print(f"[DEBUG] 已選擇預設 IP: {default_ip}")
                 else:
-                    self.ip_combobox.set(ip_history[0])
-                    print(f"[DEBUG] 已選擇第一個 IP: {ip_history[0]}")
+                self.ip_combobox.set(ip_history[0])
+                print(f"[DEBUG] 已選擇第一個 IP: {ip_history[0]}")
             else:
                 # 如果沒有歷史記錄，設定預設值
                 default_ip = dut.get('Default_IP_Address', '192.168.11.143')

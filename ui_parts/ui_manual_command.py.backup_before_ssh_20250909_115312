@@ -120,7 +120,7 @@ class ManualCommandUI:
         ttk.Label(transport_frame, text="傳輸方式:", style='Main.TLabel').pack(anchor='w')
         self.transport_mode_var = tk.StringVar(value=self.manual_setup.get('Command_Transport_Mode', 'Console'))
         transport_combo = ttk.Combobox(transport_frame, textvariable=self.transport_mode_var, 
-                                     values=['Console', 'ADB', 'SSH'], state='readonly', width=20)
+                                     values=['Console', 'ADB'], state='readonly', width=20)
         transport_combo.pack(fill='x')
         transport_combo.bind("<<ComboboxSelected>>", self.on_transport_mode_changed)
         

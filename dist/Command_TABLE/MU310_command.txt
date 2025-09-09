@@ -75,13 +75,14 @@
 22. 5G Off set = atcli at+cfun=0
 23. 5G status get = atcli at+cfun?
 24. 5G module Thermal get = atcli 'AT+QTHERMAL="thermal_level"'
-25. USB function set enable= atcli 'AT+QCFG="usbcfg",0x2C7C,0x0801,2,1,1,0,0,1,0'
-26. USB function get enable= atcli 'AT+QCFG="usbcfg"'
-27. USB function disabled set = atcli 'AT+QCFG="usbcfg",0x2C7C,0x0801,2,1,0,0,0,0,0'
-28. USB function get enable= atcli 'AT+QCFG="usbcfg"'
+
+25. USB function set enable= atcli 'AT+QCFG="usbcfg",0x2C7C,0x0801,2,1,1,0,0,1,0'==>reboot
+26. USB function get USBCFG= atcli 'AT+QCFG="usbcfg"'
+27. USB function disabled set = atcli 'AT+QCFG="usbcfg",0x2C7C,0x0801,2,1,0,0,0,0,0'==>reboot
 29. IMS disable set = atcli 'AT+QCFG="ims",2'
 30. IMS status get = atcli 'AT+QCFG="ims"'
-
+31. close ADB LIST=atcli 'AT+QCFG="usbcfg",0x2C7C,0x0801,1,1,1,1,1,1,0'==>reboot
+	
 
 
 

@@ -1,0 +1,36 @@
+ÿþimport re
+
+# ôf°e ui_components.py
+with open('ui_parts/ui_components.py', 'r', encoding='utf-8') as f:
+    content = f.read()
+
+content = re.sub(r\
+values=\[Console
+ADB
+\]\, \values=[Console
+ADB
+SSH
+]
+\, content)
+
+with open('ui_parts/ui_components.py', 'w', encoding='utf-8') as f:
+    f.write(content)
+
+print('Updated ui_components.py')
+
+# ôf°e ui_manual_command.py
+with open('ui_parts/ui_manual_command.py', 'r', encoding='utf-8') as f:
+    content = f.read()
+
+content = re.sub(r\values=\[Console
+ADB
+\]\, \values=[Console
+ADB
+SSH
+]
+\, content)
+
+with open('ui_parts/ui_manual_command.py', 'w', encoding='utf-8') as f:
+    f.write(content)
+
+print('Updated ui_manual_command.py')

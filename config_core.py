@@ -164,6 +164,8 @@ def list_com_ports() -> List[str]:
                 display_name = f"{port_name} - AT PORT"
             elif "USB NMEA PORT" in description or "NMEA PORT" in description:
                 display_name = f"{port_name} - NMEA PORT"
+            elif "DT PORT" in description:
+                display_name = f"{port_name} - DT PORT"
             # 其他類型的 COM 口只顯示名稱，不顯示描述
 
             com_ports.append(display_name)

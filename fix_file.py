@@ -1,0 +1,2 @@
+ÿþlines = []
+with open('ui_parts/ui_settings_tab.py', 'r', encoding='utf-8', errors='replace') as f:

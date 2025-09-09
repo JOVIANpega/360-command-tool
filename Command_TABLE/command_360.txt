@@ -1,7 +1,8 @@
 //指令可以自行修改 
 
 ==全部指令==
-0. I LOVE JOVIAN=SHOW:TEST
+0. I LOVE JOVIAN=SHOW:TEST==>diag -g sn mb
+A. tesg=diag -g sn mb
 1. 取得360序號 Get 360 SN States = diag -g sn dev==>diag -g sn mb==>diag -g hwver==>diag -g sku==>pegacmd version
 2. 檢查IVKEY Get IVKey = diag -g ivLic FD==>diag -g ivLic LPR
 3. 取得SD卡 Get SD state = diag -g status sd

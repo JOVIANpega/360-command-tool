@@ -28,7 +28,7 @@
     "Last_Selected_Command_Section": "全部指令",
     "Pane_Sash_Position": "636",
     "Auto_Execute": false,
-    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/360-command-tool/Command_TABLE/command_360.txt",
+    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/360-command-tool/dist/Command_TABLE/MU310_command.txt",
     "Notification_Font_Size": "10"
   },
   "Fixture_Control": {
@@ -62,7 +62,7 @@
   "SSH_Settings": {
     "Host": "192.168.11.143",
     "Port": 22,
-    "Default_Account": "root/",
+    "Default_Account": "root/oelinux123",
     "Account_History": [
       "root/oelinux123",
       "root/"
@@ -74,7 +74,7 @@
     "Connection_Timeout": 30,
     "Command_Timeout": 30
   },
-  "Command_Transport_Mode": "SSH",
+  "Command_Transport_Mode": "Console",
   "Device_Label": "MU310 : root/oelinux1233",
   "Startup_Label": "VALO360 and MU310 TOOL",
   "Manual_Command": {

@@ -1602,33 +1602,6 @@ class UIHandlers(UIHandlersCore):
                 on_finish=lambda: self.parent.root.after(0, self.on_command_finish),
                 stop_event=self.parent.stop_event
             )
-        elif transport_mode == "SSH":
-            # 導入 SSH 工作器
-            from ssh_worker import SSHWorker
-            
-            # 獲取 SSH 設定
-            ssh_settings = self.setup.get("SSH_Settings", {})
-            host = ssh_settings.get("Host", "192.168.11.143")
-            port = int(ssh_settings.get("Port", 22))
-            default_account = ssh_settings.get("Default_Account", "root/oelinux123")
-            
-            # 解析帳號密碼
-            if "/" in default_account:
-                username, password = default_account.split("/", 1)
-            else:
-                username = default_account
-                password = ""
-
-            # 創建並啟動 SSH 線程
-            self.parent.thread = SSHWorker(
-                cmd_list, end_string, timeout,
-                host, port, username, password,
-                on_data=lambda text, tag: self.on_data(text, tag),
-                on_status=lambda connected: self.parent.root.after(0, lambda: self.update_status_light(connected)),
-                on_progress=lambda p: self.parent.root.after(0, lambda: self.parent.components.update_progress(p)),
-                on_finish=lambda: self.parent.root.after(0, self.on_command_finish),
-                stop_event=self.parent.stop_event
-            )
         else:
             # 創建並啟動串口線程
             self.parent.thread = SerialWorker(

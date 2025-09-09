@@ -145,33 +145,6 @@ class SettingsTab(ttk.Frame):
         # DUT 控制設定
         dut_frame = ttk.LabelFrame(left_container, text="DUT 控制設定", padding=(10, 4))
         dut_frame.pack(fill='both', expand=True, pady=(0, 8))
-
-        # SSH 設定
-        ssh_frame = ttk.LabelFrame(left_container, text="SSH 設定", padding=(10, 4))
-        ssh_frame.pack(fill='x', pady=(0, 8))
-        ssh_frame.columnconfigure(1, weight=1)
-        
-        ssh_settings = self.setup_data.get("SSH_Settings", {})
-        
-        # 主機地址
-        ttk.Label(ssh_frame, text="主機地址:").grid(row=0, column=0, sticky="w", pady=4)
-        self.vars["SSH_Host"] = tk.StringVar(value=ssh_settings.get("Host", "192.168.11.143"))
-        ttk.Entry(ssh_frame, textvariable=self.vars["SSH_Host"], width=20).grid(row=0, column=1, sticky="w", padx=(10, 0), pady=4)
-        
-        # 埠號
-        ttk.Label(ssh_frame, text="埠號:").grid(row=1, column=0, sticky="w", pady=4)
-        self.vars["SSH_Port"] = tk.StringVar(value=str(ssh_settings.get("Port", 22)))
-        ttk.Entry(ssh_frame, textvariable=self.vars["SSH_Port"], width=20).grid(row=1, column=1, sticky="w", padx=(10, 0), pady=4)
-        
-        # 預設帳號
-        ttk.Label(ssh_frame, text="預設帳號:").grid(row=2, column=0, sticky="w", pady=4)
-        self.vars["SSH_Default_Account"] = tk.StringVar(value=ssh_settings.get("Default_Account", "root/oelinux123"))
-        ttk.Entry(ssh_frame, textvariable=self.vars["SSH_Default_Account"], width=20).grid(row=2, column=1, sticky="w", padx=(10, 0), pady=4)
-        
-        # 連線超時
-        ttk.Label(ssh_frame, text="連線超時:").grid(row=3, column=0, sticky="w", pady=4)
-        self.vars["SSH_Connection_Timeout"] = tk.StringVar(value=str(ssh_settings.get("Connection_Timeout", 30)))
-        ttk.Entry(ssh_frame, textvariable=self.vars["SSH_Connection_Timeout"], width=20).grid(row=3, column=1, sticky="w", padx=(10, 0), pady=4)
         dut_frame.columnconfigure(1, weight=1)
         
         dut_settings = self.setup_data.get('DUT_Control', {})
@@ -434,9 +407,11 @@ class SettingsTab(ttk.Frame):
             print(f"更新指令間隔符號時發生錯誤: {e}")
             import traceback
             traceback.print_exc()
+```
 
-
-
+現在讓我編譯檢查是否有語法錯誤：
+<｜tool▁calls▁begin｜><｜tool▁call▁begin｜>
+run_terminal_cmd
 
     def add_custom_separator(self):
         """新增自訂間隔符號"""

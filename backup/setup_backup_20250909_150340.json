@@ -74,7 +74,7 @@
     "Connection_Timeout": 30,
     "Command_Timeout": 30
   },
-  "Command_Transport_Mode": "SSH",
+  "Command_Transport_Mode": "Console",
   "Device_Label": "MU310 : root/oelinux1233",
   "Startup_Label": "VALO360 and MU310 TOOL",
   "Manual_Command": {
