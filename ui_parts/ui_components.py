@@ -580,10 +580,10 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         # 與舊代碼相容：提供 entry_ip 別名供 handlers 使用
         self.entry_ip = self.ip_combobox
         
-        # 新增 IP 按鈕（已停用，IP管理移至設定頁）
-        # self.btn_add_ip = tk.Button(ping_frame, text='+', command=self.add_new_ip, 
-        #                            width=2, bg='#90EE90', fg='black')
-        # self.btn_add_ip.grid(row=0, column=2, padx=2)
+        # 新增 IP 按鈕（重新啟用以供用戶手動輸入）
+        self.btn_add_ip = tk.Button(ping_frame, text='+', command=self.add_new_ip, 
+                                   width=2, bg='#90EE90', fg='black')
+        self.btn_add_ip.grid(row=0, column=2, padx=2)
         
         # Ping 按鈕
         self.btn_ping = tk.Button(ping_frame, text='Ping', command=self.parent.handlers.on_ping, 

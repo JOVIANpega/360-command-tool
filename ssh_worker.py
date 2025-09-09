@@ -17,6 +17,60 @@ log_error = error_handler.log_error
 log_warning = error_handler.log_warning
 
 
+# ---------------------------
+# 全域持久連線狀態（預設開啟保持連線）
+_persist_lock = threading.Lock()
+_persist_client: Optional[paramiko.SSHClient] = None
+_persist_connected: bool = False
+_persist_last_used: float = 0.0
+_persist_idle_timeout_sec: int = 600  # 閒置 10 分鐘自動斷線
+_idle_monitor_started = False
+
+
+def _start_idle_monitor():
+    global _idle_monitor_started
+    if _idle_monitor_started:
+        return
+
+    def _monitor():
+        global _persist_client, _persist_connected, _persist_last_used
+        while True:
+            try:
+                time.sleep(5)
+                with _persist_lock:
+                    if _persist_client and _persist_connected:
+                        idle = time.time() - _persist_last_used
+                        if idle >= _persist_idle_timeout_sec:
+                            try:
+                                _persist_client.close()
+                            except Exception:
+                                pass
+                            _persist_client = None
+                            _persist_connected = False
+                            log_info("持久 SSH 連線因閒置超時已自動關閉")
+            except Exception:
+                # 監控執行緒不因例外終止
+                pass
+
+    t = threading.Thread(target=_monitor, daemon=True)
+    t.start()
+    _idle_monitor_started = True
+
+
+def force_disconnect_persistent_session():
+    """提供外部呼叫的 API：強制關閉持久 SSH 連線"""
+    global _persist_client, _persist_connected
+    with _persist_lock:
+        if _persist_client:
+            try:
+                _persist_client.close()
+            except Exception:
+                pass
+        _persist_client = None
+        _persist_connected = False
+        log_info("已手動關閉持久 SSH 連線")
+
+
 class SSHWorker(threading.Thread):
     """SSH 工作器 - 使用 SSH 執行指令"""
     
@@ -67,18 +121,45 @@ class SSHWorker(threading.Thread):
         # SSH 連線
         self.ssh_client = None
         self.connected = False
+        self.use_persistent = True  # 預設保持連線模式
         
         log_debug(f"SSHWorker 初始化: 主機={host}:{port}, 使用者={username}, 指令數={len(cmd_list)}, 超時={timeout}s")
     
     def connect_ssh(self):
         """建立 SSH 連線"""
         try:
+            global _persist_client, _persist_connected, _persist_last_used
             log_info(f"正在連線到 SSH 主機 {self.host}:{self.port}")
             self.on_status(False)  # 連線中
             
-            # 建立 SSH 客戶端
+            # 嘗試重用持久連線
+            _start_idle_monitor()
+            if self.use_persistent:
+                with _persist_lock:
+                    if _persist_client and _persist_connected:
+                        # 驗證傳輸是否仍可用
+                        transport = _persist_client.get_transport()
+                        if transport and transport.is_active():
+                            self.ssh_client = _persist_client
+                            self.connected = True
+                            _persist_last_used = time.time()
+                            log_info("重用持久 SSH 連線")
+                            self.on_status(True)
+                            return True
+                        else:
+                            # 清理失效的持久連線
+                            try:
+                                _persist_client.close()
+                            except Exception:
+                                pass
+                            _persist_client = None
+                            _persist_connected = False
+            
+            # 建立新的 SSH 客戶端
             self.ssh_client = paramiko.SSHClient()
             self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+            
+            # Keep-Alive 將在連線成功後設定
             
             # 連線參數 - 針對 Dropbear SSH 優化
             connect_kwargs = {
@@ -86,8 +167,8 @@ class SSHWorker(threading.Thread):
                 "port": self.port,
                 "username": self.username,
                 "timeout": 30,
-                "auth_timeout": 20,      # 增加認證超時
-                "banner_timeout": 15,    # 增加 banner 超時
+                "auth_timeout": 30,      # 認證超時
+                "banner_timeout": 30,    # banner 超時
                 "look_for_keys": False,  # 關閉金鑰查找
                 "allow_agent": False,    # 關閉 SSH 代理
                 "gss_auth": False,       # 關閉 GSS 認證
@@ -95,56 +176,98 @@ class SSHWorker(threading.Thread):
                 "disabled_algorithms": {'keys': ['rsa-sha2-256', 'rsa-sha2-512']},  # 某些舊版本相容性
                 "sock": None,            # 確保使用新的 socket
             }
-            
-            # 針對 Dropbear SSH 的特殊處理
-            # 嘗試使用傳統的 none 認證方法
-            
-            # 添加短暫延遲，避免連線過於頻繁
-            import time
-            time.sleep(1)
-            
-            try:
-                # 先嘗試不帶任何認證參數的連線
-                self.ssh_client.connect(**connect_kwargs)
-                self.connected = True
-            except Exception as first_error:
-                log_debug(f"第一次連線嘗試失敗: {first_error}")
-                
-                # 如果第一次失敗，嘗試帶密碼（即使是空的）
+
+            # 退避重試（處理 banner 讀取/認證暫時失敗）
+            backoffs = [2, 5, 10]
+            last_error: Optional[Exception] = None
+
+            for attempt, delay in enumerate(backoffs, start=1):
+                # 添加延遲避免過於頻繁的嘗試
+                time.sleep(delay)
+                self.on_data(f"[提示] 裝置忙碌，{delay}s 後自動重試 (第{attempt}/3次)\n", "warning")
+
                 try:
-                    connect_kwargs["password"] = self.password
+                    # 先嘗試不帶任何認證參數的連線
                     self.ssh_client.connect(**connect_kwargs)
                     self.connected = True
-                except Exception as second_error:
-                    log_debug(f"第二次連線嘗試失敗: {second_error}")
-                    
-                    # 最後嘗試：強制使用 none 認證
+                except Exception as first_error:
+                    last_error = first_error
+                    log_debug(f"第一次連線嘗試失敗: {first_error}")
+
+                    # 第二層：嘗試帶密碼（允許空密碼）
                     try:
-                        # 重新建立客戶端
-                        self.ssh_client.close()
-                        self.ssh_client = paramiko.SSHClient()
-                        self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                        
-                        # 手動處理 none 認證
-                        transport = paramiko.Transport((self.host, self.port))
-                        transport.start_client()
-                        transport.auth_none(self.username)
-                        
-                        # 如果 none 認證成功，使用這個 transport
-                        self.ssh_client._transport = transport
+                        connect_kwargs["password"] = self.password
+                        self.ssh_client.connect(**connect_kwargs)
                         self.connected = True
-                        log_info("使用 none 認證成功")
-                        
-                    except Exception as third_error:
-                        log_error(f"所有認證方法都失敗: {third_error}")
-                        raise third_error
+                    except Exception as second_error:
+                        last_error = second_error
+                        log_debug(f"第二次連線嘗試失敗: {second_error}")
+
+                        # 第三層：強制使用 none 認證
+                        try:
+                            # 重新建立客戶端
+                            self.ssh_client.close()
+                            self.ssh_client = paramiko.SSHClient()
+                            self.ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+                            transport = paramiko.Transport((self.host, self.port))
+                            transport.start_client(timeout=30)
+                            transport.auth_none(self.username)
+
+                            self.ssh_client._transport = transport
+                            self.connected = True
+                            log_info("使用 none 認證成功")
+                        except Exception as third_error:
+                            last_error = third_error
+                            log_debug(f"第三次連線嘗試失敗: {third_error}")
+
+                # 若已連線成功，跳出重試
+                if self.connected:
+                    break
+
+                # 判斷是否繼續重試（banner/auth 類錯誤常為暫時性）
+                err_text = str(last_error) if last_error else ""
+                transient = (
+                    "Error reading SSH protocol banner" in err_text or
+                    "WinError 10054" in err_text or
+                    "Authentication failed" in err_text or
+                    "No authentication methods available" in err_text
+                )
+                if attempt < len(backoffs) and transient:
+                    continue
+                else:
+                    break
+
+            if not self.connected:
+                if last_error:
+                    raise last_error
+                raise Exception("無法建立 SSH 連線")
             
             if not self.connected:
                 raise Exception("無法建立 SSH 連線")
             
             log_info(f"SSH 連線成功: {self.username}@{self.host}:{self.port}")
-            self.on_status(True)  # 已連線
             
+            # 設定 Keep-Alive 以防止連線斷開
+            transport = self.ssh_client.get_transport()
+            if transport:
+                transport.set_keepalive(30)  # 每 30 秒發送 keep-alive
+                log_debug("已設定 SSH Keep-Alive (30秒)")
+            
+            # 建立/更新持久連線
+            if self.use_persistent:
+                with _persist_lock:
+                    _persist_set = False
+                    try:
+                        _persist_client = self.ssh_client
+                        _persist_connected = True
+                        _persist_last_used = time.time()
+                        _persist_set = True
+                    finally:
+                        if _persist_set:
+                            log_debug("已建立持久 SSH 連線")
+            
+            self.on_status(True)  # 已連線
             return True
             
         except Exception as e:
@@ -182,6 +305,11 @@ class SSHWorker(threading.Thread):
             stderr_data = stderr.read().decode("utf-8", errors="ignore")
             return_code = stdout.channel.recv_exit_status()
             
+            # 更新持久連線使用時間
+            if self.use_persistent:
+                with _persist_lock:
+                    global _persist_last_used
+                    _persist_last_used = time.time()
             return return_code, stdout_data, stderr_data
             
         except Exception as e:
@@ -242,21 +370,37 @@ class SSHWorker(threading.Thread):
             # 完成進度
             self.on_progress(100)
             self.on_data(f"\n[SSH] 所有指令已執行完成\n", "purple")
+            # 持久連線模式下，不做批次冷卻
+            if not self.use_persistent:
+                heavy_keywords = ["stream", "gst-launch", "ffmpeg", "play", "start_rtsp", "rtsp", "diag -g iv", "diag -s video", "diag -s ai", "diag -s audio play"]
+                executed = "\n".join(self.cmd_list).lower()
+                is_heavy = any(k in executed for k in heavy_keywords)
+                cooldown = 10 if is_heavy else 5
+                self.on_data(f"[提示] 裝置可能仍在釋放資源，{cooldown}s 後可再次執行\n", "warning")
+                time.sleep(cooldown)
             
         except Exception as e:
             log_error(f"SSH 執行錯誤: {e}")
             self.on_data(f"\n[錯誤] SSH 執行時發生錯誤: {e}\n", "error")
         
         finally:
-            # 關閉 SSH 連線
-            if self.ssh_client:
-                try:
-                    self.ssh_client.close()
-                    log_debug("SSH 連線已關閉")
-                except:
-                    pass
-            
-            self.connected = False
-            self.on_status(False)
+            # 持久連線模式下，保持連線不關閉；僅更新最後使用時間
+            if self.use_persistent and self.ssh_client:
+                with _persist_lock:
+                    global _persist_last_used
+                    _persist_last_used = time.time()
+                # 維持 connected 狀態供上層顯示；透過通知列以 connected/disconnected 更新
+                self.on_status(True)
+            else:
+                # 短連線模式：正常關閉
+                if self.ssh_client:
+                    try:
+                        self.ssh_client.close()
+                        log_debug("SSH 連線已關閉")
+                    except Exception:
+                        pass
+                self.connected = False
+                self.on_status(False)
+        
             self.on_finish()
             log_debug("SSHWorker 執行完成")
