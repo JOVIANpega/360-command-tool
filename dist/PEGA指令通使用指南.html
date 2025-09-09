@@ -132,6 +132,7 @@
             <ul>
                 <li>🔧 透過 COM 口（Console 模式）執行測試指令</li>
                 <li>📱 透過 ADB（ADB 模式）對 Android/Linux 裝置下達指令</li>
+                <li>🌐 <strong>透過 SSH（SSH 模式）遠端執行指令</strong> <span class="highlight">NEW!</span></li>
                 <li>📊 即時顯示指令執行結果，支援關鍵字高亮</li>
                 <li>📁 自訂指令檔案與分類，支援多重指令以分隔符執行</li>
                 <li>🎯 提供 Ping 檢查與網路診斷</li>
@@ -141,6 +142,9 @@
         <h2>✨ 最新功能與行為</h2>
         <div class="feature-box">
             <ul>
+                <li><strong>🌐 SSH 功能正式上線</strong>：支援透過 SSH 協定遠端執行指令，相容 Dropbear SSH 和 OpenSSH，完全替代 Teraterm</li>
+                <li><strong>🔐 智慧認證機制</strong>：自動適配不同 SSH 伺服器的認證方式，支援空密碼認證</li>
+                <li><strong>💻 完整環境載入</strong>：使用登入 shell 執行指令，確保所有環境變數和函式庫正確載入</li>
                 <li><strong>安全啟動檢查</strong>：執行檔同資料夾需有 <code>sign_DOC.txt</code> 且包含 <code>JOVIAN</code>，否則 GUI 不會開啟。</li>
                 <li><strong>IP 集中管理</strong>：設定頁的「預設 IP」改為可編輯下拉選單，來源為 IP 歷史，<u>最多 5 筆</u>（去重、最近使用置頂）。</li>
                 <li><strong>即時生效</strong>：在設定頁輸入或選擇 IP 後按「儲存並立即生效」，會寫回設定並同步所有頁面的 IP 下拉。</li>
@@ -181,7 +185,7 @@
         <h3>DUT控制界面組件（由上到下）</h3>
         <div class="step">
             <strong>1. 傳輸模式</strong><br>
-            選擇 <span class="highlight">Console</span> 或 <span class="highlight">ADB</span> 模式
+            選擇 <span class="highlight">Console</span>、<span class="highlight">ADB</span> 或 <span class="highlight">SSH</span> 模式
         </div>
         
         <div class="step">
@@ -241,6 +245,38 @@
             <li>選擇分類與指令（支援多重指令，以分隔符 <code>==></code> 分隔）</li>
             <li>按下「執行指令」後，程式將以 <code>adb shell</code> 執行</li>
         </ol>
+
+        <h3>快速開始（SSH 模式）🌐</h3>
+        <div class="feature-box">
+            <ol>
+                <li><strong>設定 SSH 連線資訊</strong>：
+                    <ul>
+                        <li>進入「設定」標籤頁</li>
+                        <li>在 SSH 設定區塊設定主機 IP、埠號、帳號密碼</li>
+                        <li>帳號格式：<code>使用者名稱/密碼</code>（如 <code>root/</code> 表示空密碼）</li>
+                        <li>點擊「儲存設定並即刻生效」</li>
+                    </ul>
+                </li>
+                <li><strong>執行 SSH 指令</strong>：
+                    <ul>
+                        <li>回到「DUT控制」標籤頁</li>
+                        <li>選擇 <strong>SSH 模式</strong></li>
+                        <li>選擇分類與指令</li>
+                        <li>按下「執行指令」，程式將透過 SSH 連線執行</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+        
+        <div class="warning-box">
+            <strong>🔒 SSH 安全提示：</strong>
+            <ul>
+                <li>確保目標設備 SSH 服務正常運行</li>
+                <li>檢查網路連通性（可使用 Ping 功能測試）</li>
+                <li>SSH 模式支援 Dropbear SSH 和 OpenSSH</li>
+                <li>程式會自動適配認證方式，支援空密碼認證</li>
+            </ul>
+        </div>
 
         <div class="warning-box">
             <strong>⚠️ 注意事項：</strong>
@@ -363,10 +399,44 @@ GPIO測試|cat /sys/kernel/debug/gpio
             3. 確認結束字串設定是否正確（例如 <code>root</code>）
         </div>
 
+        <h3>Q: SSH 連線失敗？🌐</h3>
+        <div class="step">
+            <strong>解決方法：</strong><br>
+            1. 確認設備 SSH 服務運行：<code>ssh root@192.168.x.x</code><br>
+            2. 檢查網路連通性：使用程式內建 Ping 功能<br>
+            3. 驗證帳號密碼格式：<code>使用者名稱/密碼</code><br>
+            4. 空密碼使用 <code>root/</code> 格式<br>
+            5. 查看輸出區域的詳細錯誤訊息
+        </div>
+
+        <h3>Q: SSH 連線成功但指令執行失敗？</h3>
+        <div class="step">
+            <strong>可能原因：</strong><br>
+            • 指令在 SSH 環境中不存在<br>
+            • 權限不足<br>
+            • 環境變數未正確載入<br><br>
+            <strong>解決方法：</strong><br>
+            1. 確認指令在目標設備上存在<br>
+            2. 檢查使用者權限<br>
+            3. 程式已自動載入完整環境，如仍有問題請檢查設備設定
+        </div>
+
+        <h3>Q: 如何選擇最佳傳輸模式？</h3>
+        <div class="step">
+            <strong>建議選擇順序：</strong><br>
+            1. <strong>SSH 模式</strong>：網路連線穩定，安全性最高<br>
+            2. <strong>Console 模式</strong>：直接 COM 口連線，最穩定<br>
+            3. <strong>ADB 模式</strong>：Android/Linux 設備開發調試<br><br>
+            <strong>選擇依據：</strong><br>
+            • 有網路且支援 SSH → 優先選 SSH<br>
+            • 僅有 COM 口 → 選 Console<br>
+            • Android 開發 → 選 ADB
+        </div>
+
         <div class="version-info">
-            <p><strong>PEGA指令通</strong></p>
-            <p>此說明文件涵蓋最新功能與行為調整（不含版本與日期）</p>
-            <p>如有問題或建議，請聯繫技術支援</p>
+            <p><strong>PEGA指令通 - SSH 功能完整版</strong></p>
+            <p>🌐 SSH 功能正式上線：支援 Dropbear SSH 和 OpenSSH，完全替代 Teraterm</p>
+            <p>📅 更新日期：2025/09/09 | 如有問題或建議，請聯繫技術支援</p>
         </div>
     </div>
 </body>

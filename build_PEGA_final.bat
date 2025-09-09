@@ -2,7 +2,7 @@
 chcp 65001 > nul
 echo.
 echo ========================================
-echo    PEGA指令工具V1.9.4 打包程序
+echo    PEGA指令通 V2.0.2 打包程序
 echo ========================================
 echo.
 
@@ -67,7 +67,7 @@ pyinstaller ^
     --clean ^
     --noconfirm ^
     --noconsole ^
-    --name "PEGA指令工具V1.9.4" ^
+    --name "PEGA指令通_V2.0.2" ^
     --version-file "version_info_zh.txt" ^
     --add-data "tooltips.ini;." ^
     --add-data "setup.json;." ^
@@ -75,6 +75,9 @@ pyinstaller ^
     --add-data "color_word.txt;." ^
     --add-data "tooltip_config.txt;." ^
     --add-data "user_guide.txt;." ^
+    --add-data "PEGA指令通使用指南.html;." ^
+    --add-data "readROVO.txt;." ^
+    --add-data "sign_DOC.txt;." ^
     --add-data "Command_TABLE;Command_TABLE" ^
     --add-data "FIXTURE;FIXTURE" ^
     --add-data "core;core" ^
@@ -85,13 +88,41 @@ pyinstaller ^
 
 rem 檢查結果
 echo.
-if exist "dist\PEGA指令工具V1.9.4.exe" (
+if exist "dist\PEGA指令通_V2.0.2.exe" (
     echo ========================================
     echo           打包成功！
     echo ========================================
     echo.
-    echo 輸出文件: dist\PEGA指令工具V1.9.4.exe
-    dir "dist\PEGA指令工具V1.9.4.exe"
+    echo 輸出文件: dist\PEGA指令通_V2.0.2.exe
+    dir "dist\PEGA指令通_V2.0.2.exe"
+    echo.
+    echo [步驟5] 複製必要的執行時檔案到 dist ...
+    if not exist "dist\assets" mkdir "dist\assets"
+    if not exist "dist\Command_TABLE" mkdir "dist\Command_TABLE"
+    if not exist "dist\FIXTURE" mkdir "dist\FIXTURE"
+    if not exist "dist\core" mkdir "dist\core"
+    if not exist "dist\ui_parts" mkdir "dist\ui_parts"
+    
+    rem 複製資料夾（包含子資料夾與檔案）
+    xcopy /E /I /Y "assets" "dist\assets\" > nul
+    xcopy /E /I /Y "Command_TABLE" "dist\Command_TABLE\" > nul
+    xcopy /E /I /Y "FIXTURE" "dist\FIXTURE\" > nul
+    xcopy /E /I /Y "core" "dist\core\" > nul
+    xcopy /E /I /Y "ui_parts" "dist\ui_parts\" > nul
+    
+    rem 複製單一檔案
+    copy /Y "setup.json" "dist\" > nul
+    copy /Y "tooltips.ini" "dist\" > nul
+    copy /Y "tooltip_config.txt" "dist\" > nul
+    copy /Y "color_word.txt" "dist\" > nul
+    copy /Y "command.txt" "dist\" > nul
+    copy /Y "user_guide.txt" "dist\" > nul
+    copy /Y "PEGA指令通使用指南.html" "dist\" > nul
+    copy /Y "readROVO.txt" "dist\" > nul
+    copy /Y "sign_DOC.txt" "dist\" > nul
+    
+    echo 複製完成。列出 dist 目錄：
+    dir "dist"
     echo.
     echo 打包完成！您可以在dist目錄找到可執行文件。
 ) else (

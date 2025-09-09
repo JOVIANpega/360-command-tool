@@ -341,6 +341,33 @@ class SSHWorker(threading.Thread):
                 progress = int((i / len(self.cmd_list)) * 100)
                 self.on_progress(progress)
                 
+                # 攔截本機指令（不送到裝置）。目前支援：SHOW: 提示視窗/通知，DELAY/WAIT: 延遲
+                local_cmd = cmd.strip()
+                if local_cmd.lower().startswith("show:"):
+                    msg = local_cmd[5:].strip()
+                    if not msg:
+                        msg = "(空白訊息)"
+                    # 在輸出區顯示本機提示；上層可同時用通知區域顯示
+                    self.on_data(f"\n[本機提示] {msg}\n", "info")
+                    # 指令已處理，進入下一個
+                    time.sleep(0.2)
+                    continue
+
+                lc = local_cmd.lower()
+                if lc.startswith("delay ") or lc.startswith("delay:") or lc.startswith("wait ") or lc.startswith("wait:"):
+                    # 支援格式：DELAY 5、DELAY:5、WAIT 500ms、WAIT:0.5s 等
+                    import re
+                    m = re.search(r"(?:delay|wait)[:\s]+([0-9]+(?:\.[0-9]+)?)(ms|s)?", lc)
+                    if m:
+                        val = float(m.group(1))
+                        unit = m.group(2) or "s"
+                        sleep_sec = val / 1000.0 if unit == "ms" else val
+                        if sleep_sec < 0:
+                            sleep_sec = 0
+                        self.on_data(f"[本機等待] {sleep_sec:.3f}s\n", "info")
+                        time.sleep(sleep_sec)
+                        continue
+
                 # 顯示發送的指令
                 self.on_data(f"\n[SSH 發送] {cmd}\n", "send")
                 
