@@ -13,9 +13,9 @@ import sys
 import datetime
 
 version_info = {
-    'version': '2.0.2',
-    'file_version': (2, 0, 2, 0),
-    'product_version': (2, 0, 2, 0),
+    'version': '2.1.5',
+    'file_version': (2, 1, 5, 0),
+    'product_version': (2, 1, 5, 0),
     'company_name': 'PEGA指令通',
     'file_description': 'PEGA指令通 - 序列埠通訊工具',
     'internal_name': 'PEGA指令通',
@@ -160,15 +160,15 @@ v1.5.0.1 (2025-07-12)
 # 定義版本號
 VERSION = version_info['version']
 
-APP_VERSION = "V2.0.2"
-APP_VERSION_DETAIL = "\n【V2.0.2 主要更新】\n- SSH 模式：持久連線、Keep-Alive、回退重試\n- Dropbear 相容：空密碼/none 認證\n- 登入 shell 執行：環境自動載入（等同 Teraterm）\n"
+APP_VERSION = "V2.1.5"
+APP_VERSION_DETAIL = "\n【V2.1.5 主要更新】\n- 治具控制TAB字体联动功能\n- COM口连接稳定性改进\n- 指令格式统一优化\n"
 
 # 生成版本資訊檔案
 with open("version_info_zh.txt", "w", encoding="utf-8") as f:
     f.write("VSVersionInfo(\n")
     f.write("  ffi=FixedFileInfo(\n")
-    f.write("    filevers=(2, 0, 2, 0),\n")
-    f.write("    prodvers=(2, 0, 2, 0),\n")
+    f.write("    filevers=(2, 1, 5, 0),\n")
+    f.write("    prodvers=(2, 1, 5, 0),\n")
     f.write("    mask=0x3f,\n")
     f.write("    flags=0x0,\n")
     f.write("    OS=0x40004,\n")

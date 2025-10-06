@@ -580,6 +580,14 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         # 與舊代碼相容：提供 entry_ip 別名供 handlers 使用
         self.entry_ip = self.ip_combobox
         
+        # 變更即保存：選擇或按 Enter 時立即寫入 Default_IP_Address 與歷史
+        try:
+            self.ip_combobox.bind('<<ComboboxSelected>>', lambda e: self.on_ip_changed())
+            self.ip_combobox.bind('<Return>', lambda e: self.on_ip_changed())
+            self.ip_combobox.bind('<FocusOut>', lambda e: self.on_ip_changed())
+        except Exception:
+            pass
+
         # 新增 IP 按鈕（重新啟用以供用戶手動輸入）
         self.btn_add_ip = tk.Button(ping_frame, text='+', command=self.add_new_ip, 
                                    width=2, bg='#90EE90', fg='black')
@@ -624,6 +632,54 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         except Exception as e:
             print(f"[DEBUG] 載入 IP 歷史記錄時發生錯誤: {e}")
     
+    def on_ip_changed(self):
+        """當下拉選擇或按 Enter 後，立即保存 IP 與歷史"""
+        try:
+            current_ip = (self.ip_combobox.get() or '').strip()
+            if not current_ip:
+                return
+            # 驗證基本格式（僅 IPv4，若需支援 FQDN 可放寬）
+            ip_only = current_ip.split(':')[0].strip()
+            # 非嚴格檢查：即使格式不完全符合，也先做保存
+            from config_core import load_setup, save_setup, resource_manager
+            from core.config_manager import get_config_manager
+            setup = load_setup()
+            # 強制重載避免快取導致看不到更新
+            try:
+                resource_manager.invalidate_cache()
+            except Exception:
+                pass
+            dut = setup.setdefault('DUT_Control', {})
+            # 更新歷史（去重、置頂、最多5筆）
+            history = list(dut.get('IP_History', []))
+            history = [h for h in history if h != current_ip]
+            history.insert(0, current_ip)
+            if len(history) > 5:
+                history = history[:5]
+            dut['IP_History'] = history
+            # 更新預設 IP
+            dut['Default_IP_Address'] = current_ip
+            # 透過 ConfigManager 直接保存，確保寫到正確路徑
+            try:
+                cfg_mgr = get_config_manager()
+                cfg = cfg_mgr.load_config(force_reload=True)
+                cfg['DUT_Control'] = dut
+                cfg_mgr.save_config(cfg, manual_save=True)
+            except Exception:
+                # 後備方案
+                save_setup(setup, manual_save=True)
+            # 同步下拉值
+            self.ip_combobox['values'] = history if history else [current_ip]
+            self.ip_combobox.set(current_ip)
+            print(f"[INFO] 已保存 Default_IP_Address 與 IP_History: {current_ip}")
+            try:
+                cfg_path = resource_manager.get_resource_path('setup.json')
+                print(f"[INFO] 設定檔寫入路徑: {cfg_path}")
+            except Exception:
+                pass
+        except Exception as e:
+            print(f"[ERROR] 保存 IP 時發生錯誤: {e}")
+
     def add_new_ip(self):
         """新增新的 IP 地址"""
         try:
