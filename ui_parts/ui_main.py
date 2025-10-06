@@ -819,11 +819,12 @@ class TabManager:
                 except Exception as e:
                     print(f"[WARNING] 更新 DUT UI 字體時發生錯誤: {e}")
             
-            # 更新治具控制頁面的字體設定
+            # 更新治具控制頁面的字體設定 - 使用DUT控制TAB的UI字體大小
             if hasattr(self, 'fixture_ui') and hasattr(self.fixture_ui, 'update_font_size'):
                 try:
-                    self.fixture_ui.update_font_size(int(fixture_font_size))
-                    print(f"[DEBUG] 已更新治具控制頁面字體大小為: {fixture_font_size}")
+                    # 使用DUT控制TAB的UI字體大小，而不是治具TAB的獨立設定
+                    self.fixture_ui.update_font_size(int(ui_font_size))
+                    print(f"[DEBUG] 已更新治具控制頁面字體大小為: {ui_font_size} (來自DUT控制TAB)")
                 except Exception as e:
                     print(f"[WARNING] 更新治具字體時發生錯誤: {e}")
             

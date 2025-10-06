@@ -101,7 +101,8 @@ class FixtureControlWindow:
         self.commands = {
             'FUNCTION': [],
             'MB': [], 
-            '原始的指令': []
+            '原始群元指令': [],
+            '4CAM_stitching的指令': []
         }
         self.description_text = ""
         
@@ -118,13 +119,15 @@ class FixtureControlWindow:
             self.test_category_vars = {
                 'FUNCTION': self.shared_config.get_var('fixture_test_function'),
                 'MB': self.shared_config.get_var('fixture_test_mb'),
-                '原始的指令': self.shared_config.get_var('fixture_test_original')
+                '原始群元指令': self.shared_config.get_var('fixture_test_original'),
+                '4CAM_stitching的指令': tk.BooleanVar()  # 新增4CAM_stitching的指令變數
             }
         else:
             self.test_category_vars = {
                 'FUNCTION': tk.BooleanVar(),
                 'MB': tk.BooleanVar(),
-                '原始的指令': tk.BooleanVar()
+                '原始群元指令': tk.BooleanVar(),
+                '4CAM_stitching的指令': tk.BooleanVar()  # 新增4CAM_stitching的指令變數
             }
             # 預設選擇FUNCTION
             self.test_category_vars['FUNCTION'].set(True)
@@ -172,8 +175,10 @@ class FixtureControlWindow:
                 fixture_settings.get('Test_Category_FUNCTION', True))
             self.test_category_vars['MB'].set(
                 fixture_settings.get('Test_Category_MB', False))
-            self.test_category_vars['原始的指令'].set(
+            self.test_category_vars['原始群元指令'].set(
                 fixture_settings.get('Test_Category_Original_Commands', False))
+            self.test_category_vars['4CAM_stitching的指令'].set(
+                fixture_settings.get('Test_Category_4CAM_stitching', False))
             
             # 確定當前選擇的類別
             for category, var in self.test_category_vars.items():
@@ -189,8 +194,15 @@ class FixtureControlWindow:
             self.parity_var.set(serial_settings.get('Parity', 'None'))
             self.timeout_var.set(serial_settings.get('Timeout', '1.0'))
             
-            # 載入字體大小設定 (設定為12)
-            self.font_size = 12
+            # 載入字體大小設定 - 與DUT控制TAB聯動
+            dut_settings = settings.get('DUT_Control', {})
+            ui_font_size = dut_settings.get('UI_Font_Size', '12')
+            try:
+                self.font_size = int(ui_font_size)
+            except (ValueError, TypeError):
+                self.font_size = 12
+            
+            print(f"[DEBUG] 治具控制TAB載入字體大小: {self.font_size} (來自DUT控制TAB的UI_Font_Size)")
             
         except Exception as e:
             print(f"載入設定時發生錯誤: {e}")
@@ -228,12 +240,14 @@ class FixtureControlWindow:
                     if current_section in self.commands:
                         # 解析指令行
                         for line in lines[1:]:
-                            if ' - ' in line and line.strip():
-                                code, desc = line.split(' - ', 1)
-                                self.commands[current_section].append({
-                                    'code': code.strip(),
-                                    'description': desc.strip()
-                                })
+                            if line.strip():
+                                # 所有指令都使用標準格式 (指令 - 描述)
+                                if ' - ' in line:
+                                    code, desc = line.split(' - ', 1)
+                                    self.commands[current_section].append({
+                                        'code': code.strip(),
+                                        'description': desc.strip()
+                                    })
                                 
         except Exception as e:
             messagebox.showerror("錯誤", f"載入指令檔案時發生錯誤: {e}")
@@ -297,6 +311,15 @@ class FixtureControlWindow:
                 command=lambda cat=category: self.on_category_changed(cat)
             )
             checkbox.pack(side=tk.LEFT, padx=(10, 0))
+        
+        # 添加重新載入按鈕
+        self.reload_btn = ttk.Button(
+            category_frame,
+            text="重新載入指令",
+            command=self.reload_commands,
+            style="Accent.TButton"
+        )
+        self.reload_btn.pack(side=tk.RIGHT, padx=(10, 0))
         
         # 第二行：COM Port 與指令選擇
         command_frame = ttk.Frame(control_frame)
@@ -604,12 +627,32 @@ class FixtureControlWindow:
             # 清除當前選擇
             self.command_combobox.set('')
 
+    def reload_commands(self):
+        """重新載入指令檔案"""
+        try:
+            # 清空現有指令
+            for category in self.commands:
+                self.commands[category] = []
+            
+            # 重新載入指令檔案
+            self.load_commands()
+            
+            # 更新指令列表
+            self.update_command_list()
+            
+            # 記錄成功訊息
+            self.log_message("指令檔案已重新載入")
+            messagebox.showinfo("成功", "指令檔案已重新載入！")
+            
+        except Exception as e:
+            error_msg = f"重新載入指令檔案時發生錯誤: {e}"
+            self.log_message(error_msg)
+            messagebox.showerror("錯誤", error_msg)
+
     def on_command_selected(self, event=None):
         """處理指令選擇"""
         selection = self.command_combobox.get()
         if selection:
-            # 提取指令代碼
-            command_code = selection.split(' - ')[0]
             self.log_message(f"已選擇: {selection}")
 
     def on_execute_command(self):
@@ -619,10 +662,13 @@ class FixtureControlWindow:
             messagebox.showwarning("警告", "請先選擇一個指令")
             return
             
-        # 提取指令代碼 (只送單一字元)
-        command_code = selection.split(' - ')[0]
+        # 提取指令代碼 (只發送指令部分，不包含描述)
+        if ' - ' in selection:
+            command_code = selection.split(' - ')[0]
+        else:
+            command_code = selection
         
-        # 顯示送出的指令
+        # 顯示送出的指令 (只顯示指令代碼)
         self.sent_command_var.set(command_code)
         
         # 執行串列指令
@@ -640,8 +686,20 @@ class FixtureControlWindow:
         self.log_message("執行結果已清除")
 
     def send_serial_command(self, command):
-        """發送串列指令"""
+        """發送串列指令 - 改進版本"""
         try:
+            # 检查COM口是否选择
+            com_port = self.com_port_var.get()
+            if not com_port:
+                self.log_message("錯誤：未選擇COM口")
+                return None
+            
+            # 检查COM口是否可用
+            available_ports = self.get_available_com_ports()
+            if com_port not in available_ports:
+                self.log_message(f"錯誤：COM口 {com_port} 不可用")
+                return None
+            
             # 獲取串列參數
             parity_map = {
                 'None': serial.PARITY_NONE,
@@ -652,7 +710,6 @@ class FixtureControlWindow:
             }
             
             # 建立串列連接 (使用選擇的 COM 埠)
-            com_port = self.com_port_var.get()
             self.serial_connection = serial.Serial(
                 port=com_port,
                 baudrate=int(self.baudrate_var.get()),
@@ -662,35 +719,39 @@ class FixtureControlWindow:
                 timeout=float(self.timeout_var.get())
             )
             
+            # 等待连接稳定
+            time.sleep(0.2)
+            
             # 發送指令
             command_bytes = command.encode('utf-8')
             self.serial_connection.write(command_bytes)
             
-            # 等待回應
-            time.sleep(0.1)
+            # 等待回應 - 增加等待时间
+            time.sleep(0.5)
             
             # 讀取回應
             response = ""
             if self.serial_connection.in_waiting > 0:
                 response = self.serial_connection.read(self.serial_connection.in_waiting).decode('utf-8', errors='ignore')
             
-            # 關閉連接
-            self.serial_connection.close()
-            self.serial_connection = None
-            
             return response.strip() if response else "指令已發送 (無回應)"
             
+        except serial.SerialException as e:
+            error_msg = f"串列通訊錯誤: {e}"
+            self.log_message(error_msg)
+            return None
         except Exception as e:
-            if self.serial_connection:
+            error_msg = f"其他錯誤: {e}"
+            self.log_message(error_msg)
+            return None
+        finally:
+            # 确保连接被关闭
+            if self.serial_connection and self.serial_connection.is_open:
                 try:
                     self.serial_connection.close()
                 except:
                     pass
                 self.serial_connection = None
-            
-            error_msg = f"串列通訊錯誤: {e}"
-            self.log_message(error_msg)
-            return None
 
     def update_serial_info(self):
         """更新串列參數顯示"""
@@ -725,7 +786,8 @@ class FixtureControlWindow:
             # 儲存測試類別設定
             fixture_settings['Test_Category_FUNCTION'] = self.test_category_vars['FUNCTION'].get()
             fixture_settings['Test_Category_MB'] = self.test_category_vars['MB'].get()
-            fixture_settings['Test_Category_Original_Commands'] = self.test_category_vars['原始的指令'].get()
+            fixture_settings['Test_Category_Original_Commands'] = self.test_category_vars['原始群元指令'].get()
+            fixture_settings['Test_Category_4CAM_stitching'] = self.test_category_vars['4CAM_stitching的指令'].get()
             
             # 儲存串列設定
             if 'Serial_Settings' not in fixture_settings:
@@ -796,7 +858,8 @@ class FixtureControlWindow:
             self.command_combobox: "選擇要執行的制具指令",
             self.execute_btn: "執行選擇的指令",
             self.sent_command_entry: "顯示剛剛發送的指令代碼", 
-            self.clear_btn: "清除執行結果區域的所有內容"
+            self.clear_btn: "清除執行結果區域的所有內容",
+            self.reload_btn: "重新載入指令檔案，適用於新增或修改指令後"
         }
         
         for widget, text in tooltips.items():
