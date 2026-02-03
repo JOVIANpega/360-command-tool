@@ -411,10 +411,7 @@ class UIHandlersCore:
             # 顯示清空通知
             self.parent.components.show_notification(get_notification_text("output_cleared"), "blue", 2000)
 
-
     def backup_output(self):
-
-
         """備份輸出內容到檔案"""
 
 

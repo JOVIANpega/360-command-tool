@@ -1165,9 +1165,14 @@ class UIHandlers(UIHandlersCore):
 
 
             # 更新 UI 字體
-
-
             self.parent.components.update_ui_fonts(size)
+            
+            # 更新 ToolTip 字體大小
+            try:
+                from ui_parts.tooltip import tooltip_manager
+                tooltip_manager.update_font_size(size)
+            except Exception as e:
+                print(f"[ERROR] 更新 ToolTip 字體時發生錯誤: {e}")
 
 
 
@@ -1480,8 +1485,149 @@ class UIHandlers(UIHandlersCore):
             pass  # 忽略個別widget的錯誤
 
 
+    def run_script_click(self, event=None):
+        """處理腳本執行按鈕點擊"""
+        # 創建彈出菜單
+        menu = tk.Menu(self.parent.root, tearoff=0)
+        menu.add_command(label="執行外部腳本檔案 (.txt)", command=self.run_external_script)
+        
+        current_section = self.parent.components.section_var.get()
+        menu.add_command(label=f"執行 '{current_section}' 所有指令", command=self.run_current_section)
+        
+        # 在滑鼠位置顯示菜單
+        try:
+            x = self.parent.components.btn_run_script.winfo_rootx()
+            y = self.parent.components.btn_run_script.winfo_rooty() + self.parent.components.btn_run_script.winfo_height()
+            menu.tk_popup(x, y)
+        finally:
+            menu.grab_release()
 
+    def run_current_section(self):
+        """執行當前區段的所有指令"""
+        section = self.parent.components.section_var.get()
+        if not section:
+            return
+            
+        cmds_dict = self.parent.commands_by_section.get(section, {})
+        if not cmds_dict:
+            messagebox.showinfo("提示", f"區段 '{section}' 沒有可用指令")
+            return
+            
+        # 構建指令列表 (指令名稱, 指令內容)
+        commands = list(cmds_dict.items())
+        
+        # 詢問是否執行
+        if not messagebox.askyesno("確認執行", f"確定要執行 '{section}' 的所有指令嗎？\n共 {len(commands)} 條指令"):
+            return
+            
+        self._execute_commands(commands, f"批量執行: {section} 所有指令")
 
+    def run_external_script(self):
+        """載入並執行外部腳本文件"""
+        try:
+            from tkinter import filedialog
+            
+            # 打開文件選擇對話框
+            file_path = filedialog.askopenfilename(
+                title="選擇腳本文件",
+                filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")]
+            )
+            
+            if not file_path:
+                return
+                
+            # 讀取文件內容
+            commands = []
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith('#') and not line.startswith('//'):
+                            commands.append(line)
+            except UnicodeDecodeError:
+                with open(file_path, 'r', encoding='ansi') as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith('#') and not line.startswith('//'):
+                            commands.append(line)
+                            
+            if not commands:
+                messagebox.showwarning("警告", "腳本文件為空或沒有有效指令")
+                return
+                
+            self._execute_commands(commands, f"執行腳本: {os.path.basename(file_path)}")
+            
+        except Exception as e:
+            print(f"[ERROR] 讀取腳本失敗: {e}")
+            messagebox.showerror("錯誤", f"讀取腳本失敗: {e}")
+
+    def _execute_commands(self, commands, title):
+        """執行指令列表的核心邏輯"""
+        try:
+            # 獲取其他參數
+            com_port = self.parent.components.combobox_com.get()
+            timeout = int(self.parent.components.entry_timeout.get())
+            end_string = self.parent.components.combobox_end.get()
+            
+            # 顯示執行信息
+            self.parent.components.add_to_buffer(f"\n=== {title} ===\n", "purple")
+            self.parent.components.add_to_buffer(f"總計指令數: {len(commands)}\n", "purple")
+            
+            # 不再預先顯示所有指令，改為執行時逐行顯示
+            self.parent.components.add_to_buffer("\n", "purple")
+            
+            # 重置 UI
+            self.parent.components.reset_progress()
+            self.parent.components.show_progress()
+            self.parent.stop_event = threading.Event()
+            
+            # 判斷傳輸模式
+            transport_mode = "Console"
+            if hasattr(self.parent.components, 'transport_mode_var'):
+                transport_mode = self.parent.components.transport_mode_var.get()
+            
+            # 創建 Worker
+            if transport_mode == "ADB":
+                from adb_worker import ADBWorker
+                self.parent.thread = ADBWorker(
+                    cmd_list=commands, 
+                    end_str=end_string, 
+                    timeout=timeout,
+                    on_data=lambda text, tag: self.on_data(text, tag),
+                    on_status=lambda status: self.update_status_light(status) if hasattr(self, 'update_status_light') else None,
+                    on_progress=lambda p: self.parent.components.update_progress(p, "blue.Horizontal.TProgressbar"),
+                    on_finish=self.on_command_finish,
+                    stop_event=self.parent.stop_event
+                )
+            else:
+                from serial_worker import SerialWorker
+                self.parent.thread = SerialWorker(
+                    com=com_port, 
+                    cmd_list=commands, 
+                    end_str=end_string, 
+                    timeout=timeout,
+                    on_data=lambda text, tag: self.on_data(text, tag),
+                    on_status=lambda status: self.update_status_light(status) if hasattr(self, 'update_status_light') else None,
+                    on_progress=lambda p: self.parent.components.update_progress(p, "blue.Horizontal.TProgressbar"),
+                    on_finish=self.on_command_finish,
+                    stop_event=self.parent.stop_event
+                )
+                
+            # 啟動線程
+            self.parent.thread.start()
+            
+            # 更新UI狀態
+            self.parent.components.btn_execute.config(text='停止', bg='#FF5722')
+            
+        except Exception as e:
+            print(f"[ERROR] 執行指令失敗: {e}")
+            messagebox.showerror("錯誤", f"執行指令失敗: {e}")
+            import traceback
+            traceback.print_exc()
+
+    def run_script_file(self):
+        """保留此方法以兼容舊引用，轉發到 run_script_click"""
+        self.run_script_click()
 
     def _validate_execution_parameters(self):
         """驗證執行參數"""
@@ -2253,6 +2399,15 @@ class UIHandlers(UIHandlersCore):
 
         # 更新字體大小
         self.parent.components.update_font_size()
+        
+        # 初始化 ToolTip 字體大小
+        try:
+            from ui_parts.tooltip import tooltip_manager
+            size = int(self.parent.components.font_size_var.get())
+            tooltip_manager.update_font_size(size)
+        except Exception as e:
+            print(f"[ERROR] 初始化 ToolTip 字體時發生錯誤: {e}")
+            
         self.parent.components.update_content_font_size()
         self.parent.components.update_fixture_font_size()
 

@@ -385,9 +385,29 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             bg='#4CAF50', fg='white', relief='raised', borderwidth=2, cursor="hand2",
             command=self.parent.handlers.on_execute, width=14, height=2
         )
+        # Restore btn_execute placement
         self.btn_execute.grid(row=0, column=2, sticky='e', padx=(5, 5))
         self.btn_execute.bind("<Enter>", self.on_enter_exec)
         self.btn_execute.bind("<Leave>", self.on_leave_exec)
+
+        # 腳本執行按鈕 - 新增在指令區域上方或下方
+        # 這裡選擇在 cmd_frame 中的 "執行指令" 按鈕左側，或者在分类按钮下方
+        
+        # 為了更好的佈局，我們將 "執行腳本" 功能加入到 cmd_frame
+        # 調整 cmd_frame 的 columnconfigure
+        cmd_frame.columnconfigure(2, weight=0)
+        cmd_frame.columnconfigure(3, weight=0)
+
+        self.btn_run_script = tk.Button(
+            cmd_frame, text='執行腳本', font=('Microsoft JhengHei UI', 10),
+            bg='#FF9800', fg='white', relief='raised', borderwidth=2, cursor="hand2",
+            command=self.parent.handlers.run_script_click, width=10, height=1
+        )
+        self.btn_run_script.grid(row=0, column=3, sticky='e', padx=(5, 0))
+        
+        # 添加 Tooltip
+        if hasattr(self, 'tooltip_manager') and self.tooltip_manager:
+            self.tooltip_manager.add_tooltip_with_text(self.btn_run_script, "點擊選擇：執行外部腳本或當前分類所有指令")
 
 
 
@@ -1003,6 +1023,29 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
     def init_exec_button_left_panel(self):
         # This method is now empty as the button has been moved.
         pass
+
+    def init_script_execution_feature(self, parent_frame):
+        """初始化腳本執行功能按鈕"""
+        try:
+            # 創建一個框架來容納按鈕
+            script_frame = ttk.Frame(parent_frame)
+            script_frame.pack(side="left", padx=5)
+            
+            # 創建執行腳本按鈕
+            self.btn_run_script = ttk.Button(
+                script_frame,
+                text="執行腳本",
+                command=self.parent.handlers.run_script_file,
+                width=10
+            )
+            self.btn_run_script.pack(side="left")
+            
+            # 添加 Tooltip
+            if hasattr(self, 'tooltip_manager') and self.tooltip_manager:
+                self.tooltip_manager.add_tooltip_with_text(self.btn_run_script, "載入並逐行執行腳本檔案 (.txt)")
+                
+        except Exception as e:
+            print(f"[ERROR] 初始化腳本執行功能時發生錯誤: {e}")
 
     def init_progress_components(self):
         """初始化進度條組件"""

@@ -135,13 +135,42 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         com_frame.columnconfigure(2, weight=0)
         com_frame.columnconfigure(3, weight=0)
 
+        # 定義紅色背景樣式
+        try:
+            style = ttk.Style()
+            style.configure('Red.TCombobox', fieldbackground='#ffcccc', background='#ffcccc')
+            style.map('Red.TCombobox', 
+                     fieldbackground=[('readonly', '#ffcccc')], 
+                     background=[('readonly', '#ffcccc')],
+                     selectbackground=[('readonly', '#ffcccc')],
+                     selectforeground=[('readonly', 'black')])
+        except Exception:
+            pass
+
         # 第一行：COM 口設定
         self.label_com = ttk.Label(com_frame, text='COM口:', style="TLabel")
         self.label_com.grid(row=0, column=0, sticky='w')
+        
+        # 獲取 COM 口列表
         com_values = list_com_ports()
-        self.combobox_com = ttk.Combobox(com_frame, values=com_values, state='readonly', width=15)
+        
+        self.combobox_com = ttk.Combobox(com_frame, values=com_values, state='readonly', width=15, style='Red.TCombobox')
         self.combobox_com.grid(row=0, column=1, padx=5, sticky='ew')
         self.combobox_com.bind("<<ComboboxSelected>>", self.handlers.on_com_port_changed)
+        
+        # 自動選擇第一個 COM 口 (如果有的話)
+        if com_values:
+            # 優先使用設定中的 COM 口，如果沒有或無效，則使用第一個
+            saved_com = self.parent.setup.get('DUT_Control', {}).get('Serial_COM_Port', '')
+            if saved_com and saved_com in com_values:
+                self.combobox_com.set(saved_com)
+            else:
+                self.combobox_com.current(0)
+                # 更新設定中的 COM 口
+                if 'DUT_Control' not in self.parent.setup:
+                    self.parent.setup['DUT_Control'] = {}
+                self.parent.setup['DUT_Control']['Serial_COM_Port'] = com_values[0]
+                
         refresh_command = None
         if hasattr(self.parent, 'handlers') and hasattr(self.parent.handlers, 'refresh_com_ports'):
             refresh_command = self.parent.handlers.refresh_com_ports
@@ -156,18 +185,15 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.label_transport = ttk.Label(com_frame, text='傳輸方式:', style="TLabel")
         self.label_transport.grid(row=1, column=0, sticky='w', pady=(5, 0))
 
-        # 優先使用統一設定管理器的值
-        current_mode = self.parent.setup.get('Command_Transport_Mode', 'Console')
-        try:
-            if hasattr(self, 'shared_config') and self.shared_config:
-                val = self.shared_config.get_data_value('command_transport_mode')
-                if val:
-                    current_mode = val
-        except Exception:
-            pass
+        # 預設使用 Console
+        current_mode = 'Console'
+        
+        # 更新設定檔
+        self.parent.setup['Command_Transport_Mode'] = current_mode
+            
         self.transport_mode_var = tk.StringVar(value=current_mode)
         self.combobox_transport = ttk.Combobox(com_frame, textvariable=self.transport_mode_var,
-                                             values=['Console', 'ADB', 'SSH'], state='readonly', width=15)
+                                             values=['Console', 'ADB', 'SSH'], state='readonly', width=15, style='Red.TCombobox')
         self.combobox_transport.grid(row=1, column=1, padx=5, sticky='ew', pady=(5, 0))
         self.combobox_transport.bind("<<ComboboxSelected>>", self.on_transport_mode_changed)
 
@@ -359,9 +385,29 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             bg='#4CAF50', fg='white', relief='raised', borderwidth=2, cursor="hand2",
             command=self.parent.handlers.on_execute, width=14, height=2
         )
+        # Restore btn_execute placement
         self.btn_execute.grid(row=0, column=2, sticky='e', padx=(5, 5))
         self.btn_execute.bind("<Enter>", self.on_enter_exec)
         self.btn_execute.bind("<Leave>", self.on_leave_exec)
+
+        # 腳本執行按鈕 - 新增在指令區域上方或下方
+        # 這裡選擇在 cmd_frame 中的 "執行指令" 按鈕左側，或者在分类按钮下方
+        
+        # 為了更好的佈局，我們將 "執行腳本" 功能加入到 cmd_frame
+        # 調整 cmd_frame 的 columnconfigure
+        cmd_frame.columnconfigure(2, weight=0)
+        cmd_frame.columnconfigure(3, weight=0)
+
+        self.btn_run_script = tk.Button(
+            cmd_frame, text='執行腳本', font=('Microsoft JhengHei UI', 10),
+            bg='#FF9800', fg='white', relief='raised', borderwidth=2, cursor="hand2",
+            command=self.parent.handlers.run_script_click, width=10, height=1
+        )
+        self.btn_run_script.grid(row=0, column=3, sticky='e', padx=(5, 0))
+        
+        # 添加 Tooltip
+        if hasattr(self, 'tooltip_manager') and self.tooltip_manager:
+            self.tooltip_manager.add_tooltip_with_text(self.btn_run_script, "點擊選擇：執行外部腳本或當前分類所有指令")
 
 
 
@@ -977,6 +1023,29 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
     def init_exec_button_left_panel(self):
         # This method is now empty as the button has been moved.
         pass
+
+    def init_script_execution_feature(self, parent_frame):
+        """初始化腳本執行功能按鈕"""
+        try:
+            # 創建一個框架來容納按鈕
+            script_frame = ttk.Frame(parent_frame)
+            script_frame.pack(side="left", padx=5)
+            
+            # 創建執行腳本按鈕
+            self.btn_run_script = ttk.Button(
+                script_frame,
+                text="執行腳本",
+                command=self.parent.handlers.run_script_file,
+                width=10
+            )
+            self.btn_run_script.pack(side="left")
+            
+            # 添加 Tooltip
+            if hasattr(self, 'tooltip_manager') and self.tooltip_manager:
+                self.tooltip_manager.add_tooltip_with_text(self.btn_run_script, "載入並逐行執行腳本檔案 (.txt)")
+                
+        except Exception as e:
+            print(f"[ERROR] 初始化腳本執行功能時發生錯誤: {e}")
 
     def init_progress_components(self):
         """初始化進度條組件"""

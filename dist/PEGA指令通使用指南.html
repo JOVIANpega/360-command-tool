@@ -139,10 +139,14 @@
             </ul>
         </div>
 
-        <h2>✨ 最新功能與行為</h2>
+        <h2>✨ 最新功能與行為 (V2.1.5)</h2>
         <div class="feature-box">
             <ul>
-                <li><strong>🌐 SSH 功能正式上線</strong>：支援透過 SSH 協定遠端執行指令，相容 Dropbear SSH 和 OpenSSH，完全替代 Teraterm</li>
+                <li><strong>🔗 治具控制TAB字体联动</strong>：治具控制TAB的界面字体现在与DUT控制TAB完全联动，修改DUT控制TAB的字体大小会自动同步到治具TAB</li>
+                <li><strong>🔧 COM口连接稳定性改进</strong>：优化了串列通信的稳定性，增加了COM口可用性检查和更详细的错误处理</li>
+                <li><strong>📝 指令格式统一优化</strong>：统一了所有指令的格式为"指令 - 描述"，支持注释功能（以//开头的行会被忽略）</li>
+                <li><strong>🔄 动态指令重新载入</strong>：治具控制TAB新增"重新载入指令"按钮，支持动态更新指令文件而无需重启程序</li>
+                <li><strong>🌐 SSH 功能完整版</strong>：支援透過 SSH 協定遠端執行指令，相容 Dropbear SSH 和 OpenSSH，完全替代 Teraterm</li>
                 <li><strong>🔐 智慧認證機制</strong>：自動適配不同 SSH 伺服器的認證方式，支援空密碼認證</li>
                 <li><strong>💻 完整環境載入</strong>：使用登入 shell 執行指令，確保所有環境變數和函式庫正確載入</li>
                 <li><strong>安全啟動檢查</strong>：執行檔同資料夾需有 <code>sign_DOC.txt</code> 且包含 <code>JOVIAN</code>，否則 GUI 不會開啟。</li>
@@ -434,9 +438,10 @@ GPIO測試|cat /sys/kernel/debug/gpio
         </div>
 
         <div class="version-info">
-            <p><strong>PEGA指令通 - SSH 功能完整版</strong></p>
-            <p>🌐 SSH 功能正式上線：支援 Dropbear SSH 和 OpenSSH，完全替代 Teraterm</p>
-            <p>📅 更新日期：2025/09/09 | 如有問題或建議，請聯繫技術支援</p>
+            <p><strong>PEGA指令通 V2.1.5 - 字体联动与稳定性优化版</strong></p>
+            <p>🔗 治具控制TAB字体联动 | 🔧 COM口连接稳定性改进 | 📝 指令格式统一优化</p>
+            <p>🌐 SSH 功能完整版：支援 Dropbear SSH 和 OpenSSH，完全替代 Teraterm</p>
+            <p>📅 更新日期：2025/01/06 | 如有問題或建議，請聯繫技術支援</p>
         </div>
     </div>
 </body>

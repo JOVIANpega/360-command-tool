@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import os
@@ -133,14 +133,22 @@ class SettingsTab(ttk.Frame):
         ui_frame.pack(fill='x', pady=(0, 8))
         ui_frame.columnconfigure(1, weight=1)
         
-        # 初始化 UI_ToolTip_Enabled 變數
-        self.vars["UI_ToolTip_Enabled"] = tk.BooleanVar(value=self.setup_data.get('UI_Settings', {}).get("ToolTip_Enabled", True))
+        # 初始化 UI_ToolTip_Enabled 變數 (強制開啟)
+        self.vars["UI_ToolTip_Enabled"] = tk.BooleanVar(value=True)
+        # 確保設定檔中的值也是 True
+        if 'UI_Settings' not in self.setup_data:
+            self.setup_data['UI_Settings'] = {}
+        self.setup_data['UI_Settings']['ToolTip_Enabled'] = True
         
-        # ToolTip 提示功能開關
-        tooltip_checkbutton = ttk.Checkbutton(ui_frame, text="啟用按鈕提示 (ToolTip)", 
-                                            variable=self.vars["UI_ToolTip_Enabled"],
-                                            command=self.on_tooltip_setting_changed)
-        tooltip_checkbutton.grid(row=0, column=0, columnspan=2, sticky="w", pady=4)
+        # ToolTip 提示功能開關 - 已移除，預設強制開啟
+        # tooltip_checkbutton = ttk.Checkbutton(ui_frame, text="啟用按鈕提示 (ToolTip)", 
+        #                                     variable=self.vars["UI_ToolTip_Enabled"],
+        #                                     command=self.on_tooltip_setting_changed)
+        # tooltip_checkbutton.grid(row=0, column=0, columnspan=2, sticky="w", pady=4)
+        
+        # 顯示提示訊息說明 ToolTip 已預設開啟
+        ttk.Label(ui_frame, text="按鈕提示功能 (ToolTip) 已預設開啟", 
+                 font=('Microsoft JhengHei UI', 9), foreground='gray').grid(row=0, column=0, columnspan=2, sticky="w", pady=4)
         
         # DUT 控制設定
         dut_frame = ttk.LabelFrame(left_container, text="DUT 控制設定", padding=(10, 4))

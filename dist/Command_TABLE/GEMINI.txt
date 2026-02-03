@@ -1,0 +1,84 @@
+
+
+ ===Gemeni 1===
+01 Read RTC=date
+02 Set RTC=date -s "2022-10-27 09:57:10"==>hwclock -w
+03 Check SPI boot IC=i2cget -y 0 0x18 0x04
+04 Read NVM Version=./intel_nvm_flash_update_tool/eeupdate64e /ALL /ADAPTERINFO
+05 Show Information=export NPU_ONLY=1==>./show_version
+06 Temperature status=export NPU_ONLY=1.==>/mfg_sources/temp_monitor.sh
+07 DRAM Read/Write=./mfg_sources/DDR_test.sh 32 1
+08 SPI Flash Read/Write=export NPU_ONLY=1==>./mfg_sources/SPI_test.sh 1024
+09 USB Read/Write=./mfg_sources/peripheralTest_sequential.sh 64 0 USB
+10 SSD Read/Write=./mfg_sources/peripheralTest_sequential.sh 64 0 eMMC
+11 Set Fan Board EEPROM=./mfg_sources/fb_eeprom_write_by_cpu.sh 0957001F [FtB]==>./mfg_sources/fb_eeprom_write_by_cpu.sh 0968011F [BtF]
+12 Get Fan Board EEPROM=./mfg_sources/fb_eeprom_check_by_cpu.sh
+13 Set Fan Board INIT_DONE flag=i2cset -y 0 0x47 0x89 0x1
+14 Set Fan PWM=./mfg_sources/fan_control_by_cpu.sh 5 speed 80
+15 LED All Off=./mfg_sources/fan_control_by_cpu.sh 5 status all amber off==>./mfg_sources/fan_control_by_cpu.sh 5 status all green off
+16 LED Green On=./mfg_sources/fan_control_by_cpu.sh 5 status all green on
+17 LED Amber On=./mfg_sources/fan_control_by_cpu.sh 5 status all amber on
+18 LED Auto (Default)=./mfg_sources/fan_control_by_cpu.sh 5 status all LED auto
+19 Read Fan Status=./mfg_sources/fan_monitor_by_cpu.sh 5
+20 Set Product Name=./mfg_sources/mb_eeprom_rw.sh w product_name DS-48x25-8x100
+21 Show Information=./show_version
+22 Set S/N=./mfg_sources/mb_eeprom_rw.sh w serial_number pega-1234-567890
+23 Check S/N=./mfg_sources/mb_eeprom_rw.sh r serial_number
+24 Hardware Monitor=./hw_monitor
+25 Show Temperature=./mfg_sources/temp_monitor.sh
+26 LED Green On=./mfg_sources/led_control.sh green nofan
+27 LED Amber On=./mfg_sources/led_control.sh amber nofan
+28 LED Blue On=./mfg_sources/led_control.sh blue nofan
+29 LED Blue On=./mfg_sources/led_control.sh blue nofan
+30 LED All Off=./mfg_sources/led_control.sh off nofan
+31 LED Auto (Default)=./mfg_sources/led_control.sh normal nofan
+32 MB control signal test=./mfg_sources/factory_mb_module_connection_check.sh
+33 OOB Ping=./mfg_sources/OOB_ping_test.sh 192.168.1.1 192.168.1.254 5
+34 OOB Ping=ping 192.168.1.2
+35 Get FCB & FTM EEPROM data=./mfg_sources/ftm_eeprom_check.sh
+36 Show Burn-In Result (short)=./diag_test --show 2
+37 Enable Burn-In=./diag_test --rst-conf Gemini pt==>./diag_test --burn-in-set on --pwr-cyc-num 10 --tfc-pkt-t 1
+38 LED Green On=./mfg_sources/led_control.sh green
+39 LED Amber On=./mfg_sources/led_control.sh amber
+40 LED Blue On=./mfg_sources/led_control.sh blue
+41 LED All Off=./mfg_sources/led_control.sh off
+42 LED Auto (Default)=./mfg_sources/led_control.sh normal
+43 VLAN Setting=./sdk_start vlan=on if=fiber fec=on
+44 Write MAC=./mfg_sources/mb_eeprom_rw.sh w mac_address 00:a0:c9:11:22:33
+45 Check MAC=./mfg_sources/mb_eeprom_rw.sh r mac_address
+46 Show Information=./show_version
+47 Check NVM Version=./intel_nvm_flash_update_tool/eeupdate64e /ALL /ADAPTERINFO
+48 Check CPLD upgrade=./mfg_sources/cpld_upgrade.sh mb /home/root/mfg/cpld_fw_upgrade/gemini_mb-b8a3c5_verifyonly_20241226.vme
+49 Check MB MCU HW upgrade=./mfg_sources/mcu_fw_upgrade.sh mb EFM8BB3_MainBoard_UART_InterfaceTest.efm8 hw
+50 Check MB MCU SW upgrade=./mfg_sources/mcu_fw_upgrade.sh mb EFM8BB3_MainBoard_UART_InterfaceTest.efm8 sw
+51 Check FAN MCU HW upgrade=./mfg_sources/mcu_fw_upgrade.sh fb EFM8BB3_FanBoard_UART_InterfaceTest.efm8 hw
+52 Check FAN MCU SW upgrade=./mfg_sources/mcu_fw_upgrade.sh fb EFM8BB3_FanBoard_UART_InterfaceTest.efm8 sw
+53 Show Adc Hardware Monitor=./mfg_sources/adc_monitor.sh
+54 Show Temperature Hardware Monitor=./mfg_sources/temp_monitor.sh
+55 DRAM Read/Write=./mfg_sources/DDR_test.sh 32 1
+56 SPI Flash Read/Write=./mfg_sources/SPI_test.sh 1024
+57 USB Read/Write=./mfg_sources/peripheralTest_sequential.sh 64 0 USB
+58 SSD Read/Write=mfg_sources/peripheralTest_sequential.sh 64 0 eMMC
+59 OOB Ping=./mfg_sources/OOB_ping_test.sh 192.168.1.1 192.168.1.254 5
+60 Read Fan Status=./mfg_sources/fan_monitor.sh
+61 Set Fan Status=./mfg_sources/fan_control.sh speed 0
+62 Set Fan to Auto Mode=./mfg_sources/fan_control.sh smart-fan enable
+63 Upgrade CPLD (NPU JTAG)=./mfg_sources/cpld_upgrade.sh mb /home/root/mfg/cpld_fw_upgrade/gemini-b6a2c4_bgm_verify-20230113.vme
+64 Upgrade MCU (NPU UART)=./mfg_sources/mcu_fw_upgrade.sh mb EFM8BB3_MainBoard_UART_InterfaceTest.efm8 sw
+65 Upgrade MCU (NPU UART FB)=./mfg_sources/mcu_fw_upgrade.sh fb EFM8BB3_FanBoard_UART_InterfaceTest.efm8 hw
+66 Voltage measure=./mfg_sources/adc_monitor.sh
+67 Voltage measure=./mfg_sources/multiphase_controller_monitor.sh
+68 MB control signal test=./mfg_sources/factory_mb_module_connection_check.sh
+69 FW version check=./mfg_sources/fw_version_check.sh
+70 BMC DDR test result Check=./mfg_sources/BMC_check_memory.sh
+71 Off environment parameter in BMC U-Boot=ipmitool raw 0x3c 0xe3 0x0 0x1 0x1
+
+===Gemeni 2===
+01 Enable Burn-In=./diag_test --rst-conf Gemini pt==>[Burn-in] ./diag_test --burn-in-set on --pwr-cyc-num 16 --tfc-pkt-t 28==>[PT-4C] ./diag_test --burn-in-set on --pwr-cyc-num 16 --tfc-pkt-t 28
+02 SFP + QSFP Port Loopback Test=* 請先進入SDK ==>root@intel-corei7-64:~/mfg# ./appDemo==>shell-execute PT_Pretest_Request 100 25 500==>shell-execute SFP_Speed_Set 1 4 0==>shell-execute QSFP_Speed_Set 5 4 0==>Console# CLIexit==>exit
+03 Port Status Check=查看Port Status==>Console# show interfaces status all==>測試結束欲跳出SDK==>Console# CLIexit==>exit
+04 FB EEPROM Write FtB=i2cset -y 0 0x72 0x7==>i2cset -y 0 0x70 0xb0 0x0==>i2cset -y 0 0x70 0xb1 0x2==>i2cset -y 0 0x70 0xb3 0x57==>i2cset -y 0 0x70 0xb1 0x6==>i2cset -y 0 0x70 0xb3 0x09==>i2cset -y 0 0x70 0xb1 0xa==>i2cset -y 0 0x70 0xb3 0x00==>i2cset -y 0 0x70 0xb1 0xe==>i2cset -y 0 0x70 0xb3 0x1f
+05 FB EEPROM Write BtF=i2cset -y 0 0x72 0x7==>i2cset -y 0 0x70 0xb0 0x0==>i2cset -y 0 0x70 0xb1 0x2==>i2cset -y 0 0x70 0xb3 0x68==>i2cset -y 0 0x70 0xb1 0x6==>i2cset -y 0 0x70 0xb3 0x09==>i2cset -y 0 0x70 0xb1 0xa==>i2cset -y 0 0x70 0xb3 0x01==>i2cset -y 0 0x70 0xb1 0xe==>i2cset -y 0 0x70 0xb3 0x1f
+06 FB EEPROM Read=i2cset -y 0 0x72 0x7==>i2cset -y 0 0x70 0xb1 0x2==>i2cget -y 0 0x70 0xb2==>i2cset -y 0 0x70 0xb1 0x6==>i2cget -y 0 0x70 0xb2==>i2cset -y 0 0x70 0xb1 0xa==>i2cget -y 0 0x70 0xb2==>i2cset -y 0 0x70 0xb1 0xe==>i2cget -y 0 0x70 0xb2
+
+希望這份整理後的清單符合您的格式需求！若有任何調整，身為 **PEGA 大師**，我隨時為您服務。

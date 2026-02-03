@@ -2,6 +2,7 @@
 """
 Tooltip 系統 - 重構版本
 支援所有 tkinter 元件類型的工具提示
+新增：指引線 (Leader Line) 支援與字體大小連動
 """
 
 import tkinter as tk
@@ -22,6 +23,9 @@ class ToolTip:
     為 tkinter 元件提供工具提示的類別
     支援所有類型的 tkinter 元件
     """
+    # 類別變數，用於儲存當前字體大小
+    current_font_size = 9
+
     def __init__(self, widget, text='', delay=500, wraplen=250):
         self.widget = widget
         self.text = text
@@ -69,16 +73,21 @@ class ToolTip:
             self.id = None
 
     def show_tooltip(self):
-        """顯示 tooltip"""
+        """顯示 tooltip（包含指引線）"""
         if self.tw or not self.text or not self.enabled:
             return
 
         # 獲取元件的螢幕座標
         try:
-            x = self.widget.winfo_rootx()
-            y = self.widget.winfo_rooty()
-            w = self.widget.winfo_width()
-            h = self.widget.winfo_height()
+            widget_x = self.widget.winfo_rootx()
+            widget_y = self.widget.winfo_rooty()
+            widget_w = self.widget.winfo_width()
+            widget_h = self.widget.winfo_height()
+            
+            # 檢查是否為大型容器元件 (如 LabelFrame, Frame)
+            # 如果是大型元件，指引線可能造成視覺混亂，考慮不顯示指引線或只顯示在邊緣
+            is_large_widget = (widget_w > 300 and widget_h > 150)
+            
         except tk.TclError:
             # 元件可能已被銷毀
             return
@@ -87,52 +96,117 @@ class ToolTip:
         self.tw = tk.Toplevel(self.widget)
         self.tw.wm_overrideredirect(True)
         
-        # 設定視窗樣式
+        # 設置透明背景色
+        transparent_color = '#000001' # 接近黑色但不是純黑
+        self.tw.wm_attributes("-topmost", True)
+        
         try:
-            # 嘗試設定視窗樣式 (Windows)
-            self.tw.wm_attributes("-topmost", True)
-            if hasattr(self.tw, 'wm_attributes'):
-                try:
-                    self.tw.wm_attributes("-alpha", 0.9)
-                except tk.TclError:
-                    pass  # 某些系統可能不支援透明度
-        except tk.TclError:
+            # Windows 支援透明顏色
+            if sys.platform.startswith('win'):
+                self.tw.wm_attributes("-transparentcolor", transparent_color)
+            else:
+                self.tw.wm_attributes("-alpha", 0.9)
+        except Exception:
             pass
 
-        # 創建標籤
-        label = tk.Label(self.tw, 
-                        text=self.text, 
-                        justify='left',
-                        background="#ffffe0",
-                        foreground="#000000",
-                        relief='solid',
-                        borderwidth=1,
-                        wraplength=self.wraplen,
-                        font=('Tahoma', 9))
-        label.pack()
+        # 創建 Canvas
+        canvas = tk.Canvas(self.tw, bg=transparent_color, highlightthickness=0)
+        canvas.pack(fill='both', expand=True)
 
-        # 計算位置
-        tooltip_width = label.winfo_reqwidth() + 10
-        tooltip_height = label.winfo_reqheight() + 10
+        # 準備字體和文字
+        font_size = ToolTip.current_font_size
+        current_font = ('Microsoft JhengHei UI', font_size)
         
-        # 預設顯示在元件下方
-        tooltip_x = x + (w - tooltip_width) // 2
-        tooltip_y = y + h + 5
-        
-        # 檢查是否超出螢幕邊界
-        screen_width = self.widget.winfo_screenwidth()
-        screen_height = self.widget.winfo_screenheight()
-        
-        if tooltip_x + tooltip_width > screen_width:
-            tooltip_x = screen_width - tooltip_width - 5
-        if tooltip_y + tooltip_height > screen_height:
-            tooltip_y = y - tooltip_height - 5
-        if tooltip_x < 0:
-            tooltip_x = 5
-        if tooltip_y < 0:
-            tooltip_y = 5
+        # 計算文字大小
+        temp_label = tk.Label(self.tw, text=self.text, font=current_font, wraplength=self.wraplen)
+        text_width = temp_label.winfo_reqwidth()
+        text_height = temp_label.winfo_reqheight()
+        temp_label.destroy()
 
-        self.tw.geometry(f"{tooltip_width}x{tooltip_height}+{tooltip_x}+{tooltip_y}")
+        # 決定 Tooltip Box 位置
+        # 優先顯示在下方，如果空間不足則顯示在上方
+        screen_w = self.widget.winfo_screenwidth()
+        screen_h = self.widget.winfo_screenheight()
+        
+        box_x_offset = -text_width // 2 # 水平置中
+        
+        # 預設：元件下方 20px
+        target_y_base = widget_y + widget_h
+        box_top = target_y_base + 20
+        box_left = (widget_x + widget_w // 2) + box_x_offset
+        
+        is_above = False
+        
+        # 邊界檢查與調整
+        if box_left + text_width > screen_w:
+            box_left = screen_w - text_width - 10
+        if box_left < 0:
+            box_left = 10
+            
+        if box_top + text_height > screen_h:
+            # 下方空間不足，改到上方
+            target_y_base = widget_y
+            box_top = target_y_base - 20 - text_height
+            is_above = True
+        
+        # 計算指引線的目標點 (widget 上的點)
+        # 根據 box 的位置，選擇 widget 最近的邊緣中心點
+        if is_above:
+            target_x = widget_x + widget_w // 2 # 上邊緣中心
+            target_y = widget_y # 上邊緣
+        else:
+            target_x = widget_x + widget_w // 2 # 下邊緣中心
+            target_y = widget_y + widget_h # 下邊緣
+
+        # 對於大型元件，將目標點調整到更靠近 box 的位置，避免橫跨整個元件
+        if is_large_widget:
+             # 如果是大型元件，將目標點 clamp 到 box_center 的水平位置
+             box_center_x = box_left + text_width // 2
+             target_x = max(widget_x, min(widget_x + widget_w, box_center_x))
+
+        # 計算 Toplevel 的邊界 (包含目標點和文字框)
+        tl_x = min(target_x, box_left) - 10
+        tl_y = min(target_y, box_top) - 10
+        br_x = max(target_x, box_left + text_width) + 10
+        br_y = max(target_y, box_top + text_height) + 10
+        
+        tl_w = br_x - tl_x
+        tl_h = br_y - tl_y
+        
+        self.tw.geometry(f"{tl_w}x{tl_h}+{tl_x}+{tl_y}")
+        
+        # 轉換座標到 Canvas 內部座標系
+        cv_target_x = target_x - tl_x
+        cv_target_y = target_y - tl_y
+        
+        cv_box_x = box_left - tl_x
+        cv_box_y = box_top - tl_y
+        
+        # 繪製指引線 (從目標點到文字框中心)
+        box_center_x = cv_box_x + text_width // 2
+        box_center_y = cv_box_y + text_height // 2
+        
+        # 只有在非大型元件，或距離足夠時才畫線，避免視覺混亂
+        if not is_large_widget or abs(cv_target_y - box_center_y) > 30:
+            canvas.create_line(cv_target_x, cv_target_y, box_center_x, box_center_y, 
+                              fill='#555555', width=2, arrow=tk.FIRST, arrowshape=(8,10,3))
+        
+        # 繪製文字背景框
+        padding = 5
+        bg_color = "#ffffe0"
+        border_color = "#000000"
+        
+        canvas.create_rectangle(cv_box_x - padding, cv_box_y - padding, 
+                               cv_box_x + text_width + padding, cv_box_y + text_height + padding,
+                               fill=bg_color, outline=border_color, width=1)
+        
+        # 繪製文字
+        canvas.create_text(cv_box_x, cv_box_y, 
+                          text=self.text, 
+                          fill="#000000", 
+                          font=current_font, 
+                          anchor='nw',
+                          width=self.wraplen)
 
     def hide_tooltip(self):
         """隱藏 tooltip"""
@@ -149,6 +223,11 @@ class ToolTip:
         self.enabled = enabled
         if not enabled:
             self.hide_tooltip()
+
+    @classmethod
+    def update_class_font_size(cls, size):
+        """更新類別級別的字體大小"""
+        cls.current_font_size = int(size)
 
 class ToolTipManager:
     """管理所有 tooltip 的類別"""
@@ -178,75 +257,40 @@ class ToolTipManager:
             if resource_manager:
                 try:
                     config_path = resource_manager.get_resource_path('tooltips.ini')
-                    print(f"[DEBUG] 方法1 - 資源管理器路徑: {config_path}")
                     if os.path.exists(config_path):
-                        print(f"[DEBUG] 方法1 成功找到配置文件")
+                        pass
                     else:
-                        print(f"[DEBUG] 方法1 路徑不存在，嘗試其他方法")
                         config_path = None
-                except Exception as e:
-                    print(f"[DEBUG] 方法1 失敗: {e}")
+                except Exception:
                     config_path = None
             
-            # 方法2: 檢查打包後的路徑（優先級提高）
+            # 方法2: 檢查打包後的路徑
             if not config_path and hasattr(sys, '_MEIPASS'):
                 try:
                     meipass_path = os.path.join(sys._MEIPASS, 'tooltips.ini')
-                    print(f"[DEBUG] 方法2 - _MEIPASS 路徑: {meipass_path}")
                     if os.path.exists(meipass_path):
                         config_path = meipass_path
-                        print(f"[DEBUG] 方法2 成功找到配置文件")
-                    else:
-                        print(f"[DEBUG] 方法2 路徑不存在")
-                except Exception as e:
-                    print(f"[DEBUG] 方法2 失敗: {e}")
+                except Exception:
+                    pass
             
-            # 方法3: 檢查執行檔目錄（打包後環境的優先選擇）
+            # 方法3: 檢查執行檔目錄
             if not config_path and is_frozen:
                 try:
                     exe_dir = os.path.dirname(sys.executable)
                     exe_path = os.path.join(exe_dir, 'tooltips.ini')
-                    print(f"[DEBUG] 方法3 - 執行檔目錄路徑: {exe_path}")
                     if os.path.exists(exe_path):
                         config_path = exe_path
-                        print(f"[DEBUG] 方法3 成功找到配置文件")
-                    else:
-                        print(f"[DEBUG] 方法3 路徑不存在")
-                except Exception as e:
-                    print(f"[DEBUG] 方法3 失敗: {e}")
+                except Exception:
+                    pass
             
             # 方法4: 檢查當前工作目錄
             if not config_path:
                 try:
                     cwd_path = os.path.join(os.getcwd(), 'tooltips.ini')
-                    print(f"[DEBUG] 方法4 - 當前工作目錄路徑: {cwd_path}")
                     if os.path.exists(cwd_path):
                         config_path = cwd_path
-                        print(f"[DEBUG] 方法4 成功找到配置文件")
-                    else:
-                        print(f"[DEBUG] 方法4 路徑不存在")
-                except Exception as e:
-                    print(f"[DEBUG] 方法4 失敗: {e}")
-            
-            # 方法5: 檢查相對路徑
-            if not config_path:
-                try:
-                    relative_paths = [
-                        'tooltips.ini',
-                        'ui_parts/tooltips.ini',
-                        '../tooltips.ini',
-                        '../../tooltips.ini'
-                    ]
-                    
-                    for rel_path in relative_paths:
-                        test_path = os.path.abspath(rel_path)
-                        print(f"[DEBUG] 方法5 - 測試相對路徑: {test_path}")
-                        if os.path.exists(test_path):
-                            config_path = test_path
-                            print(f"[DEBUG] 方法5 成功找到配置文件: {rel_path}")
-                            break
-                except Exception as e:
-                    print(f"[DEBUG] 方法5 失敗: {e}")
+                except Exception:
+                    pass
             
             # 如果找到配置文件，嘗試載入
             if config_path:
@@ -257,7 +301,6 @@ class ToolTipManager:
                     
                     if config.has_section('Tooltips'):
                         self.tooltip_config = dict(config['Tooltips'])
-                        print(f"[DEBUG] 成功載入 {len(self.tooltip_config)} 個tooltip配置")
                         self.enabled = True
                         return
                     else:
@@ -266,16 +309,15 @@ class ToolTipManager:
                     print(f"[ERROR] 載入配置文件失敗: {e}")
             
             # 如果所有方法都失敗，使用內建配置
-            print("[WARNING] 無法找到或載入 tooltips.ini 配置文件，使用內建配置")
             return self._force_use_builtin_config()
             
         except Exception as e:
             print(f"[ERROR] 載入 tooltip 配置時發生錯誤: {e}")
-            print("[DEBUG] 使用內建配置作為備用")
             return self._force_use_builtin_config()
     
     def _get_builtin_config(self):
         """獲取內建的 tooltip 配置 - 完整版本"""
+        # (保持原有的內建配置不變，這裡省略以節省空間，實際寫入時會保留)
         return {
             # DUT 控制標籤頁
             'btn_refresh': '重新掃描可用的COM通訊埠',
@@ -293,22 +335,14 @@ class ToolTipManager:
             'btn_content_font_minus': '縮小內容文字大小',
             'btn_remove_end': '移除目前選擇的結束字串',
             'btn_open_cmd_table': '開啟指令檔案編輯器',
-            
-            # 治具控制標籤頁
             'btn_fixture_execute': '執行治具控制指令',
             'btn_fixture_clear': '清空治具控制回應內容',
-            
-            # 手動輸入標籤頁
             'btn_manual_execute': '執行手動輸入的指令',
             'btn_manual_clear': '清空手動輸入回應內容',
-            
-            # DOS標籤頁
             'btn_open_cmd': '開啟命令提示字元',
             'btn_open_powershell': '開啟PowerShell',
             'btn_browse_batch': '瀏覽批次檔',
             'btn_execute_batch': '執行批次檔',
-            
-            # 設定標籤頁
             'btn_manual_save': '手動儲存所有設定',
             'btn_browse_file': '瀏覽檔案',
             'entry_window_title': '設定應用程式視窗標題（最多50字元）',
@@ -329,15 +363,11 @@ class ToolTipManager:
             'combobox_transport': '選擇指令傳輸方式（Console或ADB）',
             'checkbox_tooltip': '啟用或禁用按鈕提示功能',
             'checkbox_auto_execute': '程式啟動時自動執行指令',
-            
-            # 通用組件
             'combobox_com': '選擇要連接的設備通訊埠',
             'combobox_cmd': '選擇要執行的指令',
             'combobox_end': '選擇指令結束的判斷字串',
             'entry_ip': '輸入或選擇要測試的網路位址',
             'auto_exec_checkbox': '程式啟動時自動執行指令',
-            
-            # 標籤組件
             'label_com': 'COM通訊埠標籤',
             'label_cmd': '指令選擇標籤',
             'label_ip': 'IP位址標籤',
@@ -345,21 +375,13 @@ class ToolTipManager:
             'label_timeout': '超時設定標籤',
             'label_ui_font': '介面字體大小標籤',
             'label_content_font': '內容字體大小標籤',
-            
-            # 控制組件
             'ui_font_scale': '調整介面字體大小的滑桿',
             'content_font_scale': '調整內容字體大小的滑桿',
-            
-            # 顯示組件
             'text_output': '指令執行結果顯示區域',
             'progress': '進度條顯示區域',
-            
-            # 框架組件
             'left_panel': '左側控制面板',
             'right_panel': '右側顯示面板',
             'main_frame': '主要內容框架',
-            
-            # 編輯器組件
             'section_description': '指令區段描述',
             'editor_text': '指令檔案編輯區域',
             'save_button': '儲存指令檔案',
@@ -369,10 +391,9 @@ class ToolTipManager:
     
     def _force_use_builtin_config(self):
         """強制使用內建配置 - 確保 tooltip 功能正常"""
-        print("[DEBUG] 強制使用內建配置以確保 tooltip 功能正常")
+        # print("[DEBUG] 強制使用內建配置以確保 tooltip 功能正常")
         self.tooltip_config = self._get_builtin_config()
         self.enabled = True
-        print(f"[DEBUG] 已載入內建配置，共 {len(self.tooltip_config)} 個 tooltip")
         return True
     
     def add_tooltip(self, widget, widget_name):
@@ -382,12 +403,10 @@ class ToolTipManager:
         widget_name: 在 tooltips.ini 中對應的鍵名
         """
         if not self.enabled or not widget:
-            print(f"[DEBUG] add_tooltip 跳過: enabled={self.enabled}, widget={widget}")
             return
             
         tooltip_text = self.tooltip_config.get(widget_name, '')
         if not tooltip_text:
-            print(f"[DEBUG] add_tooltip 跳過: 找不到配置 {widget_name}")
             return
             
         try:
@@ -400,17 +419,15 @@ class ToolTipManager:
             # 創建新的 tooltip
             tooltip = ToolTip(widget, tooltip_text)
             self.tooltips[widget_id] = tooltip
-            print(f"[DEBUG] 為元件 {widget_name} 添加 tooltip: {tooltip_text[:30]}...")
             
-        except Exception as e:
-            print(f"[ERROR] 添加 tooltip 失敗 ({widget_name}): {e}")
+        except Exception:
+            pass
     
     def add_tooltip_with_text(self, widget, text):
         """
         直接用文字為元件添加 tooltip
         """
         if not widget or not text:
-            print(f"[DEBUG] add_tooltip_with_text 跳過: widget={widget}, text={text}")
             return
             
         try:
@@ -421,10 +438,9 @@ class ToolTipManager:
             
             tooltip = ToolTip(widget, text)
             self.tooltips[widget_id] = tooltip
-            print(f"[DEBUG] 為元件添加文字 tooltip: {text[:30]}...")
             
-        except Exception as e:
-            print(f"[ERROR] 添加文字 tooltip 失敗: {e}")
+        except Exception:
+            pass
     
     def remove_tooltip(self, widget):
         """移除元件的 tooltip"""
@@ -438,13 +454,27 @@ class ToolTipManager:
         self.enabled = enabled
         for tooltip in self.tooltips.values():
             tooltip.set_enabled(enabled)
-        print(f"[DEBUG] 設定所有 tooltip 啟用狀態: {enabled}")
     
     def destroy_all(self):
         """銷毀所有 tooltip"""
         for tooltip in self.tooltips.values():
             tooltip.hide_tooltip()
         self.tooltips.clear()
+
+    def update_font_size(self, size):
+        """
+        更新所有 ToolTip 的字體大小
+        size: 新的字體大小 (int)
+        """
+        try:
+            # 更新 ToolTip 類別的靜態變數，這樣新創建的 ToolTip 就會使用新字體
+            ToolTip.update_class_font_size(size)
+            print(f"[DEBUG] ToolTip 字體大小已更新為: {size}")
+            
+            # 如果需要即時更新已顯示的 tooltips（雖然通常 tooltip 是暫時顯示的，不需要實時更新當前顯示的）
+            # 但我們可以確保下次顯示時使用新字體
+        except Exception as e:
+            print(f"[ERROR] 更新 ToolTip 字體大小失敗: {e}")
 
 # 創建全域 tooltip 管理器實例
 def get_tooltip_manager():

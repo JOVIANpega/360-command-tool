@@ -13,9 +13,9 @@ import sys
 import datetime
 
 version_info = {
-    'version': '2.5.0',
-    'file_version': (2, 5, 0, 0),
-    'product_version': (2, 5, 0, 0),
+    'version': '2.5.1',
+    'file_version': (2, 5, 1, 0),
+    'product_version': (2, 5, 1, 0),
     'company_name': 'PEGA指令通',
     'file_description': 'PEGA指令通 - 序列埠通訊工具',
     'internal_name': 'PEGA指令通',
@@ -27,6 +27,16 @@ version_info = {
 
 # 版本更新記錄
 version_history = """
+v2.5.1 (2026-02-03)
+----------------------
+• 自動化功能增強：
+  - 新增自動執行腳本功能，支援讀取 .txt 檔案逐行執行指令
+  - 新增「批量執行」功能，可一鍵執行當前分類下的所有指令
+  - 執行結果日誌優化，支援逐行顯示指令、執行序號及分隔線，提升可讀性
+• 介面優化：
+  - 修正 ToolTip 指引線繪製邏輯，智慧閃避大型元件與螢幕邊緣
+  - 「執行腳本」按鈕整合選項選單，提供靈活的操作模式
+
 v2.5.0 (2026-02-03)
 ----------------------
 • 設定頁面優化：
@@ -168,15 +178,15 @@ v1.5.0.1 (2025-07-12)
 # 定義版本號
 VERSION = version_info['version']
 
-APP_VERSION = "V2.5.0"
-APP_VERSION_DETAIL = "\n【V2.5.0 主要更新】\n- 新增傳輸方式選擇 (Console/ADB/SSH)\n- 新增紅色凸顯效果於 COM Port 和傳輸方式設定\n- 自動選擇可用 COM Port\n"
+APP_VERSION = "V2.5.1"
+APP_VERSION_DETAIL = "\n【V2.5.1 主要更新】\n- 新增自動執行腳本功能，支援讀取 .txt 檔案逐行執行指令\n- 新增「批量執行」功能，可一鍵執行當前分類下的所有指令\n- 執行結果日誌優化，支援逐行顯示指令、執行序號及分隔線，提升可讀性\n- 修正 ToolTip 指引線繪製邏輯\n"
 
 # 生成版本資訊檔案
 with open("version_info_zh.txt", "w", encoding="utf-8") as f:
     f.write("VSVersionInfo(\n")
     f.write("  ffi=FixedFileInfo(\n")
-    f.write("    filevers=(2, 5, 0, 0),\n")
-    f.write("    prodvers=(2, 5, 0, 0),\n")
+    f.write("    filevers=(2, 5, 1, 0),\n")
+    f.write("    prodvers=(2, 5, 1, 0),\n")
     f.write("    mask=0x3f,\n")
     f.write("    flags=0x0,\n")
     f.write("    OS=0x40004,\n")

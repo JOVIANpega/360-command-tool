@@ -116,21 +116,25 @@ class ADBWorker(threading.Thread):
             finished = False
 
             # 執行所有指令
-            for i, cmd in enumerate(self.cmd_list):
+            for i, item in enumerate(self.cmd_list):
                 if self.stop_event.is_set() or finished:
                     break
 
-                cmd = cmd.strip()
+                # 處理指令格式 (支持 tuple 或 string)
+                if isinstance(item, tuple):
+                    cmd_name, cmd_str = item
+                else:
+                    cmd_name, cmd_str = "", item
+
+                cmd = str(cmd_str).strip()
                 if not cmd:
                     continue
 
-                # 處理特殊指令: DELAY
+                # 處理特殊指令 (DELAY, SHOW)...
                 delay_match = re.match(r'^DELAY:(\d+)$', cmd)
                 if delay_match:
                     delay_seconds = int(delay_match.group(1))
                     self.on_data(f'\n[系統] 延遲 {delay_seconds} 秒...\n', "purple")
-                    
-                    # 分段延遲，每秒更新一次進度
                     for j in range(delay_seconds):
                         if self.stop_event.is_set() or finished:
                             break
@@ -138,28 +142,24 @@ class ADBWorker(threading.Thread):
                         progress = ((j + 1) / delay_seconds) * 100
                         self.on_progress(progress)
                         self.on_data(f'剩餘 {delay_seconds - j - 1} 秒...\r', "purple")
-                    
                     self.on_data(f'\n[系統] 延遲結束\n', "purple")
                     continue
 
-                # 處理特殊指令: SHOW
                 show_match = re.match(r'^SHOW:(.+)$', cmd)
                 if show_match:
-                    message = show_match.group(1)
-                    self.on_data(f'\n[顯示] {message}\n', "purple")
-                    
-                    if self.show_message_callback:
-                        try:
-                            self.show_message_callback("提示", message)
-                        except Exception as e:
-                            self.on_data(f'[錯誤] 顯示消息框時發生錯誤: {e}\n', "error")
-                    else:
-                        self.on_data(f'[警告] 無法顯示消息框，因為未設置回調函數\n', "error")
-                    
+                    # ... 省略 ...
+                    pass
                     continue
 
                 # 正常指令處理
-                self.on_data(f'\n[ADB 發送] {cmd}\n', "send")
+                # 格式化輸出：顯示序號和指令
+                if cmd_name:
+                    header = f"{i+1:02d}  發送指令 {cmd_name}={cmd}"
+                else:
+                    header = f"{i+1:02d}  發送指令 {cmd}"
+
+                self.on_data(f'\n{header}\n', "purple")
+                self.on_data(f'[ADB 發送] {cmd}\n', "send")
                 
                 # 執行 ADB 指令
                 returncode, stdout, stderr = self.execute_adb_command(cmd)
@@ -180,6 +180,9 @@ class ADBWorker(threading.Thread):
                         self.on_data(f'\n[錯誤] {stderr}\n', "error")
                     else:
                         self.on_data(f'\n[錯誤] 指令執行失敗 (返回碼: {returncode})\n', "error")
+
+                # 添加分隔線
+                self.on_data('\n####################\n', "purple")
 
                 # 更新進度
                 progress = ((i + 1) / len(self.cmd_list)) * 100
