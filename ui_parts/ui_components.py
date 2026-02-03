@@ -135,13 +135,42 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         com_frame.columnconfigure(2, weight=0)
         com_frame.columnconfigure(3, weight=0)
 
+        # 定義紅色背景樣式
+        try:
+            style = ttk.Style()
+            style.configure('Red.TCombobox', fieldbackground='#ffcccc', background='#ffcccc')
+            style.map('Red.TCombobox', 
+                     fieldbackground=[('readonly', '#ffcccc')], 
+                     background=[('readonly', '#ffcccc')],
+                     selectbackground=[('readonly', '#ffcccc')],
+                     selectforeground=[('readonly', 'black')])
+        except Exception:
+            pass
+
         # 第一行：COM 口設定
         self.label_com = ttk.Label(com_frame, text='COM口:', style="TLabel")
         self.label_com.grid(row=0, column=0, sticky='w')
+        
+        # 獲取 COM 口列表
         com_values = list_com_ports()
-        self.combobox_com = ttk.Combobox(com_frame, values=com_values, state='readonly', width=15)
+        
+        self.combobox_com = ttk.Combobox(com_frame, values=com_values, state='readonly', width=15, style='Red.TCombobox')
         self.combobox_com.grid(row=0, column=1, padx=5, sticky='ew')
         self.combobox_com.bind("<<ComboboxSelected>>", self.handlers.on_com_port_changed)
+        
+        # 自動選擇第一個 COM 口 (如果有的話)
+        if com_values:
+            # 優先使用設定中的 COM 口，如果沒有或無效，則使用第一個
+            saved_com = self.parent.setup.get('DUT_Control', {}).get('Serial_COM_Port', '')
+            if saved_com and saved_com in com_values:
+                self.combobox_com.set(saved_com)
+            else:
+                self.combobox_com.current(0)
+                # 更新設定中的 COM 口
+                if 'DUT_Control' not in self.parent.setup:
+                    self.parent.setup['DUT_Control'] = {}
+                self.parent.setup['DUT_Control']['Serial_COM_Port'] = com_values[0]
+                
         refresh_command = None
         if hasattr(self.parent, 'handlers') and hasattr(self.parent.handlers, 'refresh_com_ports'):
             refresh_command = self.parent.handlers.refresh_com_ports
@@ -156,18 +185,15 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.label_transport = ttk.Label(com_frame, text='傳輸方式:', style="TLabel")
         self.label_transport.grid(row=1, column=0, sticky='w', pady=(5, 0))
 
-        # 優先使用統一設定管理器的值
-        current_mode = self.parent.setup.get('Command_Transport_Mode', 'Console')
-        try:
-            if hasattr(self, 'shared_config') and self.shared_config:
-                val = self.shared_config.get_data_value('command_transport_mode')
-                if val:
-                    current_mode = val
-        except Exception:
-            pass
+        # 預設使用 Console
+        current_mode = 'Console'
+        
+        # 更新設定檔
+        self.parent.setup['Command_Transport_Mode'] = current_mode
+            
         self.transport_mode_var = tk.StringVar(value=current_mode)
         self.combobox_transport = ttk.Combobox(com_frame, textvariable=self.transport_mode_var,
-                                             values=['Console', 'ADB', 'SSH'], state='readonly', width=15)
+                                             values=['Console', 'ADB', 'SSH'], state='readonly', width=15, style='Red.TCombobox')
         self.combobox_transport.grid(row=1, column=1, padx=5, sticky='ew', pady=(5, 0))
         self.combobox_transport.bind("<<ComboboxSelected>>", self.on_transport_mode_changed)
 

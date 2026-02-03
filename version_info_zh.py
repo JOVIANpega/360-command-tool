@@ -13,13 +13,13 @@ import sys
 import datetime
 
 version_info = {
-    'version': '2.1.5',
-    'file_version': (2, 1, 5, 0),
-    'product_version': (2, 1, 5, 0),
+    'version': '2.5.0',
+    'file_version': (2, 5, 0, 0),
+    'product_version': (2, 5, 0, 0),
     'company_name': 'PEGA指令通',
     'file_description': 'PEGA指令通 - 序列埠通訊工具',
     'internal_name': 'PEGA指令通',
-    'legal_copyright': '© 2024 PEGA指令通',
+    'legal_copyright': '© 2026 PEGA指令通',
     'original_filename': 'main.exe',
     'product_name': 'PEGA指令通',
     'comments': '用於PEGA設備的序列埠通訊控制工具'
@@ -27,6 +27,14 @@ version_info = {
 
 # 版本更新記錄
 version_history = """
+v2.5.0 (2026-02-03)
+----------------------
+• 設定頁面優化：
+  - 新增傳輸方式選擇 (Console/ADB/SSH)
+  - 新增紅色凸顯效果於 COM Port 和傳輸方式設定
+  - 自動選擇可用 COM Port
+• 系統穩定性提升
+
 v1.6.0.3 (2025-01-28)
 ----------------------
 • 全域通知系統優化：
@@ -160,15 +168,15 @@ v1.5.0.1 (2025-07-12)
 # 定義版本號
 VERSION = version_info['version']
 
-APP_VERSION = "V2.1.5"
-APP_VERSION_DETAIL = "\n【V2.1.5 主要更新】\n- 治具控制TAB字体联动功能\n- COM口连接稳定性改进\n- 指令格式统一优化\n"
+APP_VERSION = "V2.5.0"
+APP_VERSION_DETAIL = "\n【V2.5.0 主要更新】\n- 新增傳輸方式選擇 (Console/ADB/SSH)\n- 新增紅色凸顯效果於 COM Port 和傳輸方式設定\n- 自動選擇可用 COM Port\n"
 
 # 生成版本資訊檔案
 with open("version_info_zh.txt", "w", encoding="utf-8") as f:
     f.write("VSVersionInfo(\n")
     f.write("  ffi=FixedFileInfo(\n")
-    f.write("    filevers=(2, 1, 5, 0),\n")
-    f.write("    prodvers=(2, 1, 5, 0),\n")
+    f.write("    filevers=(2, 5, 0, 0),\n")
+    f.write("    prodvers=(2, 5, 0, 0),\n")
     f.write("    mask=0x3f,\n")
     f.write("    flags=0x0,\n")
     f.write("    OS=0x40004,\n")
@@ -185,7 +193,7 @@ with open("version_info_zh.txt", "w", encoding="utf-8") as f:
     f.write("           StringStruct(u'FileDescription', u'PEGA指令通'),\n")
     f.write("           StringStruct(u'FileVersion', u'" + VERSION + "'),\n")
     f.write("           StringStruct(u'InternalName', u'PEGA指令通'),\n")
-    f.write("           StringStruct(u'LegalCopyright', u'Copyright (C) 2025 PEGA'),\n")
+    f.write("           StringStruct(u'LegalCopyright', u'Copyright (C) 2026 PEGA'),\n")
     f.write("           StringStruct(u'OriginalFilename', u'PEGA指令通.exe'),\n")
     f.write("           StringStruct(u'ProductName', u'PEGA指令通'),\n")
     f.write("           StringStruct(u'ProductVersion', u'" + VERSION + "')]\n")

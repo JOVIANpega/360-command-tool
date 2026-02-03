@@ -2,7 +2,7 @@
 chcp 65001 > nul
 echo.
 echo ========================================
-echo    PEGA指令通 V2.1.5 打包程序
+echo    PEGA指令通 V2.5.0 打包程序
 echo ========================================
 echo.
 
@@ -67,7 +67,7 @@ pyinstaller ^
     --clean ^
     --noconfirm ^
     --noconsole ^
-    --name "PEGA指令通_V2.1.5" ^
+    --name "PEGA指令通_V2.5.0" ^
     --version-file "version_info_zh.txt" ^
     --add-data "tooltips.ini;." ^
     --add-data "setup.json;." ^
@@ -88,13 +88,13 @@ pyinstaller ^
 
 rem 檢查結果
 echo.
-if exist "dist\PEGA指令通_V2.1.5.exe" (
+if exist "dist\PEGA指令通_V2.5.0.exe" (
     echo ========================================
     echo           打包成功！
     echo ========================================
     echo.
-    echo 輸出文件: dist\PEGA指令通_V2.1.5.exe
-    dir "dist\PEGA指令通_V2.1.5.exe"
+    echo 輸出文件: dist\PEGA指令通_V2.5.0.exe
+    dir "dist\PEGA指令通_V2.5.0.exe"
     echo.
     echo [步驟5] 複製必要的執行時檔案到 dist ...
     if not exist "dist\assets" mkdir "dist\assets"
