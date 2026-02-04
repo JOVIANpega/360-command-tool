@@ -1,0 +1,291 @@
+
+=== 執行指令: 01 Read RTC ===
+COM 口: COM4, 超時: 30 秒, 結束字串: root
+
+01  發送指令 date
+[發送] date
+date
+Fri Jun 20 19:43:39 UTC 2025
+root@intel-corei7-64:~/mfg# 
+root@intel-corei7-64:~/mfg# 
+[結束] 收到指定結束字串 root
+
+####################
+
+=== 批量執行: Gemeni 1b 所有指令 ===
+總計指令數: 28
+
+
+01  發送指令 44 Write MAC=./mfg_sources/mb_eeprom_rw.sh w mac_address 00:a0:c9:11:22:33
+[發送] ./mfg_sources/mb_eeprom_rw.sh w mac_address 00:a0:c9:11:22:33
+./mfg_sources/mb_eeprom_rw.sh w mac_address 00:a0:c9::11:22:33
+Deleting TLV 0x24: Base MAC Address
+Adding   TLV 0x24: Base MAC Address
+Programming passed.
+TlvInfo Header:
+   Id String:    TlvInfo
+   Version:      1
+   Total Length: 118
+TLV Name             Code Len Value
+-------------------- ---- --- -----
+Device Version       0x26   1 6
+Label Revision       0x27   1 0
+Platform Name        0x28  27 x86_64-pegatron_fm6256_f-r1
+MAC Addresses        0x2A   2 83
+Manufacturer         0x2B   8 Pegatron
+Country Code         0x2C   2 TW
+Vendor Name          0x2D   8 Pegatron
+Diag Version         0x2E   5 1.0.2
+Product Name         0x21  14 DS-48x25-8x100
+Serial Number        0x23  16 pega-1234-567890
+Base MAC Address     0x24   6 00:A0:C9:11:22:33
+CRC-32               0xFE   4 0xCE527EF5
+Checksum is valid.
+ # Set MAC address done.
+root@intel-corei7-64:~/mfg# 
+root@intel-corei7-64:~/mfg# 
+####################
+
+02  發送指令 45 Check MAC=./mfg_sources/mb_eeprom_rw.sh r mac_address
+[發送] ./mfg_sources/mb_eeprom_rw.sh r mac_address
+./mfg_sources/mb_eeprom_rw.sh r mac_address
+ # MAC address : 00:A0:C9:11:22:33
+ # MAC address [NPU] = 00:A0:C9:11:22:33
+root@intel-corei7-64:~/mfg# 
+root@intel-corei7-64:~/mfg# 
+####################
+
+03  發送指令 46 Show Information=./show_version
+[發送] ./show_version
+./show_version
+root@intel-corei7-64:~/mfg# 
+root@intel-corei7-64:~/mfg# 
+####################
+
+04  發送指令 47 Check NVM Version=./intel_nvm_flash_update_tool/eeupdate64e /ALL /ADAPTERINFO
+[發送] ./intel_nvm_flash_update_tool/eeupdate64e /ALL /ADAPTERINFO
+./intel_nvm_flash_update_tool/eeupdate64e /ALL /ADAPTTERINFO
+Connection to QV driver failed - please reinstall it!
+
+Using: Intel (R) PRO Network Connections SDK v2.34.22
+EEUPDATE v5.34.22.05 
+Copyright (C) 1995 - 2019 Intel Corporation
+Intel (R) Confidential and not for general distribution.
+
+Driverless Mode
+
+
+NIC Bus Dev Fun Vendor-Device  Branding string
+=== === === === ============= =================================================
+  1   3  00  00   8086-15AB    Intel(R) Ethernet Connection X552 10 GbE Backpla
+  2   3  00  01   8086-15AB    Intel(R) Ethernet Connection X552 10 GbE Backpla
+  3   6  00  00   8086-1538    Intel(R) I210 Gigabit Network Connection
+
+1: 
+EtrackID:         800006A8 
+Firmware Version: REV:5.7 
+MAC Address:      00-A0-C9-00-00-00 
+NVM Version:      1.13 
+
+2: 
+EtrackID:         800006A8 
+Firmware Version: REV:5.7 
+MAC Address:      34-12-78-56-01-00 
+NVM Version:      1.13 
+
+3: 
+EtrackID:         00000000 
+Firmware Version: REV:1.7 
+MAC Address:      80-1F-02-00-00-01 
+NVM Version:      3.25 
+
+root@intel-corei7-64:~/mfg# 
+root@intel-corei7-64:~/mfg# 
+####################
+
+05  發送指令 48 Check CPLD upgrade=./mfg_sources/cpld_upgrade.sh mb /home/root/mfg/cpld_fw_upgrade/gemini_mb-b8a3c5_verifyonly_20241226.vme
+[發送] ./mfg_sources/cpld_upgrade.sh mb /home/root/mfg/cpld_fw_upgrade/gemini_mb-b8a3c5_verifyonly_20241226.vme
+./mfg_sources/cpld_upgrade.sh mb /home/root/mfg/cpld__fw_upgrade/gemini_mb-b8a3c5_verifyonly_20241226.vme
+
+####################
+
+06  發送指令 49 Check MB MCU HW upgrade=./mfg_sources/mcu_fw_upgrade.sh mb EFM8BB3_MainBoard_UART_InterfaceTest.efm8 hw
+[發送] ./mfg_sources/mcu_fw_upgrade.sh mb EFM8BB3_MainBoard_UART_InterfaceTest.efm8 hw
+Project Name => gemini_mb
+Version      => b8a3c5_verifyonly_20241226
+Fri Jun 20 19:44:01 UTC 2025
+  += Set GPIO behavior : Done
+./mfg_sources/mcu_fw_upgrade.sh mb EFM8BB3_MainBoard_UART_InterfaceTest.efm8 hw
+
+
+[警告] 命令 "./mfg_sources/mcu_fw_upgrade.sh mb EFM8BB3_MainBoard_UART_InterfaceTest.efm8 hw" 等待響應超過 10 秒，繼續執行下一步
+
+####################
+
+07  發送指令 50 Check MB MCU SW upgrade=./mfg_sources/mcu_fw_upgrade.sh mb EFM8BB3_MainBoard_UART_InterfaceTest.efm8 sw
+[發送] ./mfg_sources/mcu_fw_upgrade.sh mb EFM8BB3_MainBoard_UART_InterfaceTest.efm8 sw
+./mfg_sources/mcu_fw_upgrade.sh mb EFM8BB3_MainBoard_UART_InterfaceTest.efm8 sw
+
+
+[警告] 命令 "./mfg_sources/mcu_fw_upgrade.sh mb EFM8BB3_MainBoard_UART_InterfaceTest.efm8 sw" 等待響應超過 10 秒，繼續執行下一步
+
+####################
+
+08  發送指令 51 Check FAN MCU HW upgrade=./mfg_sources/mcu_fw_upgrade.sh fb EFM8BB3_FanBoard_UART_InterfaceTest.efm8 hw
+[發送] ./mfg_sources/mcu_fw_upgrade.sh fb EFM8BB3_FanBoard_UART_InterfaceTest.efm8 hw
+./mfg_sources/mcu_fw_upgrade.sh fb EFM8BB3_FanBoard_UART_InterfaceTest.efm8 hw
+
+
+[警告] 命令 "./mfg_sources/mcu_fw_upgrade.sh fb EFM8BB3_FanBoard_UART_InterfaceTest.efm8 hw" 等待響應超過 10 秒，繼續執行下一步
+
+####################
+
+09  發送指令 52 Check FAN MCU SW upgrade=./mfg_sources/mcu_fw_upgrade.sh fb EFM8BB3_FanBoard_UART_InterfaceTest.efm8 sw
+[發送] ./mfg_sources/mcu_fw_upgrade.sh fb EFM8BB3_FanBoard_UART_InterfaceTest.efm8 sw
+./mfg_sources/mcu_fw_upgrade.sh fb EFM8BB3_FanBoard_UART_InterfaceTest.efm8 sw
+
+                 Lattice Semiconductor Corp.
+
+             ispVME(tm) V12.2 Copyright 1998-2011.
+
+For daisy chain programming of all in-system programmable devices
+
+Processing virtual machine file (/home/root/mfg/cpld_fw_upgrade/gemini_mb-b8a3c5_verifyonly_20241226.vme)......
+
+Diamond Deployment Tool 3.12
+CREATION DATE: Tue Dec 31 10:08:23 2024
+
+
+####################
+
+10  發送指令 53 Show Adc Hardware Monitor=./mfg_sources/adc_monitor.sh
+[發送] ./mfg_sources/adc_monitor.sh
+root@intel-corei7-64:~/mfg# 
+root@intel-corei7-64:~/mfg# ./mfg_sources/mcu_fw_upgrade.sh mb EFM8BB3_MainBoard__UART_InterfaceTest.efm8 hw
+
+Input File Name => EFM8BB3_MainBoard_UART_InterfaceTest.efm8
+Project Name => EFM8BB3
+Board Type   => MainBoard
+Pin Type     => UART
+MCU Firmware Version => InterfaceTest.
+./mfg_sources/adc_monitor.sh
+
+
+[MFG Msg] Choose Main Board MCU to do Firmware Upgrade by Hardware Method
+
+####################
+
+11  發送指令 54 Show Temperature Hardware Monitor=./mfg_sources/temp_monitor.sh
+[發送] ./mfg_sources/temp_monitor.sh
+ Had into bootloader mode
+[MFG Msg] Please wait MCU image upgrade done, and do NOT shut down the machine.
+
+Pegatron port_name hwgrep:///dev/ttyS1
+
+Download over port: /dev/ttyS1
+
+@@
+
+Download complete with [ 0 ] errors
+./mfg_sources/temp_monitor.sh
+
+ !! Please reboot DUT later, in order to make MCU FW replace and to make others function working normally !!!
+
+[MFG Msg] Upgrade Main Board MCU with "EFM8BB3_MainBoard_UART_InterfaceTest.efm8" Done
+
+root@intel-corei7-64:~/mfg# 
+root@intel-corei7-64:~/mfg# ./mfg_sources/mcu_fw_upgrade.sh mb EFM8BB3_MainBoard__UART_InterfaceTest.efm8 sw
+
+####################
+
+12  發送指令 55 DRAM Read/Write=./mfg_sources/DDR_test.sh 32 1
+[發送] ./mfg_sources/DDR_test.sh 32 1
+
+Input File Name => EFM8BB3_MainBoard_UART_InterfaceTest.efm8
+Project Name => EFM8BB3
+Board Type   => MainBoard
+Pin Type     => UART
+MCU Firmware Version => InterfaceTest.
+
+[MFG Msg] Choose Main Board MCU to do Firmware Upgrade by Software Method
+./mfg_sources/DDR_test.sh 32 1
+
+ Had into bootloader mode
+[MFG Msg] Please wait MCU image upgrade done, and do NOT shut down the machine.
+
+Pegatron port_name hwgrep:///dev/ttyS1
+
+Download over port: /dev/ttyS1
+
+@@
+
+Download complete with [ 0 ] errors
+
+[MFG Msg] Upgrade Main Board MCU with "EFM8BB3_MainBoard_UART_InterfaceTest.efm8" Done
+
+root@intel-corei7-64:~/mfg# 
+root@intel-corei7-64:~/mfg# ./mfg_sources/mcu_fw_upgrade.sh fb EFM8BB3_FanBoard_UUART_InterfaceTest.efm8 hw
+
+####################
+
+13  發送指令 56 SPI Flash Read/Write=./mfg_sources/SPI_test.sh 1024
+[發送] ./mfg_sources/SPI_test.sh 1024
+
+Input File Name => EFM8BB3_FanBoard_UART_InterfaceTest.efm8
+Project Name => EFM8BB3
+Board Type   => FanBoard
+Pin Type     => UART
+MCU Firmware Version => InterfaceTest.
+
+[MFG Msg] Choose Fan Board MCU to do Firmware Upgrade by Hardware Method
+./mfg_sources/SPI_test.sh 1024
+
+[MFG Msg] Please wait MCU image upgrade done, and do NOT shut down the machine.
+
+Pegatron port_name hwgrep:///dev/ttyS1
+
+Download over port: /dev/ttyS1
+
+@@
+
+Download complete with [ 0 ] errors
+ !! Please reboot DUT later, in order to make MCU FW replace and to make others function working normally !!!
+
+[MFG Msg] Upgrade Fan board MCU with "EFM8BB3_FanBoard_UART_InterfaceTest.efm8" Done
+
+root@intel-corei7-64:~/mfg# 
+root@intel-corei7-64:~/mfg# ./mfg_sources/mcu_fw_upgrade.sh fb EFM8BB3_FanBoard_UUART_InterfaceTest.efm8 sw
+
+####################
+
+14  發送指令 57 USB Read/Write=./mfg_sources/peripheralTest_sequential.sh 64 0 USB
+[發送] ./mfg_sources/peripheralTest_sequential.sh 64 0 USB
+
+Input File Name => EFM8BB3_FanBoard_UART_InterfaceTest.efm8
+Project Name => EFM8BB3
+Board Type   => FanBoard
+Pin Type     => UART
+MCU Firmware Version => InterfaceTest.
+
+[MFG Msg] Choose Fan Board MCU to do Firmware Upgrade by Software Method
+./mfg_sources/peripheralTest_sequential.sh 64 0 USB
+
+
+[警告] 命令 "./mfg_sources/peripheralTest_sequential.sh 64 0 USB" 等待響應超過 10 秒，繼續執行下一步
+
+####################
+
+15  發送指令 58 SSD Read/Write=mfg_sources/peripheralTest_sequential.sh 64 0 eMMC
+[發送] mfg_sources/peripheralTest_sequential.sh 64 0 eMMC
+
+[警告] 命令 "mfg_sources/peripheralTest_sequential.sh 64 0 eMMC" 等待響應超過 10 秒，繼續執行下一步
+
+####################
+
+16  發送指令 59 OOB Ping=./mfg_sources/OOB_ping_test.sh 192.168.1.1 192.168.1.254 5
+[發送] ./mfg_sources/OOB_ping_test.sh 192.168.1.1 192.168.1.254 5
+
+[已中止執行]
+
+####################
+

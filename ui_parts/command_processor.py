@@ -55,37 +55,38 @@ class CommandProcessor:
             
             for line in lines:
                 line = line.strip()
-                if not line:
+                # 跳過空行或註解行 (#, ;, //)
+                if not line or line.startswith('#') or line.startswith(';') or line.startswith('//'):
                     continue
                 
                 # 檢查是否為區段標題
-                # 格式 1: [Section]
                 if line.startswith('[') and line.endswith(']'):
                     current_section = line[1:-1]
                     if current_section not in self.commands_by_section:
-                        self.commands_by_section[current_section] = []
+                        self.commands_by_section[current_section] = {}
                         
-                # 格式 2: === Section === (支援指令工具的新格式)
                 elif line.startswith('==') and line.endswith('=='):
-                     # 移除首尾的 = 號，並去除可能多餘的空白
                     current_section = line.strip('=').strip()
                     if current_section not in self.commands_by_section:
-                        self.commands_by_section[current_section] = []
+                        self.commands_by_section[current_section] = {}
                 else:
                     # 這是一個命令
-                    # 如果尚未有區段，則加入 default
                     if current_section not in self.commands_by_section:
-                         self.commands_by_section[current_section] = []
+                         self.commands_by_section[current_section] = {}
                     
-                    # 簡單判斷是否為有效指令行 (包含 =)
                     if '=' in line:
-                        # 解析 key=value
                         parts = line.split('=', 1)
                         cmd_name = parts[0].strip()
-                        self.commands_by_section[current_section].append(cmd_name)
+                        cmd_value = parts[1].strip()
+                        self.commands_by_section[current_section][cmd_name] = cmd_value
                     else:
-                        # 純指令名稱（或許是錯的格式，但為了相容）
-                         self.commands_by_section[current_section].append(line)
+                        # 純指令名稱與指令相同
+                         cmd_name = line.strip()
+                         self.commands_by_section[current_section][cmd_name] = cmd_name
+            
+            # 將結果同步到 parent 以確保 UIHandlers 可以讀取到完整的對應關係
+            if hasattr(self.parent, 'commands_by_section'):
+                self.parent.commands_by_section = self.commands_by_section
             
             print(f"[DEBUG] 解析到 {len(self.commands_by_section)} 個區段")
             for section, commands in self.commands_by_section.items():

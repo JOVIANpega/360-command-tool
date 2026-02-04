@@ -13,9 +13,9 @@ import sys
 import datetime
 
 version_info = {
-    'version': '2.5.1',
-    'file_version': (2, 5, 1, 0),
-    'product_version': (2, 5, 1, 0),
+    'version': '2.5.2',
+    'file_version': (2, 5, 2, 0),
+    'product_version': (2, 5, 2, 0),
     'company_name': 'PEGA指令通',
     'file_description': 'PEGA指令通 - 序列埠通訊工具',
     'internal_name': 'PEGA指令通',
@@ -27,6 +27,16 @@ version_info = {
 
 # 版本更新記錄
 version_history = """
+v2.5.2 (2026-02-04)
+----------------------
+• 日誌系統優化 (清理日誌產生)：
+  - 停用自動產生 logs\ 目錄與 app_xxx.log 檔案，保持目錄整潔。
+  - 優化備份功能：備份資料夾更名為 BACKUP_LOGS，且備份後自動開啟資料夾。
+• 指令解析功能增強：
+  - 新增註解支援：指令檔案現在支援使用 #, ;, // 進行註解，被註解的行將不會出現在選單中。
+  - 修正指令內容解析邏輯，確保發送指令時不帶多餘的不可見字元。
+• ToolTip 指引線優化：修正多螢幕環境下指引線過長的問題。
+
 v2.5.1 (2026-02-03)
 ----------------------
 • 自動化功能增強：
@@ -178,15 +188,15 @@ v1.5.0.1 (2025-07-12)
 # 定義版本號
 VERSION = version_info['version']
 
-APP_VERSION = "V2.5.1"
-APP_VERSION_DETAIL = "\n【V2.5.1 主要更新】\n- 新增自動執行腳本功能，支援讀取 .txt 檔案逐行執行指令\n- 新增「批量執行」功能，可一鍵執行當前分類下的所有指令\n- 執行結果日誌優化，支援逐行顯示指令、執行序號及分隔線，提升可讀性\n- 修正 ToolTip 指引線繪製邏輯\n"
+APP_VERSION = "V2.5.2"
+APP_VERSION_DETAIL = "\n【V2.5.2 主要更新】\n- 停用自動產生 logs\ 目錄，改進備份功能並自動開啟資料夾\n- 新增對 #, ;, // 註解指令的支援\n- 修正 ToolTip 指引線在多螢幕下的繪製問題\n"
 
 # 生成版本資訊檔案
 with open("version_info_zh.txt", "w", encoding="utf-8") as f:
     f.write("VSVersionInfo(\n")
     f.write("  ffi=FixedFileInfo(\n")
-    f.write("    filevers=(2, 5, 1, 0),\n")
-    f.write("    prodvers=(2, 5, 1, 0),\n")
+    f.write("    filevers=(2, 5, 2, 0),\n")
+    f.write("    prodvers=(2, 5, 2, 0),\n")
     f.write("    mask=0x3f,\n")
     f.write("    flags=0x0,\n")
     f.write("    OS=0x40004,\n")
@@ -213,4 +223,4 @@ with open("version_info_zh.txt", "w", encoding="utf-8") as f:
     f.write("  ]\n")
     f.write(")\n")
 
-print(f"已生成版本資訊檔案 version_info_zh.txt，版本號：{VERSION}") 
+print(f"已生成版本資訊檔案 version_info_zh.txt，版本號：{VERSION}")

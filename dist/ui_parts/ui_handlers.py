@@ -1491,8 +1491,19 @@ class UIHandlers(UIHandlersCore):
         menu = tk.Menu(self.parent.root, tearoff=0)
         menu.add_command(label="執行外部腳本檔案 (.txt)", command=self.run_external_script)
         
-        current_section = self.parent.components.section_var.get()
-        menu.add_command(label=f"執行 '{current_section}' 所有指令", command=self.run_current_section)
+        # 添加分隔線
+        menu.add_separator()
+        
+        # 獲取所有可用區段
+        sections = self.parent.commands_by_section.keys()
+        
+        # 動態添加每個區段的執行選項
+        for section in sections:
+            # 使用 lambda 捕捉當前的 section 變數
+            menu.add_command(
+                label=f"執行 '{section}' 所有指令", 
+                command=lambda s=section: self.run_specific_section(s)
+            )
         
         # 在滑鼠位置顯示菜單
         try:
@@ -1501,6 +1512,22 @@ class UIHandlers(UIHandlersCore):
             menu.tk_popup(x, y)
         finally:
             menu.grab_release()
+
+    def run_specific_section(self, section_name):
+        """執行指定區段的所有指令（由菜單觸發）"""
+        cmds_dict = self.parent.commands_by_section.get(section_name, {})
+        if not cmds_dict:
+            messagebox.showinfo("提示", f"區段 '{section_name}' 沒有可用指令")
+            return
+            
+        # 構建指令列表 (指令名稱, 指令內容)
+        commands = list(cmds_dict.items())
+        
+        # 詢問是否執行
+        if not messagebox.askyesno("確認執行", f"確定要執行 '{section_name}' 的所有指令嗎？\n共 {len(commands)} 條指令"):
+            return
+            
+        self._execute_commands(commands, f"批量執行: {section_name} 所有指令")
 
     def run_current_section(self):
         """執行當前區段的所有指令"""

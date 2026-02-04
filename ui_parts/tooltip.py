@@ -85,7 +85,7 @@ class ToolTip:
             widget_h = self.widget.winfo_height()
             
             # 檢查是否為大型容器元件 (如 LabelFrame, Frame)
-            # 如果是大型元件，指引線可能造成視覺混亂，考慮不顯示指引線或只顯示在邊緣
+            # (雖然下面有通用的滑動錨點邏輯，但在決定是否畫線時，大型元件仍需特殊處理以避免線條穿過元件過多)
             is_large_widget = (widget_w > 300 and widget_h > 150)
             
         except tk.TclError:
@@ -138,12 +138,19 @@ class ToolTip:
         is_above = False
         
         # 邊界檢查與調整
-        if box_left + text_width > screen_w:
-            box_left = screen_w - text_width - 10
-        if box_left < 0:
-            box_left = 10
-            
-        if box_top + text_height > screen_h:
+        # FIX: 檢測是否在主螢幕範圍內。如果在副螢幕（座標超出 screen_w），則不強制的 clamp 到主螢幕範圍
+        # 這樣避免了在副螢幕時，Tooltip 被硬拉回主螢幕導致指引線過長
+        is_on_primary_screen = (0 <= widget_x < screen_w)
+        
+        if is_on_primary_screen:
+            if box_left + text_width > screen_w:
+                box_left = screen_w - text_width - 10
+            if box_left < 0:
+                box_left = 10
+        
+        # 垂直方向通常較少有多螢幕拼接問題，或者較難判斷，暫時保留基本檢查
+        # 如果在副螢幕且 y 超界，可能需要更複雜的判斷，這裡暫時只對 primary 做保護
+        if is_on_primary_screen and (box_top + text_height > screen_h):
             # 下方空間不足，改到上方
             target_y_base = widget_y
             box_top = target_y_base - 20 - text_height
@@ -152,17 +159,15 @@ class ToolTip:
         # 計算指引線的目標點 (widget 上的點)
         # 根據 box 的位置，選擇 widget 最近的邊緣中心點
         if is_above:
-            target_x = widget_x + widget_w // 2 # 上邊緣中心
             target_y = widget_y # 上邊緣
         else:
-            target_x = widget_x + widget_w // 2 # 下邊緣中心
             target_y = widget_y + widget_h # 下邊緣
 
-        # 對於大型元件，將目標點調整到更靠近 box 的位置，避免橫跨整個元件
-        if is_large_widget:
-             # 如果是大型元件，將目標點 clamp 到 box_center 的水平位置
-             box_center_x = box_left + text_width // 2
-             target_x = max(widget_x, min(widget_x + widget_w, box_center_x))
+        # 優化：所有元件都使用「滑動錨點」邏輯
+        # 讓指引線指向元件上最接近 Tooltip 的點，減少線段長度
+        box_center_x_abs = box_left + text_width // 2
+        # 將目標點 clamp 在元件的左右邊界之間
+        target_x = max(widget_x, min(widget_x + widget_w, box_center_x_abs))
 
         # 計算 Toplevel 的邊界 (包含目標點和文字框)
         tl_x = min(target_x, box_left) - 10
@@ -186,8 +191,23 @@ class ToolTip:
         box_center_x = cv_box_x + text_width // 2
         box_center_y = cv_box_y + text_height // 2
         
-        # 只有在非大型元件，或距離足夠時才畫線，避免視覺混亂
-        if not is_large_widget or abs(cv_target_y - box_center_y) > 30:
+        # 計算線長
+        line_dx = cv_target_x - box_center_x
+        line_dy = cv_target_y - box_center_y
+        line_len_sq = line_dx*line_dx + line_dy*line_dy
+        
+        # 只有在滿足以下條件時才畫線：
+        # 1. 不是大型元件重疊 (vertical distance check)
+        # 2. 線長度不過長 (例如 > 500px 可能是異常座標)
+        should_draw_line = True
+        if is_large_widget and abs(cv_target_y - box_center_y) <= 30:
+            should_draw_line = False
+        
+        # 如果線長超過 500px，視為異常（例如多螢幕座標轉換問題），不畫線以免干擾視線
+        if line_len_sq > 500 * 500:
+            should_draw_line = False
+
+        if should_draw_line:
             canvas.create_line(cv_target_x, cv_target_y, box_center_x, box_center_y, 
                               fill='#555555', width=2, arrow=tk.FIRST, arrowshape=(8,10,3))
         

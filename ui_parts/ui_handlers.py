@@ -85,7 +85,8 @@ class UIHandlers(UIHandlersCore):
     def _parse_command_line(self, line, section, commands):
         """解析單行指令 - 重構輔助函數"""
         line = line.strip()
-        if not line or line.startswith("#") or line.startswith("//"):
+        # 跳過空行或註解行 (#, ;, //)
+        if not line or line.startswith("#") or line.startswith(";") or line.startswith("//"):
             return section
 
         # 檢查是否為區段標記
@@ -192,7 +193,8 @@ class UIHandlers(UIHandlersCore):
                     line = line.strip()
 
 
-                    if not line or line.startswith("#") or line.startswith("//"):
+                    # 跳過空行或註解行 (#, ;, //)
+                    if not line or line.startswith("#") or line.startswith(";") or line.startswith("//"):
 
 
                         continue
@@ -1039,47 +1041,35 @@ class UIHandlers(UIHandlersCore):
 
 
     def backup_output(self):
-
-
         try:
-
-
-            backup_dir = 'backup'
-
-
+            backup_dir = 'BACKUP_LOGS'
             if not os.path.exists(backup_dir):
-
-
                 os.makedirs(backup_dir)
 
-
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-
-
-            filename = os.path.join(backup_dir, f'backup_{timestamp}.txt')
-
+            filename = os.path.join(backup_dir, f'backup_{timestamp}.log')
 
             content = self.parent.components.text_output.get('1.0', 'end')
-
-
             with open(filename, 'w', encoding='utf-8') as f:
-
-
                 f.write(content)
 
-
             # 使用通知功能顯示成功訊息
-
-
             self.parent.components.show_notification(
-
-
-                get_notification_text("backup_success", filename),
-
-
-                "green", 5000
-
-
+                f"備份成功！檔案已存至 {backup_dir}",
+                "green", 3000
+            )
+            
+            # 自動開啟資料夾方便查看
+            try:
+                os.startfile(os.path.abspath(backup_dir))
+            except Exception:
+                pass
+                
+        except Exception as e:
+            # 使用通知功能顯示錯誤訊息
+            self.parent.components.show_notification(
+                f"備份失敗: {str(e)}",
+                "red", 5000
             )
 
 
@@ -1644,7 +1634,11 @@ class UIHandlers(UIHandlersCore):
             self.parent.thread.start()
             
             # 更新UI狀態
-            self.parent.components.btn_execute.config(text='停止', bg='#FF5722')
+            self.parent.components.btn_execute.config(text='停止執行')
+            
+            # 開始啟動標籤閃爍
+            if hasattr(self.parent.components, 'startup_label_manager'):
+                self.parent.components.startup_label_manager.start_blink()
             
         except Exception as e:
             print(f"[ERROR] 執行指令失敗: {e}")

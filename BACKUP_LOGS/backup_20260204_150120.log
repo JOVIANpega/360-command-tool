@@ -1,0 +1,11 @@
+
+=== 執行指令: FAN speed ===
+COM 口: COM4, 超時: 30 秒, 結束字串: root
+
+01  發送指令 ./mfg_sources/fan_control.sh speed 10
+[發送] ./mfg_sources/fan_control.sh speed 10
+
+[已中止執行]
+
+####################
+

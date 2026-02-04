@@ -26,23 +26,13 @@ class ErrorHandler:
     def _setup_logging(self):
         """設置日誌系統"""
         try:
-            # 確保日誌目錄存在
-            if not os.path.exists(self.log_dir):
-                os.makedirs(self.log_dir)
-            
             # 創建日誌器
             self.logger = logging.getLogger('VALO360')
             self.logger.setLevel(logging.DEBUG)
             
             # 避免重複添加處理器
             if not self.logger.handlers:
-                # 文件處理器 - 詳細日誌
-                today = datetime.now().strftime('%Y%m%d')
-                log_file = os.path.join(self.log_dir, f'app_{today}.log')
-                file_handler = logging.FileHandler(log_file, encoding='utf-8')
-                file_handler.setLevel(logging.DEBUG)
-                
-                # 控制台處理器 - 重要訊息
+                # 僅保留控制台處理器 - 方便開發調試，但不會產生檔案
                 console_handler = logging.StreamHandler()
                 console_handler.setLevel(logging.INFO)
                 
@@ -50,11 +40,17 @@ class ErrorHandler:
                 formatter = logging.Formatter(
                     '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
                 )
-                file_handler.setFormatter(formatter)
                 console_handler.setFormatter(formatter)
                 
-                self.logger.addHandler(file_handler)
                 self.logger.addHandler(console_handler)
+                
+                # 註解掉檔案處理器，不再產生 logs\ 目錄
+                # today = datetime.now().strftime('%Y%m%d')
+                # log_file = os.path.join(self.log_dir, f'app_{today}.log')
+                # file_handler = logging.FileHandler(log_file, encoding='utf-8')
+                # file_handler.setLevel(logging.DEBUG)
+                # file_handler.setFormatter(formatter)
+                # self.logger.addHandler(file_handler)
                 
         except Exception as e:
             print(f"[ERROR] 設置日誌系統失敗: {e}")

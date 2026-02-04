@@ -1,6 +1,7 @@
 
 
  ===Gemeni 1===
+FAN speed=./mfg_sources/fan_control.sh speed 10
 01 Read RTC=date
 02 Set RTC=date -s "2022-10-27 09:57:10"==>hwclock -w
 03 Check SPI boot IC=i2cget -y 0 0x18 0x04
@@ -61,7 +62,7 @@
 58 SSD Read/Write=mfg_sources/peripheralTest_sequential.sh 64 0 eMMC
 59 OOB Ping=./mfg_sources/OOB_ping_test.sh 192.168.1.1 192.168.1.254 5
 60 Read Fan Status=./mfg_sources/fan_monitor.sh
-61 Set Fan Status=./mfg_sources/fan_control.sh speed 0
+61 Set Fan Status=./mfg_sources/fan_control.sh speed 10
 62 Set Fan to Auto Mode=./mfg_sources/fan_control.sh smart-fan enable
 63 Upgrade CPLD (NPU JTAG)=./mfg_sources/cpld_upgrade.sh mb /home/root/mfg/cpld_fw_upgrade/gemini-b6a2c4_bgm_verify-20230113.vme
 64 Upgrade MCU (NPU UART)=./mfg_sources/mcu_fw_upgrade.sh mb EFM8BB3_MainBoard_UART_InterfaceTest.efm8 sw

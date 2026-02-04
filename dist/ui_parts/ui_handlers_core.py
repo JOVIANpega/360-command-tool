@@ -261,29 +261,22 @@ class UIHandlersCore:
 
 
         # 將解析結果保存到實例變量中
-
-
         self.commands = commands
-
-
         
-
+        # 確保父組件也有最新的指令列表 (供 run_script_click 使用)
+        if hasattr(self.parent, 'commands_by_section'):
+            self.parent.commands_by_section = commands
+            print("[DEBUG] 已更新 parent.commands_by_section")
+        else:
+            # 如果父組件沒有該屬性，則動態添加
+            self.parent.commands_by_section = commands
+            print("[DEBUG] 已動態添加 parent.commands_by_section")
 
         # 計算並輸出每個區段的指令數量
-
-
         for section, cmds in commands.items():
-
-
             print(f"[DEBUG] 區段 '{section}' 有 {len(cmds)} 個指令")
 
-
-        
-
-
-        # 返回解析結果（雖然已經保存到實例變量中，但有時需要直接返回）
-
-
+        # 返回解析結果
         return commands
 
 

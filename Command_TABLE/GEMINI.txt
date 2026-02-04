@@ -44,7 +44,9 @@ FAN speed=./mfg_sources/fan_control.sh speed 10
 40 LED Blue On=./mfg_sources/led_control.sh blue
 41 LED All Off=./mfg_sources/led_control.sh off
 42 LED Auto (Default)=./mfg_sources/led_control.sh normal
-43 VLAN Setting=./sdk_start vlan=on if=fiber fec=on
+
+ ===Gemeni 1b===
+//43 VLAN Setting=./sdk_start vlan=on if=fiber fec=on
 44 Write MAC=./mfg_sources/mb_eeprom_rw.sh w mac_address 00:a0:c9:11:22:33
 45 Check MAC=./mfg_sources/mb_eeprom_rw.sh r mac_address
 46 Show Information=./show_version

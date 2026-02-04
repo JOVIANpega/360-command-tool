@@ -215,7 +215,7 @@ class SettingsTab(ttk.Frame):
         ttk.Button(input_buttons_container, text="+", width=2, command=self.add_custom_separator).grid(row=0, column=1, padx=(2, 1))
         ttk.Button(input_buttons_container, text="-", width=2, command=self.remove_custom_separator).grid(row=0, column=2, padx=(1, 0))
         
-        # 說明標籤
+        # 說明標籤##########
         separator_help_label = ttk.Label(separator_frame, text="選擇或自訂多重指令的分隔符號，用於 command.txt 中的指令分割",
                                    font=('Microsoft JhengHei UI', 9), foreground='#666666')
         separator_help_label.grid(row=2, column=0, columnspan=3, sticky="w", pady=(2, 0))
@@ -352,7 +352,7 @@ class SettingsTab(ttk.Frame):
         # 添加說明標籤
         save_help_label = ttk.Label(
             save_button_frame,
-            text="點擊此按鈕保存所有設定變更並立即生效",
+            text="點擊此按鈕保存設定並立即生效 (部分設定需重啟)",
             font=('Microsoft JhengHei UI', 9),
             foreground='#0066CC'
         )
@@ -825,14 +825,31 @@ class SettingsTab(ttk.Frame):
             # 立即更新標籤頁名稱
             self.update_tab_names_immediately()
 
-            # 顯示成功訊息
-            messagebox.showinfo("成功", "設定已手動儲存並立即生效！\n包含視窗大小、分割位置等所有設定。")
-            print("[DEBUG] 設定已手動儲存並重新載入完成")
+            # 顯示成功訊息並詢問是否重啟
+            if messagebox.askyesno("設定已儲存", "設定已手動儲存並立即生效！\n\n是否要立即自動重啟應用程式？\n(推薦重啟以確保所有變更完整載入)"):
+                print("[INFO] 用戶選擇立即重啟應用程式...")
+                self.restart_application()
+            else:
+                print("[DEBUG] 設定已手動儲存並重新載入完成 (用戶選擇不重啟)")
 
         except Exception as e:
             print(f"[錯誤] 手動儲存設定失敗: {e}")
             traceback.print_exc()
             messagebox.showerror("錯誤", f"手動儲存設定時發生錯誤: {e}")
+
+    def restart_application(self):
+        """重啟應用程式"""
+        import sys
+        import subprocess
+        try:
+            print("[SYSTEM] 正在重啟應用程式...")
+            # 獲取當前執行的 python 解釋器路徑和腳本路徑
+            python = sys.executable
+            # 重啟當前腳本
+            os.execl(python, python, *sys.argv)
+        except Exception as e:
+            print(f"[ERROR] 重啟應用程式失敗: {e}")
+            messagebox.showerror("錯誤", f"自動重啟失敗，請手動重啟程式。\n錯誤訊息: {e}")
 
     def save_settings(self):
         """儲存設定到 setup.json（保留原有方法以維持相容性）"""

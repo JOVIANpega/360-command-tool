@@ -319,6 +319,13 @@ class TabManager:
             # 重新載入設定並更新所有 UI 元件
             self.dut_ui.setup = self.dut_ui.config.load_setup()
             self.dut_ui.handlers.reload_setup(self.dut_ui.setup)
+            
+            # 強制重新解析指令文件（以確保檔案路徑變更後能讀到新內容）
+            if hasattr(self.dut_ui.handlers, 'parse_commands_by_section'):
+                 self.dut_ui.handlers.parse_commands_by_section()
+            elif hasattr(self.dut_ui.handlers, 'command_processor') and hasattr(self.dut_ui.handlers.command_processor, 'parse_commands_by_section'):
+                 self.dut_ui.handlers.command_processor.parse_commands_by_section()
+
             self.dut_ui.update_from_config()
             
             # 更新 DUT 控制頁面的按鈕
@@ -449,24 +456,31 @@ class TabManager:
             # 更新 sections 列表
             self.dut_ui.components.sections = section_titles
 
-            # 設定預設選中的分類
-            if section_titles:
-                self.dut_ui.components.section_var.set(section_titles[0])
+            # 使用 components 中的方法自動建立選擇器（自動判斷按鈕或下拉選單）
+            if hasattr(self.dut_ui.components, 'create_section_selector'):
+                self.dut_ui.components.create_section_selector(section_titles)
+            else:
+                # 後備方案（如果 components 還沒更新）
+                print("[WARNING] components 缺少 create_section_selector 方法，使用舊版邏輯")
+                # 設定預設選中的分類
+                if section_titles:
+                    self.dut_ui.components.section_var.set(section_titles[0])
 
-            # 限制每行最多顯示4個按鈕
-            max_buttons_per_row = 4
+                # 限制每行最多顯示4個按鈕
+                max_buttons_per_row = 4
 
-            # 創建新按鈕
-            for i, sec in enumerate(section_titles):
-                # 計算行和列位置
-                row = i // max_buttons_per_row
-                col = i % max_buttons_per_row
+                # 創建新按鈕
+                for i, sec in enumerate(section_titles):
+                    # 計算行和列位置
+                    row = i // max_buttons_per_row
+                    col = i % max_buttons_per_row
 
-                rb = self._create_section_radiobutton(sec, row, col)
-                self.dut_ui.components.section_radiobuttons.append(rb)
+                    rb = self._create_section_radiobutton(sec, row, col)
+                    self.dut_ui.components.section_radiobuttons.append(rb)
 
-            # 更新按鈕背景色
-            self.dut_ui.components.update_radio_bg()
+            # 更新按鈕背景色 (如果是 Radiobutton 模式)
+            if hasattr(self.dut_ui.components, 'update_radio_bg'):
+                self.dut_ui.components.update_radio_bg()
 
             # 更新指令下拉選單
             self.dut_ui.components.update_cmd_list()
