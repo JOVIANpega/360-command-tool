@@ -339,13 +339,67 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         if self.sections:
             self.section_var.set(self.sections[0])
 
-        max_buttons_per_row = 4
+        # 創建區段選擇器（根據數量自動選擇 Radiobutton 或 Combobox）
+        self.create_section_selector(self.sections)
+
+        self.section_description = ttk.Label(self.section_frame, text=self.get_section_description(self.section_var.get()), style="TLabel", wraplength=300)
+        
+        # 初始更新描述位置
+        self.update_description_position()
+
+    def create_section_selector(self, sections):
+        """
+        建立區段選擇器
+        若區段數量 > 8，使用下拉選單 (Combobox)
+        若區段數量 <= 8，使用單選按鈕 (Radiobutton)
+        """
+        # 清除舊的元件
+        for widget in self.section_frame.winfo_children():
+            widget.destroy()
+        
+        self.sections = sections
         self.section_radiobuttons = []
+        self.section_combobox = None
+        
+        # 為了更靈活的佈局，使用內部 frame
+        selector_container = ttk.Frame(self.section_frame)
+        selector_container.pack(fill='x', expand=True)
+
+        # 閾值設定：超過 8 個區段就切換成下拉選單
+        if len(sections) > 8:
+            self._create_section_combobox(selector_container)
+        else:
+            self._create_section_radiobuttons(selector_container)
+
+    def _create_section_combobox(self, parent):
+        """建立區段下拉選單"""
+        ttk.Label(parent, text="選擇分類: ", font=('Microsoft JhengHei UI', 10)).pack(side='left', padx=(0, 5))
+        
+        self.section_combobox = ttk.Combobox(
+            parent, 
+            textvariable=self.section_var, 
+            values=self.sections, 
+            state='readonly',
+            font=('Microsoft JhengHei UI', 10),
+            width=20
+        )
+        self.section_combobox.pack(side='left', fill='x', expand=True)
+        self.section_combobox.bind("<<ComboboxSelected>>", lambda e: self.update_cmd_list())
+        
+        print(f"[DEBUG] 區段數量 ({len(self.sections)}) > 8，已切換至下拉選單模式")
+
+    def _create_section_radiobuttons(self, parent):
+        """建立區段單選按鈕"""
+        max_buttons_per_row = 4
+        
+        # 設定 grid 權重
+        for i in range(max_buttons_per_row):
+            parent.columnconfigure(i, weight=1)
 
         for i, sec in enumerate(self.sections):
             row, col = i // max_buttons_per_row, i % max_buttons_per_row
             rb = tk.Radiobutton(
-                self.section_frame, text=sec, variable=self.section_var, value=sec,
+                parent, text=sec, variable=self.section_var, value=sec,
                 command=self.update_cmd_list, bg='#d9d9d9', fg='black', selectcolor='#d9d9d9',
                 activebackground='#2196f3', activeforeground='white', indicatoron=0, relief='flat',
                 borderwidth=1, width=8, height=1, font=('Microsoft JhengHei UI', int(self.parent.setup.get('UI_Font_Size', '12')))
@@ -354,13 +408,18 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             rb.bind("<Enter>", lambda e, b=rb: b.config(bg="#2196f3", fg='white'))
             rb.bind("<Leave>", lambda e, b=rb: self.update_radio_bg())
             self.section_radiobuttons.append(rb)
-            self.section_frame.columnconfigure(col, weight=1)
 
         self.update_radio_bg()
+        print(f"[DEBUG] 區段數量 ({len(self.sections)}) <= 8，使用單選按鈕模式")
 
-        self.section_description = ttk.Label(self.section_frame, text=self.get_section_description(self.section_var.get()), style="TLabel", wraplength=300)
-        last_row = (len(self.sections) - 1) // max_buttons_per_row + 1
-        self.section_description.grid(row=last_row, column=0, columnspan=max_buttons_per_row, pady=2, sticky='w')
+    def update_description_position(self):
+        """更新描述標籤的位置（確保它在選擇器下方）"""
+        # 注意：由於我們現在使用了 pack 和 grid 混合（在 section_frame 內部），
+        # 描述標籤最好也放在一個單獨的 frame 或者直接 pack 到 section_frame 底部
+        
+        # 為了簡單起見，我們將描述標籤重新 pack 到 section_frame 底部
+        if hasattr(self, 'section_description'):
+            self.section_description.pack(side='bottom', anchor='w', pady=(5, 0))
 
         # 指令下拉選單區域（row=3，避免與分類按鈕重疊）
         cmd_frame = ttk.Frame(self.left_panel, style="TFrame")

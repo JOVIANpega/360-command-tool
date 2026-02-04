@@ -33,14 +33,22 @@ class CommandProcessor:
         self.commands_by_section = {}
         
         try:
+            # 決定使用哪個指令檔案
+            command_file_path = COMMAND_FILE
+            
+            # 嘗試從設定中讀取
+            if hasattr(self, 'setup') and self.setup:
+                custom_path = self.setup.get('DUT_Control', {}).get('Command_File_Path', '')
+                if custom_path and os.path.exists(custom_path):
+                    command_file_path = custom_path
+                    print(f"[DEBUG] 使用自訂指令檔案: {command_file_path}")
+            
             # 檢查命令文件是否存在
-            if not os.path.exists(COMMAND_FILE):
-                print(f"命令文件不存在: {COMMAND_FILE}")
+            if not os.path.exists(command_file_path):
+                print(f"命令文件不存在: {command_file_path}")
                 return
             
-
-            
-            with open(COMMAND_FILE, 'r', encoding='utf-8') as f:
+            with open(command_file_path, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
             
             current_section = "未分類"
@@ -50,16 +58,34 @@ class CommandProcessor:
                 if not line:
                     continue
                 
-                # 檢查是否為區段標題（以 [ 開頭，] 結尾）
+                # 檢查是否為區段標題
+                # 格式 1: [Section]
                 if line.startswith('[') and line.endswith(']'):
-                    current_section = line[1:-1]  # 移除 [ 和 ]
+                    current_section = line[1:-1]
+                    if current_section not in self.commands_by_section:
+                        self.commands_by_section[current_section] = []
+                        
+                # 格式 2: === Section === (支援指令工具的新格式)
+                elif line.startswith('==') and line.endswith('=='):
+                     # 移除首尾的 = 號，並去除可能多餘的空白
+                    current_section = line.strip('=').strip()
                     if current_section not in self.commands_by_section:
                         self.commands_by_section[current_section] = []
                 else:
                     # 這是一個命令
+                    # 如果尚未有區段，則加入 default
                     if current_section not in self.commands_by_section:
-                        self.commands_by_section[current_section] = []
-                    self.commands_by_section[current_section].append(line)
+                         self.commands_by_section[current_section] = []
+                    
+                    # 簡單判斷是否為有效指令行 (包含 =)
+                    if '=' in line:
+                        # 解析 key=value
+                        parts = line.split('=', 1)
+                        cmd_name = parts[0].strip()
+                        self.commands_by_section[current_section].append(cmd_name)
+                    else:
+                        # 純指令名稱（或許是錯的格式，但為了相容）
+                         self.commands_by_section[current_section].append(line)
             
             print(f"[DEBUG] 解析到 {len(self.commands_by_section)} 個區段")
             for section, commands in self.commands_by_section.items():

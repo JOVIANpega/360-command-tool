@@ -240,9 +240,18 @@ class SerialWorker(threading.Thread):
 
             ser.flush()
 
-        except Exception as e:
+        except serial.SerialException as e:
+            error_msg = str(e)
+            if "PermissionError" in error_msg or "存取被拒" in error_msg or "Access is denied" in error_msg:
+                self.on_data(f'\n[錯誤] 無法開啟 {self.com} (存取被拒)\n', "error")
+                self.on_data(f'[提示] 該 COM 口可能正被其他程式 (如 Tera Term) 佔用中。\n', "warning")
+                self.on_data(f'[建議 1] 請暫時斷開 Tera Term 連線 (File -> Disconnect)。\n', "warning")
+                self.on_data(f'[建議 2] 若需同時開啟 Tera Term 看 Log，請將「傳輸方式」改為 ADB 模式。\n', "warning")
+            else:
+                self.on_data(f'\n[錯誤] 序列埠錯誤: {e}\n', "error")
 
-            self.on_data(f'\n[錯誤] {e}\n', "error")
+        except Exception as e:
+            self.on_data(f'\n[錯誤] 執行失敗: {e}\n', "error")
 
         finally:
             # 使用簡化的關閉邏輯（回到舊版穩定做法）

@@ -1,7 +1,7 @@
 {
-  "version": "2.5.0",
+  "version": "2.5.1",
   "Window_Title": "PEGA指令通",
-  "Window_Width": "1536",
+  "Window_Width": "1522",
   "Window_Height": "741",
   "UIFontSize": "13",
   "ContentFontSize": "11",
@@ -28,7 +28,7 @@
     "Last_Selected_Command_Section": "全部指令",
     "Pane_Sash_Position": "636",
     "Auto_Execute": false,
-    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/360-command-tool/Command_TABLE/GEMINI - simple.txt",
+    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/360-command-tool/Command_TABLE/GEMINI.txt",
     "Notification_Font_Size": "10"
   },
   "Fixture_Control": {
@@ -40,11 +40,11 @@
     "Fixture_Font_Size": "11"
   },
   "tab_names": {
-    "tab0": "DUT 控制1",
-    "tab1": "治具控制1",
-    "tab2": "手打指令1",
-    "tab3": "DOS批次檔1",
-    "tab4": "設定我1"
+    "tab0": "DUT 控制2",
+    "tab1": "治具控制2",
+    "tab2": "手打指令2",
+    "tab3": "DOS批次檔2",
+    "tab4": "設定我2"
   },
   "UI_Settings": {
     "ToolTip_Enabled": true,
@@ -75,8 +75,8 @@
     "Command_Timeout": 30
   },
   "Command_Transport_Mode": "SSH",
-  "Device_Label": "",
-  "Startup_Label": " TOOL",
+  "Device_Label": "XXXXX",
+  "Startup_Label": " GEMINI TOOL2",
   "Manual_Command": {
     "Hint_Text": "請輸入指令並按執行"
   }
