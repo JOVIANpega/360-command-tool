@@ -320,42 +320,19 @@ class TabManager:
             self.dut_ui.setup = self.dut_ui.config.load_setup()
             self.dut_ui.handlers.reload_setup(self.dut_ui.setup)
             
-            # 強制重新解析指令文件（以確保檔案路徑變更後能讀到新內容）
-            if hasattr(self.dut_ui.handlers, 'parse_commands_by_section'):
-                 self.dut_ui.handlers.parse_commands_by_section()
-            elif hasattr(self.dut_ui.handlers, 'command_processor') and hasattr(self.dut_ui.handlers.command_processor, 'parse_commands_by_section'):
-                 self.dut_ui.handlers.command_processor.parse_commands_by_section()
-
-            self.dut_ui.update_from_config()
+            # 使用最徹底的刷新方法來同步更新指令
+            if hasattr(self.dut_ui, 'components') and hasattr(self.dut_ui.components, 'refresh_commands_fully'):
+                print("[DEBUG] 正在執行徹底刷新指令文件...")
+                self.dut_ui.components.refresh_commands_fully()
+            else:
+                # 備用方案：手動更新
+                if hasattr(self.dut_ui.handlers, 'command_processor'):
+                     self.dut_ui.commands_by_section = self.dut_ui.handlers.command_processor.parse_commands_by_section()
+                self.dut_ui.update_from_config()
+                self.update_dut_buttons()
             
-            # 更新 DUT 控制頁面的按鈕
-            self.update_dut_buttons()
-            
-            # 顯示通知給用戶 - 增加顯示時間到8秒，確保用戶能看到
-            if hasattr(self.dut_ui.components, 'show_notification'):
-                try:
-                    # 使用更醒目的通知效果 - 背景閃爍、更大字體
-                    settings_changed = [
-                        get_notification_text("settings_updated"),
-                        get_notification_text("cmd_reloaded"),
-                        get_notification_text("com_updated"),
-                        get_notification_text("end_string_updated"),
-                        get_notification_text("ip_updated"),
-                        get_notification_text("timeout_updated")
-                    ]
-                    
-                    self.dut_ui.components.show_notification(
-                        "\n".join(settings_changed), 
-                        "green", 
-                        8000,
-                        callback=lambda: self.notebook.select(0)  # 回調函數：切換到DUT控制頁面
-                    )
-                except Exception as e:
-                    print(f"[ERROR] 顯示通知時發生錯誤：{e}")
-                    # 繼續執行，不讓通知錯誤影響其他功能
-                
-                # 強制切換到DUT控制頁面，確保用戶能看到更新效果
-                self.notebook.select(0)  # 假設DUT控制頁面是第一個分頁
+            # 強制切換到DUT控制頁面，確保用戶能看到更新效果
+            self.notebook.select(0)
     
     def _read_section_titles_from_file(self, file_path):
         """從指令檔案中讀取區段標題 - 重構輔助函數"""
@@ -753,8 +730,20 @@ class TabManager:
             # 同步通知設定
             self.sync_notification_settings(fresh_setup)
 
-            # 更新啟動標籤
+            # 更新啟動標籤與設備標籤
             self.update_startup_label_from_settings(fresh_setup)
+            self.update_device_label_from_settings(fresh_setup)
+
+            # 刷新指令分類按鈕（重要！確保按鈕不會消失）
+            try:
+                if hasattr(self, 'components') and hasattr(self.components, 'refresh_commands_fully'):
+                    print("[DEBUG] 正在刷新指令分類按鈕...")
+                    self.components.refresh_commands_fully()
+                    print("[DEBUG] 指令分類按鈕刷新完成")
+            except Exception as e:
+                print(f"[WARNING] 刷新指令分類按鈕失敗: {e}")
+                import traceback
+                traceback.print_exc()
 
             # 顯示綜合更新通知
             print("[NOTIFICATION] 所有設定已更新並同步")
@@ -763,6 +752,7 @@ class TabManager:
             print("[NOTIFICATION] ✓ 界面設定")
             print("[NOTIFICATION] ✓ 標籤頁名稱")
             print("[NOTIFICATION] ✓ 視窗標題")
+            print("[NOTIFICATION] ✓ 指令分類按鈕")
             
             print("[DEBUG] 所有設定更新完成")
             
@@ -783,6 +773,7 @@ class TabManager:
                 if hasattr(self.dut_ui.components, 'update_startup_label'):
                     self.dut_ui.components.update_startup_label(startup_label_text)
                     print(f"[DEBUG] DUT 控制頁面啟動標籤已更新: {startup_label_text}")
+
                 else:
                     print("[WARNING] DUT 控制頁面沒有 update_startup_label 方法")
             else:
@@ -792,6 +783,28 @@ class TabManager:
             print(f"[ERROR] 更新啟動標籤時發生錯誤: {e}")
             import traceback
             traceback.print_exc()
+
+    def update_device_label_from_settings(self, setup):
+        """從設定更新設備標籤"""
+        try:
+            device_label_text = setup.get("Device_Label", "")
+            if not device_label_text:
+                device_label_text = setup.get("DUT_Control", {}).get("Device_Label", "MU310 : root/oelinux123")
+            
+            print(f"[DEBUG] 更新設備標籤: {device_label_text}")
+
+            # 更新 DUT 控制頁面的設備標籤
+            if hasattr(self, 'dut_ui') and hasattr(self.dut_ui, 'components'):
+                if hasattr(self.dut_ui.components, 'update_device_label'):
+                    self.dut_ui.components.update_device_label(device_label_text)
+                    print(f"[DEBUG] DUT 控制頁面設備標籤已更新: {device_label_text}")
+                else:
+                    print("[WARNING] DUT 控制頁面沒有 update_device_label 方法")
+            else:
+                print("[WARNING] DUT UI 或 components 不存在")
+
+        except Exception as e:
+            print(f"[ERROR] 更新設備標籤時發生錯誤: {e}")
 
     def sync_font_settings(self, setup):
         """同步字體設定"""
@@ -967,22 +980,25 @@ class TabManager:
             setup = load_setup()
             tab_names = setup.get('tab_names', {})
             
-            # 預設的標籤頁名稱
-            default_tab_names = ['DUT 控制', '治具控制', 'DOS 工具', '設定']
-            
             # 更新每個標籤頁的名稱
-            for i in range(min(4, self.notebook.index('end'))):
+            total_tabs = self.notebook.index('end')
+            for i in range(total_tabs):
                 tab_key = f'tab{i}'
                 if tab_key in tab_names:
                     new_name = tab_names[tab_key]
                 else:
+                    # 預設的標籤頁名稱
+                    default_tab_names = ['DUT 控制', '治具控制', '手打指令', 'DOS 工具', '設定']
                     new_name = default_tab_names[i] if i < len(default_tab_names) else f"標籤頁 {i+1}"
                 
                 # 只有當名稱實際改變時才更新
-                current_name = self.notebook.tab(i, "text")
-                if current_name != new_name:
-                    self.notebook.tab(i, text=new_name)
-                    print(f"[DEBUG] 標籤頁 {i} 名稱已更新: {current_name} → {new_name}")
+                try:
+                    current_name = self.notebook.tab(i, "text")
+                    if current_name != new_name:
+                        self.notebook.tab(i, text=new_name)
+                        print(f"[DEBUG] 標籤頁 {i} 名稱已更新: {current_name} → {new_name}")
+                except Exception as e:
+                    print(f"[WARNING] 無法更新標籤頁 {i} 名稱: {e}")
             
             # 顯示更新訊息
             print("[NOTIFICATION] 標籤頁名稱已同步更新")
@@ -2077,8 +2093,8 @@ class SerialUI:
 
         # 8. 更新指令相關設定
         # 重新解析指令文件
-        if hasattr(self.handlers, 'parse_commands_by_section'):
-            self.commands_by_section = self.handlers.parse_commands_by_section()
+        if hasattr(self.handlers, 'command_processor') and hasattr(self.handlers.command_processor, 'parse_commands_by_section'):
+            self.commands_by_section = self.handlers.command_processor.parse_commands_by_section()
 
             # 更新指令下拉選單
             if hasattr(c, 'update_cmd_list'):

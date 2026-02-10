@@ -323,13 +323,23 @@ class UIComponentsInput:
 
 
         # 創建指令下拉選單
-        self.combobox_cmd = ttk.Combobox(cmd_frame, width=30, height=15)
+        self.combobox_cmd = ttk.Combobox(cmd_frame, width=30, height=15, postcommand=self.update_cmd_list)
 
 
         self.combobox_cmd.grid(row=0, column=1, padx=5, sticky='ew')
 
 
         self.combobox_cmd.bind("<<ComboboxSelected>>", lambda e: self.on_cmd_selected())
+ 
+        # 刷新按鈕 (🔄)
+        self.btn_cmd_reload = tk.Button(cmd_frame, text='🔄', command=self.update_cmd_list,
+                                      bg='#e0e0e0', fg='black', activebackground='#2196f3', activeforeground='black',
+                                      width=2, height=1, font=('Arial', 10, 'bold'))
+        self.btn_cmd_reload.grid(row=0, column=2, padx=3)
+        
+        # 加入 ToolTip 說明
+        if self.parent.tooltip_manager:
+            self.parent.tooltip_manager.add_tooltip_with_text(self.btn_cmd_reload, "重新載入指令外部檔案內容")
 
 
         
@@ -779,7 +789,11 @@ class UIComponentsInput:
         # 重新讀取 command.txt
 
 
-        self.parent.commands_by_section = self.parent.handlers.parse_commands_by_section()
+        # 如果 commands_by_section 還是空的，嘗試載入一次
+        if not hasattr(self.parent, 'commands_by_section') or not self.parent.commands_by_section:
+            new_cmds = self.parent.handlers.command_processor.parse_commands_by_section()
+            if new_cmds:
+                self.parent.commands_by_section = new_cmds
 
 
         cmds = self.parent.commands_by_section.get(section, {})
@@ -791,19 +805,14 @@ class UIComponentsInput:
             cmds = self.parent.commands_by_section.get('全部指令', {})
 
 
-        self.combobox_cmd['values'] = list(cmds.keys())
-
-
-        # 自動選中第一個指令
-
-
-        if cmds:
-
-
-            first_cmd = list(cmds.keys())[0]
-
-
-            self.combobox_cmd.set(first_cmd)
+        curr_val = self.combobox_cmd.get()
+        new_names = list(cmds.keys())
+        self.combobox_cmd['values'] = new_names
+        
+        if curr_val in new_names:
+            self.combobox_cmd.set(curr_val)
+        elif new_names:
+            self.combobox_cmd.set(new_names[0])
 
 
         else:
@@ -890,13 +899,15 @@ class UIComponentsInput:
             if cmd_content:
 
 
-                self.section_description.config(text=f"指令內容: {cmd_content}")
+                if hasattr(self, 'cmd_content_label'):
+                    self.cmd_content_label.config(text=f"指令內容: {cmd_content}")
 
 
             else:
 
 
-                self.section_description.config(text="無法獲取指令內容")
+                if hasattr(self, 'cmd_content_label'):
+                    self.cmd_content_label.config(text="無法獲取指令內容")
 
 
                 

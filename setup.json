@@ -1,5 +1,5 @@
 {
-  "version": "2.5.2",
+  "version": "2.5.4",
   "Window_Title": "PEGA指令通",
   "Window_Width": "1536",
   "Window_Height": "793",
@@ -29,7 +29,8 @@
     "Pane_Sash_Position": "636",
     "Auto_Execute": false,
     "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/360-command-tool/Command_TABLE/GEMINI.txt",
-    "Notification_Font_Size": "10"
+    "Notification_Font_Size": "10",
+    "Single_Command_Timeout": "3"
   },
   "Fixture_Control": {
     "Fixture_COM_Port": "",
@@ -75,9 +76,9 @@
     "Command_Timeout": 30
   },
   "Command_Transport_Mode": "SSH",
-  "Device_Label": "XXXXX88888",
-  "Startup_Label": " GEMINI TOOL18888",
+  "Device_Label": "XXXXXEEE22",
+  "Startup_Label": " GEMINI TOOL22",
   "Manual_Command": {
-    "Hint_Text": "請輸入指令並按執行"
+    "Hint_Text": "請輸入指令並按執行222"
   }
 }

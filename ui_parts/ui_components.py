@@ -311,28 +311,25 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         # 分類按鈕區域（row=2）
         self.section_frame = ttk.Frame(self.left_panel, style="TFrame")
         self.section_frame.grid(row=2, column=0, sticky='ew', pady=5)
-        for i in range(4):
-            self.section_frame.columnconfigure(i, weight=1)
+        
+        # 建立專用的子容器，用於放置動態生成的分類按鈕/下拉選單
+        self.selector_subframe = ttk.Frame(self.section_frame, style="TFrame")
+        self.selector_subframe.pack(side='top', fill='x', expand=True)
+        
         self.section_var = tk.StringVar()
 
-        # 從 command.txt 動態讀取分類
-        self.sections = []
-        try:
-            command_file_path = self.parent.setup.get("DUT_Control", {}).get("Command_File_Path", "")
-            command_file = command_file_path if command_file_path and os.path.exists(command_file_path) else COMMAND_FILE
-            
 
-            
-            with open(command_file, 'r', encoding='utf-8') as f:
-                for line in f:
-                    line = line.strip()
-                    if line.startswith('==') and line.endswith('=='):
-                        section_name = line.strip('=')
-                        if section_name and section_name not in self.sections:
-                            self.sections.append(section_name)
-        except Exception as e:
-            print(f"[ERROR] 讀取分類時發生錯誤: {e}")
-
+        # 使用 CommandProcessor 進行統一解析
+        if not hasattr(self.handlers, 'command_processor'):
+            from ui_parts.command_processor import CommandProcessor
+            self.handlers.command_processor = CommandProcessor(self.parent)
+        
+        print("[DEBUG] 正在初始化指令分類...")
+        new_cmds = self.handlers.command_processor.parse_commands_by_section()
+        self.parent.commands_by_section = new_cmds
+        
+        # 獲取區段列表
+        self.sections = list(new_cmds.keys())
         if not self.sections:
             self.sections = ['全部指令']
 
@@ -342,10 +339,13 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         # 創建區段選擇器（根據數量自動選擇 Radiobutton 或 Combobox）
         self.create_section_selector(self.sections)
 
+        # 建立描述標籤，放置在 section_frame 底部 (改用 grid 避免與 packed selector_subframe 衝突導致元件消失)
         self.section_description = ttk.Label(self.section_frame, text=self.get_section_description(self.section_var.get()), style="TLabel", wraplength=300)
-        
-        # 初始更新描述位置
-        self.update_description_position()
+        self.section_description.pack(side='bottom', anchor='w', pady=(5, 0))
+
+        # 初始指令列與 Ping 組件 (這兩個 gridded to left_panel)
+        self.init_cmd_row()
+        self.init_ping_components()
 
     def create_section_selector(self, sections):
         """
@@ -353,23 +353,30 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         若區段數量 > 8，使用下拉選單 (Combobox)
         若區段數量 <= 8，使用單選按鈕 (Radiobutton)
         """
-        # 清除舊的元件
-        for widget in self.section_frame.winfo_children():
-            widget.destroy()
+        # 確保子容器存在且位置正確
+        if not hasattr(self, 'selector_subframe') or not self.selector_subframe.winfo_exists():
+            self.selector_subframe = ttk.Frame(self.section_frame, style="TFrame")
+            self.selector_subframe.pack(side='top', fill='x', expand=True)
+            print("[DEBUG] 已重新建立 selector_subframe")
+        else:
+            # 只清除子容器的元件
+            for widget in self.selector_subframe.winfo_children():
+                widget.destroy()
+            print(f"[DEBUG] 已清除 selector_subframe 的 {len(self.selector_subframe.winfo_children())} 個子元件")
+        
+        target = self.selector_subframe
         
         self.sections = sections
         self.section_radiobuttons = []
         self.section_combobox = None
         
-        # 為了更靈活的佈局，使用內部 frame
-        selector_container = ttk.Frame(self.section_frame)
-        selector_container.pack(fill='x', expand=True)
-
-        # 閾值設定：超過 8 個區段就切換成下拉選單
         if len(sections) > 8:
-            self._create_section_combobox(selector_container)
+            self._create_section_combobox(target)
         else:
-            self._create_section_radiobuttons(selector_container)
+            self._create_section_radiobuttons(target)
+        
+        # 確認按鈕是否正確創建
+        print(f"[DEBUG] create_section_selector 完成，selector_subframe 有 {len(self.selector_subframe.winfo_children())} 個子元件")
 
     def _create_section_combobox(self, parent):
         """建立區段下拉選單"""
@@ -414,63 +421,63 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
 
     def update_description_position(self):
         """更新描述標籤的位置（確保它在選擇器下方）"""
-        # 注意：由於我們現在使用了 pack 和 grid 混合（在 section_frame 內部），
-        # 描述標籤最好也放在一個單獨的 frame 或者直接 pack 到 section_frame 底部
-        
-        # 為了簡單起見，我們將描述標籤重新 pack 到 section_frame 底部
-        if hasattr(self, 'section_description'):
-            self.section_description.pack(side='bottom', anchor='w', pady=(5, 0))
+        pass
+
+    def init_cmd_row(self):
+        """初始化指令選擇與執行區域"""
+        if hasattr(self, 'cmd_frame') and self.cmd_frame.winfo_exists():
+            self.cmd_frame.grid(row=3, column=0, sticky='ew', pady=3)
+            return self.cmd_frame
 
         # 指令下拉選單區域（row=3，避免與分類按鈕重疊）
-        cmd_frame = ttk.Frame(self.left_panel, style="TFrame")
-        cmd_frame.grid(row=3, column=0, sticky='ew', pady=3)
-        cmd_frame.columnconfigure(1, weight=1)  # 讓指令下拉選單擴展
-        cmd_frame.columnconfigure(2, weight=0)  # 執行指令按鈕固定大小
+        self.cmd_frame = ttk.Frame(self.left_panel, style="TFrame")
+        self.cmd_frame.grid(row=3, column=0, sticky='ew', pady=3)
+        self.cmd_frame.columnconfigure(1, weight=1)
         
-        self.label_cmd = ttk.Label(cmd_frame, text='指令:', style="TLabel")
+        self.label_cmd = ttk.Label(self.cmd_frame, text='指令:', style="TLabel")
         self.label_cmd.grid(row=0, column=0, sticky='w')
         
-        font_size = int(self.parent.setup.get('UI_Font_Size', '12'))
+        # 獲取字體大小
+        ui_font_size = int(self.parent.setup.get('DUT_Control', {}).get('UI_Font_Size', self.parent.setup.get('UI_Font_Size', '12')))
         style = ttk.Style()
-        style.configure('Custom.TCombobox', font=('Microsoft JhengHei UI', font_size))
+        style.configure('Custom.TCombobox', font=('Microsoft JhengHei UI', ui_font_size))
         
-        self.combobox_cmd = ttk.Combobox(cmd_frame, state='readonly', width=25, style='Custom.TCombobox')
+        self.combobox_cmd = ttk.Combobox(self.cmd_frame, state='readonly', width=25, style='Custom.TCombobox', postcommand=self.update_cmd_list)
         self.combobox_cmd.grid(row=0, column=1, padx=5, sticky='ew')
         self.combobox_cmd.bind("<<ComboboxSelected>>", lambda e: self.on_cmd_selected())
         self.combobox_cmd.bind("<<ComboboxOpened>>", self.limit_dropdown_height)
 
-        self.btn_execute = tk.Button(
-            cmd_frame, text='執行指令', font=('Microsoft JhengHei UI', 14, 'bold'),
-            bg='#4CAF50', fg='white', relief='raised', borderwidth=2, cursor="hand2",
-            command=self.parent.handlers.on_execute, width=14, height=2
-        )
-        # Restore btn_execute placement
-        self.btn_execute.grid(row=0, column=2, sticky='e', padx=(5, 5))
-        self.btn_execute.bind("<Enter>", self.on_enter_exec)
-        self.btn_execute.bind("<Leave>", self.on_leave_exec)
-
-        # 腳本執行按鈕 - 新增在指令區域上方或下方
-        # 這裡選擇在 cmd_frame 中的 "執行指令" 按鈕左側，或者在分类按钮下方
-        
-        # 為了更好的佈局，我們將 "執行腳本" 功能加入到 cmd_frame
-        # 調整 cmd_frame 的 columnconfigure
-        cmd_frame.columnconfigure(2, weight=0)
-        cmd_frame.columnconfigure(3, weight=0)
-
+        # 執行腳本按鈕 (原本在 column 4)
         self.btn_run_script = tk.Button(
-            cmd_frame, text='執行腳本', font=('Microsoft JhengHei UI', 10),
+            self.cmd_frame, text='執行腳本', font=('Microsoft JhengHei UI', 10),
             bg='#FF9800', fg='white', relief='raised', borderwidth=2, cursor="hand2",
             command=self.parent.handlers.run_script_click, width=10, height=1
         )
-        self.btn_run_script.grid(row=0, column=3, sticky='e', padx=(5, 0))
-        
-        # 添加 Tooltip
-        if hasattr(self, 'tooltip_manager') and self.tooltip_manager:
-            self.tooltip_manager.add_tooltip_with_text(self.btn_run_script, "點擊選擇：執行外部腳本或當前分類所有指令")
+        self.btn_run_script.grid(row=0, column=2, sticky='e', padx=(5, 2))
 
+        # 執行指令按鈕 (原本在 column 5)
+        self.btn_execute = tk.Button(
+            self.cmd_frame, text='執行指令', font=('Microsoft JhengHei UI', 14, 'bold'),
+            bg='#4CAF50', fg='white', relief='raised', borderwidth=2, cursor="hand2",
+            command=self.parent.handlers.on_execute, width=12, height=2
+        )
+        self.btn_execute.grid(row=0, column=3, sticky='e', padx=(5, 5))
+        self.btn_execute.bind("<Enter>", self.on_enter_exec)
+        self.btn_execute.bind("<Leave>", self.on_leave_exec)
 
+        # 指令內容顯示標籤（放在指令下拉選單下方）
+        self.cmd_content_label = ttk.Label(
+            self.cmd_frame, 
+            text='', 
+            style="TLabel", 
+            wraplength=500,
+            foreground='#666666'
+        )
+        self.cmd_content_label.grid(row=1, column=0, columnspan=4, sticky='w', padx=5, pady=(2, 0))
 
         self.combobox_cmd.bind('<Return>', lambda event: self.parent.handlers.on_execute())
+        
+        return self.cmd_frame
 
     def on_enter_exec(self, event):
         self.btn_execute.config(bg='#2196F3')
@@ -619,6 +626,91 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             
         except Exception as e:
             messagebox.showerror("錯誤", f"載入檔案失敗：{str(e)}")
+
+    def update_startup_label(self, new_text):
+        """更新啟動標籤文字"""
+        if hasattr(self, 'startup_label_manager'):
+            self.startup_label_manager.update_label_text(new_text)
+
+    def update_device_label(self, new_text):
+        """更新設備標籤文字"""
+        if hasattr(self, 'device_label'):
+            # 限制最多顯示100個字元
+            if len(new_text) > 100:
+                new_text = new_text[:100]
+            self.device_label.config(text=new_text)
+            print(f"[DEBUG] 設備標籤已更新: {new_text}")
+
+    def refresh_commands_fully(self):
+        """徹底重新載入指令與分類區段"""
+        try:
+            print("[DEBUG] 正在徹底重新載入指令文件與分類...")
+            # 1. 重新解析所有指令與區段
+            if hasattr(self.handlers, 'command_processor'):
+                new_cmds = self.handlers.command_processor.parse_commands_by_section()
+            else:
+                from ui_parts.command_processor import CommandProcessor
+                self.handlers.command_processor = CommandProcessor(self.handlers)
+                new_cmds = self.handlers.command_processor.parse_commands_by_section()
+                
+            if not new_cmds:
+                self.show_notification("無法解析指令文件或文件不存在", "error")
+                return
+
+            self.parent.commands_by_section = new_cmds
+            
+            # 2. 獲取新的區段列表
+            new_sections = list(new_cmds.keys())
+            if not new_sections:
+                new_sections = ['全部指令']
+            
+            # 3. 重新建立區段選擇器 (Radiobuttons 或 Combobox)
+            current_section = self.section_var.get()
+            print(f"[DEBUG] 準備重新建立區段選擇器，當前分類: {current_section}, 新分類列表: {new_sections}")
+            self.create_section_selector(new_sections)
+            print(f"[DEBUG] 區段選擇器重建完成")
+            
+            # 如果之前的區段還在，恢復它，否則選第一個
+            if current_section in new_sections:
+                self.section_var.set(current_section)
+            else:
+                self.section_var.set(new_sections[0])
+            
+            # 4. 更新指令下拉選單內容 (此方法內部也會呼叫 parse_commands_by_section)
+            self.update_cmd_list()
+            
+            # 5. 強制確保各個容器依然在 grid 中 (防止因為佈局刷新導致元件縮小或隱藏)
+            if hasattr(self, 'section_frame') and self.section_frame.winfo_exists():
+                self.section_frame.grid(row=2, column=0, sticky='ew', pady=5)
+                # 確保描述標籤位置正常（selector_subframe 已在 create_section_selector 中正確設置，不需要重複 pack）
+                if hasattr(self, 'section_description') and self.section_description.winfo_exists():
+                    self.section_description.pack(side='bottom', anchor='w', pady=(5, 0))
+            
+            self.init_cmd_row()
+            if hasattr(self, 'init_ping_components'):
+                self.init_ping_components()
+
+            # 強制更新 UI 並重繪
+            self.parent.root.update_idletasks()
+            
+            # 獲取實際讀取的檔名用於提示
+            try:
+                actual_path = self.handlers.command_processor.get_last_read_path()
+                filename = os.path.basename(actual_path)
+            except:
+                filename = "command.txt"
+
+            total_cmds = len(new_cmds.get('全部指令', {}))
+            self.show_notification(f"✅ 指令已刷新！自 {filename} 載入 {total_cmds} 個指令", "green", 5000)
+            print(f"[DEBUG] 徹底刷新完成: {filename}, 共 {total_cmds} 個指令")
+            
+            # 強制 UI 刷新畫面
+            self.parent.root.update_idletasks()
+            
+        except Exception as e:
+            print(f"[ERROR] 徹底刷新指令時發生錯誤: {e}")
+            import traceback
+            traceback.print_exc()
     
     def save_command_file(self, file_path):
         """儲存指令檔案"""
@@ -1256,12 +1348,6 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         try:
             print(f"[DEBUG] regenerate_section_buttons: 重新生成分類按鈕，新分類: {new_sections}")
             
-            # 清除現有的分類按鈕
-            if hasattr(self, 'section_radiobuttons'):
-                for rb in self.section_radiobuttons:
-                    rb.destroy()
-                self.section_radiobuttons = []
-            
             # 更新分類列表
             self.sections = new_sections
             
@@ -1276,39 +1362,11 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                     self.section_var.set(self.sections[0])
                     print(f"[DEBUG] regenerate_section_buttons: 設定預設選中的分類: {self.sections[0]}")
             
-            # 限制每行最多顯示4個按鈕
-            max_buttons_per_row = 4
-            self.section_radiobuttons = []
-            
-            # 創建新的分類按鈕
-            for i, sec in enumerate(self.sections):
-                # 計算行和列位置
-                row = i // max_buttons_per_row
-                col = i % max_buttons_per_row
-                
-                rb = tk.Radiobutton(
-                    self.section_frame, text=sec, variable=self.section_var, value=sec, 
-                    command=self.update_cmd_list,
-                    bg='#d9d9d9', fg='black', selectcolor='#d9d9d9', 
-                    activebackground='#2196f3', activeforeground='white',
-                    indicatoron=0, relief='flat', borderwidth=1, width=8, height=1,
-                    font=('Microsoft JhengHei UI', int(self.parent.setup.get('UI_Font_Size', '12')))
-                )
-                rb.grid(row=row, column=col, padx=1, pady=1, sticky='ew')
-                rb.bind("<Enter>", lambda e, b=rb: b.config(bg="#2196f3", fg='white'))
-                rb.bind("<Leave>", lambda e, b=rb: self.update_radio_bg())
-                self.section_radiobuttons.append(rb)
-                
-                # 設置列的權重，使按鈕平均分配空間
-                self.section_frame.columnconfigure(col, weight=1)
+            # 使用 create_section_selector 重新創建選擇器（避免 pack/grid 混用）
+            self.create_section_selector(new_sections)
             
             # 更新按鈕背景色
             self.update_radio_bg()
-            
-            # 更新說明文字的位置
-            if hasattr(self, 'section_description'):
-                last_row = (len(self.sections) - 1) // max_buttons_per_row + 1
-                self.section_description.grid(row=last_row, column=0, columnspan=max_buttons_per_row, pady=2, sticky='w')
             
             print(f"[DEBUG] regenerate_section_buttons: 已重新生成 {len(self.sections)} 個分類按鈕")
             
@@ -1610,11 +1668,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
 
     # 移除自動執行相關方法 - 功能已不需要
 
-    def show_notification(self, message, color="info", duration=2000, callback=None):
-        """
-        簡化的通知方法，只輸出到控制台
-        """
-        print(f"[NOTIFICATION] {message}")
+    # 指保留原本的 show_notification，不重複 override
 
     def on_cmd_selected(self):
         """當選擇指令時的回調函數"""
@@ -1627,6 +1681,11 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             
             # 顯示選擇的指令內容
             self.show_notification(get_notification_text("cmd_selected", cmd_key), "blue", 3000)
+            
+            # 更新指令內容標籤（在指令下拉選單下方）
+            if hasattr(self, 'cmd_content_label'):
+                self.cmd_content_label.config(text=f"指令內容: {cmd}")
+                print(f"[DEBUG] 更新指令內容顯示: {cmd}")
             
             # 如果是特殊指令，顯示提示
             if cmd.startswith("DELAY:"):
