@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='PEGA指令通_V2.5.1',
+    name='PEGA指令通_V2.5.41',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

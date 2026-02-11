@@ -2,10 +2,10 @@
 
 
 a = Analysis(
-    ['main.py'],
+    ['MAIN.PY'],
     pathex=[],
     binaries=[],
-    datas=[('tooltips.ini', '.'), ('setup.json', '.'), ('command.txt', '.'), ('color_word.txt', '.'), ('tooltip_config.txt', '.'), ('user_guide.txt', '.'), ('PEGA指令通使用指南.html', '.'), ('readROVO.txt', '.'), ('sign_DOC.txt', '.'), ('Command_TABLE', 'Command_TABLE'), ('FIXTURE', 'FIXTURE'), ('core', 'core'), ('ui_parts', 'ui_parts'), ('assets', 'assets')],
+    datas=[('tooltips.ini', '.'), ('setup.json', '.'), ('command.txt', '.'), ('color_word.txt', '.'), ('tooltip_config.txt', '.'), ('user_guide.txt', '.'), ('readROVO.txt', '.'), ('sign_DOC.txt', '.'), ('Command_TABLE', 'Command_TABLE'), ('FIXTURE', 'FIXTURE'), ('core', 'core'), ('ui_parts', 'ui_parts'), ('transport', 'transport'), ('assets', 'assets')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -36,5 +36,5 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     version='version_info_zh.txt',
-    icon=['assets\\app.ico'],
+    icon=['assets\\icon.ico'],
 )

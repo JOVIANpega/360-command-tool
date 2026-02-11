@@ -1,7 +1,7 @@
 
 
  ===Gemeni 1===
-FANDD speed=./mfg_sources/fan_control.sh speed 10==>date
+FAN speed=./mfg_sources/fan_control.sh speed 10==>date
 01 Read RTC=date
 02 Set RTC=date -s "2022-10-27 09:57:10"==>hwclock -w
 03 Show Information=export NPU_ONLY=1==>./show_version
@@ -21,7 +21,6 @@ FANDD speed=./mfg_sources/fan_control.sh speed 10==>date
 17 Get FB EEPROM=./mfg_sources/fb_eeprom_check_by_cpu.sh
 18 Get FCB/FTM Data=./mfg_sources/ftm_eeprom_check.sh
 19 FAN speed set=./mfg_sources/fan_control.sh speed 10
-
 21 Read Fan Status=./mfg_sources/fan_monitor_by_cpu.sh 5
 22 Set Fan Init Flag=i2cset -y 0 0x47 0x89 0x1
 23 LED All Off=./mfg_sources/led_control.sh blue

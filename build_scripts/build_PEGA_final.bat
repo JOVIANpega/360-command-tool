@@ -1,12 +1,15 @@
 @echo off
 chcp 65001 > nul
 
+rem 切換到專案根目錄
+cd /d "%~dp0.."
+
 rem 讀取版本號從 setup.json
 echo [初始化] 讀取版本號...
 for /f "delims=" %%i in ('python get_version.py') do set APP_VERSION=%%i
 if "%APP_VERSION%"=="" (
-    echo [警告] 無法讀取版本號，使用預設值 2.5.0
-    set APP_VERSION=2.5.0
+    echo [警告] 無法讀取版本號，使用預設值 2.5.4
+    set APP_VERSION=2.5.4
 )
 
 echo.
@@ -41,8 +44,8 @@ if %errorlevel% neq 0 (
 
 rem 檢查必要文件
 echo [步驟2] 檢查必要文件...
-if not exist "main.py" (
-    echo [錯誤] 找不到main.py
+if not exist "MAIN.PY" (
+    echo [錯誤] 找不到MAIN.PY
     pause
     exit /b 1
 )
@@ -84,16 +87,16 @@ pyinstaller ^
     --add-data "color_word.txt;." ^
     --add-data "tooltip_config.txt;." ^
     --add-data "user_guide.txt;." ^
-    --add-data "PEGA指令通使用指南.html;." ^
     --add-data "readROVO.txt;." ^
     --add-data "sign_DOC.txt;." ^
     --add-data "Command_TABLE;Command_TABLE" ^
     --add-data "FIXTURE;FIXTURE" ^
     --add-data "core;core" ^
     --add-data "ui_parts;ui_parts" ^
+    --add-data "transport;transport" ^
     --add-data "assets;assets" ^
-    --icon "assets/app.ico" ^
-    main.py
+    --icon "assets/icon.ico" ^
+    MAIN.PY
 
 rem 檢查結果
 echo.
@@ -111,6 +114,7 @@ if exist "dist\PEGA指令通_V%APP_VERSION%.exe" (
     if not exist "dist\FIXTURE" mkdir "dist\FIXTURE"
     if not exist "dist\core" mkdir "dist\core"
     if not exist "dist\ui_parts" mkdir "dist\ui_parts"
+    if not exist "dist\transport" mkdir "dist\transport"
     
     rem 複製資料夾（包含子資料夾與檔案）
     xcopy /E /I /Y "assets" "dist\assets\" > nul
@@ -118,6 +122,7 @@ if exist "dist\PEGA指令通_V%APP_VERSION%.exe" (
     xcopy /E /I /Y "FIXTURE" "dist\FIXTURE\" > nul
     xcopy /E /I /Y "core" "dist\core\" > nul
     xcopy /E /I /Y "ui_parts" "dist\ui_parts\" > nul
+    xcopy /E /I /Y "transport" "dist\transport\" > nul
     
     rem 複製單一檔案
     copy /Y "setup.json" "dist\" > nul
@@ -126,7 +131,6 @@ if exist "dist\PEGA指令通_V%APP_VERSION%.exe" (
     copy /Y "color_word.txt" "dist\" > nul
     copy /Y "command.txt" "dist\" > nul
     copy /Y "user_guide.txt" "dist\" > nul
-    copy /Y "PEGA指令通使用指南.html" "dist\" > nul
     copy /Y "readROVO.txt" "dist\" > nul
     copy /Y "sign_DOC.txt" "dist\" > nul
     
