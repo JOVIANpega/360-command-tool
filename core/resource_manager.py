@@ -137,8 +137,29 @@ class ResourceManager:
         # 處理設定文件
         if relative_path == 'setup.json':
             return self._ensure_setup_file(base_path, relative_path)
+            
+        # 處理提示文件
+        if relative_path == 'tooltips.ini':
+            return self._find_tooltip_file(base_path)
         
         return os.path.join(base_path, relative_path)
+    
+    def _find_tooltip_file(self, base_path: str) -> str:
+        """尋找提示文件"""
+        possible_paths = [
+            os.path.join(base_path, 'docs', 'tooltips.ini'),
+            os.path.join(base_path, 'tooltips.ini'),
+            os.path.join(os.path.dirname(base_path), 'docs', 'tooltips.ini')
+        ]
+        
+        for path in possible_paths:
+            if os.path.exists(path):
+                self.error_handler.log_debug(f"找到提示檔: {path}")
+                return path
+        
+        default_path = os.path.join(base_path, 'docs', 'tooltips.ini')
+        self.error_handler.log_warning(f"無法找到提示檔，使用預設路徑: {default_path}")
+        return default_path
     
     def _find_command_file(self, base_path: str) -> str:
         """尋找指令文件"""

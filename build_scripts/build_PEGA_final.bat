@@ -49,12 +49,11 @@ pyinstaller ^
     --noconsole ^
     --name "PEGA指令通_V%APP_VERSION%" ^
     --version-file "version_info_zh.txt" ^
-    --add-data "tooltips.ini;." ^
+    --add-data "docs\tooltips.ini;." ^
     --add-data "setup.json;." ^
     --add-data "command.txt;." ^
     --add-data "color_word.txt;." ^
-    --add-data "tooltip_config.txt;." ^
-    --add-data "user_guide.txt;." ^
+    --add-data "docs\tooltip_config.txt;." ^
     --add-data "readROVO.txt;." ^
     --add-data "sign_DOC.txt;." ^
     --add-data "Command_TABLE;Command_TABLE" ^
@@ -86,11 +85,10 @@ if exist "dist\PEGA指令通_V%APP_VERSION%.exe" (
     xcopy /E /I /Y "docs\VALO360_guide_files" "dist\VALO360_guide_files\" > nul
     
     copy /Y "setup.json" "dist\" > nul
-    copy /Y "tooltips.ini" "dist\" > nul
-    copy /Y "tooltip_config.txt" "dist\" > nul
+    copy /Y "docs\tooltips.ini" "dist\" > nul
+    copy /Y "docs\tooltip_config.txt" "dist\" > nul
     copy /Y "color_word.txt" "dist\" > nul
     copy /Y "command.txt" "dist\" > nul
-    copy /Y "user_guide.txt" "dist\" > nul
     copy /Y "docs\PEGA指令通使用指南.html" "dist\" > nul
     copy /Y "readROVO.txt" "dist\" > nul
     copy /Y "sign_DOC.txt" "dist\" > nul
