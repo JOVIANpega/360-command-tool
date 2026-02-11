@@ -80,7 +80,8 @@ class SSHWorker(threading.Thread):
                  on_status: Callable[[bool], None],
                  on_progress: Callable[[int], None],
                  on_finish: Callable[[], None],
-                 stop_event: threading.Event):
+                 stop_event: threading.Event,
+                 cmd_timeout: float = 30.0):
         """
         初始化 SSH 工作器
         
@@ -110,6 +111,7 @@ class SSHWorker(threading.Thread):
         self.cmd_list = cmd_list
         self.end_str = end_str
         self.timeout = timeout
+        self.cmd_timeout = cmd_timeout
         
         # 回調函數
         self.on_data = on_data
@@ -317,7 +319,7 @@ class SSHWorker(threading.Thread):
             log_debug(f"包裝後的指令: {wrapped_command}")
             
             # 執行指令
-            stdin, stdout, stderr = self.ssh_client.exec_command(wrapped_command, timeout=self.timeout)
+            stdin, stdout, stderr = self.ssh_client.exec_command(wrapped_command, timeout=self.cmd_timeout)
             
             # 讀取輸出
             stdout_data = stdout.read().decode("utf-8", errors="ignore")

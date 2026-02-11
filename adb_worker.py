@@ -23,7 +23,7 @@ class ADBWorker(threading.Thread):
 
     def __init__(self, cmd_list: List[str], end_str: str, timeout: float,
                  on_data: Callable, on_status: Callable, on_progress: Callable,
-                 on_finish: Callable, stop_event: threading.Event):
+                 on_finish: Callable, stop_event: threading.Event, cmd_timeout: float = 30.0):
         super().__init__()
 
         # 初始化核心組件
@@ -34,6 +34,7 @@ class ADBWorker(threading.Thread):
         self.cmd_list = cmd_list
         self.end_str = end_str
         self.timeout = timeout
+        self.cmd_timeout = cmd_timeout
 
         # 回調函數
         self.on_data = on_data
@@ -86,7 +87,7 @@ class ADBWorker(threading.Thread):
                 startupinfo.wShowWindow = subprocess.SW_HIDE
 
             # 執行指令
-            result = subprocess.run(adb_cmd, capture_output=True, text=True, timeout=30,
+            result = subprocess.run(adb_cmd, capture_output=True, text=True, timeout=self.cmd_timeout,
                                   startupinfo=startupinfo)
 
             return result.returncode, result.stdout, result.stderr

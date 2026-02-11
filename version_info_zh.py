@@ -13,9 +13,9 @@ import sys
 import datetime
 
 version_info = {
-    'version': '2.5.2',
-    'file_version': (2, 5, 2, 0),
-    'product_version': (2, 5, 2, 0),
+    'version': '2.5.3',
+    'file_version': (2, 5, 3, 0),
+    'product_version': (2, 5, 3, 0),
     'company_name': 'PEGA指令通',
     'file_description': 'PEGA指令通 - 序列埠通訊工具',
     'internal_name': 'PEGA指令通',
@@ -27,6 +27,14 @@ version_info = {
 
 # 版本更新記錄
 version_history = """
+v2.5.3 (2026-02-10)
+----------------------
+• 指令超時功能強化 (TIMEOUT 可設定)：
+  - 分離「總超時」與「單個指令待響應超時」設定。
+  - 新增「單個指令待響應超時 (秒)」於設定頁面。
+  - 支援 Console、ADB、SSH 三種傳輸方式同步套用單個指令超時設定。
+  - 解決原本寫死 10 秒等待響應的問題，讓長時執行腳本更穩定。
+
 v2.5.2 (2026-02-04)
 ----------------------
 • 日誌系統優化 (清理日誌產生)：
@@ -188,15 +196,15 @@ v1.5.0.1 (2025-07-12)
 # 定義版本號
 VERSION = version_info['version']
 
-APP_VERSION = "V2.5.2"
-APP_VERSION_DETAIL = "\n【V2.5.2 主要更新】\n- 停用自動產生 logs\ 目錄，改進備份功能並自動開啟資料夾\n- 新增對 #, ;, // 註解指令的支援\n- 修正 ToolTip 指引線在多螢幕下的繪製問題\n"
+APP_VERSION = "V2.5.3"
+APP_VERSION_DETAIL = "\n【V2.5.3 主要更新】\n- 新增「單個指令待響應超時」設定，可自訂單條指令等待時間\n- Console/ADB/SSH 模式全面支持自定義超時設定\n- 解決長執行指令因 10s 限制導致中斷的問題\n"
 
 # 生成版本資訊檔案
 with open("version_info_zh.txt", "w", encoding="utf-8") as f:
     f.write("VSVersionInfo(\n")
     f.write("  ffi=FixedFileInfo(\n")
-    f.write("    filevers=(2, 5, 2, 0),\n")
-    f.write("    prodvers=(2, 5, 2, 0),\n")
+    f.write("    filevers=(2, 5, 3, 0),\n")
+    f.write("    prodvers=(2, 5, 3, 0),\n")
     f.write("    mask=0x3f,\n")
     f.write("    flags=0x0,\n")
     f.write("    OS=0x40004,\n")

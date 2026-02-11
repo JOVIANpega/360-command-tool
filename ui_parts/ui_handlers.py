@@ -39,7 +39,7 @@ class UIHandlers(UIHandlersCore):
 
         # 初始化專門的管理器
         self.font_manager = FontManager(parent)
-        self.command_processor = CommandProcessor(parent)
+        self.command_processor = CommandProcessor(self)
 
         # 初始化 component_label_map，用於記錄標籤對應的索引
         self.component_label_map = {}
@@ -62,6 +62,13 @@ class UIHandlers(UIHandlersCore):
 
         # 解析指令文件中的分類和指令（使用命令處理器）
         self.command_processor.parse_commands_by_section()
+
+    def reload_setup(self, setup):
+        """重新載入設定"""
+        self.setup = setup
+        if hasattr(self, 'command_processor'):
+            self.command_processor.setup = setup
+        print("[DEBUG] UIHandlers 設定已重新載入")
 
 
 
@@ -1586,6 +1593,12 @@ class UIHandlers(UIHandlersCore):
             timeout = int(self.parent.components.entry_timeout.get())
             end_string = self.parent.components.combobox_end.get()
             
+            # 獲取單個指令超時時間
+            try:
+                cmd_timeout = float(self.setup.get('DUT_Control', {}).get('Single_Command_Timeout', 10.0))
+            except (ValueError, TypeError):
+                cmd_timeout = 10.0
+            
             # 顯示執行信息
             self.parent.components.add_to_buffer(f"\n=== {title} ===\n", "purple")
             self.parent.components.add_to_buffer(f"總計指令數: {len(commands)}\n", "purple")
@@ -1614,7 +1627,38 @@ class UIHandlers(UIHandlersCore):
                     on_status=lambda status: self.update_status_light(status) if hasattr(self, 'update_status_light') else None,
                     on_progress=lambda p: self.parent.components.update_progress(p, "blue.Horizontal.TProgressbar"),
                     on_finish=self.on_command_finish,
-                    stop_event=self.parent.stop_event
+                    stop_event=self.parent.stop_event,
+                    cmd_timeout=cmd_timeout
+                )
+            elif transport_mode == "SSH":
+                from ssh_worker import SSHWorker
+                # 獲取 SSH 設定
+                ssh_settings = self.setup.get("SSH_Settings", {})
+                host = ssh_settings.get("Host", "192.168.11.143")
+                port = int(ssh_settings.get("Port", 22))
+                default_account = ssh_settings.get("Default_Account", "root/oelinux123")
+                
+                # 解析帳號密碼
+                if "/" in default_account:
+                    username, password = default_account.split("/", 1)
+                else:
+                    username = default_account
+                    password = ""
+
+                self.parent.thread = SSHWorker(
+                    cmd_list=commands, 
+                    end_str=end_string, 
+                    timeout=timeout,
+                    host=host, 
+                    port=port, 
+                    username=username, 
+                    password=password,
+                    on_data=lambda text, tag: self.on_data(text, tag),
+                    on_status=lambda status: self.update_status_light(status) if hasattr(self, 'update_status_light') else None,
+                    on_progress=lambda p: self.parent.components.update_progress(p, "blue.Horizontal.TProgressbar"),
+                    on_finish=self.on_command_finish,
+                    stop_event=self.parent.stop_event,
+                    cmd_timeout=cmd_timeout
                 )
             else:
                 from serial_worker import SerialWorker
@@ -1627,7 +1671,8 @@ class UIHandlers(UIHandlersCore):
                     on_status=lambda status: self.update_status_light(status) if hasattr(self, 'update_status_light') else None,
                     on_progress=lambda p: self.parent.components.update_progress(p, "blue.Horizontal.TProgressbar"),
                     on_finish=self.on_command_finish,
-                    stop_event=self.parent.stop_event
+                    stop_event=self.parent.stop_event,
+                    cmd_timeout=cmd_timeout
                 )
                 
             # 啟動線程
@@ -1697,12 +1742,21 @@ class UIHandlers(UIHandlersCore):
         # 獲取結束字串
         end_string = self.parent.components.combobox_end.get()
 
-        # 獲取超時時間
-        timeout = int(self.parent.components.entry_timeout.get())
+        # 獲取總超時時間
+        try:
+            timeout = int(self.parent.components.entry_timeout.get())
+        except (ValueError, TypeError):
+            timeout = 30
 
-        return selected_command, com_port, timeout, end_string
+        # 獲取單個指令超時時間
+        try:
+            cmd_timeout = float(self.setup.get('DUT_Control', {}).get('Single_Command_Timeout', 10.0))
+        except (ValueError, TypeError):
+            cmd_timeout = 10.0
 
-    def _start_execution(self, selected_command, com_port, timeout, end_string):
+        return selected_command, com_port, timeout, end_string, cmd_timeout
+
+    def _start_execution(self, selected_command, com_port, timeout, end_string, cmd_timeout=10.0):
         """開始執行指令"""
         # 獲取指令內容
         section = self.parent.components.section_var.get()
@@ -1767,7 +1821,8 @@ class UIHandlers(UIHandlersCore):
                 on_status=lambda connected: self.parent.root.after(0, lambda: self.update_status_light(connected)),
                 on_progress=lambda p: self.parent.root.after(0, lambda: self.parent.components.update_progress(p)),
                 on_finish=lambda: self.parent.root.after(0, self.on_command_finish),
-                stop_event=self.parent.stop_event
+                stop_event=self.parent.stop_event,
+                cmd_timeout=cmd_timeout
             )
         elif transport_mode == "SSH":
             # 導入 SSH 工作器
@@ -1794,7 +1849,8 @@ class UIHandlers(UIHandlersCore):
                 on_status=lambda connected: self.parent.root.after(0, lambda: self.update_status_light(connected)),
                 on_progress=lambda p: self.parent.root.after(0, lambda: self.parent.components.update_progress(p)),
                 on_finish=lambda: self.parent.root.after(0, self.on_command_finish),
-                stop_event=self.parent.stop_event
+                stop_event=self.parent.stop_event,
+                cmd_timeout=cmd_timeout
             )
         else:
             # 創建並啟動串口線程
@@ -1804,7 +1860,8 @@ class UIHandlers(UIHandlersCore):
                 on_status=lambda connected: self.parent.root.after(0, lambda: self.update_status_light(connected)),
                 on_progress=lambda p: self.parent.root.after(0, lambda: self.parent.components.update_progress(p)),
                 on_finish=lambda: self.parent.root.after(0, self.on_command_finish),
-                stop_event=self.parent.stop_event
+                stop_event=self.parent.stop_event,
+                cmd_timeout=cmd_timeout
             )
 
         # 設置顯示消息的回調
@@ -1863,7 +1920,8 @@ class UIHandlers(UIHandlersCore):
             'cmd': cmd,
             'cmd_content': cmd_content,
             'end_str': end_str,
-            'timeout': timeout
+            'timeout': timeout,
+            'cmd_timeout': float(self.setup.get('DUT_Control', {}).get('Single_Command_Timeout', 10.0)) if str(self.setup.get('DUT_Control', {}).get('Single_Command_Timeout', '')).replace('.', '', 1).isdigit() else 10.0
         }
 
     def _prepare_command_execution(self, params):
@@ -1897,7 +1955,8 @@ class UIHandlers(UIHandlersCore):
             on_status=lambda connected: self.parent.root.after(0, lambda: self.update_status_light(connected)),
             on_progress=lambda p: self.parent.root.after(0, lambda: self.parent.components.update_progress(p)),
             on_finish=lambda: self.parent.root.after(0, self.on_command_finish),
-            stop_event=self.parent.stop_event
+            stop_event=self.parent.stop_event,
+            cmd_timeout=params.get('cmd_timeout', 10.0)
         )
 
         # 設置顯示消息的回調
@@ -2067,7 +2126,7 @@ class UIHandlers(UIHandlersCore):
                 return
 
             # 獲取執行參數
-            selected_command, com_port, timeout, end_string = self._get_execution_parameters()
+            selected_command, com_port, timeout, end_string, cmd_timeout = self._get_execution_parameters()
             if not selected_command:
                 return
 
@@ -2079,7 +2138,7 @@ class UIHandlers(UIHandlersCore):
             self.parent.components.reset_progress()
 
             # 開始執行
-            self._start_execution(selected_command, com_port, timeout, end_string)
+            self._start_execution(selected_command, com_port, timeout, end_string, cmd_timeout)
 
         except Exception as e:
             print(f"[ERROR] 執行指令時發生錯誤: {e}")
@@ -2366,7 +2425,13 @@ class UIHandlers(UIHandlersCore):
 
         # 保存設定
         save_setup(current_setup)
-        messagebox.showinfo('成功', '設定已儲存')
+        
+        # 立即更新介面
+        if hasattr(self.parent, 'components') and hasattr(self.parent.components, 'refresh_commands_fully'):
+            print("[DEBUG] 正在同步更新指令與分類...")
+            self.parent.components.refresh_commands_fully()
+            
+        messagebox.showinfo('成功', '設定已儲存並已刷新指令內容')
 
 
 

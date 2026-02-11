@@ -1,50 +1,38 @@
 
 
  ===Gemeni 1===
-FAN speed=./mfg_sources/fan_control.sh speed 10
+FANDD speed=./mfg_sources/fan_control.sh speed 10
 01 Read RTC=date
 02 Set RTC=date -s "2022-10-27 09:57:10"==>hwclock -w
-03 Check SPI boot IC=i2cget -y 0 0x18 0x04
-04 Read NVM Version=./intel_nvm_flash_update_tool/eeupdate64e /ALL /ADAPTERINFO
-05 Show Information=export NPU_ONLY=1==>./show_version
-06 Temperature status=export NPU_ONLY=1.==>/mfg_sources/temp_monitor.sh
-07 DRAM Read/Write=./mfg_sources/DDR_test.sh 32 1
-08 SPI Flash Read/Write=export NPU_ONLY=1==>./mfg_sources/SPI_test.sh 1024
-09 USB Read/Write=./mfg_sources/peripheralTest_sequential.sh 64 0 USB
-10 SSD Read/Write=./mfg_sources/peripheralTest_sequential.sh 64 0 eMMC
-11 Set Fan Board EEPROM=./mfg_sources/fb_eeprom_write_by_cpu.sh 0957001F [FtB]==>./mfg_sources/fb_eeprom_write_by_cpu.sh 0968011F [BtF]
-12 Get Fan Board EEPROM=./mfg_sources/fb_eeprom_check_by_cpu.sh
-13 Set Fan Board INIT_DONE flag=i2cset -y 0 0x47 0x89 0x1
-14 Set Fan PWM=./mfg_sources/fan_control_by_cpu.sh 5 speed 80
-15 LED All Off=./mfg_sources/fan_control_by_cpu.sh 5 status all amber off==>./mfg_sources/fan_control_by_cpu.sh 5 status all green off
-16 LED Green On=./mfg_sources/fan_control_by_cpu.sh 5 status all green on
-17 LED Amber On=./mfg_sources/fan_control_by_cpu.sh 5 status all amber on
-18 LED Auto (Default)=./mfg_sources/fan_control_by_cpu.sh 5 status all LED auto
-19 Read Fan Status=./mfg_sources/fan_monitor_by_cpu.sh 5
-20 Set Product Name=./mfg_sources/mb_eeprom_rw.sh w product_name DS-48x25-8x100
-21 Show Information=./show_version
-22 Set S/N=./mfg_sources/mb_eeprom_rw.sh w serial_number pega-1234-567890
-23 Check S/N=./mfg_sources/mb_eeprom_rw.sh r serial_number
-24 Hardware Monitor=./hw_monitor
-25 Show Temperature=./mfg_sources/temp_monitor.sh
-26 LED Green On=./mfg_sources/led_control.sh green nofan
-27 LED Amber On=./mfg_sources/led_control.sh amber nofan
-28 LED Blue On=./mfg_sources/led_control.sh blue nofan
-29 LED Blue On=./mfg_sources/led_control.sh blue nofan
-30 LED All Off=./mfg_sources/led_control.sh off nofan
-31 LED Auto (Default)=./mfg_sources/led_control.sh normal nofan
-32 MB control signal test=./mfg_sources/factory_mb_module_connection_check.sh
-33 OOB Ping=./mfg_sources/OOB_ping_test.sh 192.168.1.1 192.168.1.254 5
-34 OOB Ping=ping 192.168.1.2
-35 Get FCB & FTM EEPROM data=./mfg_sources/ftm_eeprom_check.sh
-36 Show Burn-In Result (short)=./diag_test --show 2
-37 Enable Burn-In=./diag_test --rst-conf Gemini pt==>./diag_test --burn-in-set on --pwr-cyc-num 10 --tfc-pkt-t 1
-38 LED Green On=./mfg_sources/led_control.sh green
-39 LED Amber On=./mfg_sources/led_control.sh amber
-40 LED Blue On=./mfg_sources/led_control.sh blue
-41 LED All Off=./mfg_sources/led_control.sh off
-42 LED Auto (Default)=./mfg_sources/led_control.sh normal
-
+03 Show Information=export NPU_ONLY=1==>./show_version
+04 Hardware Monitor=./hw_monitor
+05 Show Temperature=./mfg_sources/temp_monitor.sh
+06 Check SPI boot IC=i2cget -y 0 0x18 0x04
+07 Read NVM Version=./intel_nvm_flash_update_tool/eeupdate64e /ALL /ADAPTERINFO
+08 DRAM Read/Write=./mfg_sources/DDR_test.sh 32 1
+09 SPI Flash Read/Write=export NPU_ONLY=1==>./mfg_sources/SPI_test.sh 1024
+10 USB Read/Write=./mfg_sources/peripheralTest_sequential.sh 64 0 USB
+11 SSD Read/Write=./mfg_sources/peripheralTest_sequential.sh 64 0 eMMC
+12 MB connection check=./mfg_sources/factory_mb_module_connection_check.sh
+13 Set Product Name=./mfg_sources/mb_eeprom_rw.sh w product_name DS-48x25-8x100
+14 Set S/N=./mfg_sources/mb_eeprom_rw.sh w serial_number pega-1234-567890
+15 Check S/N=./mfg_sources/mb_eeprom_rw.sh r serial_number
+16 Set FB EEPROM=./mfg_sources/fb_eeprom_write_by_cpu.sh 0957001F
+17 Get FB EEPROM=./mfg_sources/fb_eeprom_check_by_cpu.sh
+18 Get FCB/FTM Data=./mfg_sources/ftm_eeprom_check.sh
+19 FAN speed set=./mfg_sources/fan_control.sh speed 10
+20 Set Fan PWM=./mfg_sources/fan_control_by_cpu.sh 5 speed 80
+21 Read Fan Status=./mfg_sources/fan_monitor_by_cpu.sh 5
+22 Set Fan Init Flag=i2cset -y 0 0x47 0x89 0x1
+23 LED All Off=./mfg_sources/led_control.sh blue
+24 LED Green On=./mfg_sources/led_control.sh green
+25 LED Amber On=./mfg_sources/led_control.sh amber
+26 LED Blue On=./mfg_sources/led_control.sh blue
+27 LED Auto Mode=./mfg_sources/led_control.sh normal
+28 OOB Ping Test=./mfg_sources/OOB_ping_test.sh 192.168.1.1 192.168.1.254 5
+29 Enable Burn-In=./diag_test --burn-in-set on --pwr-cyc-num 10 --tfc-pkt-t 1
+30 Show Burn-In Result=./diag_test --show 2
+31 Show Burn-In Result=./diag_test --show 2
  ===Gemeni 1b===
 //43 VLAN Setting=./sdk_start vlan=on if=fiber fec=on
 44 Write MAC=./mfg_sources/mb_eeprom_rw.sh w mac_address 00:a0:c9:11:22:33
@@ -83,5 +71,3 @@ FAN speed=./mfg_sources/fan_control.sh speed 10
 04 FB EEPROM Write FtB=i2cset -y 0 0x72 0x7==>i2cset -y 0 0x70 0xb0 0x0==>i2cset -y 0 0x70 0xb1 0x2==>i2cset -y 0 0x70 0xb3 0x57==>i2cset -y 0 0x70 0xb1 0x6==>i2cset -y 0 0x70 0xb3 0x09==>i2cset -y 0 0x70 0xb1 0xa==>i2cset -y 0 0x70 0xb3 0x00==>i2cset -y 0 0x70 0xb1 0xe==>i2cset -y 0 0x70 0xb3 0x1f
 05 FB EEPROM Write BtF=i2cset -y 0 0x72 0x7==>i2cset -y 0 0x70 0xb0 0x0==>i2cset -y 0 0x70 0xb1 0x2==>i2cset -y 0 0x70 0xb3 0x68==>i2cset -y 0 0x70 0xb1 0x6==>i2cset -y 0 0x70 0xb3 0x09==>i2cset -y 0 0x70 0xb1 0xa==>i2cset -y 0 0x70 0xb3 0x01==>i2cset -y 0 0x70 0xb1 0xe==>i2cset -y 0 0x70 0xb3 0x1f
 06 FB EEPROM Read=i2cset -y 0 0x72 0x7==>i2cset -y 0 0x70 0xb1 0x2==>i2cget -y 0 0x70 0xb2==>i2cset -y 0 0x70 0xb1 0x6==>i2cget -y 0 0x70 0xb2==>i2cset -y 0 0x70 0xb1 0xa==>i2cget -y 0 0x70 0xb2==>i2cset -y 0 0x70 0xb1 0xe==>i2cget -y 0 0x70 0xb2
-
-希望這份整理後的清單符合您的格式需求！若有任何調整，身為 **PEGA 大師**，我隨時為您服務。

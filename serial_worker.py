@@ -24,7 +24,7 @@ class SerialWorker(threading.Thread):
 
     def __init__(self, com: str, cmd_list: List[str], end_str: str, timeout: float,
                  on_data: Callable, on_status: Callable, on_progress: Callable,
-                 on_finish: Callable, stop_event: threading.Event):
+                 on_finish: Callable, stop_event: threading.Event, cmd_timeout: float = 10.0):
         super().__init__()
 
         # 初始化核心組件
@@ -36,6 +36,7 @@ class SerialWorker(threading.Thread):
         self.cmd_list = cmd_list
         self.end_str = end_str
         self.timeout = timeout
+        self.cmd_timeout = cmd_timeout
 
         # 回調函數
         self.on_data = on_data
@@ -144,8 +145,8 @@ class SerialWorker(threading.Thread):
                 cmd_buffer = ""
                 cmd_received_end = False
                 
-                # 等待這個命令的響應，但不超過超時時間的一半
-                cmd_timeout = min(self.timeout / 2, 10)  # 最多等待10秒或總超時的一半
+                # 等待這個命令的響應，使用設定的指令超時時間
+                cmd_timeout = self.cmd_timeout
                 
                 while not self.stop_event.is_set() and not finished:
                     cmd_elapsed = time.time() - cmd_start_time
