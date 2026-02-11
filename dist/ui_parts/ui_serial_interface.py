@@ -34,7 +34,7 @@ except ImportError as e:
     sys.exit(1)
 
 try:
-    from serial_worker import SerialWorker
+    # 舊版本 worker 已移除，改用 V2 版本（在需要時 import）
     from ui_parts.ui_components import UIComponents
     from ui_parts.ui_handlers import UIHandlers
 except ImportError as e:

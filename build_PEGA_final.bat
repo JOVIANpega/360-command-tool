@@ -1,8 +1,17 @@
 @echo off
 chcp 65001 > nul
+
+rem 讀取版本號從 setup.json
+echo [初始化] 讀取版本號...
+for /f "delims=" %%i in ('python get_version.py') do set APP_VERSION=%%i
+if "%APP_VERSION%"=="" (
+    echo [警告] 無法讀取版本號，使用預設值 2.5.0
+    set APP_VERSION=2.5.0
+)
+
 echo.
 echo ========================================
-echo    PEGA指令通 V2.5.1 打包程序
+echo    PEGA指令通 V%APP_VERSION% 打包程序
 echo ========================================
 echo.
 
@@ -67,7 +76,7 @@ pyinstaller ^
     --clean ^
     --noconfirm ^
     --noconsole ^
-    --name "PEGA指令通_V2.5.1" ^
+    --name "PEGA指令通_V%APP_VERSION%" ^
     --version-file "version_info_zh.txt" ^
     --add-data "tooltips.ini;." ^
     --add-data "setup.json;." ^
@@ -88,13 +97,13 @@ pyinstaller ^
 
 rem 檢查結果
 echo.
-if exist "dist\PEGA指令通_V2.5.1.exe" (
+if exist "dist\PEGA指令通_V%APP_VERSION%.exe" (
     echo ========================================
     echo           打包成功！
     echo ========================================
     echo.
-    echo 輸出文件: dist\PEGA指令通_V2.5.1.exe
-    dir "dist\PEGA指令通_V2.5.1.exe"
+    echo 輸出文件: dist\PEGA指令通_V%APP_VERSION%.exe
+    dir "dist\PEGA指令通_V%APP_VERSION%.exe"
     echo.
     echo [步驟5] 複製必要的執行時檔案到 dist ...
     if not exist "dist\assets" mkdir "dist\assets"

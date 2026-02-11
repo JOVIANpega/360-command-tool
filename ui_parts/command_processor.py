@@ -8,8 +8,10 @@ import os
 import threading
 from datetime import datetime
 from config_core import COMMAND_FILE, save_setup, load_setup
-from serial_worker import SerialWorker
-from adb_worker import ADBWorker
+
+# 使用重構版本的 worker (V2)
+from transport.serial_worker_v2 import SerialWorkerV2
+from transport.adb_worker_v2 import ADBWorkerV2
 
 
 class CommandProcessor:
@@ -183,8 +185,8 @@ class CommandProcessor:
                 except (ValueError, TypeError):
                     cmd_timeout = 30.0
 
-                # 創建新的 ADB 工作器
-                self.adb_worker = ADBWorker(
+                # 創建新的 ADB 工作器 (使用 V2)
+                self.adb_worker = ADBWorkerV2(
                     cmd_list=cmd_list,
                     end_str=end_string,
                     timeout=timeout,
@@ -209,8 +211,8 @@ class CommandProcessor:
                 except (ValueError, TypeError):
                     cmd_timeout = 10.0
 
-                # 創建新的串口工作器
-                self.serial_worker = SerialWorker(
+                # 創建新的串口工作器 (使用 V2)
+                self.serial_worker = SerialWorkerV2(
                     com=com_port,
                     cmd_list=[command],
                     end_str=end_string,

@@ -589,9 +589,19 @@ class ManualCommandUI:
         """執行手動指令按鈕點擊事件"""
         command = self.command_entry.get("1.0", tk.END).rstrip('\n')  # 從Text widget獲取內容
         
-        # 獲取設定
+        # 獲獲取設定
         com_port = extract_com_port_name(self.com_port_var.get())
-        timeout = 30  # 固定超時時間
+        
+        # 獲取總超時和單個指令超時
+        timeout = 30  # 預設總超時
+        cmd_timeout = 10.0  # 預設單個指令超時
+        
+        try:
+            # 嘗試讀取全域設定中的單個指令超時
+            cmd_timeout = float(self.setup.get('DUT_Control', {}).get('Single_Command_Timeout', 10.0))
+        except (ValueError, TypeError):
+            cmd_timeout = 10.0
+            
         transport_mode = self.transport_mode_var.get()
         end_string = self.end_string_var.get()
         
@@ -614,9 +624,9 @@ class ManualCommandUI:
             self.add_colored_output("=== 執行空白指令 ===\n", "purple")
         
         # 執行指令
-        self.execute_command_thread(command, com_port, timeout, transport_mode, end_string)
+        self.execute_command_thread(command, com_port, timeout, transport_mode, end_string, cmd_timeout)
     
-    def execute_command_thread(self, command, com_port, timeout, transport_mode, end_string):
+    def execute_command_thread(self, command, com_port, timeout, transport_mode, end_string, cmd_timeout=10.0):
         """
         在執行緒中執行指令，並即時顯示回應內容
         支援 Console 和 ADB 兩種傳輸模式
@@ -625,10 +635,10 @@ class ManualCommandUI:
             try:
                 if transport_mode == "ADB":
                     # 使用 ADB 模式執行指令
-                    self.execute_adb_command(command, timeout, end_string)
+                    self.execute_adb_command(command, timeout, end_string, cmd_timeout)
                 else:
                     # 使用 Console 模式執行指令
-                    self.execute_console_command(command, com_port, timeout, end_string)
+                    self.execute_console_command(command, com_port, timeout, end_string, cmd_timeout)
                 
                 self.root.after(0, self.command_finished)
 
@@ -640,7 +650,7 @@ class ManualCommandUI:
         thread.daemon = True
         thread.start()
     
-    def execute_console_command(self, command, com_port, timeout, end_string):
+    def execute_console_command(self, command, com_port, timeout, end_string, cmd_timeout=10.0):
         """執行 Console 模式指令"""
         try:
             ser = serial.Serial(
@@ -658,10 +668,10 @@ class ManualCommandUI:
             ser.write(f"{command}\r\n".encode('utf-8'))
 
             response = ""
-            start_time = time.time()
-            end_string_found = False
-
-            while time.time() - start_time < timeout and not end_string_found:
+            # 使用設定的指令超時時間，而不僅僅是總超時時間
+            effective_timeout = cmd_timeout
+            
+            while time.time() - start_time < effective_timeout and not end_string_found:
                 if ser.in_waiting:
                     data = ser.read(ser.in_waiting)
                     decoded = data.decode('utf-8', errors='ignore')
@@ -682,7 +692,7 @@ class ManualCommandUI:
         except Exception as e:
             raise e
     
-    def execute_adb_command(self, command, timeout, end_string):
+    def execute_adb_command(self, command, timeout, end_string, cmd_timeout=30.0):
         """執行 ADB 模式指令"""
         try:
             from adb_worker import ADBWorker
@@ -714,7 +724,8 @@ class ManualCommandUI:
                 on_status=on_status_callback,
                 on_progress=on_progress_callback,
                 on_finish=on_finish_callback,
-                stop_event=stop_event
+                stop_event=stop_event,
+                cmd_timeout=cmd_timeout
             )
             
             # 執行 ADB 指令

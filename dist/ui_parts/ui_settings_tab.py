@@ -227,6 +227,12 @@ class SettingsTab(ttk.Frame):
         self.vars["DUT_Default_IP_Address"] = tk.StringVar(value=dut_settings.get("Default_IP_Address", "192.168.11.143"))
         ttk.Entry(dut_frame, textvariable=self.vars["DUT_Default_IP_Address"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
         dut_row += 1
+
+        # 單個指令超時 (回傳超時)
+        ttk.Label(dut_frame, text="單個指令待響應超時 (秒):").grid(row=dut_row, column=0, sticky="w", pady=4)
+        self.vars["DUT_Single_Command_Timeout"] = tk.StringVar(value=str(dut_settings.get("Single_Command_Timeout", 10)))
+        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Single_Command_Timeout"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
+        dut_row += 1
         
 
         
@@ -663,6 +669,7 @@ class SettingsTab(ttk.Frame):
         # current_setup["DUT_Command_End_String"] = self.vars["DUT_Command_End_String"].get()
         current_setup["DUT_Control"]["Command_Separator"] = self.vars["DUT_Command_Separator"].get()
         current_setup["DUT_Control"]["Default_IP_Address"] = self.vars["DUT_Default_IP_Address"].get()
+        current_setup["DUT_Control"]["Single_Command_Timeout"] = self.vars["DUT_Single_Command_Timeout"].get()
         # 字體設定已移至DUT控制標籤頁，此處不再處理
         current_setup["DUT_Control"]["Pane_Sash_Position"] = self.vars["DUT_Pane_Sash_Position"].get()
         current_setup["DUT_Control"]["Auto_Execute"] = self.vars["DUT_Auto_Execute"].get()
@@ -826,7 +833,8 @@ class SettingsTab(ttk.Frame):
             self.update_tab_names_immediately()
 
             # 顯示成功訊息並詢問是否重啟
-            if messagebox.askyesno("設定已儲存", "設定已手動儲存並立即生效！\n\n是否要立即自動重啟應用程式？\n(推薦重啟以確保所有變更完整載入)"):
+            msg = "設定已手動儲存並【立即生效】！\n\n大部分變更（超時、IP、分隔符號、標籤名稱）已同步更新。\n是否要立即自動重啟應用程式以確保所有底層變更完整載入？"
+            if messagebox.askyesno("設定已更新", msg):
                 print("[INFO] 用戶選擇立即重啟應用程式...")
                 self.restart_application()
             else:
@@ -1118,6 +1126,7 @@ class SettingsTab(ttk.Frame):
             # self.vars["DUT_Command_End_String"].set(dut_settings.get("Command_End_String", "root"))
             self.vars["DUT_Command_Separator"].set(dut_settings.get("Command_Separator", "|"))
             self.vars["DUT_Default_IP_Address"].set(dut_settings.get("Default_IP_Address", "192.168.11.143"))
+            self.vars["DUT_Single_Command_Timeout"].set(str(dut_settings.get("Single_Command_Timeout", 10)))
             # 字體設定已移至DUT控制標籤頁，此處不再處理
             self.vars["DUT_Pane_Sash_Position"].set(dut_settings.get("Pane_Sash_Position", "633"))
             self.vars["DUT_Auto_Execute"].set(dut_settings.get("Auto_Execute", False))

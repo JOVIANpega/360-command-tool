@@ -16,7 +16,7 @@ import threading
 
 from config_utils import get_notification_text, get_app_version
 from config_core import COMMAND_FILE, GUIDE_FILE, save_setup, list_com_ports, load_setup
-from serial_worker import SerialWorker
+# 舊版本 worker 已移除，改用 V2 版本（在函數內部 import）
 from ui_parts.ui_handlers_core import UIHandlersCore
 from ui_parts.font_manager import FontManager
 from ui_parts.command_processor import CommandProcessor
@@ -1618,8 +1618,8 @@ class UIHandlers(UIHandlersCore):
             
             # 創建 Worker
             if transport_mode == "ADB":
-                from adb_worker import ADBWorker
-                self.parent.thread = ADBWorker(
+                from transport.adb_worker_v2 import ADBWorkerV2
+                self.parent.thread = ADBWorkerV2(
                     cmd_list=commands, 
                     end_str=end_string, 
                     timeout=timeout,
@@ -1631,7 +1631,7 @@ class UIHandlers(UIHandlersCore):
                     cmd_timeout=cmd_timeout
                 )
             elif transport_mode == "SSH":
-                from ssh_worker import SSHWorker
+                from transport.ssh_worker_v2 import SSHWorkerV2
                 # 獲取 SSH 設定
                 ssh_settings = self.setup.get("SSH_Settings", {})
                 host = ssh_settings.get("Host", "192.168.11.143")
@@ -1645,7 +1645,7 @@ class UIHandlers(UIHandlersCore):
                     username = default_account
                     password = ""
 
-                self.parent.thread = SSHWorker(
+                self.parent.thread = SSHWorkerV2(
                     cmd_list=commands, 
                     end_str=end_string, 
                     timeout=timeout,
@@ -1661,8 +1661,8 @@ class UIHandlers(UIHandlersCore):
                     cmd_timeout=cmd_timeout
                 )
             else:
-                from serial_worker import SerialWorker
-                self.parent.thread = SerialWorker(
+                from transport.serial_worker_v2 import SerialWorkerV2
+                self.parent.thread = SerialWorkerV2(
                     com=com_port, 
                     cmd_list=commands, 
                     end_str=end_string, 
@@ -1811,11 +1811,11 @@ class UIHandlers(UIHandlersCore):
 
         # 根據傳輸模式創建對應的工作器
         if transport_mode == "ADB":
-            # 導入 ADB 工作器
-            from adb_worker import ADBWorker
+            # 導入 ADB 工作器 (V2)
+            from transport.adb_worker_v2 import ADBWorkerV2
 
             # 創建並啟動 ADB 線程
-            self.parent.thread = ADBWorker(
+            self.parent.thread = ADBWorkerV2(
                 cmd_list, end_string, timeout,
                 on_data=lambda text, tag: self.on_data(text, tag),
                 on_status=lambda connected: self.parent.root.after(0, lambda: self.update_status_light(connected)),
@@ -1825,8 +1825,8 @@ class UIHandlers(UIHandlersCore):
                 cmd_timeout=cmd_timeout
             )
         elif transport_mode == "SSH":
-            # 導入 SSH 工作器
-            from ssh_worker import SSHWorker
+            # 導入 SSH 工作器 (V2)
+            from transport.ssh_worker_v2 import SSHWorkerV2
             
             # 獲取 SSH 設定
             ssh_settings = self.setup.get("SSH_Settings", {})
@@ -1842,7 +1842,7 @@ class UIHandlers(UIHandlersCore):
                 password = ""
 
             # 創建並啟動 SSH 線程
-            self.parent.thread = SSHWorker(
+            self.parent.thread = SSHWorkerV2(
                 cmd_list, end_string, timeout,
                 host, port, username, password,
                 on_data=lambda text, tag: self.on_data(text, tag),
@@ -1853,8 +1853,10 @@ class UIHandlers(UIHandlersCore):
                 cmd_timeout=cmd_timeout
             )
         else:
+            # 導入 Serial 工作器 (V2)
+            from transport.serial_worker_v2 import SerialWorkerV2
             # 創建並啟動串口線程
-            self.parent.thread = SerialWorker(
+            self.parent.thread = SerialWorkerV2(
                 com_port, cmd_list, end_string, timeout,
                 on_data=lambda text, tag: self.on_data(text, tag),
                 on_status=lambda connected: self.parent.root.after(0, lambda: self.update_status_light(connected)),

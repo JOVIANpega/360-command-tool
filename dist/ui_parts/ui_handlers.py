@@ -16,7 +16,7 @@ import threading
 
 from config_utils import get_notification_text, get_app_version
 from config_core import COMMAND_FILE, GUIDE_FILE, save_setup, list_com_ports, load_setup
-from serial_worker import SerialWorker
+# 舊版本 worker 已移除，改用 V2 版本（在函數內部 import）
 from ui_parts.ui_handlers_core import UIHandlersCore
 from ui_parts.font_manager import FontManager
 from ui_parts.command_processor import CommandProcessor
@@ -39,7 +39,7 @@ class UIHandlers(UIHandlersCore):
 
         # 初始化專門的管理器
         self.font_manager = FontManager(parent)
-        self.command_processor = CommandProcessor(parent)
+        self.command_processor = CommandProcessor(self)
 
         # 初始化 component_label_map，用於記錄標籤對應的索引
         self.component_label_map = {}
@@ -63,6 +63,13 @@ class UIHandlers(UIHandlersCore):
         # 解析指令文件中的分類和指令（使用命令處理器）
         self.command_processor.parse_commands_by_section()
 
+    def reload_setup(self, setup):
+        """重新載入設定"""
+        self.setup = setup
+        if hasattr(self, 'command_processor'):
+            self.command_processor.setup = setup
+        print("[DEBUG] UIHandlers 設定已重新載入")
+
 
 
 
@@ -85,7 +92,8 @@ class UIHandlers(UIHandlersCore):
     def _parse_command_line(self, line, section, commands):
         """解析單行指令 - 重構輔助函數"""
         line = line.strip()
-        if not line or line.startswith("#") or line.startswith("//"):
+        # 跳過空行或註解行 (#, ;, //)
+        if not line or line.startswith("#") or line.startswith(";") or line.startswith("//"):
             return section
 
         # 檢查是否為區段標記
@@ -192,7 +200,8 @@ class UIHandlers(UIHandlersCore):
                     line = line.strip()
 
 
-                    if not line or line.startswith("#") or line.startswith("//"):
+                    # 跳過空行或註解行 (#, ;, //)
+                    if not line or line.startswith("#") or line.startswith(";") or line.startswith("//"):
 
 
                         continue
@@ -1039,47 +1048,35 @@ class UIHandlers(UIHandlersCore):
 
 
     def backup_output(self):
-
-
         try:
-
-
-            backup_dir = 'backup'
-
-
+            backup_dir = 'BACKUP_LOGS'
             if not os.path.exists(backup_dir):
-
-
                 os.makedirs(backup_dir)
 
-
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-
-
-            filename = os.path.join(backup_dir, f'backup_{timestamp}.txt')
-
+            filename = os.path.join(backup_dir, f'backup_{timestamp}.log')
 
             content = self.parent.components.text_output.get('1.0', 'end')
-
-
             with open(filename, 'w', encoding='utf-8') as f:
-
-
                 f.write(content)
 
-
             # 使用通知功能顯示成功訊息
-
-
             self.parent.components.show_notification(
-
-
-                get_notification_text("backup_success", filename),
-
-
-                "green", 5000
-
-
+                f"備份成功！檔案已存至 {backup_dir}",
+                "green", 3000
+            )
+            
+            # 自動開啟資料夾方便查看
+            try:
+                os.startfile(os.path.abspath(backup_dir))
+            except Exception:
+                pass
+                
+        except Exception as e:
+            # 使用通知功能顯示錯誤訊息
+            self.parent.components.show_notification(
+                f"備份失敗: {str(e)}",
+                "red", 5000
             )
 
 
@@ -1596,6 +1593,12 @@ class UIHandlers(UIHandlersCore):
             timeout = int(self.parent.components.entry_timeout.get())
             end_string = self.parent.components.combobox_end.get()
             
+            # 獲取單個指令超時時間
+            try:
+                cmd_timeout = float(self.setup.get('DUT_Control', {}).get('Single_Command_Timeout', 10.0))
+            except (ValueError, TypeError):
+                cmd_timeout = 10.0
+            
             # 顯示執行信息
             self.parent.components.add_to_buffer(f"\n=== {title} ===\n", "purple")
             self.parent.components.add_to_buffer(f"總計指令數: {len(commands)}\n", "purple")
@@ -1615,8 +1618,8 @@ class UIHandlers(UIHandlersCore):
             
             # 創建 Worker
             if transport_mode == "ADB":
-                from adb_worker import ADBWorker
-                self.parent.thread = ADBWorker(
+                from transport.adb_worker_v2 import ADBWorkerV2
+                self.parent.thread = ADBWorkerV2(
                     cmd_list=commands, 
                     end_str=end_string, 
                     timeout=timeout,
@@ -1624,11 +1627,42 @@ class UIHandlers(UIHandlersCore):
                     on_status=lambda status: self.update_status_light(status) if hasattr(self, 'update_status_light') else None,
                     on_progress=lambda p: self.parent.components.update_progress(p, "blue.Horizontal.TProgressbar"),
                     on_finish=self.on_command_finish,
-                    stop_event=self.parent.stop_event
+                    stop_event=self.parent.stop_event,
+                    cmd_timeout=cmd_timeout
+                )
+            elif transport_mode == "SSH":
+                from transport.ssh_worker_v2 import SSHWorkerV2
+                # 獲取 SSH 設定
+                ssh_settings = self.setup.get("SSH_Settings", {})
+                host = ssh_settings.get("Host", "192.168.11.143")
+                port = int(ssh_settings.get("Port", 22))
+                default_account = ssh_settings.get("Default_Account", "root/oelinux123")
+                
+                # 解析帳號密碼
+                if "/" in default_account:
+                    username, password = default_account.split("/", 1)
+                else:
+                    username = default_account
+                    password = ""
+
+                self.parent.thread = SSHWorkerV2(
+                    cmd_list=commands, 
+                    end_str=end_string, 
+                    timeout=timeout,
+                    host=host, 
+                    port=port, 
+                    username=username, 
+                    password=password,
+                    on_data=lambda text, tag: self.on_data(text, tag),
+                    on_status=lambda status: self.update_status_light(status) if hasattr(self, 'update_status_light') else None,
+                    on_progress=lambda p: self.parent.components.update_progress(p, "blue.Horizontal.TProgressbar"),
+                    on_finish=self.on_command_finish,
+                    stop_event=self.parent.stop_event,
+                    cmd_timeout=cmd_timeout
                 )
             else:
-                from serial_worker import SerialWorker
-                self.parent.thread = SerialWorker(
+                from transport.serial_worker_v2 import SerialWorkerV2
+                self.parent.thread = SerialWorkerV2(
                     com=com_port, 
                     cmd_list=commands, 
                     end_str=end_string, 
@@ -1637,14 +1671,19 @@ class UIHandlers(UIHandlersCore):
                     on_status=lambda status: self.update_status_light(status) if hasattr(self, 'update_status_light') else None,
                     on_progress=lambda p: self.parent.components.update_progress(p, "blue.Horizontal.TProgressbar"),
                     on_finish=self.on_command_finish,
-                    stop_event=self.parent.stop_event
+                    stop_event=self.parent.stop_event,
+                    cmd_timeout=cmd_timeout
                 )
                 
             # 啟動線程
             self.parent.thread.start()
             
             # 更新UI狀態
-            self.parent.components.btn_execute.config(text='停止', bg='#FF5722')
+            self.parent.components.btn_execute.config(text='停止執行')
+            
+            # 開始啟動標籤閃爍
+            if hasattr(self.parent.components, 'startup_label_manager'):
+                self.parent.components.startup_label_manager.start_blink()
             
         except Exception as e:
             print(f"[ERROR] 執行指令失敗: {e}")
@@ -1703,12 +1742,21 @@ class UIHandlers(UIHandlersCore):
         # 獲取結束字串
         end_string = self.parent.components.combobox_end.get()
 
-        # 獲取超時時間
-        timeout = int(self.parent.components.entry_timeout.get())
+        # 獲取總超時時間
+        try:
+            timeout = int(self.parent.components.entry_timeout.get())
+        except (ValueError, TypeError):
+            timeout = 30
 
-        return selected_command, com_port, timeout, end_string
+        # 獲取單個指令超時時間
+        try:
+            cmd_timeout = float(self.setup.get('DUT_Control', {}).get('Single_Command_Timeout', 10.0))
+        except (ValueError, TypeError):
+            cmd_timeout = 10.0
 
-    def _start_execution(self, selected_command, com_port, timeout, end_string):
+        return selected_command, com_port, timeout, end_string, cmd_timeout
+
+    def _start_execution(self, selected_command, com_port, timeout, end_string, cmd_timeout=10.0):
         """開始執行指令"""
         # 獲取指令內容
         section = self.parent.components.section_var.get()
@@ -1763,21 +1811,22 @@ class UIHandlers(UIHandlersCore):
 
         # 根據傳輸模式創建對應的工作器
         if transport_mode == "ADB":
-            # 導入 ADB 工作器
-            from adb_worker import ADBWorker
+            # 導入 ADB 工作器 (V2)
+            from transport.adb_worker_v2 import ADBWorkerV2
 
             # 創建並啟動 ADB 線程
-            self.parent.thread = ADBWorker(
+            self.parent.thread = ADBWorkerV2(
                 cmd_list, end_string, timeout,
                 on_data=lambda text, tag: self.on_data(text, tag),
                 on_status=lambda connected: self.parent.root.after(0, lambda: self.update_status_light(connected)),
                 on_progress=lambda p: self.parent.root.after(0, lambda: self.parent.components.update_progress(p)),
                 on_finish=lambda: self.parent.root.after(0, self.on_command_finish),
-                stop_event=self.parent.stop_event
+                stop_event=self.parent.stop_event,
+                cmd_timeout=cmd_timeout
             )
         elif transport_mode == "SSH":
-            # 導入 SSH 工作器
-            from ssh_worker import SSHWorker
+            # 導入 SSH 工作器 (V2)
+            from transport.ssh_worker_v2 import SSHWorkerV2
             
             # 獲取 SSH 設定
             ssh_settings = self.setup.get("SSH_Settings", {})
@@ -1793,24 +1842,28 @@ class UIHandlers(UIHandlersCore):
                 password = ""
 
             # 創建並啟動 SSH 線程
-            self.parent.thread = SSHWorker(
+            self.parent.thread = SSHWorkerV2(
                 cmd_list, end_string, timeout,
                 host, port, username, password,
                 on_data=lambda text, tag: self.on_data(text, tag),
                 on_status=lambda connected: self.parent.root.after(0, lambda: self.update_status_light(connected)),
                 on_progress=lambda p: self.parent.root.after(0, lambda: self.parent.components.update_progress(p)),
                 on_finish=lambda: self.parent.root.after(0, self.on_command_finish),
-                stop_event=self.parent.stop_event
+                stop_event=self.parent.stop_event,
+                cmd_timeout=cmd_timeout
             )
         else:
+            # 導入 Serial 工作器 (V2)
+            from transport.serial_worker_v2 import SerialWorkerV2
             # 創建並啟動串口線程
-            self.parent.thread = SerialWorker(
+            self.parent.thread = SerialWorkerV2(
                 com_port, cmd_list, end_string, timeout,
                 on_data=lambda text, tag: self.on_data(text, tag),
                 on_status=lambda connected: self.parent.root.after(0, lambda: self.update_status_light(connected)),
                 on_progress=lambda p: self.parent.root.after(0, lambda: self.parent.components.update_progress(p)),
                 on_finish=lambda: self.parent.root.after(0, self.on_command_finish),
-                stop_event=self.parent.stop_event
+                stop_event=self.parent.stop_event,
+                cmd_timeout=cmd_timeout
             )
 
         # 設置顯示消息的回調
@@ -1869,7 +1922,8 @@ class UIHandlers(UIHandlersCore):
             'cmd': cmd,
             'cmd_content': cmd_content,
             'end_str': end_str,
-            'timeout': timeout
+            'timeout': timeout,
+            'cmd_timeout': float(self.setup.get('DUT_Control', {}).get('Single_Command_Timeout', 10.0)) if str(self.setup.get('DUT_Control', {}).get('Single_Command_Timeout', '')).replace('.', '', 1).isdigit() else 10.0
         }
 
     def _prepare_command_execution(self, params):
@@ -1903,7 +1957,8 @@ class UIHandlers(UIHandlersCore):
             on_status=lambda connected: self.parent.root.after(0, lambda: self.update_status_light(connected)),
             on_progress=lambda p: self.parent.root.after(0, lambda: self.parent.components.update_progress(p)),
             on_finish=lambda: self.parent.root.after(0, self.on_command_finish),
-            stop_event=self.parent.stop_event
+            stop_event=self.parent.stop_event,
+            cmd_timeout=params.get('cmd_timeout', 10.0)
         )
 
         # 設置顯示消息的回調
@@ -2073,7 +2128,7 @@ class UIHandlers(UIHandlersCore):
                 return
 
             # 獲取執行參數
-            selected_command, com_port, timeout, end_string = self._get_execution_parameters()
+            selected_command, com_port, timeout, end_string, cmd_timeout = self._get_execution_parameters()
             if not selected_command:
                 return
 
@@ -2085,7 +2140,7 @@ class UIHandlers(UIHandlersCore):
             self.parent.components.reset_progress()
 
             # 開始執行
-            self._start_execution(selected_command, com_port, timeout, end_string)
+            self._start_execution(selected_command, com_port, timeout, end_string, cmd_timeout)
 
         except Exception as e:
             print(f"[ERROR] 執行指令時發生錯誤: {e}")
@@ -2372,7 +2427,13 @@ class UIHandlers(UIHandlersCore):
 
         # 保存設定
         save_setup(current_setup)
-        messagebox.showinfo('成功', '設定已儲存')
+        
+        # 立即更新介面
+        if hasattr(self.parent, 'components') and hasattr(self.parent.components, 'refresh_commands_fully'):
+            print("[DEBUG] 正在同步更新指令與分類...")
+            self.parent.components.refresh_commands_fully()
+            
+        messagebox.showinfo('成功', '設定已儲存並已刷新指令內容')
 
 
 

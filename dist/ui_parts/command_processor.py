@@ -8,8 +8,10 @@ import os
 import threading
 from datetime import datetime
 from config_core import COMMAND_FILE, save_setup, load_setup
-from serial_worker import SerialWorker
-from adb_worker import ADBWorker
+
+# 使用重構版本的 worker (V2)
+from transport.serial_worker_v2 import SerialWorkerV2
+from transport.adb_worker_v2 import ADBWorkerV2
 
 
 class CommandProcessor:
@@ -27,7 +29,13 @@ class CommandProcessor:
         self.commands_by_section = {}
         self.serial_worker = None
         self.adb_worker = None
-        
+        self.last_read_path = ""
+
+    def get_last_read_path(self):
+        """獲取最後一次讀取的指令檔案路徑"""
+        return self.last_read_path
+
+
     def parse_commands_by_section(self):
         """解析命令文件，按區段整理"""
         self.commands_by_section = {}
@@ -43,6 +51,10 @@ class CommandProcessor:
                     command_file_path = custom_path
                     print(f"[DEBUG] 使用自訂指令檔案: {command_file_path}")
             
+            self.last_read_path = command_file_path
+
+
+            
             # 檢查命令文件是否存在
             if not os.path.exists(command_file_path):
                 print(f"命令文件不存在: {command_file_path}")
@@ -51,48 +63,66 @@ class CommandProcessor:
             with open(command_file_path, 'r', encoding='utf-8') as f:
                 lines = f.readlines()
             
+            print(f"[DEBUG] 讀取指令檔案成功: {os.path.abspath(command_file_path)}")
+            if lines:
+                print(f"[DEBUG] 檔案前 3 行: {lines[:3]}")
+            
             current_section = "未分類"
+            self.commands_by_section = {"全部指令": {}}
             
             for line in lines:
                 line = line.strip()
-                if not line:
+                # 跳過空行或註解行 (#, ;, //)
+                if not line or line.startswith('#') or line.startswith(';') or line.startswith('//'):
                     continue
                 
                 # 檢查是否為區段標題
-                # 格式 1: [Section]
+                header_match = False
                 if line.startswith('[') and line.endswith(']'):
-                    current_section = line[1:-1]
-                    if current_section not in self.commands_by_section:
-                        self.commands_by_section[current_section] = []
-                        
-                # 格式 2: === Section === (支援指令工具的新格式)
-                elif line.startswith('==') and line.endswith('=='):
-                     # 移除首尾的 = 號，並去除可能多餘的空白
+                    current_section = line[1:-1].strip()
+                    header_match = True
+                elif line.startswith('=') and line.endswith('=') and line.count('=') >= 2:
+                    # 至少要有兩個等號 (例如 ==Section== 或 ===Section===)
                     current_section = line.strip('=').strip()
+                    header_match = True
+                
+                if header_match:
+                    if not current_section: 
+                        current_section = "未命名分類"
                     if current_section not in self.commands_by_section:
-                        self.commands_by_section[current_section] = []
+                        self.commands_by_section[current_section] = {}
                 else:
                     # 這是一個命令
-                    # 如果尚未有區段，則加入 default
                     if current_section not in self.commands_by_section:
-                         self.commands_by_section[current_section] = []
+                         self.commands_by_section[current_section] = {}
                     
-                    # 簡單判斷是否為有效指令行 (包含 =)
                     if '=' in line:
-                        # 解析 key=value
                         parts = line.split('=', 1)
                         cmd_name = parts[0].strip()
-                        self.commands_by_section[current_section].append(cmd_name)
+                        cmd_value = parts[1].strip()
+                        self.commands_by_section[current_section][cmd_name] = cmd_value
+                        # 同步到全部指令
+                        self.commands_by_section["全部指令"][cmd_name] = cmd_value
                     else:
-                        # 純指令名稱（或許是錯的格式，但為了相容）
-                         self.commands_by_section[current_section].append(line)
+                        # 純指令名稱與指令相同
+                        cmd_name = line.strip()
+                        self.commands_by_section[current_section][cmd_name] = cmd_name
+                        # 同步到全部指令
+                        self.commands_by_section["全部指令"][cmd_name] = cmd_name
+            
+            # 將結果同步到 parent 以確保 UIHandlers 可以讀取到完整的對應關係
+            if hasattr(self.parent, 'commands_by_section'):
+                self.parent.commands_by_section = self.commands_by_section
             
             print(f"[DEBUG] 解析到 {len(self.commands_by_section)} 個區段")
             for section, commands in self.commands_by_section.items():
                 print(f"[DEBUG] 區段 '{section}': {len(commands)} 個命令")
                 
+            return self.commands_by_section
+                
         except Exception as e:
             print(f"解析命令文件時發生錯誤: {e}")
+            return {}
     
     def get_sections(self):
         """獲取所有區段名稱"""
@@ -149,8 +179,14 @@ class CommandProcessor:
                 separator = self.setup.get('DUT_Control', {}).get('Command_Separator', '|')
                 cmd_list = command.split(separator)
 
-                # 創建新的 ADB 工作器
-                self.adb_worker = ADBWorker(
+                # 獲取單個指令超時時間
+                try:
+                    cmd_timeout = float(self.setup.get('DUT_Control', {}).get('Single_Command_Timeout', 10.0))
+                except (ValueError, TypeError):
+                    cmd_timeout = 30.0
+
+                # 創建新的 ADB 工作器 (使用 V2)
+                self.adb_worker = ADBWorkerV2(
                     cmd_list=cmd_list,
                     end_str=end_string,
                     timeout=timeout,
@@ -158,7 +194,8 @@ class CommandProcessor:
                     on_status=lambda connected: None,  # ADB 不需要狀態燈
                     on_progress=lambda p: None,  # 進度由外部處理
                     on_finish=on_finish_callback,
-                    stop_event=self.parent.stop_event
+                    stop_event=self.parent.stop_event,
+                    cmd_timeout=cmd_timeout
                 )
 
                 # 啟動 ADB 工作器
@@ -168,15 +205,24 @@ class CommandProcessor:
                 # 使用 Console 模式 (原有邏輯)
                 print(f"[DEBUG] 使用 Console 模式執行命令: {command}")
 
-                # 創建新的串口工作器
-                self.serial_worker = SerialWorker(
-                    com_port=com_port,
-                    command=command,
+                # 獲取單個指令超時時間
+                try:
+                    cmd_timeout = float(self.setup.get('DUT_Control', {}).get('Single_Command_Timeout', 10.0))
+                except (ValueError, TypeError):
+                    cmd_timeout = 10.0
+
+                # 創建新的串口工作器 (使用 V2)
+                self.serial_worker = SerialWorkerV2(
+                    com=com_port,
+                    cmd_list=[command],
+                    end_str=end_string,
                     timeout=timeout,
-                    end_string=end_string,
                     on_data=on_data_callback,
+                    on_status=lambda connected: None,
+                    on_progress=lambda p: None,
                     on_finish=on_finish_callback,
-                    stop_event=self.parent.stop_event
+                    stop_event=self.parent.stop_event,
+                    cmd_timeout=cmd_timeout
                 )
 
                 # 啟動串口工作器
