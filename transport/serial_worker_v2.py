@@ -33,8 +33,8 @@ class SerialWorkerV2(BaseWorker):
     所有共用邏輯 (DELAY, SHOW, 進度管理等) 都由 BaseWorker 提供
     """
     
-    def __init__(self, com: str, cmd_list, end_str: str, timeout: float,
-                 on_data, on_status, on_progress, on_finish, stop_event, cmd_timeout: float = 10.0):
+    def __init__(self, com: str, cmd_list, end_str: str, timeout: float, baudrate: int = 115200,
+                 on_data=None, on_status=None, on_progress=None, on_finish=None, stop_event=None, cmd_timeout: float = 10.0):
         """
         初始化序列埠工作器
         
@@ -56,6 +56,7 @@ class SerialWorkerV2(BaseWorker):
         
         # 序列埠特定參數
         self.com = com
+        self.baudrate = baudrate
         self.serial_connection = None
         self.global_buffer = ""  # 全域緩衝區，用於檢查結束字串
         
@@ -73,7 +74,7 @@ class SerialWorkerV2(BaseWorker):
         try:
             self.serial_connection = serial.Serial(
                 self.com, 
-                115200, 
+                self.baudrate, 
                 timeout=0.1
             )
             log_info(f"序列埠連線成功: {self.com}")

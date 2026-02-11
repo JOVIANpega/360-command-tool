@@ -231,7 +231,17 @@ class SettingsTab(ttk.Frame):
         # 單個指令超時 (回傳超時)
         ttk.Label(dut_frame, text="單個指令待響應超時 (秒):").grid(row=dut_row, column=0, sticky="w", pady=4)
         self.vars["DUT_Single_Command_Timeout"] = tk.StringVar(value=str(dut_settings.get("Single_Command_Timeout", 10)))
-        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Single_Command_Timeout"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
+        
+        # 使用 tk.Entry 以便更改背景顏色
+        self.timeout_entry = tk.Entry(
+            dut_frame, 
+            textvariable=self.vars["DUT_Single_Command_Timeout"], 
+            width=20,
+            bg='#FFFACD',  # 淺黃色
+            relief='sunken',
+            borderwidth=1
+        )
+        self.timeout_entry.grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
         dut_row += 1
         
 
@@ -308,6 +318,21 @@ class SettingsTab(ttk.Frame):
         self.vars["DUT_Command_File_Path"] = tk.StringVar(value=current_path)
         path_entry = ttk.Entry(path_container, textvariable=self.vars["DUT_Command_File_Path"])
         path_entry.grid(row=0, column=0, sticky="ew", pady=(0, 5))
+        
+        # 為路徑輸入框添加 ToolTip 顯示完整路徑
+        if self.tooltip_manager:
+            # 即時更新提示內容
+            def update_path_tooltip(*args):
+                try:
+                    path = self.vars["DUT_Command_File_Path"].get()
+                    if hasattr(self.tooltip_manager, 'add_tooltip_with_text'):
+                        self.tooltip_manager.add_tooltip_with_text(path_entry, f"完整路徑:\n{path}")
+                except Exception as e:
+                    print(f"[DEBUG] 更新路徑 ToolTip 失敗: {e}")
+            
+            self.vars["DUT_Command_File_Path"].trace('w', update_path_tooltip)
+            # 初始化時呼叫一次
+            self.after(500, update_path_tooltip) # 延遲一下確保元件已完全初始化
 
         # 瀏覽按鈕
         self.browse_button = ttk.Button(path_container, text="瀏覽檔案", command=lambda: self.browse_file("DUT_Command_File_Path"))

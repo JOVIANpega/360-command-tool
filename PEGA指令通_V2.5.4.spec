@@ -2,10 +2,10 @@
 
 
 a = Analysis(
-    ['MAIN.PY'],
+    ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('tooltips.ini', '.'), ('setup.json', '.'), ('command.txt', '.'), ('color_word.txt', '.'), ('tooltip_config.txt', '.'), ('user_guide.txt', '.'), ('readROVO.txt', '.'), ('sign_DOC.txt', '.'), ('Command_TABLE', 'Command_TABLE'), ('FIXTURE', 'FIXTURE'), ('core', 'core'), ('ui_parts', 'ui_parts'), ('transport', 'transport'), ('assets', 'assets'), ('docs\\PEGA指令通使用指南.html', '.'), ('docs\\VALO360_guide_files', 'VALO360_guide_files')],
+    datas=[('docs\\tooltips.ini', '.'), ('setup.json', '.'), ('Command_TABLE\\command.txt', '.'), ('color_word.txt', '.'), ('docs\\tooltip_config.txt', '.'), ('sign_DOC.txt', '.'), ('Command_TABLE', 'Command_TABLE'), ('FIXTURE', 'FIXTURE'), ('core', 'core'), ('ui_parts', 'ui_parts'), ('transport', 'transport'), ('assets', 'assets'), ('docs\\PEGA指令通使用指南.html', '.'), ('docs\\VALO360_guide_files', 'VALO360_guide_files')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

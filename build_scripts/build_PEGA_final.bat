@@ -29,7 +29,7 @@ if %errorlevel% neq 0 (
 
 rem 檢查必要文件
 echo [步驟2] 檢查必要文件...
-if not exist "MAIN.PY" echo [錯誤] 找不到MAIN.PY && pause && exit /b 1
+if not exist "main.py" echo [錯誤] 找不到main.py && pause && exit /b 1
 if not exist "setup.json" echo [錯誤] 找不到setup.json && pause && exit /b 1
 if not exist "docs\PEGA指令通使用指南.html" echo [錯誤] 找不到使用指南 && pause && exit /b 1
 
@@ -51,10 +51,9 @@ pyinstaller ^
     --version-file "version_info_zh.txt" ^
     --add-data "docs\tooltips.ini;." ^
     --add-data "setup.json;." ^
-    --add-data "command.txt;." ^
+    --add-data "Command_TABLE\command.txt;." ^
     --add-data "color_word.txt;." ^
     --add-data "docs\tooltip_config.txt;." ^
-    --add-data "readROVO.txt;." ^
     --add-data "sign_DOC.txt;." ^
     --add-data "Command_TABLE;Command_TABLE" ^
     --add-data "FIXTURE;FIXTURE" ^
@@ -65,7 +64,7 @@ pyinstaller ^
     --add-data "docs\PEGA指令通使用指南.html;." ^
     --add-data "docs\VALO360_guide_files;VALO360_guide_files" ^
     --icon "assets/icon.ico" ^
-    MAIN.PY
+    main.py
 
 rem 檢查結果
 echo.
@@ -88,9 +87,8 @@ if exist "dist\PEGA指令通_V%APP_VERSION%.exe" (
     copy /Y "docs\tooltips.ini" "dist\" > nul
     copy /Y "docs\tooltip_config.txt" "dist\" > nul
     copy /Y "color_word.txt" "dist\" > nul
-    copy /Y "command.txt" "dist\" > nul
+    copy /Y "Command_TABLE\command.txt" "dist\" > nul
     copy /Y "docs\PEGA指令通使用指南.html" "dist\" > nul
-    copy /Y "readROVO.txt" "dist\" > nul
     copy /Y "sign_DOC.txt" "dist\" > nul
     
     echo 打包完成！您可以在dist目錄找到可執行文件。

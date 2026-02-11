@@ -16,7 +16,9 @@ import re
 import subprocess
 
 from config_core import load_setup, save_setup, list_com_ports, extract_com_port_name
-from ui_parts.ui_handlers_core import UIHandlersCore
+from transport.serial_worker_v2 import SerialWorkerV2
+from transport.adb_worker_v2 import ADBWorkerV2
+from transport.ssh_worker_v2 import SSHWorkerV2
 
 
 class ManualCommandUI:
@@ -42,8 +44,8 @@ class ManualCommandUI:
         # 初始化變數
         self.command_history = []  # 指令歷史記錄
         self.history_index = -1   # 歷史記錄索引
-        self.current_worker = None # 當前工作執行緒
         self.serial_connection = None  # 串口連接
+        self.stop_event = threading.Event()  # 用於停止執行緒
         self.notepad_process = None  # 記事本程序
         
         # 創建自定義樣式
@@ -157,6 +159,10 @@ class ManualCommandUI:
         # 添加滑鼠指針效果
         self.execute_button.bind('<Enter>', lambda e: self.execute_button.configure(cursor='hand2'))
         self.execute_button.bind('<Leave>', lambda e: self.execute_button.configure(cursor=''))
+
+        # 停止按鈕 (紅色)
+        self.stop_button = ttk.Button(button_frame, text="停止", command=self.on_stop_click, state='disabled')
+        self.stop_button.pack(side='left', padx=(0, 5))
         
         # 清除按鈕
         self.clear_button = ttk.Button(button_frame, text="清除", command=self.clear_input)
@@ -406,8 +412,10 @@ class ManualCommandUI:
     
     def add_prompt(self):
         """添加提示符"""
+        self.output_text.configure(state='normal')
         self.output_text.insert(tk.END, "root@MU310:~# ")
         self.output_text.see(tk.END)
+        self.output_text.configure(state='disabled')
     
     def execute_command_from_output(self, command):
         """從輸出區域執行指令"""
@@ -416,16 +424,25 @@ class ManualCommandUI:
         
         # 獲取設定
         com_port = extract_com_port_name(self.com_port_var.get())
-        timeout = int(self.timeout_var.get())
         transport_mode = self.transport_mode_var.get()
         end_string = self.end_string_var.get()
         
+        # 獲取超時
+        timeout = 30
+        cmd_timeout = 10.0
+        try:
+            cmd_timeout = float(self.setup.get('DUT_Control', {}).get('Single_Command_Timeout', 10.0))
+        except (ValueError, TypeError):
+            cmd_timeout = 10.0
+        
         # 顯示指令
+        self.output_text.configure(state='normal')
         self.output_text.insert(tk.END, f"{command}\n")
         self.output_text.see(tk.END)
+        self.output_text.configure(state='disabled')
         
         # 執行指令
-        self.execute_command_thread(command, com_port, timeout, transport_mode, end_string)
+        self.execute_command_thread(command, com_port, timeout, transport_mode, end_string, cmd_timeout)
     
     def append_output(self, text):
         """添加輸出文字（垂直排列）"""
@@ -484,7 +501,8 @@ class ManualCommandUI:
     
     def show_error(self, message):
         """顯示錯誤訊息"""
-        self.output_text.insert(tk.END, f"錯誤: {message}\n")
+        self.output_text.configure(state='normal')
+        self.output_text.insert(tk.END, f"錯誤: {message}\n", "error")
         self.add_prompt()
         self.command_finished()
     
@@ -492,11 +510,18 @@ class ManualCommandUI:
         """指令執行完成"""
         self.status_label.config(text="就緒")
         self.execute_button.config(state='normal')
+        self.stop_button.config(state='disabled')
         self.update_connection_light('gray')
         
         # 在互動模式下，添加提示符
         self.add_prompt()
     
+    def on_stop_click(self):
+        """停止當前執行的指令"""
+        self.stop_event.set()
+        self.status_label.config(text="停止中...")
+        self.stop_button.config(state='disabled')
+
     def update_connection_light(self, color):
         """更新連線狀態指示燈"""
         self.connection_light.config(bg=color)
@@ -613,6 +638,7 @@ class ManualCommandUI:
         # 更新狀態
         self.status_label.config(text="執行中...")
         self.execute_button.config(state='disabled')
+        self.stop_button.config(state='normal')
         self.update_connection_light('yellow')
         
         # 不清空輸入框，保留使用者輸入
@@ -629,110 +655,90 @@ class ManualCommandUI:
     def execute_command_thread(self, command, com_port, timeout, transport_mode, end_string, cmd_timeout=10.0):
         """
         在執行緒中執行指令，並即時顯示回應內容
-        支援 Console 和 ADB 兩種傳輸模式
+        支援 Console, ADB 和 SSH 三種傳輸模式
         """
-        def run():
-            try:
-                if transport_mode == "ADB":
-                    # 使用 ADB 模式執行指令
-                    self.execute_adb_command(command, timeout, end_string, cmd_timeout)
-                else:
-                    # 使用 Console 模式執行指令
-                    self.execute_console_command(command, com_port, timeout, end_string, cmd_timeout)
-                
-                self.root.after(0, self.command_finished)
+        def on_data_callback(text, tag=None):
+            self.root.after(0, lambda: self.add_colored_output(text, tag))
+        
+        def on_status_callback(connected):
+            color = 'green' if connected else 'red'
+            self.root.after(0, lambda: self.update_connection_light(color))
+        
+        def on_progress_callback(progress):
+            pass
+        
+        def on_finish_callback():
+            self.root.after(0, self.command_finished)
 
-            except Exception as e:
-                error_msg = f"執行指令失敗: {e}"
-                self.root.after(0, lambda: self.show_error(error_msg))
+        # 重置停止事件
+        self.stop_event.clear()
+        
+        # 準備指令列表
+        cmd_list = [command] if command.strip() else [""]
 
-        thread = threading.Thread(target=run)
-        thread.daemon = True
-        thread.start()
-    
-    def execute_console_command(self, command, com_port, timeout, end_string, cmd_timeout=10.0):
-        """執行 Console 模式指令"""
         try:
-            ser = serial.Serial(
-                port=com_port,
-                baudrate=115200,
-                timeout=timeout,
-                bytesize=serial.EIGHTBITS,
-                parity=serial.PARITY_NONE,
-                stopbits=serial.STOPBITS_ONE
-            )
-
-            # 顯示發送的指令（藍色）
-            self.root.after(0, lambda: self.add_colored_output(f"[發送] {command}\n", "send"))
+            if transport_mode == "ADB":
+                # 使用 ADBWorkerV2
+                worker = ADBWorkerV2(
+                    cmd_list=cmd_list,
+                    end_str=end_string,
+                    timeout=timeout,
+                    on_data=on_data_callback,
+                    on_status=on_status_callback,
+                    on_progress=on_progress_callback,
+                    on_finish=on_finish_callback,
+                    stop_event=self.stop_event,
+                    cmd_timeout=cmd_timeout
+                )
+            elif transport_mode == "SSH":
+                # 使用 SSHWorkerV2
+                dut_setup = self.setup.get('DUT_Control', {})
+                worker = SSHWorkerV2(
+                    cmd_list=cmd_list,
+                    end_str=end_string,
+                    timeout=timeout,
+                    host=dut_setup.get('SSH_IP', '192.168.11.143'),
+                    port=int(dut_setup.get('SSH_Port', 22)),
+                    username=dut_setup.get('SSH_Username', 'root'),
+                    password=dut_setup.get('SSH_Password', 'oelinux123'),
+                    on_data=on_data_callback,
+                    on_status=on_status_callback,
+                    on_progress=on_progress_callback,
+                    on_finish=on_finish_callback,
+                    stop_event=self.stop_event,
+                    cmd_timeout=cmd_timeout
+                )
+            else:
+                # 預設使用 SerialWorkerV2 (Console)
+                # 從設定中獲取 Baudrate
+                baudrate = 115200
+                try:
+                    baudrate = int(self.setup.get('DUT_Control', {}).get('Serial_Baudrate', 115200))
+                except (ValueError, TypeError):
+                    baudrate = 115200
+                    
+                worker = SerialWorkerV2(
+                    com=com_port,
+                    baudrate=baudrate,
+                    cmd_list=cmd_list,
+                    end_str=end_string,
+                    timeout=timeout,
+                    on_data=on_data_callback,
+                    on_status=on_status_callback,
+                    on_progress=on_progress_callback,
+                    on_finish=on_finish_callback,
+                    stop_event=self.stop_event,
+                    cmd_timeout=cmd_timeout
+                )
             
-            ser.write(f"{command}\r\n".encode('utf-8'))
-
-            response = ""
-            # 使用設定的指令超時時間，而不僅僅是總超時時間
-            effective_timeout = cmd_timeout
-            
-            while time.time() - start_time < effective_timeout and not end_string_found:
-                if ser.in_waiting:
-                    data = ser.read(ser.in_waiting)
-                    decoded = data.decode('utf-8', errors='ignore')
-                    response += decoded
-                    # 即時顯示新收到的資料
-                    self.root.after(0, lambda text=decoded: self.add_colored_output(text, None))
-                    if end_string and end_string in response:
-                        print(f"[DEBUG] 找到結束字串: {end_string}")
-                        end_string_found = True
-                        break
-                time.sleep(0.01)
-
-            ser.close()
-
-            if end_string_found:
-                self.root.after(0, lambda: self.add_colored_output(f"[結束] 找到結束字串 '{end_string}'，停止讀取\n", "end"))
-
-        except Exception as e:
-            raise e
-    
-    def execute_adb_command(self, command, timeout, end_string, cmd_timeout=30.0):
-        """執行 ADB 模式指令"""
-        try:
-            from adb_worker import ADBWorker
-            
-            # 顯示發送的指令（藍色）
-            self.root.after(0, lambda: self.add_colored_output(f"[發送] {command}\n", "send"))
-            
-            # 創建 ADB Worker 並執行指令
-            def on_data_callback(text, tag):
-                self.root.after(0, lambda: self.add_colored_output(text, tag))
-            
-            def on_status_callback(connected):
-                pass  # 不需要處理狀態變化
-            
-            def on_progress_callback(progress):
-                pass  # 不需要處理進度
-            
-            def on_finish_callback():
-                pass  # 完成回調在主執行緒中處理
-            
-            # 創建停止事件
-            import threading
-            stop_event = threading.Event()
-            
-            # 創建 ADB Worker
-            adb_worker = ADBWorker(
-                [command], end_string, timeout,
-                on_data=on_data_callback,
-                on_status=on_status_callback,
-                on_progress=on_progress_callback,
-                on_finish=on_finish_callback,
-                stop_event=stop_event,
-                cmd_timeout=cmd_timeout
-            )
-            
-            # 執行 ADB 指令
-            adb_worker.run()
+            # 開始執行
+            thread = threading.Thread(target=worker.run)
+            thread.daemon = True
+            thread.start()
             
         except Exception as e:
-            raise e
+            error_msg = f"初始化工作執行緒失敗: {e}"
+            self.root.after(0, lambda: self.show_error(error_msg))
     
     def on_com_port_changed(self, event=None):
         """COM口變更時保存設定"""

@@ -38,7 +38,11 @@ if ui_parts_dir not in sys.path:
 def write_log(msg: str):
     """寫入運行日誌"""
     try:
-        with open("run_log.txt", "a", encoding="utf-8") as f:
+        backup_dir = "backup"
+        if not os.path.exists(backup_dir):
+            os.makedirs(backup_dir)
+        log_path = os.path.join(backup_dir, "run_log.txt")
+        with open(log_path, "a", encoding="utf-8") as f:
             f.write(msg + "\n")
         log_info(f"運行日誌: {msg}")
     except Exception as e:
@@ -67,7 +71,11 @@ def import_required_modules():
 def setup_logging():
     """設置日誌系統"""
     try:
-        with open("run_log.txt", "a", encoding="utf-8") as f:
+        backup_dir = "backup"
+        if not os.path.exists(backup_dir):
+            os.makedirs(backup_dir)
+        log_path = os.path.join(backup_dir, "run_log.txt")
+        with open(log_path, "a", encoding="utf-8") as f:
             f.write("=== 應用程式啟動 ===\n")
         log_info("日誌系統初始化完成")
     except Exception as e:
