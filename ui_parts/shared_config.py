@@ -169,7 +169,7 @@ class SharedConfigManager:
     def on_var_changed(self, var_name):
         """當變數變更時調用"""
         # 只更新UI顯示，不自動保存到檔案
-        print(f"[DEBUG] SharedConfigManager: 變數 {var_name} 已變更，等待手動保存")
+        # print(f"[DEBUG] SharedConfigManager: 變數 {var_name} 已變更，等待手動保存")
 
         # 通知相關的回調函數
         if var_name in self.callbacks:
@@ -367,12 +367,12 @@ class SharedConfigManager:
     def disable_auto_save(self):
         """禁用自動保存"""
         self._auto_save_enabled = False
-        print("[DEBUG] SharedConfigManager: 自動保存已禁用")
+        # print("[DEBUG] SharedConfigManager: 自動保存已禁用")
 
     def enable_auto_save(self):
         """啟用自動保存"""
         self._auto_save_enabled = True
-        print("[DEBUG] SharedConfigManager: 自動保存已啟用")
+        # print("[DEBUG] SharedConfigManager: 自動保存已啟用")
 
     def force_save_all(self):
         """強制保存所有待保存的設定"""

@@ -1189,6 +1189,15 @@ class UIHandlers(UIHandlersCore):
             # 通知全域字體管理器更新所有GUI元件
             self.update_global_ui_fonts(size)
 
+            # [修正] 同步更新 SharedConfigManager
+            if hasattr(self.parent, "shared_config") and self.parent.shared_config:
+                try:
+                    if 'dut_ui_font_size' in self.parent.shared_config.vars:
+                        self.parent.shared_config.vars['dut_ui_font_size'].set(str(size))
+                        # print(f"[DEBUG] UIHandlers: 字體設定同步 - UI:{size}")
+                except Exception as e:
+                    print(f"[WARNING] UIHandlers: 無法同步 SharedConfig UI 字體: {e}")
+
 
 
 
@@ -1254,6 +1263,15 @@ class UIHandlers(UIHandlersCore):
 
             # 通知全域字體管理器更新所有GUI元件
             self.update_global_content_fonts(size)
+
+            # [修正] 同步更新 SharedConfigManager
+            if hasattr(self.parent, "shared_config") and self.parent.shared_config:
+                try:
+                    if 'dut_content_font_size' in self.parent.shared_config.vars:
+                        self.parent.shared_config.vars['dut_content_font_size'].set(str(size))
+                        # print(f"[DEBUG] UIHandlers: 字體設定同步 - Content:{size}")
+                except Exception as e:
+                    print(f"[WARNING] UIHandlers: 無法同步 SharedConfig Content 字體: {e}")
 
 
 

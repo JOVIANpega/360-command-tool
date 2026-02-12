@@ -205,7 +205,7 @@ class ConfigManager:
         """保存配置"""
         # 如果不是手動保存且自動保存被禁用，則跳過
         if not manual_save and not self._auto_save_enabled:
-            self.error_handler.log_debug("自動保存已禁用，跳過配置保存")
+            # self.error_handler.log_debug("自動保存已禁用，跳過配置保存")
             return False
 
         with self._cache_lock:

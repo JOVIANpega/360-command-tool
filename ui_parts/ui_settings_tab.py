@@ -440,7 +440,7 @@ class SettingsTab(ttk.Frame):
                     if "DUT_Control" not in current_settings:
                         current_settings["DUT_Control"] = {}
                     current_settings["DUT_Control"]["UI_Font_Size"] = ui_size
-                    print(f"[DEBUG] 從記憶體同步 UI 字體大小: {ui_size}")
+                    # print(f"[DEBUG] 從記憶體同步 UI 字體大小: {ui_size}")
                 
                 # 內容字體
                 if 'ContentFontSize' in mem_setup:
