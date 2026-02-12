@@ -1,5 +1,5 @@
 {
-  "version": "V2.5.6",
+  "version": "V2.2.6",
   "Window_Title": "PEGA指令通",
   "Window_Width": "1536",
   "Window_Height": "793",
@@ -16,10 +16,10 @@
     "Available_End_Strings": [
       "root"
     ],
-    "Default_IP_Address": "192.168.0.1",
+    "Default_IP_Address": "172.0.0.1",
     "IP_History": [
-      "192.168.0.1",
       "172.0.0.1",
+      "192.168.0.1",
       "192.168.11.3",
       "192.168.11.143",
       "192.168.225.10"
@@ -78,8 +78,8 @@
   },
   "Command_Transport_Mode": "SSH",
   "Device_Label": "XXXXX33222",
-  "Startup_Label": " GEMINI TOOL",
+  "Startup_Label": " GEMINI TOOL33334",
   "Manual_Command": {
-    "Hint_Text": "請輸入指令並按執行"
+    "Hint_Text": "請輸入指令並按執行33"
   }
 }

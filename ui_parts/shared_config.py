@@ -116,16 +116,30 @@ class SharedConfigManager:
             # 載入 DUT 控制設定
             dut_settings = self.setup_data.get('DUT_Control', {})
             self.vars['dut_com_port'].set(dut_settings.get('Serial_COM_Port', ''))
-            self.vars['dut_timeout'].set(dut_settings.get('Command_Timeout_Seconds', '30'))
-            self.vars['dut_end_string'].set(dut_settings.get('Command_End_String', 'root'))
+            
+            timeout = dut_settings.get('Command_Timeout_Seconds', '30')
+            if not timeout: timeout = '30'
+            self.vars['dut_timeout'].set(timeout)
+            
+            end_str = dut_settings.get('Command_End_String', 'root')
+            if not end_str: end_str = 'root'
+            self.vars['dut_end_string'].set(end_str)
+            
             self.vars['dut_ip_address'].set(dut_settings.get('Default_IP_Address', '192.168.11.143'))
             self.vars['dut_ui_font_size'].set(dut_settings.get('UI_Font_Size', '12'))
             self.vars['dut_content_font_size'].set(dut_settings.get('Content_Font_Size', '11'))
-            self.vars['dut_notification_font_size'].set(dut_settings.get('Notification_Font_Size', '10'))
+            
+            notif_size = dut_settings.get('Notification_Font_Size', '10')
+            if not notif_size: notif_size = '10'
+            self.vars['dut_notification_font_size'].set(notif_size)
+            
             self.vars['dut_command_file_path'].set(dut_settings.get('Command_File_Path', ''))
             self.vars['dut_auto_execute'].set(dut_settings.get('Auto_Execute', False))
+            
             # 載入 指令傳輸方式（頂層）
-            self.vars['command_transport_mode'].set(self.setup_data.get('Command_Transport_Mode', 'Console'))
+            mode = self.setup_data.get('Command_Transport_Mode', 'Console')
+            if not mode: mode = 'Console'
+            self.vars['command_transport_mode'].set(mode)
             
             # 載入治具控制設定
             fixture_settings = self.setup_data.get('Fixture_Control', {})
@@ -137,19 +151,40 @@ class SharedConfigManager:
             self.vars['fixture_test_mb'].set(fixture_settings.get('Test_Category_MB', False))
             self.vars['fixture_test_original'].set(fixture_settings.get('Test_Category_Original_Commands', False))
             
+            
             # 載入串列設定
             serial_settings = fixture_settings.get('Serial_Settings', {})
-            self.vars['fixture_baudrate'].set(serial_settings.get('Baudrate', '9600'))
-            self.vars['fixture_bytesize'].set(serial_settings.get('Bytesize', '8'))
-            self.vars['fixture_stopbits'].set(serial_settings.get('Stopbits', '1'))
-            self.vars['fixture_parity'].set(serial_settings.get('Parity', 'None'))
-            self.vars['fixture_timeout'].set(serial_settings.get('Timeout', '1.0'))
+            baud = serial_settings.get('Baudrate', '9600')
+            if not baud: baud = '9600'
+            self.vars['fixture_baudrate'].set(baud)
+
+            bytesize = serial_settings.get('Bytesize', '8')
+            if not bytesize: bytesize = '8'
+            self.vars['fixture_bytesize'].set(bytesize)
+
+            stopbits = serial_settings.get('Stopbits', '1')
+            if not stopbits: stopbits = '1'
+            self.vars['fixture_stopbits'].set(stopbits)
+
+            parity = serial_settings.get('Parity', 'None')
+            if not parity: parity = 'None'
+            self.vars['fixture_parity'].set(parity)
+
+            timeout = serial_settings.get('Timeout', '1.0')
+            if not timeout: timeout = '1.0'
+            self.vars['fixture_timeout'].set(timeout)
             
             # 載入全域設定
             self.vars['app_version'].set(self.setup_data.get('version', 'V1.5.0.8'))
             self.vars['window_title'].set(self.setup_data.get('Window_Title', 'VALO360 指令通'))
-            self.vars['window_width'].set(self.setup_data.get('Window_Width', '1024'))
-            self.vars['window_height'].set(self.setup_data.get('Window_Height', '768'))
+            
+            w = self.setup_data.get('Window_Width', '1024')
+            if not w: w = '1024'
+            self.vars['window_width'].set(w)
+            
+            h = self.setup_data.get('Window_Height', '768')
+            if not h: h = '768'
+            self.vars['window_height'].set(h)
             
             # 載入標籤頁名稱
             tab_names = self.setup_data.get('tab_names', {})
@@ -241,17 +276,40 @@ class SharedConfigManager:
                     setup['DUT_Control'] = {}
                 
                 dut_settings = setup['DUT_Control']
-                dut_settings['Serial_COM_Port'] = self.vars['dut_com_port'].get()
-                dut_settings['Command_Timeout_Seconds'] = self.vars['dut_timeout'].get()
-                dut_settings['Command_End_String'] = self.vars['dut_end_string'].get()
-                dut_settings['Default_IP_Address'] = self.vars['dut_ip_address'].get()
+                # [修正] 只有當變數有值時才更新，避免因為變數未綁定導致清空設定
+                val = self.vars['dut_com_port'].get()
+                if val: dut_settings['Serial_COM_Port'] = val
+
+                val = self.vars['dut_timeout'].get()
+                if val: dut_settings['Command_Timeout_Seconds'] = val
+
+                val = self.vars['dut_end_string'].get()
+                if val: dut_settings['Command_End_String'] = val
+                
+                val = self.vars['dut_command_separator'].get()
+                if val: dut_settings['Command_Separator'] = val
+
+                val = self.vars['dut_ip_address'].get()
+                if val: dut_settings['Default_IP_Address'] = val
+
+                # 字體大小已經修正過同步邏輯，且為本次修復重點，應該總是正確的
                 dut_settings['UI_Font_Size'] = self.vars['dut_ui_font_size'].get()
+                setup['UIFontSize'] = dut_settings['UI_Font_Size']  # [修正] 同步更新頂層 UIFontSize
+
                 dut_settings['Content_Font_Size'] = self.vars['dut_content_font_size'].get()
-                dut_settings['Notification_Font_Size'] = self.vars['dut_notification_font_size'].get()
-                dut_settings['Command_File_Path'] = self.vars['dut_command_file_path'].get()
+                setup['ContentFontSize'] = dut_settings['Content_Font_Size']  # [修正] 同步更新頂層 ContentFontSize
+                
+                val = self.vars['dut_notification_font_size'].get()
+                if val: dut_settings['Notification_Font_Size'] = val
+
+                val = self.vars['dut_command_file_path'].get()
+                if val: dut_settings['Command_File_Path'] = val
+                
                 dut_settings['Auto_Execute'] = self.vars['dut_auto_execute'].get()
+                
                 # 保存 指令傳輸方式（頂層）
-                setup['Command_Transport_Mode'] = self.vars['command_transport_mode'].get() or 'Console'
+                val = self.vars['command_transport_mode'].get()
+                if val: setup['Command_Transport_Mode'] = val
                 
                 # 更新治具控制設定
                 if 'Fixture_Control' not in setup:
@@ -411,8 +469,24 @@ class SharedConfigManager:
                     if var_name in self.vars:
                         try:
                             value = self.vars[var_name].get()
+                            
+                            # [安全機制] 如果變數為空字串，且不是 Boolean 類型，則跳過保存，以防覆蓋
+                            # 這防止了因為 SharedConfigManager 變數未綁定 UI 而清空設定的問題
+                            if value == "" and setup_key != 'Auto_Execute':
+                                # print(f"[DEBUG] 跳過空值保存: {setup_key}")
+                                continue
+                            
                             setup['DUT_Control'][setup_key] = value
-                            print(f"[DEBUG] SharedConfigManager: 更新 DUT_Control.{setup_key} = {value}")
+                            
+                            # [修正] 同步更新頂層字體設定，確保下次啟動讀取正確
+                            if setup_key == 'UI_Font_Size':
+                                setup['UIFontSize'] = value
+                                # print(f"[DEBUG] SharedConfigManager: 同步更新頂層 UIFontSize = {value}")
+                            elif setup_key == 'Content_Font_Size':
+                                setup['ContentFontSize'] = value
+                                # print(f"[DEBUG] SharedConfigManager: 同步更新頂層 ContentFontSize = {value}")
+                                
+                            # print(f"[DEBUG] SharedConfigManager: 更新 DUT_Control.{setup_key} = {value}")
                         except Exception as e:
                             print(f"[WARNING] SharedConfigManager: 無法獲取變數 {var_name}: {e}")
 
@@ -429,8 +503,12 @@ class SharedConfigManager:
                     if var_name in self.vars:
                         try:
                             value = self.vars[var_name].get()
+                            # [安全機制] 如果變數為空字串，則跳過保存
+                            if value == "":
+                                continue
+                            
                             setup[setup_key] = value
-                            print(f"[DEBUG] SharedConfigManager: 更新全域 {setup_key} = {value}")
+                            # print(f"[DEBUG] SharedConfigManager: 更新全域 {setup_key} = {value}")
                         except Exception as e:
                             print(f"[WARNING] SharedConfigManager: 無法獲取變數 {var_name}: {e}")
 
@@ -438,13 +516,17 @@ class SharedConfigManager:
                 if 'tab_names' not in setup:
                     setup['tab_names'] = {}
 
-                for i in range(4):
+                for i in range(5):
                     var_name = f'tab_name_{i}'
                     if var_name in self.vars:
                         try:
                             value = self.vars[var_name].get()
+                            # [安全機制] 如果變數為空字串，則跳過保存
+                            if value == "":
+                                continue
+
                             setup['tab_names'][f'tab{i}'] = value
-                            print(f"[DEBUG] SharedConfigManager: 更新標籤頁 tab{i} = {value}")
+                            # print(f"[DEBUG] SharedConfigManager: 更新標籤頁 tab{i} = {value}")
                         except Exception as e:
                             print(f"[WARNING] SharedConfigManager: 無法獲取標籤頁變數 {var_name}: {e}")
 

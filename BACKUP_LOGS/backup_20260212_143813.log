@@ -1,0 +1,67 @@
+
+=== 執行指令: 01 Read RTC ===
+COM 口: COM4, 超時: 30 秒, 結束字串: root
+
+01  發送指令 date
+[Console 發送] date
+date
+Fri Oct 28 08:09:56 UTC 2022
+root@intel-corei7-64:~/mfg# 
+root@intel-corei7-64:~/mfg# 
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 01 Read RTC ===
+COM 口: COM4, 超時: 10 秒, 結束字串: root
+
+01  發送指令 date
+[Console 發送] date
+date
+Fri Oct 28 08:10:11 UTC 2022
+root@intel-corei7-64:~/mfg# 
+root@intel-corei7-64:~/mfg# 
+[結束] 收到指定結束字串 root
+
+=== 執行指令: FAN speed ===
+COM 口: COM4, 超時: 5 秒, 結束字串: root
+多重指令模式: 將執行 2 個指令
+  1. ./mfg_sources/fan_control.sh speed 10
+  2. date
+
+
+01  發送指令 ./mfg_sources/fan_control.sh speed 10
+[Console 發送] ./mfg_sources/fan_control.sh speed 10
+./mfg_sources/fan_control.sh speed 10
+  Set Fan PWM to speed 10 % Done.
+root@intel-corei7-64:~/mfg# 
+root@intel-corei7-64:~/mfg# 
+####################
+
+02  發送指令 date
+[Console 發送] date
+date
+Fri Oct 28 08:10:31 UTC 2022
+root@intel-corei7-64:~/mfg# 
+root@intel-corei7-64:~/mfg# 
+[結束] 收到指定結束字串 root
+
+=== 執行指令: 03 Show Information ===
+COM 口: COM4, 超時: 5 秒, 結束字串: root
+多重指令模式: 將執行 2 個指令
+  1. export NPU_ONLY=1
+  2. ./show_version
+
+
+01  發送指令 export NPU_ONLY=1
+[Console 發送] export NPU_ONLY=1
+export NPU_ONLY=1
+root@intel-corei7-64:~/mfg# 
+root@intel-corei7-64:~/mfg# 
+####################
+
+02  發送指令 ./show_version
+[Console 發送] ./show_version
+./show_version
+root@intel-corei7-64:~/mfg# 
+root@intel-corei7-64:~/mfg# 
+[結束] 收到指定結束字串 root
+

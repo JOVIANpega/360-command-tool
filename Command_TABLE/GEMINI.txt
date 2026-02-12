@@ -64,9 +64,9 @@ FAN speed=./mfg_sources/fan_control.sh speed 10==>date
 71 Off environment parameter in BMC U-Boot=ipmitool raw 0x3c 0xe3 0x0 0x1 0x1
 
 ===Gemeni 2===
-01 Enable Burn-In=./diag_test --rst-conf Gemini pt==>[Burn-in] ./diag_test --burn-in-set on --pwr-cyc-num 16 --tfc-pkt-t 28==>[PT-4C] ./diag_test --burn-in-set on --pwr-cyc-num 16 --tfc-pkt-t 28
-02 SFP + QSFP Port Loopback Test=* 請先進入SDK ==>root@intel-corei7-64:~/mfg# ./appDemo==>shell-execute PT_Pretest_Request 100 25 500==>shell-execute SFP_Speed_Set 1 4 0==>shell-execute QSFP_Speed_Set 5 4 0==>Console# CLIexit==>exit
-03 Port Status Check=查看Port Status==>Console# show interfaces status all==>測試結束欲跳出SDK==>Console# CLIexit==>exit
-04 FB EEPROM Write FtB=i2cset -y 0 0x72 0x7==>i2cset -y 0 0x70 0xb0 0x0==>i2cset -y 0 0x70 0xb1 0x2==>i2cset -y 0 0x70 0xb3 0x57==>i2cset -y 0 0x70 0xb1 0x6==>i2cset -y 0 0x70 0xb3 0x09==>i2cset -y 0 0x70 0xb1 0xa==>i2cset -y 0 0x70 0xb3 0x00==>i2cset -y 0 0x70 0xb1 0xe==>i2cset -y 0 0x70 0xb3 0x1f
-05 FB EEPROM Write BtF=i2cset -y 0 0x72 0x7==>i2cset -y 0 0x70 0xb0 0x0==>i2cset -y 0 0x70 0xb1 0x2==>i2cset -y 0 0x70 0xb3 0x68==>i2cset -y 0 0x70 0xb1 0x6==>i2cset -y 0 0x70 0xb3 0x09==>i2cset -y 0 0x70 0xb1 0xa==>i2cset -y 0 0x70 0xb3 0x01==>i2cset -y 0 0x70 0xb1 0xe==>i2cset -y 0 0x70 0xb3 0x1f
-06 FB EEPROM Read=i2cset -y 0 0x72 0x7==>i2cset -y 0 0x70 0xb1 0x2==>i2cget -y 0 0x70 0xb2==>i2cset -y 0 0x70 0xb1 0x6==>i2cget -y 0 0x70 0xb2==>i2cset -y 0 0x70 0xb1 0xa==>i2cget -y 0 0x70 0xb2==>i2cset -y 0 0x70 0xb1 0xe==>i2cget -y 0 0x70 0xb2
+01 Read RTC=date
+02 Set RTC=date -s "2022-10-27 09:57:10"==>hwclock -w
+03 Show Information=export NPU_ONLY=1==>./show_version
+04 Hardware Monitor=./hw_monitor
+05 Show Temperature=./mfg_sources/temp_monitor.sh
+06 Check SPI boot IC=i2cget -y 0 0x18 0x04

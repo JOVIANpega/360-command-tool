@@ -287,15 +287,21 @@ class BaseWorker(threading.Thread, ABC):
             finished = False
             
             # 步驟 2: 執行所有指令
+            # 步驟 2: 執行所有指令
             for i, cmd in enumerate(self.cmd_list):
                 if self.stop_event.is_set() or finished:
                     break
                 
-                # 處理特殊指令
-                if self._handle_special_command(cmd, i):
+                # [Fix] 解包 tuple 指令 (name, cmd_str)
+                cmd_str = cmd
+                if isinstance(cmd, tuple):
+                    _, cmd_str = cmd
+                
+                # 處理特殊指令 (使用 cmd_str)
+                if self._handle_special_command(cmd_str, i):
                     continue
                 
-                # 執行正常指令
+                # 執行正常指令 (傳遞原始 cmd，以便正常指令可以輸出名稱)
                 if self._execute_normal_command(cmd, i):
                     finished = True
                     break

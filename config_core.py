@@ -135,7 +135,7 @@ def save_setup(setup_data: Dict[str, Any], manual_save=False) -> bool:
     if not manual_save:
         # print("[DEBUG] 自動保存已禁用，請使用手動保存")
         return False
-    return config_manager.save_config(setup_data)
+    return config_manager.save_config(setup_data, manual_save=manual_save)
 
 
 
