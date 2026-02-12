@@ -368,35 +368,187 @@ class SettingsTab(ttk.Frame):
                                      font=('Microsoft JhengHei UI', 9), foreground='#666666')
         startup_help_label.grid(row=1, column=0, sticky="w", pady=(2, 0))
 
-        # 添加手動保存按鈕
+        # === 儲存設定按鈕 (移回這裡) ===
         save_button_frame = ttk.Frame(info_frame)
-        save_button_frame.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(10, 5))
-
+        save_button_frame.grid(row=4, column=0, columnspan=2, sticky="w", pady=(15, 5))
+        
         self.manual_save_button = ttk.Button(
             save_button_frame,
-            text="💾 儲存設定並即刻生效",
+            text="💾 儲存所有設定",
             command=self.manual_save_settings,
-            style="Accent.TButton"
+            style="Accent.TButton",
+            width=20
         )
         self.manual_save_button.pack(side="left", padx=(0, 10))
-
-        # 添加說明標籤
-        save_help_label = ttk.Label(
-            save_button_frame,
-            text="點擊此按鈕保存設定並立即生效 (部分設定需重啟)",
-            font=('Microsoft JhengHei UI', 9),
-            foreground='#0066CC'
-        )
-        save_help_label.pack(side="left", padx=(10, 0))
         
-        # 注意：治具控制設定已移動至「TAB 測試治具」的指令控制區塊中
-
-        # 移除綠色儲存按鈕 - 已改用手動保存按鈕
-        # 原本的綠色儲存按鈕已被移除，改用上方的手動保存按鈕
+        # 說明文字
+        ttk.Label(
+            save_button_frame,
+            text="(部分設定需重啟生效)",
+            font=('Microsoft JhengHei UI', 9),
+            foreground='gray'
+        ).pack(side="left")
 
     # 字體設定函式已移至DUT控制標籤頁
 
 
+    def manual_save_settings(self):
+        """
+        [安全版] 手動保存設定到 setup.json
+        邏輯：讀取最新設定 -> 只更新UI上有值的欄位 -> 寫回檔案
+        注意：字體設定由 DUT 控制頁面即時儲存，此處不應覆蓋
+        """
+        try:
+            print("[DEBUG] 開始執行安全手動保存...")
+            
+            # 1. 讀取磁碟上最新的設定檔 (確保包含最新的字體設定)
+            current_settings = load_setup()
+            
+            # 2. 收集並更新 - 應用程式基本設定
+            # 視窗標題
+            title = self.vars["Window_Title"].get().strip()
+            if title:
+                current_settings["Window_Title"] = title
+                if "DUT_Control" in current_settings:
+                    current_settings["DUT_Control"]["Window_Title"] = title
+            
+            # 傳輸模式
+            transport = self.vars["Command_Transport_Mode"].get()
+            if transport:
+                current_settings["Command_Transport_Mode"] = transport
+            
+            # 視窗大小
+            w = self.vars["Window_Width"].get().strip()
+            h = self.vars["Window_Height"].get().strip()
+            if w.isdigit() and h.isdigit():
+                current_settings["Window_Width"] = w
+                current_settings["Window_Height"] = h
+                if "DUT_Control" in current_settings:
+                    current_settings["DUT_Control"]["Window_Width"] = w
+                    current_settings["DUT_Control"]["Window_Height"] = h
+            
+            # [修正] 從記憶體中抓取最新的字體設定
+            # 因為自動保存可能被禁用，磁碟上的 setup.json 可能是舊的
+            # 但 UIHandlers 在調整字體時會更新記憶體中的 self.parent.setup
+            if hasattr(self, 'parent') and hasattr(self.parent, 'setup'):
+                mem_setup = self.parent.setup
+                
+                # 介面字體
+                if 'UIFontSize' in mem_setup:
+                    ui_size = str(mem_setup['UIFontSize'])
+                    current_settings["UIFontSize"] = ui_size
+                    if "DUT_Control" not in current_settings:
+                        current_settings["DUT_Control"] = {}
+                    current_settings["DUT_Control"]["UI_Font_Size"] = ui_size
+                    print(f"[DEBUG] 從記憶體同步 UI 字體大小: {ui_size}")
+                
+                # 內容字體
+                if 'ContentFontSize' in mem_setup:
+                    content_size = str(mem_setup['ContentFontSize'])
+                    current_settings["ContentFontSize"] = content_size
+                    if "DUT_Control" not in current_settings:
+                        current_settings["DUT_Control"] = {}
+                    current_settings["DUT_Control"]["Content_Font_Size"] = content_size
+                    print(f"[DEBUG] 從記憶體同步內容字體大小: {content_size}")
+
+            # 3. 收集並更新 - DUT 控制設定
+            if "DUT_Control" not in current_settings:
+                current_settings["DUT_Control"] = {}
+                
+            # IP地址
+            ip = self.vars["DUT_Default_IP_Address"].get().strip()
+            if ip:
+                current_settings["DUT_Control"]["Default_IP_Address"] = ip
+            
+            # 指令超時
+            timeout = self.vars["DUT_Single_Command_Timeout"].get().strip()
+            if timeout.isdigit():
+                current_settings["DUT_Control"]["Single_Command_Timeout"] = timeout
+                
+            # 間隔符號
+            separator = self.vars["DUT_Command_Separator"].get()
+            if separator:
+                current_settings["DUT_Control"]["Command_Separator"] = separator
+
+            # 4. 收集並更新 - SSH 設定
+            if "SSH_Settings" not in current_settings:
+                current_settings["SSH_Settings"] = {}
+                
+            ssh_host = self.vars["SSH_Host"].get().strip()
+            if ssh_host:
+                current_settings["SSH_Settings"]["Host"] = ssh_host
+                
+            ssh_port = self.vars["SSH_Port"].get().strip()
+            if ssh_port.isdigit():
+                 current_settings["SSH_Settings"]["Port"] = int(ssh_port)
+                 
+            ssh_account = self.vars["SSH_Default_Account"].get().strip()
+            if ssh_account:
+                current_settings["SSH_Settings"]["Default_Account"] = ssh_account
+                
+            ssh_timeout = self.vars["SSH_Connection_Timeout"].get().strip()
+            if ssh_timeout.isdigit():
+                current_settings["SSH_Settings"]["Connection_Timeout"] = int(ssh_timeout)
+
+            # 5. 收集並更新 - 標籤頁名稱
+            if "tab_names" not in current_settings:
+                current_settings["tab_names"] = {}
+            
+            for i in range(5):
+                tab_key = f'tab{i}'
+                var_key = f"tab_names_{tab_key}"
+                if var_key in self.vars:
+                    name = self.vars[var_key].get().strip()
+                    if name:
+                        current_settings["tab_names"][tab_key] = name
+
+            # 6. 收集並更新 - 手動輸入指令設定
+            hint_text = self.vars["Manual_Hint_Text"].get().strip()
+            if hint_text:
+                if "Manual_Command" not in current_settings:
+                    current_settings["Manual_Command"] = {}
+                current_settings["Manual_Command"]["Hint_Text"] = hint_text
+
+            # 7. 收集並更新 - 版本與路徑資訊
+            # 版本號
+            ver = self.vars["version"].get().strip()
+            if ver:
+                current_settings["version"] = ver
+            
+            # 指令檔案路徑
+            cmd_path = self.vars["DUT_Command_File_Path"].get().strip()
+            if cmd_path:
+                current_settings["DUT_Control"]["Command_File_Path"] = cmd_path
+                
+            # 設備標籤
+            device_label = self.vars["Device_Label"].get().strip()
+            if device_label:
+                current_settings["Device_Label"] = device_label
+                
+            # 啟動標籤
+            startup_label = self.vars["Startup_Label"].get().strip()
+            if startup_label:
+                current_settings["Startup_Label"] = startup_label
+
+            # 8. 寫回檔案 (強制手動保存)
+            print("[DEBUG] 正在寫入 setup.json ...")
+            save_setup(current_settings, manual_save=True)
+            
+            # 9. 更新本地緩存
+            self.setup_data = current_settings
+            
+            # 10. 顯示成功訊息
+            messagebox.showinfo("成功", "所有設定已成功儲存！\n\n部分設定可能需要重新啟動程式才會生效。")
+            
+            # 通知 parent (如果有 callback)
+            if self.on_save_callback:
+                self.on_save_callback(current_settings)
+
+        except Exception as e:
+            print(f"[ERROR] 手動保存設定失敗: {e}")
+            import traceback
+            traceback.print_exc()
+            messagebox.showerror("錯誤", f"保存設定失敗: {e}")
 
     def on_fixture_font_changed(self, event=None):
         """治具字體大小即時更新（僅更新顯示，不自動保存）"""

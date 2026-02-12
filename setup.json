@@ -1,5 +1,5 @@
 {
-  "version": "2.5.4",
+  "version": "2.5.52",
   "Window_Title": "PEGA指令通",
   "Window_Width": "1536",
   "Window_Height": "793",
@@ -42,11 +42,11 @@
     "Fixture_Font_Size": "11"
   },
   "tab_names": {
-    "tab0": "DUT控制",
-    "tab1": "治具控制",
-    "tab2": "手打指令",
-    "tab3": "DOS批次檔",
-    "tab4": "設定我"
+    "tab0": "DUT控制2",
+    "tab1": "治具控制2",
+    "tab2": "手打指令2",
+    "tab3": "DOS批次檔2",
+    "tab4": "設定我2"
   },
   "UI_Settings": {
     "ToolTip_Enabled": true,
@@ -77,9 +77,9 @@
     "Command_Timeout": 30
   },
   "Command_Transport_Mode": "SSH",
-  "Device_Label": "XXXXX",
-  "Startup_Label": " GEMINI TOOL",
+  "Device_Label": "XXXXX22",
+  "Startup_Label": " GEMINI TOOL22",
   "Manual_Command": {
-    "Hint_Text": "請輸入指令並按執行"
+    "Hint_Text": "請輸入指令並按執行22"
   }
 }
