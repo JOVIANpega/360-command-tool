@@ -111,6 +111,12 @@ class UIComponentsBase:
         self.highlight_keywords = getattr(parent, 'highlight_keywords', {})
 
 
+        # [修復] 即時記錄分割線位置，確保程式關閉時能保存最後的位置
+
+
+        self._last_known_sash_pos = None
+
+
         print(f"[DEBUG] 載入了 {len(self.highlight_keywords)} 個高亮關鍵字到 UIComponents")
 
 
@@ -365,10 +371,15 @@ class UIComponentsBase:
                 # 獲取新的分割位置
                 sash_position = self.main_frame.sashpos(0)
                 
+                # [修復] 立即記錄位置，確保程式關閉時能保存
+                if sash_position > 100:
+                    self._last_known_sash_pos = sash_position
+                    print(f"[DEBUG] 即時記錄DUT分割位置: {sash_position}")
+                
                 # 延遲保存，避免頻繁寫入
                 if hasattr(self, '_pane_timer'):
                     self.parent.root.after_cancel(self._pane_timer)
-                self._pane_timer = self.parent.root.after(1000, self._delayed_save_pane_position, sash_position)
+                self._pane_timer = self.parent.root.after(1000, lambda: self._delayed_save_pane_position(sash_position))
                 
                 print(f"[DEBUG] 分割位置已變更: {sash_position}")
                 
@@ -393,7 +404,7 @@ class UIComponentsBase:
                     # 延遲保存，避免頻繁寫入
                     if hasattr(self, '_resize_timer'):
                         self.parent.root.after_cancel(self._resize_timer)
-                    self._resize_timer = self.parent.root.after(2000, self._delayed_save_window_size, w, h)
+                    self._resize_timer = self.parent.root.after(2000, lambda: self._delayed_save_window_size(w, h))
                     
                     # 更新左側面板滾動狀態
                     self.parent.root.after(100, self.update_left_panel_scroll)
@@ -510,6 +521,10 @@ class UIComponentsBase:
     def restore_pane_position(self):
         """恢復 PanedWindow 分割位置"""
         try:
+            # [修復] 恢復分割位置前，務必重新從設定檔載入，確保讀取到最新的位置
+            from config_core import load_setup
+            self.parent.setup = load_setup()
+            
             # 獲取保存的分割位置
             sash_position = self.parent.setup.get('DUT_Control', {}).get('Pane_Sash_Position', 633)
             

@@ -834,6 +834,15 @@ class SettingsTab(ttk.Frame):
         current_setup["DUT_Control"]["Auto_Execute"] = self.vars["DUT_Auto_Execute"].get()
         current_setup["DUT_Control"]["Command_File_Path"] = self.vars["DUT_Command_File_Path"].get()
         
+        # 更新 SSH 設定 (新增)
+        if "SSH_Settings" not in current_setup:
+            current_setup["SSH_Settings"] = {}
+        
+        current_setup["SSH_Settings"]["Host"] = self.vars["SSH_Host"].get()
+        current_setup["SSH_Settings"]["Port"] = int(self.vars["SSH_Port"].get()) if self.vars["SSH_Port"].get().isdigit() else 22
+        current_setup["SSH_Settings"]["Default_Account"] = self.vars["SSH_Default_Account"].get()
+        current_setup["SSH_Settings"]["Connection_Timeout"] = int(self.vars["SSH_Connection_Timeout"].get()) if self.vars["SSH_Connection_Timeout"].get().isdigit() else 30
+        
         # 注意：Fixture_Control 設定已移動至治具控制TAB中，這裡不再處理
         # 只保留基本結構，確保不破壞現有設定
         if "Fixture_Control" not in current_setup:
@@ -926,6 +935,11 @@ class SettingsTab(ttk.Frame):
             except Exception as e:
                 print(f"[DEBUG] 獲取設定分欄位置失敗: {e}")
 
+            # [關鍵修復] 必須先將 settings_dict 保存到磁碟，否則 SharedConfigManager 會讀取到舊的設定
+            print("[DEBUG] 正在寫入 setup.json...")
+            save_setup(settings_dict, manual_save=True)
+            print("[DEBUG] settings_dict 已寫入磁碟")
+
             # 強制保存 SharedConfigManager 中的設定
             try:
                 from ui_parts.shared_config import get_shared_config
@@ -940,9 +954,26 @@ class SettingsTab(ttk.Frame):
                 if 'settings_sash_position' in shared_config.vars:
                     shared_config.vars['settings_sash_position'].set(sash_pos_str)
                 
+                # [新增] 同步標籤頁名稱至全域，防止被舊值覆蓋
+                if 'tab_names' in settings_dict:
+                    for i in range(5):
+                        t_key = f'tab{i}'
+                        s_key = f'tab_name_{i}'
+                        if t_key in settings_dict['tab_names'] and s_key in shared_config.vars:
+                            shared_config.vars[s_key].set(settings_dict['tab_names'][t_key])
+                            
+                # [新增] 同步 DUT 控制相關設定至全域
+                if 'DUT_Control' in settings_dict:
+                    # 指令檔路徑
+                    if 'Command_File_Path' in settings_dict['DUT_Control'] and 'dut_command_file_path' in shared_config.vars:
+                         shared_config.vars['dut_command_file_path'].set(settings_dict['DUT_Control']['Command_File_Path'])
+                    # 自動執行
+                    if 'Auto_Execute' in settings_dict['DUT_Control'] and 'dut_auto_execute' in shared_config.vars:
+                         shared_config.vars['dut_auto_execute'].set(settings_dict['DUT_Control']['Auto_Execute'])
+                
                 if hasattr(shared_config, 'force_save_all'):
                     shared_config.force_save_all()
-                    print(f"[DEBUG] SharedConfigManager 強制保存完成 (ToolTip=True, Sash={sash_pos_str})")
+                    print(f"[DEBUG] SharedConfigManager 強制保存完成 (同步變數: ToolTip, Sash, Tabs, Path)")
             except Exception as e:
                 print(f"[WARNING] SharedConfigManager 強制保存失敗: {e}")
 
@@ -1272,11 +1303,11 @@ class SettingsTab(ttk.Frame):
             
             # 更新標籤頁名稱
             tab_names = self.setup_data.get('tab_names', {})
-            for i in range(4):
+            for i in range(5):
                 tab_key = f'tab{i}'
                 if f"tab_names_{tab_key}" in self.vars:
-                    default_names = ['DUT 控制', '治具控制', '使用說明', '設定']
-                    self.vars[f"tab_names_{tab_key}"].set(tab_names.get(tab_key, default_names[i]))
+                    default_names = ['DUT 控制', '治具控制', '手動輸入指令', 'DOS 工具', '設定']
+                    self.vars[f"tab_names_{tab_key}"].set(tab_names.get(tab_key, default_names[i] if i < len(default_names) else f'標籤頁 {i+1}'))
             
             # 更新 DUT 控制設定
             dut_settings = self.setup_data.get('DUT_Control', {})
@@ -1297,6 +1328,20 @@ class SettingsTab(ttk.Frame):
             # 更新 UI 設定
             ui_settings = self.setup_data.get('UI_Settings', {})
             self.vars["UI_ToolTip_Enabled"].set(ui_settings.get("ToolTip_Enabled", True))
+
+            # 更新 SSH 設定 (新增)
+            ssh_settings = self.setup_data.get("SSH_Settings", {})
+            self.vars["SSH_Host"].set(ssh_settings.get("Host", "192.168.11.143"))
+            self.vars["SSH_Port"].set(str(ssh_settings.get("Port", 22)))
+            self.vars["SSH_Default_Account"].set(ssh_settings.get("Default_Account", "root/oelinux123"))
+            self.vars["SSH_Connection_Timeout"].set(str(ssh_settings.get("Connection_Timeout", 30)))
+            
+            # 更新其他設定 (新增)
+            self.vars["Device_Label"].set(self.setup_data.get("Device_Label", "MU310 : root/oelinux123"))
+            self.vars["Startup_Label"].set(self.setup_data.get("Startup_Label", "TEST"))
+            
+            manual_cmd = self.setup_data.get("Manual_Command", {})
+            self.vars["Manual_Hint_Text"].set(manual_cmd.get("Hint_Text", "請輸入指令並按執行"))
             
         except Exception as e:
             print(f"[ERROR] 更新 UI 設定時發生錯誤: {e}")

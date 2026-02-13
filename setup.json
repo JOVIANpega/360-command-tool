@@ -1,5 +1,5 @@
 {
-  "version": "V2.6.1",
+  "version": "V2.6.2",
   "Window_Title": "PEGA指令通",
   "Window_Width": "1536",
   "Window_Height": "793",
@@ -27,9 +27,9 @@
     "Window_Width": "1536",
     "Window_Height": "793",
     "Last_Selected_Command_Section": "全部指令",
-    "Pane_Sash_Position": "600",
+    "Pane_Sash_Position": "677",
     "Auto_Execute": false,
-    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/PEGA-command-tool/Command_TABLE/GEMINI.txt",
+    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/PEGA-command-tool/Command_TABLE/command_360.txt",
     "Notification_Font_Size": "",
     "Single_Command_Timeout": "15",
     "Custom_Separators": [
@@ -48,16 +48,16 @@
     "Fixture_Font_Size": "11"
   },
   "tab_names": {
-    "tab0": "DUT",
-    "tab1": "FIXTURE",
-    "tab2": "MANUAL CMD",
-    "tab3": "DOS",
-    "tab4": "設定我"
+    "tab0": "DUT1",
+    "tab1": "FIXTURE1",
+    "tab2": "MANUAL1",
+    "tab3": "DOS1",
+    "tab4": "設定我1"
   },
   "UI_Settings": {
     "ToolTip_Enabled": true,
     "left_pane_width": 420,
-    "Settings_Sash_Position": "559"
+    "Settings_Sash_Position": "607"
   },
   "notification_messages": {
     "app_started": "指令通 已啟動",
@@ -84,9 +84,9 @@
     "Command_Timeout": 30
   },
   "Command_Transport_Mode": "Console",
-  "Device_Label": "XXXXX332228",
-  "Startup_Label": " GEMINI TOOL",
+  "Device_Label": "XXX1",
+  "Startup_Label": " GEMINI TOO1",
   "Manual_Command": {
-    "Hint_Text": "請輸入指令並按執行"
+    "Hint_Text": "gggg1"
   }
 }

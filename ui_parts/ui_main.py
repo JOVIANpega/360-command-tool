@@ -1671,8 +1671,16 @@ class SerialUI:
         self.handlers.refresh_com_ports()
 
         # 恢復分割位置
+        # [修復] 切換標籤頁時不要強制重置分割位置，這會導致拖曳後的位置失效
+        # 只有在分割位置尚未正確設定時才需要恢復
         if hasattr(self, 'components') and hasattr(self.components, 'restore_pane_position'):
-            self.components.restore_pane_position()
+            try:
+                # 只有當位置不正確時才恢復（例如太靠近邊緣）
+                sash_pos = self.components.main_frame.sashpos(0)
+                if sash_pos <= 10:
+                     self.components.restore_pane_position()
+            except:
+                self.components.restore_pane_position()
 
 
         # 其他激活操作...
@@ -1716,11 +1724,20 @@ class SerialUI:
 
                 if hasattr(self.components, 'main_frame'):
 
+                    # [修復] 優先使用即時記錄的位置，確保保存用戶最後調整的值
+                    sash_position = None
+                    
+                    # 優先使用即時記錄的位置
+                    if hasattr(self.components, '_last_known_sash_pos') and self.components._last_known_sash_pos:
+                        sash_position = self.components._last_known_sash_pos
+                        print(f"[DEBUG] SerialUI.on_close: 使用即時記錄的分割位置: {sash_position}")
+                    else:
+                        # 如果沒有記錄，才使用即時讀取的值
+                        sash_position = self.components.main_frame.sashpos(0)
+                        print(f"[DEBUG] SerialUI.on_close: 使用即時讀取的分割位置: {sash_position}")
 
-                    sash_position = self.components.main_frame.sashpos(0)
 
-
-                    if sash_position > 0:  # 確保分割位置有效
+                    if sash_position and sash_position > 100:  # 確保分割位置有效
 
 
                         current_settings['Pane_Sash_Position'] = str(sash_position)
