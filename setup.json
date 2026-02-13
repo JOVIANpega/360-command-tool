@@ -55,7 +55,7 @@
     "tab4": "設定我"
   },
   "UI_Settings": {
-    "ToolTip_Enabled": false,
+    "ToolTip_Enabled": true,
     "left_pane_width": 420,
     "Settings_Sash_Position": "559"
   },

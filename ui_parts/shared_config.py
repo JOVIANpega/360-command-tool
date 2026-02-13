@@ -86,6 +86,7 @@ class SharedConfigManager:
         
         # UI設定
         self.vars['tooltip_enabled'] = tk.BooleanVar(root)
+        self.vars['settings_sash_position'] = tk.StringVar(root)
         
         # 為所有變數綁定變更監聽
         self.bind_var_changes()
@@ -195,6 +196,7 @@ class SharedConfigManager:
             # 載入UI設定
             ui_settings = self.setup_data.get('UI_Settings', {})
             self.vars['tooltip_enabled'].set(ui_settings.get('ToolTip_Enabled', True))
+            self.vars['settings_sash_position'].set(ui_settings.get('Settings_Sash_Position', '450'))
             
             print("[DEBUG] SharedConfigManager: 設定資料已載入到變數")
             
@@ -538,9 +540,18 @@ class SharedConfigManager:
                     try:
                         value = self.vars['tooltip_enabled'].get()
                         setup['UI_Settings']['ToolTip_Enabled'] = value
-                        print(f"[DEBUG] SharedConfigManager: 更新 UI_Settings.ToolTip_Enabled = {value}")
+                        # print(f"[DEBUG] SharedConfigManager: 更新 UI_Settings.ToolTip_Enabled = {value}")
                     except Exception as e:
                         print(f"[WARNING] SharedConfigManager: 無法獲取 tooltip_enabled: {e}")
+
+                if 'settings_sash_position' in self.vars:
+                    try:
+                        value = self.vars['settings_sash_position'].get()
+                        if value and value != "0":
+                            setup['UI_Settings']['Settings_Sash_Position'] = value
+                            # print(f"[DEBUG] SharedConfigManager: 更新 UI_Settings.Settings_Sash_Position = {value}")
+                    except Exception as e:
+                        print(f"[WARNING] SharedConfigManager: 無法獲取 settings_sash_position: {e}")
 
             # 如果有 root 窗口，獲取當前視窗狀態
             if self.root and hasattr(self.root, 'winfo_exists') and self.root.winfo_exists():

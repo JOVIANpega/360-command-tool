@@ -53,19 +53,31 @@ class SettingsTab(ttk.Frame):
 
     def create_widgets(self):
         # 創建主容器，使用 PanedWindow 來提供可調整的左右分隔
-        main_container = ttk.PanedWindow(self, orient='horizontal')
-        main_container.pack(fill='both', expand=True, padx=10, pady=10)
+        self.main_container = ttk.PanedWindow(self, orient='horizontal')
+        self.main_container.pack(fill='both', expand=True, padx=10, pady=10)
         
         # 左側容器
-        left_frame = ttk.Frame(main_container)
-        main_container.add(left_frame, weight=1)
+        left_frame = ttk.Frame(self.main_container)
+        self.main_container.add(left_frame, weight=1)
         
         # 右側容器
-        right_frame = ttk.Frame(main_container)
-        main_container.add(right_frame, weight=1)
+        right_frame = ttk.Frame(self.main_container)
+        self.main_container.add(right_frame, weight=1)
         
-        # 設定分隔位置為中間
-        main_container.sashpos(0, 400)
+        # 讀取並設定分隔位置
+        self.after(200, self.restore_sash)
+        self.after(500, self.restore_sash)
+        
+        # 綁定分割位置變更事件，即時記錄
+        self._last_known_sash_pos = None
+        def on_sash_pos_changed_local(e):
+            try:
+                pos = self.main_container.sashpos(0)
+                if pos > 100:
+                    self._last_known_sash_pos = pos
+                    print(f"[DEBUG] 記錄設定頁面分欄位置: {pos}")
+            except: pass
+        self.main_container.bind("<ButtonRelease-1>", on_sash_pos_changed_local)
         
         # 移除儲存按鈕區域 - 因為已經移動到DUT控制區塊了
         
@@ -106,8 +118,8 @@ class SettingsTab(ttk.Frame):
         pass
         
         # 使用者介面設定
-        ui_frame = ttk.LabelFrame(left_container, text="使用者介面設定", padding=(10, 4))
-        ui_frame.pack(fill='x', pady=(0, 8))
+        ui_frame = ttk.LabelFrame(left_container, text="使用者介面設定", padding=(12, 10))
+        ui_frame.pack(fill='x', pady=(0, 15))
         ui_frame.columnconfigure(1, weight=1)
         
         # 初始化 UI_ToolTip_Enabled 變數 (強制開啟)
@@ -123,18 +135,15 @@ class SettingsTab(ttk.Frame):
         #                                     command=self.on_tooltip_setting_changed)
         # tooltip_checkbutton.grid(row=0, column=0, columnspan=2, sticky="w", pady=4)
         
-        # 恢復 ToolTip 提示功能開關
-        # ToolTip 開關 UI 已移除，初始化變數以維持儲存邏輯
-        self.vars["UI_ToolTip_Enabled"] = tk.BooleanVar(value=self.setup_data.get("UI_Settings", {}).get("ToolTip_Enabled", True))
-        pass
+
         
         # DUT 控制設定
-        dut_frame = ttk.LabelFrame(left_container, text="DUT 控制設定", padding=(10, 4))
-        dut_frame.pack(fill='both', expand=True, pady=(0, 8))
+        dut_frame = ttk.LabelFrame(left_container, text="DUT 控制設定", padding=(12, 10))
+        dut_frame.pack(fill='both', expand=True, pady=(0, 15))
 
         # SSH 設定 (全寬對齊)
-        ssh_frame = ttk.LabelFrame(left_container, text="SSH 設定", padding=(10, 8))
-        ssh_frame.pack(fill='x', pady=(0, 10))
+        ssh_frame = ttk.LabelFrame(left_container, text="SSH 設定", padding=(12, 10))
+        ssh_frame.pack(fill='x', pady=(0, 15))
         ssh_frame.columnconfigure(0, minsize=140)
         
         ssh_settings = self.setup_data.get("SSH_Settings", {})
@@ -264,9 +273,9 @@ class SettingsTab(ttk.Frame):
         # 字體設定已移至DUT控制標籤頁，此處不再顯示
         # 保留註解以說明字體設定位置
         
-        # === 儲存設定按鈕區域 (使用 Grid 佈局嚴格防止重疊) ===
+        # === 儲存設定按鈕區域 (Grid 佈局，增加與上方組件間距) ===
         save_btn_container = ttk.Frame(dut_frame)
-        save_btn_container.grid(row=dut_row, column=0, columnspan=3, sticky="w", pady=(20, 10))
+        save_btn_container.grid(row=dut_row, column=0, columnspan=3, sticky="w", pady=(40, 15))
         
         self.manual_save_button = tk.Button(
             save_btn_container,
@@ -433,7 +442,8 @@ class SettingsTab(ttk.Frame):
                 try:
                     path = self.vars["DUT_Command_File_Path"].get()
                     if hasattr(self.tooltip_manager, 'add_tooltip_with_text'):
-                        self.tooltip_manager.add_tooltip_with_text(path_entry, f"完整路徑:\n{path}")
+                        # 修正為 path_display
+                        self.tooltip_manager.add_tooltip_with_text(path_display, f"完整路徑:\n{path}")
                 except Exception as e:
                     print(f"[DEBUG] 更新路徑 ToolTip 失敗: {e}")
             
@@ -515,164 +525,8 @@ class SettingsTab(ttk.Frame):
     # 字體設定函式已移至DUT控制標籤頁
 
 
-    @safe_execute(get_error_handler(), show_user_error=True)
-    def manual_save_settings(self):
-        """
-        [安全版] 手動保存設定到 setup.json
-        邏輯：讀取最新設定 -> 只更新UI上有值的欄位 -> 寫回檔案
-        注意：字體設定由 DUT 控制頁面即時儲存，此處不應覆蓋
-        """
-        from core.error_handler import log_info, log_error, log_debug
-        try:
-            log_info("開始執行手動保存設定...")
-            
-            # 1. 讀取磁碟上最新的設定檔 (確保包含最新的字體設定)
-            current_settings = load_setup()
-            if not current_settings:
-                current_settings = {}
-            
-            # 2. 收集並更新 - 應用程式基本設定
-            # 視窗標題
-            title = self.vars["Window_Title"].get().strip()
-            if title:
-                current_settings["Window_Title"] = title
-                if "DUT_Control" not in current_settings:
-                    current_settings["DUT_Control"] = {}
-                current_settings["DUT_Control"]["Window_Title"] = title
-            
-            # 傳輸模式
-            transport = self.vars["Command_Transport_Mode"].get()
-            if transport:
-                current_settings["Command_Transport_Mode"] = transport
-            
-            # 視窗大小
-            w = self.vars["Window_Width"].get().strip()
-            h = self.vars["Window_Height"].get().strip()
-            if w.isdigit() and h.isdigit():
-                current_settings["Window_Width"] = w
-                current_settings["Window_Height"] = h
-                if "DUT_Control" in current_settings:
-                    current_settings["DUT_Control"]["Window_Width"] = w
-                    current_settings["DUT_Control"]["Window_Height"] = h
-            
-            # 從記憶體中抓取最新的字體設定
-            if hasattr(self, 'parent') and hasattr(self.parent, 'setup'):
-                mem_setup = self.parent.setup
-                
-                # 介面字體
-                if 'UIFontSize' in mem_setup:
-                    ui_size = str(mem_setup['UIFontSize'])
-                    current_settings["UIFontSize"] = ui_size
-                    if "DUT_Control" not in current_settings:
-                        current_settings["DUT_Control"] = {}
-                    current_settings["DUT_Control"]["UI_Font_Size"] = ui_size
-                
-                # 內容字體
-                if 'ContentFontSize' in mem_setup:
-                    content_size = str(mem_setup['ContentFontSize'])
-                    current_settings["ContentFontSize"] = content_size
-                    if "DUT_Control" not in current_settings:
-                        current_settings["DUT_Control"] = {}
-                    current_settings["DUT_Control"]["Content_Font_Size"] = content_size
-                    log_debug(f"同步記憶體內容字體大小: {content_size}")
 
-            # 3. 收集並更新 - DUT 控制設定
-            if "DUT_Control" not in current_settings:
-                current_settings["DUT_Control"] = {}
-                
-            # IP地址
-            ip = self.vars["DUT_Default_IP_Address"].get().strip()
-            if ip:
-                current_settings["DUT_Control"]["Default_IP_Address"] = ip
-            
-            # 指令超時
-            timeout = self.vars["DUT_Single_Command_Timeout"].get().strip()
-            if timeout.isdigit():
-                current_settings["DUT_Control"]["Single_Command_Timeout"] = timeout
-            elif "Single_Command_Timeout" not in current_settings["DUT_Control"]:
-                current_settings["DUT_Control"]["Single_Command_Timeout"] = "30"
-                
-            # 間隔符號
-            separator = self.vars["DUT_Command_Separator"].get()
-            if separator:
-                current_settings["DUT_Control"]["Command_Separator"] = separator
 
-            # 4. 收集並更新 - SSH 設定
-            if "SSH_Settings" not in current_settings:
-                current_settings["SSH_Settings"] = {}
-                
-            ssh_host = self.vars["SSH_Host"].get().strip()
-            if ssh_host:
-                current_settings["SSH_Settings"]["Host"] = ssh_host
-                
-            ssh_port = self.vars["SSH_Port"].get().strip()
-            if ssh_port.isdigit():
-                 current_settings["SSH_Settings"]["Port"] = int(ssh_port)
-                 
-            ssh_account = self.vars["SSH_Default_Account"].get().strip()
-            if ssh_account:
-                current_settings["SSH_Settings"]["Default_Account"] = ssh_account
-                
-            ssh_timeout = self.vars["SSH_Connection_Timeout"].get().strip()
-            if ssh_timeout.isdigit():
-                current_settings["SSH_Settings"]["Connection_Timeout"] = int(ssh_timeout)
-
-            # 5. 收集並更新 - 標籤頁名稱
-            if "tab_names" not in current_settings:
-                current_settings["tab_names"] = {}
-            
-            for i in range(5):
-                tab_key = f'tab{i}'
-                var_key = f"tab_names_{tab_key}"
-                if var_key in self.vars:
-                    name = self.vars[var_key].get().strip()
-                    if name:
-                        current_settings["tab_names"][tab_key] = name
-
-            # 6. 收集並更新 - 手動輸入指令設定
-            hint_text = self.vars["Manual_Hint_Text"].get().strip()
-            if hint_text:
-                if "Manual_Command" not in current_settings:
-                    current_settings["Manual_Command"] = {}
-                current_settings["Manual_Command"]["Hint_Text"] = hint_text
-
-            # 7. 收集並更新 - 版本與路徑資訊
-            ver = self.vars["version"].get().strip()
-            if ver:
-                current_settings["version"] = ver
-            
-            cmd_path = self.vars["DUT_Command_File_Path"].get().strip()
-            if cmd_path:
-                current_settings["DUT_Control"]["Command_File_Path"] = cmd_path
-                
-            device_label = self.vars["Device_Label"].get().strip()
-            if device_label:
-                current_settings["Device_Label"] = device_label
-                
-            startup_label = self.vars["Startup_Label"].get().strip()
-            if startup_label:
-                current_settings["Startup_Label"] = startup_label
-
-            # 8. 寫回檔案 (強制手動保存)
-            log_info("正在寫入 setup.json 檔案...")
-            success = save_setup(current_settings, manual_save=True)
-            
-            if success:
-                # 9. 更新本地緩存
-                self.setup_data = current_settings
-                # 10. 顯示成功訊息
-                messagebox.showinfo("成功", "所有設定已成功儲存！\n\n部分設定可能需要重新啟動程式才會生效。")
-                
-                # 通知 parent (如果有 callback)
-                if self.on_save_callback:
-                    self.on_save_callback(current_settings)
-            else:
-                log_error("save_setup 返回失敗")
-                messagebox.showerror("失敗", "儲存設定失敗，請檢查權限或日誌。")
-
-        except Exception as e:
-            log_error("手動保存設定過程中發生崩潰等級異常", e)
-            messagebox.showerror("嚴重錯誤", f"保存設定時發生錯誤: {e}")
 
     def on_fixture_font_changed(self, event=None):
         """治具字體大小即時更新（僅更新顯示，不自動保存）"""
@@ -1049,51 +903,46 @@ class SettingsTab(ttk.Frame):
                     settings_dict['DUT_Control']['Window_Title'] = window_title
                     print(f"[DEBUG] 手動保存：視窗標題 {window_title}")
 
-                    # 獲取分割位置（如果存在）
-                    try:
-                        # 尋找 PanedWindow 元件
-                        def find_panedwindow(widget):
-                            if hasattr(widget, 'winfo_class') and widget.winfo_class() == 'PanedWindow':
-                                return widget
-                            for child in widget.winfo_children():
-                                result = find_panedwindow(child)
-                                if result:
-                                    return result
-                            return None
-
-                        panedwindow = find_panedwindow(root)
-                        if panedwindow:
-                            try:
-                                sash_position = panedwindow.sashpos(0)
-                                if sash_position > 0:
-                                    settings_dict['DUT_Control']['Pane_Sash_Position'] = str(sash_position)
-                                    print(f"[DEBUG] 手動保存：分割位置 {sash_position}")
-                            except Exception as e:
-                                print(f"[DEBUG] 獲取分割位置失敗: {e}")
-                    except Exception as e:
-                        print(f"[DEBUG] 尋找分割位置失敗: {e}")
-
             except Exception as e:
                 print(f"[WARNING] 獲取視窗狀態失敗: {e}")
 
-            # 手動保存設定（繞過自動保存限制）
-            from config_core import save_setup
-            from core.config_manager import get_config_manager
-
-            # 使用config_core的手動保存
-            save_setup(settings_dict, manual_save=True)
-
-            # 同時使用ConfigManager的手動保存
-            config_manager = get_config_manager()
-            config_manager.save_config(settings_dict, manual_save=True)
+            # 獲取設定頁面分欄位置
+            try:
+                # 優先使用即時記錄的位置
+                sash_pos = getattr(self, '_last_known_sash_pos', None)
+                
+                # 如果沒有記錄或記錄無效，嘗試即時獲取
+                if sash_pos is None or sash_pos <= 100:
+                    self.update_idletasks()
+                    try:
+                        # 優先嘗試 sash_coord 獲取 X 軸位置
+                        sash_pos = self.main_container.sash_coord(0)[0]
+                    except:
+                        sash_pos = self.main_container.sashpos(0)
+                
+                if sash_pos and sash_pos > 100:
+                    settings_dict['UI_Settings']['Settings_Sash_Position'] = str(sash_pos)
+                    print(f"[DEBUG] 手動保存：設定頁面分欄位置 {sash_pos}")
+            except Exception as e:
+                print(f"[DEBUG] 獲取設定分欄位置失敗: {e}")
 
             # 強制保存 SharedConfigManager 中的設定
             try:
                 from ui_parts.shared_config import get_shared_config
                 shared_config = get_shared_config()
+                
+                # 同步 ToolTip 狀態至全域 (解決 ToolTip 消失問題)
+                if 'tooltip_enabled' in shared_config.vars:
+                    shared_config.vars['tooltip_enabled'].set(True) # 強制啟用，確保重啟後存在
+                
+                # 同步設定分欄位置至全域 (解決分隔位置沒記住的問題)
+                sash_pos_str = settings_dict['UI_Settings'].get('Settings_Sash_Position', '450')
+                if 'settings_sash_position' in shared_config.vars:
+                    shared_config.vars['settings_sash_position'].set(sash_pos_str)
+                
                 if hasattr(shared_config, 'force_save_all'):
                     shared_config.force_save_all()
-                    print("[DEBUG] SharedConfigManager 強制保存完成")
+                    print(f"[DEBUG] SharedConfigManager 強制保存完成 (ToolTip=True, Sash={sash_pos_str})")
             except Exception as e:
                 print(f"[WARNING] SharedConfigManager 強制保存失敗: {e}")
 
@@ -1111,6 +960,9 @@ class SettingsTab(ttk.Frame):
             if self.on_save_callback:
                 # 傳遞最新的設定資料
                 self.on_save_callback(updated_setup)
+            
+            # 手動更新後再次強制恢復分欄位置
+            self.after(100, self.restore_sash)
             
             # 更新手動輸入指令設定
             try:
@@ -1353,7 +1205,10 @@ class SettingsTab(ttk.Frame):
         # 更新所有 UI 控件的值
         self.update_ui_from_settings()
         
-        print("[DEBUG] 設定分頁已激活並更新")
+        # 恢復分欄位置
+        self.after(100, self.restore_sash)
+        
+        print("[DEBUG] 設定分頁已激活並更新 (包含分欄位置)")
 
     def sync_current_window_size(self):
         """同步當前視窗大小到設定欄位"""
@@ -1445,6 +1300,30 @@ class SettingsTab(ttk.Frame):
             
         except Exception as e:
             print(f"[ERROR] 更新 UI 設定時發生錯誤: {e}")
+
+    def restore_sash(self):
+        """恢復 PanedWindow 分割位置"""
+        try:
+            # 優先從 setup_data 獲取，若無則從磁碟載入
+            ui_settings = self.setup_data.get("UI_Settings", {})
+            saved_sash_pos = ui_settings.get("Settings_Sash_Position")
+            
+            if not saved_sash_pos:
+                # 嘗試再次從磁碟載入
+                fresh_setup = load_setup()
+                saved_sash_pos = fresh_setup.get("UI_Settings", {}).get("Settings_Sash_Position", 450)
+            
+            pos = int(saved_sash_pos)
+            if pos > 0:
+                self.main_container.sashpos(0, pos)
+                print(f"[DEBUG] 設定頁面分欄位置恢復成功: {pos}")
+        except Exception as e:
+            # 靜默失敗或設定 50/50
+            try:
+                self.main_container.sashpos(0, 450)
+            except:
+                pass
+            print(f"[DEBUG] 恢復設定分欄位置異常: {e}")
 
 
 

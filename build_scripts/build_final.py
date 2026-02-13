@@ -45,7 +45,7 @@ def main():
         except: pass
         
     # 不完全刪除 dist，只刪除我們目標的那個
-    app_name = "PEGA指令通_V2.5.6"
+    app_name = "PEGA指令通_V2.6.1"
     target_exe = os.path.join(dist_dir, f"{app_name}.exe")
     target_folder = os.path.join(dist_dir, app_name)
     
@@ -176,6 +176,7 @@ def main():
         ('sign_DOC.txt', '.', 'file'),
         ('Command_TABLE', '.', 'dir'),          # 整個 Command_TABLE 目錄
         ('FIXTURE', '.', 'dir'),                # 整個 FIXTURE 目錄
+        ('IMAGES', '.', 'dir'),                 # 圖片資料夾 (手冊皆引用此處)
         ('docs/PEGA指令通使用指南.html', 'docs', 'file'),
     ]
 
