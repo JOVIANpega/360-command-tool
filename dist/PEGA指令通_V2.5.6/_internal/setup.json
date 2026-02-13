@@ -31,7 +31,13 @@
     "Auto_Execute": false,
     "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/PEGA-command-tool/Command_TABLE/GEMINI.txt",
     "Notification_Font_Size": "",
-    "Single_Command_Timeout": "15"
+    "Single_Command_Timeout": "15",
+    "Custom_Separators": [
+      "|",
+      "||",
+      "==>",
+      "####"
+    ]
   },
   "Fixture_Control": {
     "Fixture_COM_Port": "",
@@ -76,8 +82,8 @@
     "Connection_Timeout": 30,
     "Command_Timeout": 30
   },
-  "Command_Transport_Mode": "SSH",
-  "Device_Label": "XXXXX33222",
+  "Command_Transport_Mode": "Console",
+  "Device_Label": "XXXXX332228",
   "Startup_Label": " GEMINI TOOL",
   "Manual_Command": {
     "Hint_Text": "請輸入指令並按執行"
