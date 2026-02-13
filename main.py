@@ -200,7 +200,10 @@ def initialize_application():
         return root, app
 
     except Exception as e:
-        log_error("初始化應用程式失敗", e, show_user=True)
+        import traceback
+        error_msg = f"初始化應用程式失敗\n\n錯誤詳情: {e}\n\n{traceback.format_exc()}"
+        log_error(error_msg, e, show_user=False)
+        messagebox.showerror("初始化錯誤", error_msg)
         sys.exit(1)
 
 if __name__ == "__main__":
@@ -208,16 +211,14 @@ if __name__ == "__main__":
         # 在創建GUI前，檢查安全簽名檔案
         log_info("程式啟動時檢查安全簽名...")
         
-        # EXE 同一路徑（開發時則為檔案所在路徑）
-        if getattr(sys, 'frozen', False):
-            base_dir = os.path.dirname(sys.executable)
-        else:
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-        signature_file = os.path.join(base_dir, 'sign_DOC.txt')
+        # 使用 resource_manager 獲取正確路徑
+        from core.resource_manager import get_resource_manager
+        resource_manager = get_resource_manager()
+        signature_file = resource_manager.get_resource_path('sign_DOC.txt')
         
         # 檢查簽名檔案是否存在
         if not os.path.exists(signature_file):
-            error_msg = '程式啟動失敗：缺少安全簽名檔案\n\n請將 sign_DOC.txt 與執行檔放在同一資料夾'
+            error_msg = f'程式啟動失敗：缺少安全簽名檔案\n\n找不到檔案: {signature_file}\n\n請將 sign_DOC.txt 與執行檔放在同一資料夾'
             log_error(error_msg)
             messagebox.showerror('錯誤', error_msg)
             sys.exit(1)

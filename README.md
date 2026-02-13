@@ -71,5 +71,5 @@
 本專案為內部開發工具，未經授權禁止外傳。
 
 ---
-**Last Updated**: 2026-02-11
-**Version**: 2.5.4
+**Last Updated**: 2026-02-12
+**Version**: 2.5.6 (Stable Release)

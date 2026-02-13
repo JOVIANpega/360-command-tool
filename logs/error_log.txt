@@ -1,6 +1,0 @@
-An unexpected error occurred: 'str' object has no attribute 'items'
-Traceback (most recent call last):
-  File "M:\PYTHON\360-command-toola_HOME\main.py", line 44, in <module>
-    for cmd_name, cmd_content in cmd_dict.items():
-                                 ^^^^^^^^^^^^^^
-AttributeError: 'str' object has no attribute 'items'

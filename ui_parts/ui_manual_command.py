@@ -643,11 +643,20 @@ class ManualCommandUI:
         
         # 不清空輸入框，保留使用者輸入
         
+        # 獲取並處理顯示用的 SSH 帳號資訊 (限制20字)
+        display_acc = end_string
+        if transport_mode == "SSH":
+            ssh_acc = self.setup.get('DUT_Control', {}).get('SSH_Username', 'root')
+            if len(ssh_acc) > 20:
+                display_acc = ssh_acc[:17] + "..."
+            else:
+                display_acc = ssh_acc
+
         # 在輸出區域顯示指令（使用彩色顯示）
         if command.strip():
             self.add_colored_output(f"=== 執行指令: {command} ===\n", "purple")
-        else:
-            self.add_colored_output("=== 執行空白指令 ===\n", "purple")
+            if transport_mode == "SSH":
+                self.add_colored_output(f"[SSH] 使用帳號: {display_acc}\n", "purple")
         
         # 執行指令
         self.execute_command_thread(command, com_port, timeout, transport_mode, end_string, cmd_timeout)
@@ -774,7 +783,9 @@ class ManualCommandUI:
             print(f"保存手動指令設定失敗: {e}")
     
     def update_hint_text(self, hint_text):
-        """更新提示文字"""
+        """更新提示文字，限制顯示長度最多30個字"""
+        if len(hint_text) > 30:
+            hint_text = hint_text[:27] + "..."
         self.hint_label.config(text=hint_text)
     
     def update_from_config(self):

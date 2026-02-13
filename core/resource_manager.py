@@ -96,7 +96,7 @@ class ResourceManager:
         self._cleanup_callbacks = []
         
     def get_resource_path(self, relative_path: str) -> str:
-        """獲取資源的絕對路徑，支持開發環境和打包後的環境"""
+        """獲取資源的絕對路徑，優先查找打包內容，再查找外部文件"""
         cache_key = f"path_{relative_path}"
         cached_path = self._file_cache.get(cache_key)
         
@@ -104,13 +104,20 @@ class ResourceManager:
             return cached_path
         
         try:
+            # 1. 基礎路徑判定
             if getattr(sys, 'frozen', False):
-                base_path = os.path.dirname(sys.executable)
+                # 打包環境 (PyInstaller)
+                # _MEIPASS 是解壓後的暫存目錄 (存放內建資源)
+                bundle_dir = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
+                # executable_dir 是 EXE 所在目錄 (存放外部設定)
+                exe_dir = os.path.dirname(sys.executable)
             else:
-                base_path = os.path.abspath(".")
+                # 開發環境
+                bundle_dir = os.path.abspath(".")
+                exe_dir = os.path.abspath(".")
             
-            # 處理特殊文件路徑
-            resolved_path = self._resolve_special_paths(base_path, relative_path)
+            # 2. 特殊路徑解析策略
+            resolved_path = self._resolve_special_paths(bundle_dir, exe_dir, relative_path)
             
             # 快取結果
             self._file_cache.set(cache_key, resolved_path)
@@ -120,29 +127,85 @@ class ResourceManager:
             self.error_handler.log_error(f"獲取資源路徑失敗: {relative_path}", e)
             return os.path.join(os.path.abspath("."), relative_path)
     
-    def _resolve_special_paths(self, base_path: str, relative_path: str) -> str:
-        """解析特殊文件路徑"""
+    def _resolve_special_paths(self, bundle_dir: str, exe_dir: str, relative_path: str) -> str:
+        """
+        解析特殊文件路徑
+        Args:
+            bundle_dir: 內建資源目錄 (_MEIPASS)
+            exe_dir: 執行檔目錄
+            relative_path: 相對路徑
+        """
         # 移除開頭的斜線
         if relative_path.startswith(('/', '\\')):
             relative_path = relative_path[1:]
-        
-        # 處理指令文件
-        if relative_path == 'command.txt':
-            return self._find_command_file(base_path)
-        
-        # 處理治具指令文件
-        if relative_path in ('Fixture_Command.txt', 'FIXTURE/Fixture_Command.txt'):
-            return self._find_fixture_command_file(base_path)
-        
-        # 處理設定文件
-        if relative_path == 'setup.json':
-            return self._ensure_setup_file(base_path, relative_path)
             
-        # 處理提示文件
-        if relative_path == 'tooltips.ini':
-            return self._find_tooltip_file(base_path)
+        # 定義查找順序：有些檔案優先找外部(可編輯)，有些優先找內部(核心)
         
-        return os.path.join(base_path, relative_path)
+        # 0. 特別優先處理：治具指令文件 (無論請求路徑為何，都強制導向 FIXTURE 資料夾)
+        if 'fixture_command.txt' in relative_path.lower():
+            # 1. 優先檢查 EXE 旁 FIXTURE 資料夾
+            check_path = os.path.join(exe_dir, 'FIXTURE', 'Fixture_Command.txt')
+            if os.path.exists(check_path): return check_path
+            
+            # 2. 檢查 internal/bundle 內 FIXTURE 資料夾
+            internal_path = os.path.join(bundle_dir, 'FIXTURE', 'Fixture_Command.txt')
+            if os.path.exists(internal_path): return internal_path
+            
+            # 3. 如果都找不到，還是回傳 FIXTURE 路徑 (至少路徑是對的)
+            return internal_path
+
+        # 0.5. 重定向 color_word.txt 到 Command_TABLE (清理根目錄)
+        if relative_path == 'color_word.txt':
+            # 1. 優先檢查 EXE 旁 Command_TABLE/color_word.txt
+            check_path = os.path.join(exe_dir, 'Command_TABLE', 'color_word.txt')
+            if os.path.exists(check_path): return check_path
+            
+            # 2. 檢查 internal/bundle 內 Command_TABLE
+            return os.path.join(bundle_dir, 'Command_TABLE', 'color_word.txt')
+
+        # A. 優先找外部，找不到找內部的檔案 (如設定檔，用戶可能想改)
+        if relative_path in ['setup.json', 'docs\\tooltips.ini', 'tooltips.ini']:
+            # 1. 檢查 EXE 旁
+            check_path = os.path.join(exe_dir, relative_path)
+            if os.path.exists(check_path): 
+                return check_path
+            # 2. 檢查內部
+            return os.path.join(bundle_dir, relative_path)
+
+        # B. 指令檔與簽名檔 (核心資源)
+        if 'command.txt' in relative_path or 'sign_DOC.txt' in relative_path:
+            # 1. 優先檢查 EXE 旁 (允許用戶覆蓋)
+            check_path = os.path.join(exe_dir, relative_path)
+            if os.path.exists(check_path): return check_path
+            
+            # 2. 也是檢查 EXE 旁的子目錄 (針對 Onedir 結構)
+            if 'Command_TABLE' in relative_path:
+                check_path = os.path.join(exe_dir, 'Command_TABLE', 'command.txt')
+                if os.path.exists(check_path): return check_path
+                
+            # 3. 最後檢查內部包 (Onefile 的救星)
+            return os.path.join(bundle_dir, relative_path)
+
+
+
+        # C. 預設：優先找內部
+        return os.path.join(bundle_dir, relative_path)
+    
+    def _find_sign_doc_file(self, base_path: str) -> str:
+        """尋找簽名文件"""
+        possible_paths = [
+            os.path.join(base_path, 'sign_DOC.txt'),
+            os.path.join(os.path.dirname(base_path), 'sign_DOC.txt')
+        ]
+        
+        for path in possible_paths:
+            if os.path.exists(path):
+                self.error_handler.log_debug(f"找到簽名檔: {path}")
+                return path
+        
+        default_path = os.path.join(base_path, 'sign_DOC.txt')
+        self.error_handler.log_warning(f"無法找到簽名檔，使用預設路徑: {default_path}")
+        return default_path
     
     def _find_tooltip_file(self, base_path: str) -> str:
         """尋找提示文件"""

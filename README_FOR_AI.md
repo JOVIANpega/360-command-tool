@@ -163,3 +163,36 @@ BACKUP_DEL/
 - ❌ 破壞現有的架構
 
 **祝你工作順利！** 😊
+
+---
+
+## 📦 打包系統與部署 (v2.5.6 更新)
+
+**重要：本專案已廢棄 `.spec` 文件打包方式，全面改用 Python 腳本建置。**
+
+### 1. 建置方式
+- **唯一入口**：`build_scripts/build_PEGA_final.bat`
+- **核心腳本**：`build_scripts/build_final.py`
+- **輸出目錄**：專案根目錄下的 `dist/`
+
+### 2. 關鍵技術細節 (AI 必讀)
+
+#### A. 資源路徑管理 (`core/resource_manager.py`)
+本專案採用智慧路徑解析，以解決 PyInstaller `_MEIPASS` 與本地開發環境的路徑差異：
+- **開發環境**：直接讀取專案目錄下的檔案。
+- **打包環境 (Onedir)**：讀取 EXE 同級目錄下的檔案。
+- **打包環境 (Onefile)**：優先讀取 `sys._MEIPASS` 內的資源，但允許外部檔案 (如 `setup.json`) 覆蓋。
+- **🚨 特殊重定向**：為了相容舊代碼，所有對 `Fixture_Command.txt` 的請求（即使路徑錯誤指向 `Command_TABLE/`），都會被 `resource_manager` 強制導向到正確的 `FIXTURE/Fixture_Command.txt`。
+
+#### B. SSH 與 Cryptography 崩潰問題
+SSH 功能依賴 `paramiko` 與 `cryptography`，這兩個庫在 PyInstaller 打包時極易出錯（特別是 Rust bindings）。
+- **解決方案 1 (腳本面)**：在 `build_final.py` 中使用 `--collect-all cryptography` 與 `--collect-all paramiko` 強制收集所有二進位依賴。
+- **解決方案 2 (代碼面)**：在 `transport/ssh_worker_v2.py` 中，移除了頂層的 Type Hint (`Optional[paramiko.SSHClient]`)，避免在模組導入時觸發 `NoneType` 錯誤。
+
+#### C. 遞歸資源複製
+為了確保 `Command_TABLE` 內的子目錄與所有指令檔都能被讀取，打包腳本會執行 **後處理 (Post-processing)**，將整個 `Command_TABLE` 與 `FIXTURE` 目錄完整複製到 `dist/` 中。
+
+### 3. 未來維護指南
+- 若要新增資源檔案：請在 `build_final.py` 的 `add_data` 列表與 `files_to_copy` 列表中同步新增。
+- 若要修改打包參數：直接修改 `build_final.py`，**不要** 修改 `.spec` 檔（因為它們是自動生成的，且已被 gitignore）。
+- 若遇到 `ImportError`：請檢查 `build_final.py` 中的 `hidden_imports` 列表。

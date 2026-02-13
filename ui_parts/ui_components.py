@@ -635,9 +635,9 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
     def update_device_label(self, new_text):
         """更新設備標籤文字"""
         if hasattr(self, 'device_label'):
-            # 限制最多顯示100個字元
-            if len(new_text) > 100:
-                new_text = new_text[:100]
+            # 限制最多顯示25個字元
+            if len(new_text) > 25:
+                new_text = new_text[:22] + "..."
             self.device_label.config(text=new_text)
             print(f"[DEBUG] 設備標籤已更新: {new_text}")
 

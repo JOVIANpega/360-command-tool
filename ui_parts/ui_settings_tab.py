@@ -11,6 +11,7 @@ sys.path.append(current_dir)
 
 from config_core import load_setup, save_setup
 from ui_parts.tooltip import ToolTipManager
+from core.error_handler import get_error_handler, safe_execute
 
 class SettingsTab(ttk.Frame):
     def __init__(self, parent, on_save_callback=None, tooltip_manager=None, **kwargs):
@@ -74,59 +75,35 @@ class SettingsTab(ttk.Frame):
         
         current_row = 0
         
-        # 應用程式基本設定
-        basic_frame = ttk.LabelFrame(left_container, text="應用程式基本設定", padding=(10, 4))
-        basic_frame.pack(fill='x', pady=(0, 8))
-        basic_frame.columnconfigure(1, weight=1)
+        # 應用程式基本設定 (對齊優化)
+        basic_frame = ttk.LabelFrame(left_container, text="應用程式基本設定", padding=(10, 8))
+        basic_frame.pack(fill='x', pady=(0, 10))
+        basic_frame.columnconfigure(0, minsize=140) # 讓左側標籤統一寬度
+        basic_frame.columnconfigure(1, weight=0)
         
         # 獲取版本號（用於後面的版本與路徑資訊區塊）
         current_version = self.setup_data.get("version", "1.7.1")
         self.vars["version"] = tk.StringVar(value=current_version)
         print(f"[DEBUG] 設定頁面初始化版本號: {current_version}")
 
-        # 視窗標題 - width=40，最多50個字元
-        ttk.Label(basic_frame, text="視窗標題 (最多50字元):").grid(row=0, column=0, sticky="w", pady=4)
+        # 視窗標題 - 最多30個字元
+        ttk.Label(basic_frame, text="視窗標題 (最多30字元):").grid(row=0, column=0, sticky="w", pady=4)
         self.vars["Window_Title"] = tk.StringVar(value=self.setup_data.get("Window_Title", "指令通"))
-        self.title_entry = ttk.Entry(basic_frame, textvariable=self.vars["Window_Title"], width=40)
-        self.title_entry.grid(row=0, column=1, sticky="ew", padx=(10, 0), pady=4)
+        self.title_entry = ttk.Entry(basic_frame, textvariable=self.vars["Window_Title"], width=30)
+        self.title_entry.grid(row=0, column=1, sticky="w", padx=(10, 0), pady=4)
 
         # 綁定字元限制檢查
         self.vars["Window_Title"].trace('w', self.on_title_changed)
 
         # 添加字元計數標籤
-        self.title_count_label = ttk.Label(basic_frame, text=f"({len(self.vars['Window_Title'].get())}/50)",
+        self.title_count_label = ttk.Label(basic_frame, text=f"({len(self.vars['Window_Title'].get())}/30)",
                                           font=('Microsoft JhengHei UI', 9), foreground='gray')
-        self.title_count_label.grid(row=0, column=2, sticky="w", padx=(5, 0), pady=4)
+        self.title_count_label.grid(row=0, column=2, sticky="w", padx=(10, 0), pady=4)
         
-        # 指令傳輸方式選擇
-        ttk.Label(basic_frame, text="指令傳輸方式:").grid(row=1, column=0, sticky="w", pady=4)
-        self.vars["Command_Transport_Mode"] = tk.StringVar(value=self.setup_data.get("Command_Transport_Mode", "Console"))
-        self.transport_mode_combo = ttk.Combobox(basic_frame, textvariable=self.vars["Command_Transport_Mode"],
-                                               values=["Console", "ADB"], state="readonly", width=15)
-        self.transport_mode_combo.grid(row=1, column=1, sticky="w", padx=(10, 0), pady=4)
-
-        # 視窗大小 - 視窗寬度 width=20
-        size_frame = ttk.Frame(basic_frame)
-        size_frame.grid(row=2, column=0, columnspan=2, sticky="ew", pady=4)
-        size_frame.columnconfigure(1, weight=1)
-        size_frame.columnconfigure(3, weight=1)
-
-        ttk.Label(size_frame, text="視窗寬度:").grid(row=0, column=0, sticky="w")
+        # 視窗大小設定已簡化為自動記錄，初始化變數以維持儲存邏輯
         self.vars["Window_Width"] = tk.StringVar(value=self.setup_data.get("Window_Width", "1536"))
-        self.width_entry = ttk.Entry(size_frame, textvariable=self.vars["Window_Width"], width=20)
-        self.width_entry.grid(row=0, column=1, sticky="w", padx=(5, 10))
-
-        ttk.Label(size_frame, text="高度:").grid(row=0, column=2, sticky="w")
         self.vars["Window_Height"] = tk.StringVar(value=self.setup_data.get("Window_Height", "793"))
-        self.height_entry = ttk.Entry(size_frame, textvariable=self.vars["Window_Height"], width=20)
-        self.height_entry.grid(row=0, column=3, sticky="w", padx=(5, 0))
-
-        # 添加同步當前視窗大小按鈕
-        sync_button = ttk.Button(size_frame, text="同步當前", command=self.sync_current_window_size)
-        sync_button.grid(row=0, column=4, sticky="w", padx=(10, 0))
-
-        # 啟動定時更新視窗大小
-        self.start_window_size_sync()
+        pass
         
         # 使用者介面設定
         ui_frame = ttk.LabelFrame(left_container, text="使用者介面設定", padding=(10, 4))
@@ -146,40 +123,74 @@ class SettingsTab(ttk.Frame):
         #                                     command=self.on_tooltip_setting_changed)
         # tooltip_checkbutton.grid(row=0, column=0, columnspan=2, sticky="w", pady=4)
         
-        # 顯示提示訊息說明 ToolTip 已預設開啟
-        ttk.Label(ui_frame, text="按鈕提示功能 (ToolTip) 已預設開啟", 
-                 font=('Microsoft JhengHei UI', 9), foreground='gray').grid(row=0, column=0, columnspan=2, sticky="w", pady=4)
+        # 恢復 ToolTip 提示功能開關
+        # ToolTip 開關 UI 已移除，初始化變數以維持儲存邏輯
+        self.vars["UI_ToolTip_Enabled"] = tk.BooleanVar(value=self.setup_data.get("UI_Settings", {}).get("ToolTip_Enabled", True))
+        pass
         
         # DUT 控制設定
         dut_frame = ttk.LabelFrame(left_container, text="DUT 控制設定", padding=(10, 4))
         dut_frame.pack(fill='both', expand=True, pady=(0, 8))
 
-        # SSH 設定
-        ssh_frame = ttk.LabelFrame(left_container, text="SSH 設定", padding=(10, 4))
-        ssh_frame.pack(fill='x', pady=(0, 8))
-        ssh_frame.columnconfigure(1, weight=1)
+        # SSH 設定 (全寬對齊)
+        ssh_frame = ttk.LabelFrame(left_container, text="SSH 設定", padding=(10, 8))
+        ssh_frame.pack(fill='x', pady=(0, 10))
+        ssh_frame.columnconfigure(0, minsize=140)
         
         ssh_settings = self.setup_data.get("SSH_Settings", {})
         
         # 主機地址
         ttk.Label(ssh_frame, text="主機地址:").grid(row=0, column=0, sticky="w", pady=4)
         self.vars["SSH_Host"] = tk.StringVar(value=ssh_settings.get("Host", "192.168.11.143"))
-        ttk.Entry(ssh_frame, textvariable=self.vars["SSH_Host"], width=20).grid(row=0, column=1, sticky="w", padx=(10, 0), pady=4)
+        # 限制 SSH 主機最多 30 個字並更新計數器
+        def limit_ssh_host_len(*args):
+            val = self.vars["SSH_Host"].get()
+            if len(val) > 30:
+                val = val[:30]
+                self.vars["SSH_Host"].set(val)
+            if hasattr(self, 'ssh_host_count_label'):
+                color = 'red' if len(val) >= 30 else 'gray'
+                self.ssh_host_count_label.config(text=f"({len(val)}/30)", foreground=color)
+        self.vars["SSH_Host"].trace('w', limit_ssh_host_len)
+
+        ssh_host_entry = ttk.Entry(ssh_frame, textvariable=self.vars["SSH_Host"], width=30)
+        ssh_host_entry.grid(row=0, column=1, sticky="w", padx=(5, 0), pady=4)
+        
+        self.ssh_host_count_label = ttk.Label(ssh_frame, text=f"({len(self.vars['SSH_Host'].get())}/30)", 
+                                            font=('Microsoft JhengHei UI', 9), foreground='gray')
+        self.ssh_host_count_label.grid(row=0, column=2, sticky="w", padx=(10, 0))
         
         # 埠號
-        ttk.Label(ssh_frame, text="埠號:").grid(row=1, column=0, sticky="w", pady=4)
+        ttk.Label(ssh_frame, text="埠號 (Port):").grid(row=1, column=0, sticky="w", pady=4)
         self.vars["SSH_Port"] = tk.StringVar(value=str(ssh_settings.get("Port", 22)))
-        ttk.Entry(ssh_frame, textvariable=self.vars["SSH_Port"], width=20).grid(row=1, column=1, sticky="w", padx=(10, 0), pady=4)
+        ttk.Entry(ssh_frame, textvariable=self.vars["SSH_Port"], width=30).grid(row=1, column=1, sticky="w", padx=(5, 0), pady=4)
         
         # 預設帳號
-        ttk.Label(ssh_frame, text="預設帳號:").grid(row=2, column=0, sticky="w", pady=4)
+        ttk.Label(ssh_frame, text="預設帳號/密碼:").grid(row=2, column=0, sticky="w", pady=4)
+        
+        # 限制 SSH 帳號最多 40 個字並更新計數器
+        def limit_ssh_acc_len(*args):
+            val = self.vars["SSH_Default_Account"].get()
+            if len(val) > 40:
+                val = val[:40]
+                self.vars["SSH_Default_Account"].set(val)
+            if hasattr(self, 'ssh_acc_count_label'):
+                color = 'red' if len(val) >= 40 else 'gray'
+                self.ssh_acc_count_label.config(text=f"({len(val)}/40)", foreground=color)
         self.vars["SSH_Default_Account"] = tk.StringVar(value=ssh_settings.get("Default_Account", "root/oelinux123"))
-        ttk.Entry(ssh_frame, textvariable=self.vars["SSH_Default_Account"], width=20).grid(row=2, column=1, sticky="w", padx=(10, 0), pady=4)
+        self.vars["SSH_Default_Account"].trace('w', limit_ssh_acc_len)
+
+        ssh_acc_entry = ttk.Entry(ssh_frame, textvariable=self.vars["SSH_Default_Account"], width=30)
+        ssh_acc_entry.grid(row=2, column=1, sticky="w", padx=(5, 0), pady=4)
+        
+        self.ssh_acc_count_label = ttk.Label(ssh_frame, text=f"({len(self.vars['SSH_Default_Account'].get())}/40)", 
+                                           font=('Microsoft JhengHei UI', 9), foreground='gray')
+        self.ssh_acc_count_label.grid(row=2, column=2, sticky="w", padx=(10, 0))
         
         # 連線超時
         ttk.Label(ssh_frame, text="連線超時:").grid(row=3, column=0, sticky="w", pady=4)
         self.vars["SSH_Connection_Timeout"] = tk.StringVar(value=str(ssh_settings.get("Connection_Timeout", 30)))
-        ttk.Entry(ssh_frame, textvariable=self.vars["SSH_Connection_Timeout"], width=20).grid(row=3, column=1, sticky="w", padx=(10, 0), pady=4)
+        ttk.Entry(ssh_frame, textvariable=self.vars["SSH_Connection_Timeout"], width=30).grid(row=3, column=1, sticky="w", padx=(5, 0), pady=4)
         dut_frame.columnconfigure(1, weight=1)
         
         dut_settings = self.setup_data.get('DUT_Control', {})
@@ -189,14 +200,14 @@ class SettingsTab(ttk.Frame):
         
         # 指令間隔符號管理
         separator_frame = ttk.LabelFrame(dut_frame, text="指令間隔符號管理", padding=(5, 2))
-        separator_frame.grid(row=dut_row, column=0, columnspan=2, sticky="ew", pady=4)
-        separator_frame.columnconfigure(1, weight=1)
+        separator_frame.grid(row=dut_row, column=0, columnspan=2, sticky="w", pady=4)
+        # 移除 columnconfigure(1, weight=1)
         
-        # 當前選擇的間隔符號
+        # 當前選擇的間隔符號 (改為可直填入模式)
         ttk.Label(separator_frame, text="當前選擇:").grid(row=0, column=0, sticky="w", pady=2)
         self.vars["DUT_Command_Separator"] = tk.StringVar(value=dut_settings.get("Command_Separator", "|"))
         self.separator_combo = ttk.Combobox(separator_frame, textvariable=self.vars["DUT_Command_Separator"], 
-                                           values=["|", "||", "==>"], state="readonly", width=15)
+                                           values=["|", "||", "==>"], width=15) # 移除 state="readonly"
         self.separator_combo.grid(row=0, column=1, sticky="w", padx=(5, 10), pady=2)
         self.separator_combo.bind('<<ComboboxSelected>>', self.on_separator_changed)
         
@@ -215,18 +226,15 @@ class SettingsTab(ttk.Frame):
         ttk.Button(input_buttons_container, text="+", width=2, command=self.add_custom_separator).grid(row=0, column=1, padx=(2, 1))
         ttk.Button(input_buttons_container, text="-", width=2, command=self.remove_custom_separator).grid(row=0, column=2, padx=(1, 0))
         
-        # 說明標籤##########
+        # 說明標籤
         separator_help_label = ttk.Label(separator_frame, text="選擇或自訂多重指令的分隔符號，用於 command.txt 中的指令分割",
                                    font=('Microsoft JhengHei UI', 9), foreground='#666666')
         separator_help_label.grid(row=2, column=0, columnspan=3, sticky="w", pady=(2, 0))
         
         dut_row += 1
         
-        # 預設IP地址 - width=20
-        ttk.Label(dut_frame, text="預設IP地址:").grid(row=dut_row, column=0, sticky="w", pady=4)
+        # 預設 IP 地址 UI 已移除，初始化變數以維持儲存邏輯
         self.vars["DUT_Default_IP_Address"] = tk.StringVar(value=dut_settings.get("Default_IP_Address", "192.168.11.143"))
-        ttk.Entry(dut_frame, textvariable=self.vars["DUT_Default_IP_Address"], width=20).grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
-        dut_row += 1
 
         # 單個指令超時 (回傳超時)
         ttk.Label(dut_frame, text="單個指令待響應超時 (秒):").grid(row=dut_row, column=0, sticky="w", pady=4)
@@ -256,55 +264,151 @@ class SettingsTab(ttk.Frame):
         # 字體設定已移至DUT控制標籤頁，此處不再顯示
         # 保留註解以說明字體設定位置
         
-        # 移除版本與路徑資訊區塊 - 將移動到右側
+        # === 儲存設定按鈕區域 (使用 Grid 佈局嚴格防止重疊) ===
+        save_btn_container = ttk.Frame(dut_frame)
+        save_btn_container.grid(row=dut_row, column=0, columnspan=3, sticky="w", pady=(20, 10))
+        
+        self.manual_save_button = tk.Button(
+            save_btn_container,
+            text="💾 儲存所有設定",
+            command=self.manual_save_settings,
+            bg='#2E7D32',  # 預設深綠色
+            fg='white',
+            font=('Microsoft JhengHei UI', 12, 'bold'),
+            width=30,
+            height=2,
+            relief='raised',
+            borderwidth=2,
+            cursor="hand2"
+        )
+        self.manual_save_button.grid(row=0, column=0, sticky="w")
+        
+        # 設置懸停效果 (綠 -> 藍)
+        def on_save_enter(e):
+            self.manual_save_button.config(bg='#1565C0') # 變為深藍
+        def on_save_leave(e):
+            self.manual_save_button.config(bg='#2E7D32') # 回到深綠
+            
+        self.manual_save_button.bind("<Enter>", on_save_enter)
+        self.manual_save_button.bind("<Leave>", on_save_leave)
+
+        # 添加說明文字 (使用 grid 並加大 padx 確保不重疊)
+        ttk.Label(
+            save_btn_container,
+            text="(部分設定需重啟生效)",
+            font=('Microsoft JhengHei UI', 9),
+            foreground='gray'
+        ).grid(row=0, column=1, sticky="w", padx=(20, 0))
+
+        dut_row += 1
+        
+        # 移除版本與路徑資訊區區塊 - 將移動到右側
         dut_row += 1
         
         # === 右側內容 ===
         right_container = ttk.Frame(right_frame)
         right_container.pack(fill='both', expand=True, padx=(5, 0))
         
-        # 標籤頁名稱設定
-        tab_frame = ttk.LabelFrame(right_container, text="標籤頁名稱設定", padding=(10, 4))
-        tab_frame.pack(fill='x', pady=(0, 8))
-        tab_frame.columnconfigure(1, weight=1)
+        # 標籤頁名稱設定 (全寬對齊)
+        tab_frame = ttk.LabelFrame(right_container, text="標籤頁名稱設定", padding=(10, 8))
+        tab_frame.pack(fill='x', pady=(0, 10))
+        tab_frame.columnconfigure(0, minsize=120)
         
         # 獲取當前的標籤頁名稱
         tab_names = self.setup_data.get('tab_names', {})
         default_tab_names = ['DUT 控制', '治具控制', '手動輸入指令', 'DOS 工具', '設定']
 
-        # 創建標籤頁名稱輸入框 - 標籤頁1~5 width=20
+        # 創建標籤頁名稱輸入框 - 標籤頁1~5 width=30, 限制最多10個字
+        self.tab_count_labels = {}
         for i in range(5):
             tab_key = f'tab{i}'
             tab_name = tab_names.get(tab_key, default_tab_names[i] if i < len(default_tab_names) else f'標籤頁 {i+1}')
             ttk.Label(tab_frame, text=f"標籤頁 {i+1}:").grid(row=i, column=0, sticky="w", pady=4)
+            
+            # 定義限制與更新計數器函式
+            def update_tab_ui(var_name, limit=10, key=tab_key):
+                val = self.vars[var_name].get()
+                if len(val) > limit:
+                    val = val[:limit]
+                    self.vars[var_name].set(val)
+                # 更新計數器文字
+                if key in self.tab_count_labels:
+                    color = 'red' if len(val) >= limit else 'gray'
+                    self.tab_count_labels[key].config(text=f"({len(val)}/{limit})", foreground=color)
+
             self.vars[f"tab_names_{tab_key}"] = tk.StringVar(value=tab_name)
-            ttk.Entry(tab_frame, textvariable=self.vars[f"tab_names_{tab_key}"], width=20).grid(row=i, column=1, sticky="ew", padx=(10, 0), pady=4)
+            
+            # 創建輸入框 - 統一視覺寬度 (30)
+            entry = ttk.Entry(tab_frame, textvariable=self.vars[f"tab_names_{tab_key}"], width=30)
+            entry.grid(row=i, column=1, sticky="w", padx=(5, 0), pady=4)
+            
+            # 創建計數器標籤 (緊貼)
+            count_label = ttk.Label(tab_frame, text=f"({len(tab_name)}/10)", font=('Microsoft JhengHei UI', 9), foreground='gray')
+            count_label.grid(row=i, column=2, sticky="w", padx=(10, 0), pady=4)
+            self.tab_count_labels[tab_key] = count_label
+            
+            # 綁定追蹤
+            self.vars[f"tab_names_{tab_key}"].trace('w', lambda *args, name=f"tab_names_{tab_key}", k=tab_key: update_tab_ui(name, 10, k))
         
-        # 手動輸入指令提示文字設定
-        manual_frame = ttk.LabelFrame(right_container, text="手動輸入指令設定", padding=(10, 4))
-        manual_frame.pack(fill='x', pady=(8, 8))
-        manual_frame.columnconfigure(1, weight=1)
+        # 手動輸入指令提示文字設定 (全寬對齊)
+        manual_frame = ttk.LabelFrame(right_container, text="手動輸入指令設定", padding=(10, 8))
+        manual_frame.pack(fill='x', pady=(0, 10))
+        manual_frame.columnconfigure(0, minsize=120)
         
         ttk.Label(manual_frame, text="提示文字:").grid(row=0, column=0, sticky="w", pady=4)
+        
+        # 限制提示文字最多 50 個字並更新計數器
+        def limit_manual_hint_len(*args):
+            val = self.vars["Manual_Hint_Text"].get()
+            if len(val) > 50:
+                val = val[:50]
+                self.vars["Manual_Hint_Text"].set(val)
+            if hasattr(self, 'manual_hint_count_label'):
+                color = 'red' if len(val) >= 50 else 'gray'
+                self.manual_hint_count_label.config(text=f"({len(val)}/50)", foreground=color)
+
         self.vars["Manual_Hint_Text"] = tk.StringVar(value=self.setup_data.get("Manual_Command", {}).get("Hint_Text", "請輸入指令並按執行"))
-        manual_hint_entry = ttk.Entry(manual_frame, textvariable=self.vars["Manual_Hint_Text"], width=30)
-        manual_hint_entry.grid(row=0, column=1, sticky="ew", padx=(10, 0), pady=4)
+        self.vars["Manual_Hint_Text"].trace('w', limit_manual_hint_len)
+        
+        manual_hint_entry = ttk.Entry(manual_frame, textvariable=self.vars["Manual_Hint_Text"], width=35)
+        manual_hint_entry.grid(row=0, column=1, sticky="w", padx=(5, 0), pady=4)
+        
+        self.manual_hint_count_label = ttk.Label(manual_frame, text=f"({len(self.vars['Manual_Hint_Text'].get())}/50)", 
+                                                font=('Microsoft JhengHei UI', 9), foreground='gray')
+        self.manual_hint_count_label.grid(row=0, column=2, sticky="w", padx=(10, 0))
         
         # 添加說明標籤
         manual_help_label = ttk.Label(manual_frame, text="此文字將顯示在手動輸入指令頁面的提示區域",
                                      font=('Microsoft JhengHei UI', 9), foreground='#666666')
         manual_help_label.grid(row=1, column=0, columnspan=2, sticky="w", pady=(2, 0))
         
-        # 版本與路徑資訊區塊 - 移動到右側
-        info_frame = ttk.LabelFrame(right_container, text="版本與路徑資訊", padding=(10, 4))
-        info_frame.pack(fill='x', pady=(8, 8))
-        info_frame.columnconfigure(1, weight=1)
+        # 版本與路徑資訊區塊 (全寬對齊)
+        info_frame = ttk.LabelFrame(right_container, text="版本與路徑資訊", padding=(10, 8))
+        info_frame.pack(fill='x', pady=(0, 10))
+        info_frame.columnconfigure(0, minsize=120)
 
-        # 應用程式版本（移到這裡，改為可編輯）
-        ttk.Label(info_frame, text="應用程式版本:").grid(row=0, column=0, sticky="w", pady=2)
-        version_entry = ttk.Entry(info_frame, textvariable=self.vars["version"], width=15,
+        # 應用程式版本
+        ttk.Label(info_frame, text="程式版本:").grid(row=0, column=0, sticky="w", pady=2)
+        
+        # 限制版本號最多 12 個字並更新計數器
+        def limit_version_len(*args):
+            val = self.vars["version"].get()
+            if len(val) > 12:
+                val = val[:12]
+                self.vars["version"].set(val)
+            if hasattr(self, 'version_count_label'):
+                color = 'red' if len(val) >= 12 else 'gray'
+                self.version_count_label.config(text=f"({len(val)}/12)", foreground=color)
+
+        self.vars["version"].trace('w', limit_version_len)
+
+        version_entry = ttk.Entry(info_frame, textvariable=self.vars["version"], width=10,
                                  font=('Microsoft JhengHei UI', 10, 'bold'))
-        version_entry.grid(row=0, column=1, sticky="w", padx=(10, 0), pady=2)
+        version_entry.grid(row=0, column=1, sticky="w", padx=(5, 0), pady=2)
+        
+        self.version_count_label = ttk.Label(info_frame, text=f"({len(self.vars['version'].get())}/12)", 
+                                           font=('Microsoft JhengHei UI', 9), foreground='gray')
+        self.version_count_label.grid(row=0, column=2, sticky="w", padx=(3, 0))
 
         # 指令檔案路徑
         ttk.Label(info_frame, text="指令檔案路徑:").grid(row=1, column=0, sticky="nw", pady=2)
@@ -312,12 +416,15 @@ class SettingsTab(ttk.Frame):
         path_container.grid(row=1, column=1, sticky="ew", padx=(10, 0), pady=2)
         path_container.columnconfigure(0, weight=1)
 
-        # 設定預設路徑為 Command_TABLE\command.txt
         default_path = os.path.join("Command_TABLE", "command.txt")
         current_path = dut_settings.get("Command_File_Path", default_path)
         self.vars["DUT_Command_File_Path"] = tk.StringVar(value=current_path)
-        path_entry = ttk.Entry(path_container, textvariable=self.vars["DUT_Command_File_Path"])
-        path_entry.grid(row=0, column=0, sticky="ew", pady=(0, 5))
+        
+        # 使用 Label 並開啟自動換行 (wraplength)，最多顯示兩行
+        path_display = ttk.Label(path_container, textvariable=self.vars["DUT_Command_File_Path"], 
+                                foreground="#2196F3", font=('Consolas', 9),
+                                wraplength=450, justify="left")
+        path_display.grid(row=0, column=0, sticky="ew", pady=(0, 5))
         
         # 為路徑輸入框添加 ToolTip 顯示完整路徑
         if self.tooltip_manager:
@@ -345,8 +452,25 @@ class SettingsTab(ttk.Frame):
         device_label_container.columnconfigure(0, weight=1)
 
         self.vars["Device_Label"] = tk.StringVar(value=self.setup_data.get("Device_Label", "MU310 : root/oelinux123"))
-        device_label_entry = ttk.Entry(device_label_container, textvariable=self.vars["Device_Label"])
-        device_label_entry.grid(row=0, column=0, sticky="ew")
+        
+        # 限制設備標籤最多 25 個字並更新計數器
+        def limit_device_label_len(*args):
+            val = self.vars["Device_Label"].get()
+            if len(val) > 25:
+                val = val[:25]
+                self.vars["Device_Label"].set(val)
+            if hasattr(self, 'device_count_label'):
+                color = 'red' if len(val) >= 25 else 'gray'
+                self.device_count_label.config(text=f"({len(val)}/25)", foreground=color)
+
+        self.vars["Device_Label"].trace('w', limit_device_label_len)
+
+        device_label_entry = ttk.Entry(device_label_container, textvariable=self.vars["Device_Label"], width=18)
+        device_label_entry.grid(row=0, column=0, sticky="w")
+        
+        self.device_count_label = ttk.Label(device_label_container, text=f"({len(self.vars['Device_Label'].get())}/25)", 
+                                          font=('Microsoft JhengHei UI', 9), foreground='gray')
+        self.device_count_label.grid(row=0, column=1, sticky="w", padx=(3, 0))
 
         # 添加說明標籤
         device_help_label = ttk.Label(device_label_container, text="此內容將顯示在DUT控制頁面的清空回應按鈕下方",
@@ -360,57 +484,61 @@ class SettingsTab(ttk.Frame):
         startup_label_container.columnconfigure(0, weight=1)
 
         self.vars["Startup_Label"] = tk.StringVar(value=self.setup_data.get("Startup_Label", "TEST"))
-        startup_label_entry = ttk.Entry(startup_label_container, textvariable=self.vars["Startup_Label"])
-        startup_label_entry.grid(row=0, column=0, sticky="ew")
+        
+        # 限制自訂啟動名稱最多 15 個字並更新計數器
+        def limit_startup_label_len(*args):
+            val = self.vars["Startup_Label"].get()
+            if len(val) > 15:
+                val = val[:15]
+                self.vars["Startup_Label"].set(val)
+            if hasattr(self, 'startup_count_label'):
+                color = 'red' if len(val) >= 15 else 'gray'
+                self.startup_count_label.config(text=f"({len(val)}/15)", foreground=color)
+
+        self.vars["Startup_Label"].trace('w', limit_startup_label_len)
+
+        startup_label_entry = ttk.Entry(startup_label_container, textvariable=self.vars["Startup_Label"], width=30)
+        startup_label_entry.grid(row=0, column=0, sticky="w")
+        
+        self.startup_count_label = ttk.Label(startup_label_container, text=f"({len(self.vars['Startup_Label'].get())}/15)", 
+                                           font=('Microsoft JhengHei UI', 9), foreground='gray')
+        self.startup_count_label.grid(row=0, column=1, sticky="w", padx=(10, 0))
 
         # 添加說明標籤
         startup_help_label = ttk.Label(startup_label_container, text="此名稱將顯示在DUT控制頁面的綠色標籤中",
                                      font=('Microsoft JhengHei UI', 9), foreground='#666666')
         startup_help_label.grid(row=1, column=0, sticky="w", pady=(2, 0))
 
-        # === 儲存設定按鈕 (移回這裡) ===
-        save_button_frame = ttk.Frame(info_frame)
-        save_button_frame.grid(row=4, column=0, columnspan=2, sticky="w", pady=(15, 5))
-        
-        self.manual_save_button = ttk.Button(
-            save_button_frame,
-            text="💾 儲存所有設定",
-            command=self.manual_save_settings,
-            style="Accent.TButton",
-            width=20
-        )
-        self.manual_save_button.pack(side="left", padx=(0, 10))
-        
-        # 說明文字
-        ttk.Label(
-            save_button_frame,
-            text="(部分設定需重啟生效)",
-            font=('Microsoft JhengHei UI', 9),
-            foreground='gray'
-        ).pack(side="left")
+        # 儲存按鈕已移至左側 DUT 控制設定下方
+        pass
 
     # 字體設定函式已移至DUT控制標籤頁
 
 
+    @safe_execute(get_error_handler(), show_user_error=True)
     def manual_save_settings(self):
         """
         [安全版] 手動保存設定到 setup.json
         邏輯：讀取最新設定 -> 只更新UI上有值的欄位 -> 寫回檔案
         注意：字體設定由 DUT 控制頁面即時儲存，此處不應覆蓋
         """
+        from core.error_handler import log_info, log_error, log_debug
         try:
-            print("[DEBUG] 開始執行安全手動保存...")
+            log_info("開始執行手動保存設定...")
             
             # 1. 讀取磁碟上最新的設定檔 (確保包含最新的字體設定)
             current_settings = load_setup()
+            if not current_settings:
+                current_settings = {}
             
             # 2. 收集並更新 - 應用程式基本設定
             # 視窗標題
             title = self.vars["Window_Title"].get().strip()
             if title:
                 current_settings["Window_Title"] = title
-                if "DUT_Control" in current_settings:
-                    current_settings["DUT_Control"]["Window_Title"] = title
+                if "DUT_Control" not in current_settings:
+                    current_settings["DUT_Control"] = {}
+                current_settings["DUT_Control"]["Window_Title"] = title
             
             # 傳輸模式
             transport = self.vars["Command_Transport_Mode"].get()
@@ -427,9 +555,7 @@ class SettingsTab(ttk.Frame):
                     current_settings["DUT_Control"]["Window_Width"] = w
                     current_settings["DUT_Control"]["Window_Height"] = h
             
-            # [修正] 從記憶體中抓取最新的字體設定
-            # 因為自動保存可能被禁用，磁碟上的 setup.json 可能是舊的
-            # 但 UIHandlers 在調整字體時會更新記憶體中的 self.parent.setup
+            # 從記憶體中抓取最新的字體設定
             if hasattr(self, 'parent') and hasattr(self.parent, 'setup'):
                 mem_setup = self.parent.setup
                 
@@ -440,7 +566,6 @@ class SettingsTab(ttk.Frame):
                     if "DUT_Control" not in current_settings:
                         current_settings["DUT_Control"] = {}
                     current_settings["DUT_Control"]["UI_Font_Size"] = ui_size
-                    # print(f"[DEBUG] 從記憶體同步 UI 字體大小: {ui_size}")
                 
                 # 內容字體
                 if 'ContentFontSize' in mem_setup:
@@ -449,7 +574,7 @@ class SettingsTab(ttk.Frame):
                     if "DUT_Control" not in current_settings:
                         current_settings["DUT_Control"] = {}
                     current_settings["DUT_Control"]["Content_Font_Size"] = content_size
-                    print(f"[DEBUG] 從記憶體同步內容字體大小: {content_size}")
+                    log_debug(f"同步記憶體內容字體大小: {content_size}")
 
             # 3. 收集並更新 - DUT 控制設定
             if "DUT_Control" not in current_settings:
@@ -464,6 +589,8 @@ class SettingsTab(ttk.Frame):
             timeout = self.vars["DUT_Single_Command_Timeout"].get().strip()
             if timeout.isdigit():
                 current_settings["DUT_Control"]["Single_Command_Timeout"] = timeout
+            elif "Single_Command_Timeout" not in current_settings["DUT_Control"]:
+                current_settings["DUT_Control"]["Single_Command_Timeout"] = "30"
                 
             # 間隔符號
             separator = self.vars["DUT_Command_Separator"].get()
@@ -510,45 +637,42 @@ class SettingsTab(ttk.Frame):
                 current_settings["Manual_Command"]["Hint_Text"] = hint_text
 
             # 7. 收集並更新 - 版本與路徑資訊
-            # 版本號
             ver = self.vars["version"].get().strip()
             if ver:
                 current_settings["version"] = ver
             
-            # 指令檔案路徑
             cmd_path = self.vars["DUT_Command_File_Path"].get().strip()
             if cmd_path:
                 current_settings["DUT_Control"]["Command_File_Path"] = cmd_path
                 
-            # 設備標籤
             device_label = self.vars["Device_Label"].get().strip()
             if device_label:
                 current_settings["Device_Label"] = device_label
                 
-            # 啟動標籤
             startup_label = self.vars["Startup_Label"].get().strip()
             if startup_label:
                 current_settings["Startup_Label"] = startup_label
 
             # 8. 寫回檔案 (強制手動保存)
-            print("[DEBUG] 正在寫入 setup.json ...")
-            save_setup(current_settings, manual_save=True)
+            log_info("正在寫入 setup.json 檔案...")
+            success = save_setup(current_settings, manual_save=True)
             
-            # 9. 更新本地緩存
-            self.setup_data = current_settings
-            
-            # 10. 顯示成功訊息
-            messagebox.showinfo("成功", "所有設定已成功儲存！\n\n部分設定可能需要重新啟動程式才會生效。")
-            
-            # 通知 parent (如果有 callback)
-            if self.on_save_callback:
-                self.on_save_callback(current_settings)
+            if success:
+                # 9. 更新本地緩存
+                self.setup_data = current_settings
+                # 10. 顯示成功訊息
+                messagebox.showinfo("成功", "所有設定已成功儲存！\n\n部分設定可能需要重新啟動程式才會生效。")
+                
+                # 通知 parent (如果有 callback)
+                if self.on_save_callback:
+                    self.on_save_callback(current_settings)
+            else:
+                log_error("save_setup 返回失敗")
+                messagebox.showerror("失敗", "儲存設定失敗，請檢查權限或日誌。")
 
         except Exception as e:
-            print(f"[ERROR] 手動保存設定失敗: {e}")
-            import traceback
-            traceback.print_exc()
-            messagebox.showerror("錯誤", f"保存設定失敗: {e}")
+            log_error("手動保存設定過程中發生崩潰等級異常", e)
+            messagebox.showerror("嚴重錯誤", f"保存設定時發生錯誤: {e}")
 
     def on_fixture_font_changed(self, event=None):
         """治具字體大小即時更新（僅更新顯示，不自動保存）"""
@@ -573,14 +697,14 @@ class SettingsTab(ttk.Frame):
             
             # 更新字元計數顯示
             if hasattr(self, 'title_count_label'):
-                color = 'red' if char_count > 50 else 'gray'
-                self.title_count_label.config(text=f"({char_count}/50)", foreground=color)
+                color = 'red' if char_count > 30 else 'gray'
+                self.title_count_label.config(text=f"({char_count}/30)", foreground=color)
             
-            # 如果超過50個字元，截斷並顯示警告
-            if char_count > 50:
-                truncated_title = current_title[:50]
+            # 如果超過30個字元，截斷
+            if char_count > 30:
+                truncated_title = current_title[:30]
                 self.vars["Window_Title"].set(truncated_title)
-                print(f"[WARNING] 視窗標題已截斷至50個字元: {truncated_title}")
+                print(f"[WARNING] 視窗標題已截斷至30個字元: {truncated_title}")
                 
                 # 顯示提示訊息
                 print("[NOTIFICATION] 視窗標題已限制為50個字元")
@@ -641,31 +765,35 @@ class SettingsTab(ttk.Frame):
             settings = load_setup()
             if 'DUT_Control' not in settings:
                 settings['DUT_Control'] = {}
-            if 'Custom_Separators' not in settings['DUT_Control']:
-                settings['DUT_Control']['Custom_Separators'] = ["|", "||", "==>"]
             
-            custom_separators = settings['DUT_Control']['Custom_Separators']
+            # 獲取現有的自訂清單，若不存在則初始化
+            custom_separators = settings['DUT_Control'].get('Custom_Separators', ["|", "||", "==>"])
             
             # 檢查是否已存在
             if new_separator in custom_separators:
-                messagebox.showwarning("警告", "該間隔符號已存在")
+                messagebox.showwarning("警告", "該間隔符號已存在於清單中")
+                # 即使存在，也讓它變成當前選中的值
+                self.vars["DUT_Command_Separator"].set(new_separator)
                 return
             
             # 添加到列表
             custom_separators.append(new_separator)
             settings['DUT_Control']['Custom_Separators'] = custom_separators
             
-            # 保存設定
-            save_setup(settings)
+            # 立即保存到 setup.json
+            save_setup(settings, manual_save=True)
             
-            # 更新下拉選單
+            # 立即更新下拉選單的 values
             self.update_separator_combo()
             
-            # 清空輸入框
+            # 讓新輸入的符號變成當前選中的值
+            self.vars["DUT_Command_Separator"].set(new_separator)
+            
+            # 清空新增用的輸入框
             self.custom_separator_entry.delete(0, tk.END)
             
-            print(f"[INFO] 已新增自訂間隔符號: {new_separator}")
-            messagebox.showinfo("成功", f"已新增間隔符號: {new_separator}")
+            print(f"[INFO] 已新增並成功套用自訂間隔符號: {new_separator}")
+            messagebox.showinfo("成功", f"已新增並選取間隔符號: {new_separator}")
             
         except Exception as e:
             print(f"新增自訂間隔符號時發生錯誤: {e}")
@@ -701,8 +829,8 @@ class SettingsTab(ttk.Frame):
                 custom_separators.remove(current_separator)
                 settings['DUT_Control']['Custom_Separators'] = custom_separators
                 
-                # 保存設定
-                save_setup(settings)
+                # 保存設定 (務必開啟 manual_save 以確保立即寫入)
+                save_setup(settings, manual_save=True)
                 
                 # 重置為預設值
                 self.vars["DUT_Command_Separator"].set("|")
@@ -825,7 +953,7 @@ class SettingsTab(ttk.Frame):
         current_setup["Window_Title"] = self.vars["Window_Title"].get()
         current_setup["Window_Width"] = self.vars["Window_Width"].get()
         current_setup["Window_Height"] = self.vars["Window_Height"].get()
-        current_setup["Command_Transport_Mode"] = self.vars["Command_Transport_Mode"].get()
+        # 指令傳輸方式已移至 DUT 控制區域，這裡不再重複處理
         
         # 更新標籤頁名稱
         if "tab_names" not in current_setup:

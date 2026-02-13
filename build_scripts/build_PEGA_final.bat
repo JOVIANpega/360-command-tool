@@ -1,98 +1,34 @@
 @echo off
 chcp 65001 > nul
+setlocal EnableDelayedExpansion
 
-rem 切換到專案根目錄
-cd /d "%~dp0.."
-
-rem 讀取版本號從 setup.json
-echo [初始化] 讀取版本號...
-for /f "delims=" %%i in ('python build_scripts\get_version.py') do set APP_VERSION=%%i
-if "%APP_VERSION%"=="" (
-    echo [警告] 無法讀取版本號，使用預設值 2.5.4
-    set APP_VERSION=2.5.4
-)
+REM ========================================================
+REM   PEGA 指令通 - 啟動器
+REM   此腳本會呼叫 Python 版的打包系統 (build_final.py)
+REM   確保路徑正確、資源完整、且解決 SSH 崩潰問題。
+REM ========================================================
 
 echo.
-echo ========================================
-echo    PEGA指令通 V%APP_VERSION% 打包程序
-echo ========================================
+echo [INFO] 正在啟動 Python 打包系統...
 echo.
 
-rem 生成版本信息
-echo [步驟1] 生成版本信息...
-python build_scripts\version_info_zh.py
+REM 檢查 Python 是否安裝
+python --version > nul 2>&1
 if %errorlevel% neq 0 (
-    echo [錯誤] 版本信息生成失敗
+    echo [ERROR] 找不到 Python！請確認已安裝 Python 並加入環境變數。
     pause
-    exit /b 1
+    exit /b
 )
 
-rem 檢查必要文件
-echo [步驟2] 檢查必要文件...
-if not exist "main.py" echo [錯誤] 找不到main.py && pause && exit /b 1
-if not exist "setup.json" echo [錯誤] 找不到setup.json && pause && exit /b 1
-if not exist "docs\PEGA指令通使用指南.html" echo [錯誤] 找不到使用指南 && pause && exit /b 1
+REM 呼叫 build_final.py (位於同一目錄)
+REM 使用 %~dp0 確保路徑正群
+python "%~dp0build_final.py"
 
-rem 清理舊文件
-echo [步驟3] 清理舊文件...
-if exist "build" rmdir /s /q "build"
-if exist "dist" rmdir /s /q "dist"
-
-rem 開始打包
-echo [步驟4] 開始打包...
 echo.
-
-pyinstaller ^
-    --onefile ^
-    --clean ^
-    --noconfirm ^
-    --noconsole ^
-    --name "PEGA指令通_V%APP_VERSION%" ^
-    --version-file "version_info_zh.txt" ^
-    --add-data "docs\tooltips.ini;." ^
-    --add-data "setup.json;." ^
-    --add-data "Command_TABLE\command.txt;." ^
-    --add-data "color_word.txt;." ^
-    --add-data "docs\tooltip_config.txt;." ^
-    --add-data "sign_DOC.txt;." ^
-    --add-data "Command_TABLE;Command_TABLE" ^
-    --add-data "FIXTURE;FIXTURE" ^
-    --add-data "core;core" ^
-    --add-data "ui_parts;ui_parts" ^
-    --add-data "transport;transport" ^
-    --add-data "assets;assets" ^
-    --add-data "docs\PEGA指令通使用指南.html;." ^
-    --add-data "docs\VALO360_guide_files;VALO360_guide_files" ^
-    --icon "assets/icon.ico" ^
-    main.py
-
-rem 檢查結果
-echo.
-if exist "dist\PEGA指令通_V%APP_VERSION%.exe" (
-    echo ========================================
-    echo           打包成功！
-    echo ========================================
-    echo.
-    
-    echo [步驟5] 複製必要的執行時檔案到 dist ...
-    xcopy /E /I /Y "assets" "dist\assets\" > nul
-    xcopy /E /I /Y "Command_TABLE" "dist\Command_TABLE\" > nul
-    xcopy /E /I /Y "FIXTURE" "dist\FIXTURE\" > nul
-    xcopy /E /I /Y "core" "dist\core\" > nul
-    xcopy /E /I /Y "ui_parts" "dist\ui_parts\" > nul
-    xcopy /E /I /Y "transport" "dist\transport\" > nul
-    xcopy /E /I /Y "docs\VALO360_guide_files" "dist\VALO360_guide_files\" > nul
-    
-    copy /Y "setup.json" "dist\" > nul
-    copy /Y "docs\tooltips.ini" "dist\" > nul
-    copy /Y "docs\tooltip_config.txt" "dist\" > nul
-    copy /Y "color_word.txt" "dist\" > nul
-    copy /Y "Command_TABLE\command.txt" "dist\" > nul
-    copy /Y "docs\PEGA指令通使用指南.html" "dist\" > nul
-    copy /Y "sign_DOC.txt" "dist\" > nul
-    
-    echo 打包完成！您可以在dist目錄找到可執行文件。
+if %errorlevel% neq 0 (
+    echo [ERROR] 打包過程發生錯誤。
 ) else (
-    echo 打包失敗！
+    echo [SUCCESS] 打包腳本執行完畢。
 )
+echo.
 pause

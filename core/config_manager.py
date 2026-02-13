@@ -24,6 +24,7 @@ class ConfigManager:
         self._cache_lock = threading.RLock()
         self._last_modified = 0
         self._backup_dir = "backup"
+        self._backup_dir_abs = self._backup_dir # 預設值
         self._auto_save_enabled = True  # 控制自動保存
         self._ensure_directories()
         
@@ -85,18 +86,25 @@ class ConfigManager:
     def _ensure_directories(self):
         """確保必要目錄存在"""
         try:
-            if not os.path.exists(self._backup_dir):
-                os.makedirs(self._backup_dir)
+            config_dir = os.path.dirname(self._get_config_path())
+            backup_full_path = os.path.join(config_dir, self._backup_dir)
+            if not os.path.exists(backup_full_path):
+                os.makedirs(backup_full_path)
+            # 更新 self._backup_dir 為絕對路徑
+            self._backup_dir_abs = backup_full_path
         except Exception as e:
             self.error_handler.log_error("創建備份目錄失敗", e)
     
     def _get_config_path(self) -> str:
         """獲取配置文件的完整路徑"""
-        if getattr(sys, 'frozen', False):
-            base_path = os.path.dirname(sys.executable)
-        else:
-            base_path = os.path.abspath(".")
-        return os.path.join(base_path, self.config_file)
+        try:
+            if getattr(sys, 'frozen', False):
+                base_path = os.path.dirname(sys.executable)
+            else:
+                base_path = os.path.abspath(".")
+            return os.path.join(base_path, self.config_file)
+        except Exception:
+            return os.path.abspath(self.config_file)
     
     def _is_config_modified(self) -> bool:
         """檢查配置文件是否被修改"""
@@ -114,7 +122,7 @@ class ConfigManager:
         """備份配置文件"""
         try:
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            backup_file = os.path.join(self._backup_dir, f'setup_backup_{timestamp}.json')
+            backup_file = os.path.join(self._backup_dir_abs, f'setup_backup_{timestamp}.json')
             
             with open(backup_file, 'w', encoding='utf-8') as f:
                 json.dump(config_data, f, ensure_ascii=False, indent=2)
@@ -128,12 +136,12 @@ class ConfigManager:
     def _cleanup_old_backups(self, keep_count: int = 30):
         """清理舊的備份文件"""
         try:
-            if not os.path.exists(self._backup_dir):
+            if not os.path.exists(self._backup_dir_abs):
                 return
                 
             backup_files = [
-                os.path.join(self._backup_dir, f) 
-                for f in os.listdir(self._backup_dir) 
+                os.path.join(self._backup_dir_abs, f) 
+                for f in os.listdir(self._backup_dir_abs) 
                 if f.startswith('setup_backup_') and f.endswith('.json')
             ]
             

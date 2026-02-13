@@ -81,19 +81,12 @@ except ImportError as e:
 # 檢查 command.txt
 
 
-try:
+# commands = load_commands() 
+# 移除全域執行，改為在 SerialUI 初始化時載入
+commands = {}
 
 
-    commands = load_commands()
 
-
-except Exception as e:
-
-
-    messagebox.showerror('錯誤', str(e))
-
-
-    sys.exit(1)
 
 
 
@@ -478,17 +471,18 @@ class TabManager:
             # 預設的 TAB 按鈕名稱
             default_tab_names = ['DUT 控制', '治具控制', 'DOS 工具', '設定']
 
-            # 更新標籤名稱
+            # 更新標籤名稱 - 限制顯示最多10個字元
             for i in range(4):  # 目前有4個標籤頁
                 tab_key = f'tab{i}'
-                if tab_key in tab_names:
-                    # 使用設定檔中的名稱
-                    self.notebook.tab(i, text=tab_names[tab_key])
-                    print(f"[DEBUG] 更新 TAB {i} 名稱為：{tab_names[tab_key]}（從設定檔）")
-                else:
-                    # 使用預設名稱
-                    self.notebook.tab(i, text=default_tab_names[i])
-                    print(f"[DEBUG] 更新 TAB {i} 名稱為：{default_tab_names[i]}（預設值）")
+                raw_name = tab_names.get(tab_key, default_tab_names[i])
+                
+                # 自動截斷邏輯
+                display_name = raw_name
+                if len(raw_name) > 10:
+                    display_name = raw_name[:9] + "..."
+                
+                self.notebook.tab(i, text=display_name)
+                print(f"[DEBUG] 更新 TAB {i} 名稱為：{display_name}")
         
         except Exception as e:
             print(f"[ERROR] 更新 TAB 按鈕名稱時發生錯誤：{e}")

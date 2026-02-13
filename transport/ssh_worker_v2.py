@@ -5,10 +5,23 @@ SSH 工作器 - 重構版本 (繼承 BaseWorker)
 """
 import threading
 import time
-import paramiko
 import sys
 import os
 from typing import Tuple, Optional
+
+# 延遲導入 paramiko - 只在實際需要 SSH 時才載入
+# 這樣可以避免打包後因 cryptography 問題導致整個程式崩潰
+paramiko = None
+
+def _ensure_paramiko():
+    """確保 paramiko 已載入"""
+    global paramiko
+    if paramiko is None:
+        try:
+            import paramiko as _pm
+            paramiko = _pm
+        except ImportError as e:
+            raise ImportError(f"SSH 功能需要 paramiko 模組，請安裝: pip install paramiko\n錯誤: {e}")
 
 # 添加 transport 目錄到路徑
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -24,7 +37,7 @@ from core import log_debug, log_info, log_error, log_warning
 
 # 全域持久連線狀態（與原版相同）
 _persist_lock = threading.Lock()
-_persist_client: Optional[paramiko.SSHClient] = None
+_persist_client = None  # Remove explicit type hint to avoid NoneType error
 _persist_connected: bool = False
 _persist_last_used: float = 0.0
 _persist_idle_timeout_sec: int = 600  # 閒置 10 分鐘自動斷線
@@ -135,6 +148,9 @@ class SSHWorkerV2(BaseWorker):
             bool: 連線成功返回 True，失敗返回 False
         """
         try:
+            # 確保 paramiko 已載入
+            _ensure_paramiko()
+            
             global _persist_client, _persist_connected, _persist_last_used
             log_info(f"正在連線到 SSH 主機 {self.host}:{self.port}")
             

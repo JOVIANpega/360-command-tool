@@ -7,6 +7,8 @@
 import os
 import sys
 import json
+import re
+import platform
 from typing import Dict, List, Any, Optional
 from tkinter import messagebox
 
@@ -37,8 +39,8 @@ TODAY_LOG_FILE = resource_manager.get_resource_path(f'logs/log_{today}.txt')
 
 
 # 確保必要的目錄存在
-resource_manager.ensure_directory('backup')
-resource_manager.ensure_directory('logs')
+resource_manager.ensure_directory(resource_manager.get_resource_path('backup'))
+resource_manager.ensure_directory(resource_manager.get_resource_path('logs'))
 
 
 # 預設配置已移至 ConfigManager 中，這裡保留向後相容性

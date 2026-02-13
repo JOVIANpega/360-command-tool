@@ -553,11 +553,13 @@ class UIHandlers(UIHandlersCore):
                 # 從設定中獲取預設IP地址，使用正確的鍵名
 
 
+                # 獲取備用 IP：優先嘗試 SSH Host，再嘗試舊的預設 IP，最後用 127.0.0.1
+                ssh_host = self.parent.setup.get('SSH_Settings', {}).get('Host', '')
                 dut_control = self.parent.setup.get('DUT_Control', {})
-                default_ip = dut_control.get('Default_IP_Address', '192.168.11.143')
-
-
-                ip = self.parent.components.entry_ip.get().strip() or default_ip
+                old_default_ip = dut_control.get('Default_IP_Address', '192.168.11.143')
+                
+                fallback_ip = ssh_host if ssh_host else old_default_ip
+                ip = self.parent.components.entry_ip.get().strip() or fallback_ip
 
 
 
@@ -1656,7 +1658,13 @@ class UIHandlers(UIHandlersCore):
                 port = int(ssh_settings.get("Port", 22))
                 default_account = ssh_settings.get("Default_Account", "root/oelinux123")
                 
-                # 解析帳號密碼
+                # 準備顯示用的帳號資訊 (限制20字)
+                display_acc = default_account
+                if len(display_acc) > 20:
+                    display_acc = display_acc[:17] + "..."
+                self.parent.components.add_to_buffer(f"[SSH] 連線對象: {host}:{port} ({display_acc})\n", "purple")
+
+                # 解析帳號密碼 (傳遞給 Worker 的必須是真實未截斷的)
                 if "/" in default_account:
                     username, password = default_account.split("/", 1)
                 else:
@@ -1852,6 +1860,12 @@ class UIHandlers(UIHandlersCore):
             port = int(ssh_settings.get("Port", 22))
             default_account = ssh_settings.get("Default_Account", "root/oelinux123")
             
+            # 準備顯示用的帳號資訊 (限制20字)
+            display_acc = default_account
+            if len(display_acc) > 20:
+                display_acc = display_acc[:17] + "..."
+            self.parent.components.add_to_buffer(f"[SSH] 連線對象: {host}:{port} ({display_acc})\n", "purple")
+
             # 解析帳號密碼
             if "/" in default_account:
                 username, password = default_account.split("/", 1)
