@@ -13,9 +13,9 @@ import sys
 import datetime
 
 version_info = {
-    'version': '2.5.3',
-    'file_version': (2, 5, 3, 0),
-    'product_version': (2, 5, 3, 0),
+    'version': '2.6.1',
+    'file_version': (2, 6, 1, 0),
+    'product_version': (2, 6, 1, 0),
     'company_name': 'PEGA指令通',
     'file_description': 'PEGA指令通 - 序列埠通訊工具',
     'internal_name': 'PEGA指令通',
@@ -27,7 +27,19 @@ version_info = {
 
 # 版本更新記錄
 version_history = """
-v2.5.3 (2026-02-10)
+v2.6.1 (2026-02-13)
+----------------------
+• UI 視覺與交互深度優化：
+  - 統一通訊設定欄位寬度與對齊，解決長短不一問題。
+  - 美化「刷新」按鈕：採用深綠色主題、藍色懸停 (Hover) 效果及高度 2 優化。
+  - 重新調整佈局權重，使按鈕緊貼輸入欄位，介面更緊湊精緻。
+  - 優化區塊間距，為啟動標籤區域增加 30 像素呼吸空間。
+• 系統持久化與啟動穩定性：
+  - 修復手動指令分頁變數遺失导致的初始化異常。
+  - 實現分欄位置 (Sash Position) 持久化，確保佈局自定義後可記憶。
+• 修正與強化：
+  - 強化所有分頁激活 (activate) 時的狀態恢復機制。
+  - 全面同步各分頁的視覺元件風格一致性。
 ----------------------
 • 指令超時功能強化 (TIMEOUT 可設定)：
   - 分離「總超時」與「單個指令待響應超時」設定。
@@ -196,15 +208,15 @@ v1.5.0.1 (2025-07-12)
 # 定義版本號
 VERSION = version_info['version']
 
-APP_VERSION = "V2.5.3"
-APP_VERSION_DETAIL = "\n【V2.5.3 主要更新】\n- 新增「單個指令待響應超時」設定，可自訂單條指令等待時間\n- Console/ADB/SSH 模式全面支持自定義超時設定\n- 解決長執行指令因 10s 限制導致中斷的問題\n"
+APP_VERSION = "V2.6.1"
+APP_VERSION_DETAIL = "\n【V2.6.1 主要更新】\n- UI 視覺美化：統一欄位長度、按鈕緊貼佈局、懸停變色效果\n- 佈局記憶：自動儲存並恢復各分頁的分欄分割位置\n- 穩定性修復：解決分頁初始化報錯並同步全域視覺風格\n"
 
 # 生成版本資訊檔案
 with open("version_info_zh.txt", "w", encoding="utf-8") as f:
     f.write("VSVersionInfo(\n")
     f.write("  ffi=FixedFileInfo(\n")
-    f.write("    filevers=(2, 5, 3, 0),\n")
-    f.write("    prodvers=(2, 5, 3, 0),\n")
+    f.write("    filevers=(2, 6, 1, 0),\n")
+    f.write("    prodvers=(2, 6, 1, 0),\n")
     f.write("    mask=0x3f,\n")
     f.write("    flags=0x0,\n")
     f.write("    OS=0x40004,\n")

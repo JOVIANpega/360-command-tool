@@ -62,7 +62,7 @@ class StartupLabelManager:
         try:
             # 創建標籤框架
             label_frame = ttk.Frame(parent_frame, style="TFrame")
-            label_frame.grid(row=row, column=0, sticky='ew', pady=5)
+            label_frame.grid(row=row, column=0, sticky='ew', pady=(30, 5)) # 增加上方間距至 30px
             label_frame.columnconfigure(0, weight=1)
             
             # 創建淡黃底黑字的大標籤

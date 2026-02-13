@@ -130,10 +130,10 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
     def init_com_components(self):
         com_frame = ttk.Frame(self.left_panel, style="TFrame")
         com_frame.grid(row=0, column=0, sticky='ew', pady=3)
-        com_frame.columnconfigure(0, weight=0)
-        com_frame.columnconfigure(1, weight=1)
+        com_frame.columnconfigure(0, minsize=80) 
+        com_frame.columnconfigure(1, weight=0)   
         com_frame.columnconfigure(2, weight=0)
-        com_frame.columnconfigure(3, weight=0)
+        com_frame.columnconfigure(3, weight=1)   # 將剩餘空間推向右側，使按鈕靠左靠近欄位
 
         # 定義紅色背景樣式
         try:
@@ -154,8 +154,8 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         # 獲取 COM 口列表
         com_values = list_com_ports()
         
-        self.combobox_com = ttk.Combobox(com_frame, values=com_values, state='readonly', width=15, style='Red.TCombobox')
-        self.combobox_com.grid(row=0, column=1, padx=5, sticky='ew')
+        self.combobox_com = ttk.Combobox(com_frame, values=com_values, state='readonly', width=20, font=('Microsoft JhengHei UI', 10), style='Red.TCombobox')
+        self.combobox_com.grid(row=0, column=1, padx=(5, 0), sticky='w')
         self.combobox_com.bind("<<ComboboxSelected>>", self.handlers.on_com_port_changed)
         
         # 自動選擇第一個 COM 口 (如果有的話)
@@ -178,8 +178,19 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             refresh_command = lambda: None
             print("[WARNING] handlers 不存在或沒有 refresh_com_ports 方法")
         self.btn_refresh = tk.Button(com_frame, text='刷新', command=refresh_command,
-                                   bg='#e0e0e0', fg='black', activebackground='#2196f3', activeforeground='black')
-        self.btn_refresh.grid(row=0, column=2, padx=3, sticky='ew')
+                                   bg='#2E7D32', fg='white', 
+                                   activebackground='#1565C0', activeforeground='white',
+                                   height=2, font=('Microsoft JhengHei UI', 9, 'bold'),
+                                   relief='raised', borderwidth=1)
+        self.btn_refresh.grid(row=0, column=2, padx=10, sticky='w', rowspan=2) # 改為 sticky='w' 靠近欄位，並增加左側間距
+
+        # 懸停效果
+        def on_refresh_enter(e):
+            self.btn_refresh.config(bg='#1565C0')
+        def on_refresh_leave(e):
+            self.btn_refresh.config(bg='#2E7D32')
+        self.btn_refresh.bind("<Enter>", on_refresh_enter)
+        self.btn_refresh.bind("<Leave>", on_refresh_leave)
 
         # 第二行：指令傳輸方式選擇
         self.label_transport = ttk.Label(com_frame, text='傳輸方式:', style="TLabel")
@@ -193,8 +204,8 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             
         self.transport_mode_var = tk.StringVar(value=current_mode)
         self.combobox_transport = ttk.Combobox(com_frame, textvariable=self.transport_mode_var,
-                                             values=['Console', 'ADB', 'SSH'], state='readonly', width=15, style='Red.TCombobox')
-        self.combobox_transport.grid(row=1, column=1, padx=5, sticky='ew', pady=(5, 0))
+                                             values=['Console', 'ADB', 'SSH'], state='readonly', width=20, font=('Microsoft JhengHei UI', 10), style='Red.TCombobox')
+        self.combobox_transport.grid(row=1, column=1, padx=(5, 0), sticky='w', pady=(5, 0))
         self.combobox_transport.bind("<<ComboboxSelected>>", self.on_transport_mode_changed)
 
         # 根據傳輸方式設定 COM 口的啟用狀態
@@ -771,7 +782,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.label_ip.grid(row=0, column=0, sticky='w')
         
         # IP 下拉選單
-        self.ip_combobox = ttk.Combobox(ping_frame, width=20, state='readonly')
+        self.ip_combobox = ttk.Combobox(ping_frame, width=22, state='readonly')
         self.ip_combobox.grid(row=0, column=1, sticky='ew', padx=5)
         self.ip_combobox.bind('<<ComboboxSelected>>', self.on_ip_selected)
         # 與舊代碼相容：提供 entry_ip 別名供 handlers 使用
@@ -958,8 +969,6 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
     
 
     
-
-    
     def on_ping(self):
         """執行 Ping 操作"""
         current_ip = self.ip_combobox.get()
@@ -1008,7 +1017,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         # 綁定變化事件進行即時保存
         self.end_string_var.trace_add("write", self.on_end_string_changed)
         
-        self.combobox_end = ttk.Combobox(end_frame, textvariable=self.end_string_var, width=15)
+        self.combobox_end = ttk.Combobox(end_frame, textvariable=self.end_string_var, width=22)
         self.combobox_end.grid(row=0, column=1, padx=(5, 4), sticky='ew')
         self.update_end_strings()
         

@@ -83,6 +83,9 @@ class ManualCommandUI:
         # 設置分割位置
         sash_position = int(self.manual_setup.get('Pane_Sash_Position', 400))
         self.paned_window.sashpos(0, sash_position)
+        
+        # 綁定分割位置變更事件
+        self.paned_window.bind("<ButtonRelease-1>", lambda e: self.on_sash_pos_changed())
     
     def create_left_panel(self):
         """創建左側控制面板"""
@@ -93,9 +96,10 @@ class ManualCommandUI:
         # 水平排列的設定區域
         horizontal_frame = ttk.Frame(settings_frame, style='Main.TFrame')
         horizontal_frame.pack(fill='x', pady=(0, 5))
-        horizontal_frame.columnconfigure(0, weight=1)
-        horizontal_frame.columnconfigure(1, weight=1)
-        horizontal_frame.columnconfigure(2, weight=1)
+        horizontal_frame.columnconfigure(0, weight=0)
+        horizontal_frame.columnconfigure(1, weight=0)
+        horizontal_frame.columnconfigure(2, weight=0)
+        horizontal_frame.columnconfigure(3, weight=1) # 增加彈性空間將內容推向左側
         
         # COM Port 選擇
         com_frame = ttk.Frame(horizontal_frame, style='Main.TFrame')
@@ -107,13 +111,25 @@ class ManualCommandUI:
         
         self.com_port_var = tk.StringVar(value=self.manual_setup.get('Serial_COM_Port', ''))
         self.com_port_combo = ttk.Combobox(com_input_frame, textvariable=self.com_port_var, 
-                                          state='readonly', width=20)
-        self.com_port_combo.pack(side='left', fill='x', expand=True)
+                                          state='readonly', width=20, font=('Microsoft JhengHei UI', 10))
+        self.com_port_combo.pack(side='left', fill='none', expand=False)
         self.com_port_combo.bind("<<ComboboxSelected>>", self.on_com_port_changed)
         
-        # 刷新 COM Port 按鈕
-        self.refresh_com_button = ttk.Button(com_input_frame, text="🔄", width=3, command=self.refresh_com_ports)
+        # 刷新 COM Port 按鈕 (與 DUT 一致)
+        self.refresh_com_button = tk.Button(com_input_frame, text='刷新', command=self.refresh_com_ports,
+                                          bg='#2E7D32', fg='white', 
+                                          activebackground='#1565C0', activeforeground='white',
+                                          height=2, font=('Microsoft JhengHei UI', 9, 'bold'),
+                                          relief='raised', borderwidth=1)
         self.refresh_com_button.pack(side='right', padx=(2, 0))
+
+        # 懸停效果
+        def on_btn_enter(e):
+            self.refresh_com_button.config(bg='#1565C0')
+        def on_btn_leave(e):
+            self.refresh_com_button.config(bg='#2E7D32')
+        self.refresh_com_button.bind('<Enter>', on_btn_enter)
+        self.refresh_com_button.bind('<Leave>', on_btn_leave)
         
         # 傳輸方式
         transport_frame = ttk.Frame(horizontal_frame, style='Main.TFrame')
@@ -122,8 +138,8 @@ class ManualCommandUI:
         ttk.Label(transport_frame, text="傳輸方式:", style='Main.TLabel').pack(anchor='w')
         self.transport_mode_var = tk.StringVar(value=self.manual_setup.get('Command_Transport_Mode', 'Console'))
         transport_combo = ttk.Combobox(transport_frame, textvariable=self.transport_mode_var, 
-                                     values=['Console', 'ADB', 'SSH'], state='readonly', width=20)
-        transport_combo.pack(fill='x')
+                                      values=['Console', 'ADB', 'SSH'], state='readonly', width=20, font=('Microsoft JhengHei UI', 10))
+        transport_combo.pack(fill='none', anchor='w')
         transport_combo.bind("<<ComboboxSelected>>", self.on_transport_mode_changed)
         
         # 結束字串設定
@@ -132,8 +148,8 @@ class ManualCommandUI:
         
         ttk.Label(end_string_frame, text="結束字串:", style='Main.TLabel').pack(anchor='w')
         self.end_string_var = tk.StringVar(value=self.manual_setup.get('Command_End_String', 'root'))
-        self.end_string_entry = ttk.Entry(end_string_frame, textvariable=self.end_string_var, width=20)
-        self.end_string_entry.pack(fill='x')
+        self.end_string_entry = ttk.Entry(end_string_frame, textvariable=self.end_string_var, width=22, font=('Microsoft JhengHei UI', 10))
+        self.end_string_entry.pack(fill='none', anchor='w')
         
         
         # 指令輸入區域
@@ -814,6 +830,31 @@ class ManualCommandUI:
             
         except Exception as e:
             print(f"從設定檔更新 UI 失敗: {e}")
+            
+    def activate(self):
+        """分頁激活時調用"""
+        self.refresh_com_ports()
+        self.restore_sash()
+        
+    def restore_sash(self):
+        """恢復分割位置"""
+        try:
+            self.setup = load_setup()
+            self.manual_setup = self.setup.get('Manual_Command', {})
+            sash_position = int(self.manual_setup.get('Pane_Sash_Position', 400))
+            self.paned_window.sashpos(0, sash_position)
+        except:
+            pass
+            
+    def on_sash_pos_changed(self):
+        """分割位置變更時記錄"""
+        try:
+            pos = self.paned_window.sashpos(0)
+            if pos > 0:
+                print(f"[DEBUG] 記錄手動指令分頁分欄位置: {pos}")
+                # 這裡不鎖定 IO，只在 save 時寫入磁碟
+        except:
+            pass
     
     def bind_shortcuts(self):
         """綁定快捷鍵"""
@@ -846,7 +887,15 @@ class ManualCommandUI:
                 self.notepad_process = None
             
             # 保存設定
-            self.save_manual_settings()
+            try:
+                # 獲取當前分欄位置
+                sash_pos = self.paned_window.sashpos(0)
+                if 'Manual_Command' not in self.setup:
+                    self.setup['Manual_Command'] = {}
+                self.setup['Manual_Command']['Pane_Sash_Position'] = str(sash_pos)
+            except: pass
+            
+            save_setup(self.setup)
             
             # 清理變數
             self.command_history.clear()

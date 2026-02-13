@@ -1347,9 +1347,11 @@ class TabManager:
 
 
         selected_tab = self.notebook.select()
-
-
         tab_text = self.notebook.tab(selected_tab, "text")
+        try:
+            current_index = self.notebook.index("current")
+        except:
+            current_index = -1
 
 
         
@@ -1358,16 +1360,10 @@ class TabManager:
         # 根據分頁切換處理資源
 
 
-        if tab_text == 'DUT 控制':
-
-
+        if tab_text == 'DUT 控制' or current_index == 0:
             if hasattr(self, 'dut_ui'):
-
-
                 self.dut_ui.activate()
-
-
-        elif tab_text == '治具控制':
+        elif tab_text == '治具控制' or current_index == 1:
 
 
             # 治具控制分頁的處理邏輯
@@ -1388,16 +1384,13 @@ class TabManager:
                     self.fixture_ui.refresh_ports()
 
 
-        elif tab_text == '使用說明':
+        elif tab_text == '使用說明' or current_index == 2:
+            # 使用說明/手動指令分頁
+            if hasattr(self, 'manual_ui') and hasattr(self.manual_ui, 'activate'):
+                self.manual_ui.activate()
 
 
-            # 使用說明分頁的處理邏輯
-
-
-            pass
-
-
-        elif tab_text == '設定':
+        elif tab_text == '設定' or current_index == 4:
 
 
             # 設定分頁的處理邏輯
@@ -1676,6 +1669,10 @@ class SerialUI:
 
 
         self.handlers.refresh_com_ports()
+
+        # 恢復分割位置
+        if hasattr(self, 'components') and hasattr(self.components, 'restore_pane_position'):
+            self.components.restore_pane_position()
 
 
         # 其他激活操作...
