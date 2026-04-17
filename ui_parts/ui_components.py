@@ -1446,7 +1446,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                         end_idx = f"{idx}+{len(keyword)}c"
                         try:
                             self.text_output.tag_add(tag_name, idx, end_idx)
-                            print(f"[DEBUG] 應用關鍵字高亮: '{keyword}' 於位置 {idx}-{end_idx}, 標籤: {tag_name}")
+                            # print(f"[DEBUG] 應用關鍵字高亮: '{keyword}' 於位置 {idx}-{end_idx}, 標籤: {tag_name}")
                         except Exception as e:
                             print(f"[ERROR] tag_add 失敗: {e}")
                         search_start = end_idx

@@ -100,6 +100,11 @@ class CommandProcessor:
                         parts = line.split('=', 1)
                         cmd_name = parts[0].strip()
                         cmd_value = parts[1].strip()
+                        
+                        # [修正] 強力清理開頭的所有分隔符號殘留 (如 =>, ==>, ===> 等)
+                        while cmd_value and (cmd_value.startswith('=') or cmd_value.startswith('>')):
+                            cmd_value = cmd_value[1:].strip()
+                                
                         self.commands_by_section[current_section][cmd_name] = cmd_value
                         # 同步到全部指令
                         self.commands_by_section["全部指令"][cmd_name] = cmd_value

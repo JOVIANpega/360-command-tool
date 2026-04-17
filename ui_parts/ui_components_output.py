@@ -568,7 +568,7 @@ class UIComponentsOutput:
 
 
 
-                            print(f"[DEBUG] 成功應用關鍵字高亮: '{keyword}' 於位置 {idx}-{end_idx}, 標籤: {tag_name}")
+                            # print(f"[DEBUG] 成功應用關鍵字高亮: '{keyword}' 於位置 {idx}-{end_idx}, 標籤: {tag_name}")
 
 
                         except Exception as e:
@@ -589,7 +589,10 @@ class UIComponentsOutput:
                 if found_keywords:
 
 
-                    print(f"[INFO] 本行找到關鍵字: {found_keywords}")
+                    # print(f"[INFO] 本行找到關鍵字: {found_keywords}")
+
+
+                    pass
 
 
             else:

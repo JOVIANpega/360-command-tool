@@ -110,6 +110,10 @@ class UIHandlers(UIHandlersCore):
             label = parts[0].strip()
             command = parts[1].strip()
 
+            # [修正] 強力清理開頭的所有分隔符號殘留 (如 =>, ==>, ===> 等)
+            while command and (command.startswith('=') or command.startswith('>')):
+                command = command[1:].strip()
+
             # 檢查是否有顏色標記
             has_color = '[COLOR:' in label
             if has_color:
@@ -247,6 +251,14 @@ class UIHandlers(UIHandlersCore):
 
 
                         command = parts[1].strip()
+
+
+
+
+
+                        # [修正] 強力清理開頭的所有分隔符號殘留 (如 =>, ==>, ===> 等)
+                        while command and (command.startswith('=') or command.startswith('>')):
+                            command = command[1:].strip()
 
 
 
@@ -2187,30 +2199,13 @@ class UIHandlers(UIHandlersCore):
 
 
     def on_data(self, text, tag=None):
-
-
         """處理接收到的數據，自動檢測關鍵字並應用顏色"""
-
-
-        # 如果已經指定了標籤，直接使用
-
-
-        if tag:
-
-
+        # [修正] 使用 after 確保 thread-safe，避免大流量數據導致 UI 無反應
+        if hasattr(self.parent, 'root'):
+            self.parent.root.after(0, lambda: self.parent.components.add_to_buffer(text, tag))
+        else:
+            # 後備方案
             self.parent.components.add_to_buffer(text, tag)
-
-
-            return
-
-
-
-
-
-        # 直接添加文字，在 add_to_buffer 中處理關鍵字高亮
-
-
-        self.parent.components.add_to_buffer(text, None)
 
 
 

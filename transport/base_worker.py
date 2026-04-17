@@ -157,7 +157,8 @@ class BaseWorker(threading.Thread, ABC):
         Returns:
             bool: 如果是 DELAY 指令返回 True
         """
-        delay_match = re.match(r'^DELAY[:\s]+(\d+)$', cmd.strip(), re.IGNORECASE)
+        # [修正] 只比對全大寫的 DELAY:，避免誤判裝置指令
+        delay_match = re.match(r'^DELAY[:\s]+(\d+)$', cmd.strip())
         if delay_match:
             delay_seconds = int(delay_match.group(1))
             self.on_data(f'\n[系統] 延遲 {delay_seconds} 秒...\n', "purple")
@@ -189,7 +190,8 @@ class BaseWorker(threading.Thread, ABC):
         Returns:
             bool: 如果是 SHOW 指令返回 True
         """
-        show_match = re.match(r'^SHOW[:\s]+(.+)$', cmd.strip(), re.IGNORECASE)
+        # [修正] 只比對全大寫的 SHOW:，避免誤判裝置指令（如 show system version）
+        show_match = re.match(r'^SHOW[:\s]+(.+)$', cmd.strip())
         if show_match:
             message = show_match.group(1)
             self.on_data(f'\n[系統] 顯示訊息: {message}\n', "purple")

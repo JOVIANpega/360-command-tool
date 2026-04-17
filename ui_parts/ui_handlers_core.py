@@ -212,6 +212,18 @@ class UIHandlersCore:
                         
 
 
+                        # [修正] 強力清理開頭的所有分隔符號殘留 (如 =>, ==>, ===> 等)
+
+
+                        while command and (command.startswith('=') or command.startswith('>')):
+
+
+                            command = command[1:].strip()
+
+
+                        
+
+
                         # 檢查是否有顏色標記
 
 
