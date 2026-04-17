@@ -34,7 +34,23 @@ def main():
     print(f"[Mode] Selected: {mode_str}")
 
     # ==========================================
-    # 3. 清理舊建置
+    # 3. 讀取版本號 (從 setup.json)
+    # ==========================================
+    import json
+    setup_path = os.path.join(project_root, 'setup.json')
+    app_version = "V2.6.3" # 預設值
+    try:
+        with open(setup_path, 'r', encoding='utf-8') as f:
+            setup_data = json.load(f)
+            app_version = setup_data.get('version', 'V2.6.3')
+    except Exception as e:
+        print(f"[WARN] 無法讀取 setup.json 中的版本號: {e}")
+
+    app_name = f"PEGA指令通_{app_version}"
+    print(f"[Info] Building: {app_name}")
+
+    # ==========================================
+    # 4. 清理舊建置
     # ==========================================
     dist_dir = os.path.join(project_root, 'dist')
     build_dir = os.path.join(project_root, 'build')
@@ -45,7 +61,6 @@ def main():
         except: pass
         
     # 不完全刪除 dist，只刪除我們目標的那個
-    app_name = "PEGA指令通_V2.6.1"
     target_exe = os.path.join(dist_dir, f"{app_name}.exe")
     target_folder = os.path.join(dist_dir, app_name)
     
