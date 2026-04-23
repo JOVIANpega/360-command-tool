@@ -333,9 +333,11 @@ class UIComponentsInput:
  
         # 刷新按鈕 (🔄)
         self.btn_cmd_reload = tk.Button(cmd_frame, text='🔄', command=self.update_cmd_list,
-                                      bg='#e0e0e0', fg='black', activebackground='#2196f3', activeforeground='black',
+                                      bg='#d9d9d9', fg='black', activebackground='#2196f3', activeforeground='white',
                                       width=2, height=1, font=('Arial', 10, 'bold'))
         self.btn_cmd_reload.grid(row=0, column=2, padx=3)
+        self.btn_cmd_reload.bind("<Enter>", lambda e: self.btn_cmd_reload.config(bg='#2196f3', fg='white'))
+        self.btn_cmd_reload.bind("<Leave>", lambda e: self.btn_cmd_reload.config(bg='#d9d9d9', fg='black'))
         
         # 加入 ToolTip 說明
         if self.parent.tooltip_manager:
@@ -559,13 +561,17 @@ class UIComponentsInput:
         
         # 新增 IP 區段按鈕
         self.btn_add_ip = tk.Button(ping_frame, text='+', command=self.add_ip_segment, 
-                                   width=2, bg='#90EE90', fg='black')
+                                   width=2, bg='#d9d9d9', fg='black')
         self.btn_add_ip.grid(row=0, column=2, padx=2)
+        self.btn_add_ip.bind("<Enter>", lambda e: self.btn_add_ip.config(bg='#2196f3', fg='white'))
+        self.btn_add_ip.bind("<Leave>", lambda e: self.btn_add_ip.config(bg='#d9d9d9', fg='black'))
         
         # Ping 按鈕
         self.btn_ping = tk.Button(ping_frame, text='Ping', command=self.on_ping, 
-                                 width=6, bg='#87CEEB', fg='black')
+                                 width=6, bg='#d9d9d9', fg='black')
         self.btn_ping.grid(row=0, column=3, padx=2)
+        self.btn_ping.bind("<Enter>", lambda e: self.btn_ping.config(bg='#2196f3', fg='white'))
+        self.btn_ping.bind("<Leave>", lambda e: self.btn_ping.config(bg='#d9d9d9', fg='black'))
     
     def load_ip_segments(self):
         """從設定檔載入 IP 區段"""
@@ -763,9 +769,7 @@ class UIComponentsInput:
 
 
             else:
-
-
-                rb.config(bg="#d9d9d9", fg="black", activebackground="#d9d9d9", activeforeground="black")
+                rb.config(bg="#d9d9d9", fg="black", activebackground="#2196f3", activeforeground="white")
 
 
 

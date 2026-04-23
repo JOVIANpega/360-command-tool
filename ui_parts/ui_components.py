@@ -178,17 +178,17 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             refresh_command = lambda: None
             print("[WARNING] handlers 不存在或沒有 refresh_com_ports 方法")
         self.btn_refresh = tk.Button(com_frame, text='刷新', command=refresh_command,
-                                   bg='#2E7D32', fg='white', 
-                                   activebackground='#1565C0', activeforeground='white',
+                                   bg='#d9d9d9', fg='black', 
+                                   activebackground='#2196F3', activeforeground='white',
                                    height=2, font=('Microsoft JhengHei UI', 9, 'bold'),
                                    relief='raised', borderwidth=1)
         self.btn_refresh.grid(row=0, column=2, padx=10, sticky='w', rowspan=2) # 改為 sticky='w' 靠近欄位，並增加左側間距
 
         # 懸停效果
         def on_refresh_enter(e):
-            self.btn_refresh.config(bg='#1565C0')
+            self.btn_refresh.config(bg='#2196F3', fg='white')
         def on_refresh_leave(e):
-            self.btn_refresh.config(bg='#2E7D32')
+            self.btn_refresh.config(bg='#d9d9d9', fg='black')
         self.btn_refresh.bind("<Enter>", on_refresh_enter)
         self.btn_refresh.bind("<Leave>", on_refresh_leave)
 
@@ -461,15 +461,19 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         # 執行腳本按鈕 (原本在 column 4)
         self.btn_run_script = tk.Button(
             self.cmd_frame, text='執行腳本', font=('Microsoft JhengHei UI', 10),
-            bg='#FF9800', fg='white', relief='raised', borderwidth=2, cursor="hand2",
+            bg='#d9d9d9', fg='black', relief='raised', borderwidth=2, cursor="hand2",
             command=self.parent.handlers.run_script_click, width=10, height=1
         )
         self.btn_run_script.grid(row=0, column=2, sticky='e', padx=(5, 2))
+        
+        # [新增] 執行腳本按鈕的懸停效果
+        self.btn_run_script.bind("<Enter>", lambda e: self.btn_run_script.config(bg='#2196F3', fg='white'))
+        self.btn_run_script.bind("<Leave>", lambda e: self.btn_run_script.config(bg='#d9d9d9', fg='black'))
 
         # 執行指令按鈕 (原本在 column 5)
         self.btn_execute = tk.Button(
             self.cmd_frame, text='執行指令', font=('Microsoft JhengHei UI', 14, 'bold'),
-            bg='#4CAF50', fg='white', relief='raised', borderwidth=2, cursor="hand2",
+            bg='#d9d9d9', fg='black', relief='raised', borderwidth=2, cursor="hand2",
             command=self.parent.handlers.on_execute, width=12, height=2
         )
         self.btn_execute.grid(row=0, column=3, sticky='e', padx=(5, 5))
@@ -491,10 +495,10 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         return self.cmd_frame
 
     def on_enter_exec(self, event):
-        self.btn_execute.config(bg='#2196F3')
+        self.btn_execute.config(bg='#2196F3', fg='white')
 
     def on_leave_exec(self, event):
-        self.btn_execute.config(bg='#4CAF50')
+        self.btn_execute.config(bg='#d9d9d9', fg='black')
 
 
 
@@ -533,7 +537,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         # 創建新視窗
         self.editor_window = tk.Toplevel(self.parent.root)
         self.editor_window.title(f"指令檔案編輯器 - {os.path.basename(file_path)}")
-        self.editor_window.geometry("800x600")
+        self.editor_window.geometry("1000x750")
         
         # 創建主框架
         main_frame = ttk.Frame(self.editor_window)
@@ -543,7 +547,23 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         info_frame = ttk.Frame(main_frame)
         info_frame.pack(fill=tk.X, pady=(0, 10))
         
-        ttk.Label(info_frame, text=f"檔案路徑: {file_path}", font=('Microsoft JhengHei UI', 10, 'bold')).pack(anchor='w')
+        # 頂部路徑標籤
+        path_label = ttk.Label(info_frame, text=f"檔案路徑: {file_path}", font=('Microsoft JhengHei UI', 10, 'bold'))
+        path_label.pack(side=tk.TOP, anchor='w')
+
+        # 搜尋功能框架
+        search_container = ttk.Frame(info_frame)
+        search_container.pack(side=tk.TOP, fill=tk.X, pady=(5, 0))
+        
+        ttk.Label(search_container, text="🔍 搜尋字串: ", font=('Microsoft JhengHei UI', 10)).pack(side=tk.LEFT)
+        self.editor_search_entry = ttk.Entry(search_container, font=('Microsoft JhengHei UI', 10))
+        self.editor_search_entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
+        
+        search_btn = ttk.Button(search_container, text="開始搜尋", command=self.search_in_editor)
+        search_btn.pack(side=tk.LEFT, padx=5)
+
+        # 綁定 Enter 鍵觸發搜尋
+        self.editor_search_entry.bind('<Return>', lambda e: self.search_in_editor())
         
         # 文字編輯區域
         text_frame = ttk.Frame(main_frame)
@@ -594,6 +614,15 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         )
         reload_button.pack(side=tk.LEFT, padx=(0, 10))
         
+        # 搜尋結果顯示標籤
+        self.editor_search_count_label = ttk.Label(
+            button_frame, 
+            text="", 
+            font=('Microsoft JhengHei UI', 10, 'bold'),
+            foreground='#2196F3'
+        )
+        self.editor_search_count_label.pack(side=tk.LEFT, padx=10)
+        
         # 關閉按鈕
         close_button = ttk.Button(
             button_frame,
@@ -607,9 +636,66 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         
         # 設定快捷鍵
         self.editor_window.bind('<Control-s>', lambda e: self.save_command_file(file_path))
+        self.editor_window.bind('<Control-f>', lambda e: self.editor_search_entry.focus_set())
         
         # 顯示通知
         self.show_notification(f"已開啟指令檔案編輯器", "success")
+
+    def search_in_editor(self):
+        """在編輯器中搜尋字串並反黃色底"""
+        if not hasattr(self, 'editor_text') or not self.editor_text.winfo_exists():
+            return
+
+        search_query = self.editor_search_entry.get()
+        
+        # 清除所有舊的高亮與計數標籤
+        self.editor_text.tag_remove("search_highlight", "1.0", tk.END)
+        self.editor_search_count_label.config(text="")
+        
+        if not search_query:
+            return
+
+        # 設定高亮風格：黃色背景，黑色文字
+        self.editor_text.tag_configure("search_highlight", background="yellow", foreground="black")
+
+        count = 0
+        search_start = "1.0"
+        first_match_pos = None
+
+        while True:
+            # 進行不區分大小寫的搜尋
+            idx = self.editor_text.search(search_query, search_start, stopindex=tk.END, nocase=True)
+            if not idx:
+                break
+            
+            if first_match_pos is None:
+                first_match_pos = idx
+                
+            # 計算結束位置
+            end_idx = f"{idx}+{len(search_query)}c"
+            
+            # 加上標籤
+            self.editor_text.tag_add("search_highlight", idx, end_idx)
+            
+            # 準備下一次搜尋
+            search_start = end_idx
+            count += 1
+
+        if count > 0:
+            # 捲動到第一個匹配項使其可見
+            self.editor_text.see(first_match_pos)
+            # 暫時反白選中第一個匹配項以便視覺確認
+            self.editor_text.mark_set(tk.INSERT, first_match_pos)
+            
+            # 更新底部 TRAY 計數
+            self.editor_search_count_label.config(text=f"🔍 找到 {count} 筆符合項")
+            
+            self.show_notification(f"搜尋完成：找到 {count} 個匹配字串", "success", 3000)
+        else:
+            self.editor_search_count_label.config(text="❌ 找不到符合項", foreground="red")
+            # 2秒後恢復預設顏色
+            self.editor_window.after(2000, lambda: self.editor_search_count_label.config(foreground='#2196F3'))
+            self.show_notification(f"找不到關鍵字: '{search_query}'", "warning", 3000)
     
     def reload_command_file(self, file_path):
         """重新載入指令檔案內容"""

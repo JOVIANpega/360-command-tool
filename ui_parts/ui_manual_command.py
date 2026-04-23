@@ -117,17 +117,17 @@ class ManualCommandUI:
         
         # 刷新 COM Port 按鈕 (與 DUT 一致)
         self.refresh_com_button = tk.Button(com_input_frame, text='刷新', command=self.refresh_com_ports,
-                                          bg='#2E7D32', fg='white', 
-                                          activebackground='#1565C0', activeforeground='white',
+                                          bg='#d9d9d9', fg='black', 
+                                          activebackground='#2196F3', activeforeground='white',
                                           height=2, font=('Microsoft JhengHei UI', 9, 'bold'),
                                           relief='raised', borderwidth=1)
         self.refresh_com_button.pack(side='right', padx=(2, 0))
 
         # 懸停效果
         def on_btn_enter(e):
-            self.refresh_com_button.config(bg='#1565C0')
+            self.refresh_com_button.config(bg='#2196F3', fg='white')
         def on_btn_leave(e):
-            self.refresh_com_button.config(bg='#2E7D32')
+            self.refresh_com_button.config(bg='#d9d9d9', fg='black')
         self.refresh_com_button.bind('<Enter>', on_btn_enter)
         self.refresh_com_button.bind('<Leave>', on_btn_leave)
         
@@ -216,21 +216,23 @@ class ManualCommandUI:
                        borderwidth=1,
                        relief='solid')
         
-        # 綠色執行按鈕樣式
+        # 綠色執行按鈕樣式 (改為灰底黑字，hover藍底白字)
         style.configure('Green.TButton',
-                       background='#4CAF50',  # 綠色
-                       foreground='white')
+                       background='#d9d9d9', 
+                       foreground='black')
         
         # 藍色 hover 樣式
         style.map('Green.TButton',
-                 background=[('active', '#2196F3')])  # hover 時變藍色
+                 background=[('active', '#2196F3')],
+                 foreground=[('active', 'white')])
         
-        # 藍色按鈕樣式
+        # 藍色按鈕樣式 (改為灰底黑字，hover藍底白字)
         style.configure('Blue.TButton', 
-                       background='#2196F3', 
-                       foreground='white')
+                       background='#d9d9d9', 
+                       foreground='black')
         style.map('Blue.TButton',
-                 background=[('active', '#1976D2')])
+                 background=[('active', '#2196F3')],
+                 foreground=[('active', 'white')])
     
     def create_right_panel(self):
         """創建右側輸出面板"""

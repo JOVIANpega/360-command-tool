@@ -13,9 +13,9 @@ import sys
 import datetime
 
 version_info = {
-    'version': '2.6.1',
-    'file_version': (2, 6, 1, 0),
-    'product_version': (2, 6, 1, 0),
+    'version': '2.6.4',
+    'file_version': (2, 6, 4, 0),
+    'product_version': (2, 6, 4, 0),
     'company_name': 'PEGA指令通',
     'file_description': 'PEGA指令通 - 序列埠通訊工具',
     'internal_name': 'PEGA指令通',
@@ -27,6 +27,15 @@ version_info = {
 
 # 版本更新記錄
 version_history = """
+v2.6.4 (2026-04-23)
+----------------------
+• 指令檔案編輯器功能強化：
+  - 新增搜尋字串功能，支援不區分大小寫搜尋。
+  - 搜尋結果自動以「黃色底」反白高亮顯示。
+  - 底部 TRAY 區域新增搜尋筆數統計顯示（🔍 找到 X 筆符合項）。
+  - 優化編輯器視窗大小，從 800x600 放大至 1000x750，提供更寬廣的編輯空間。
+  - 新增 Ctrl+F 搜尋快捷鍵支援。
+
 v2.6.1 (2026-02-13)
 ----------------------
 • UI 視覺與交互深度優化：
@@ -208,15 +217,15 @@ v1.5.0.1 (2025-07-12)
 # 定義版本號
 VERSION = version_info['version']
 
-APP_VERSION = "V2.6.1"
-APP_VERSION_DETAIL = "\n【V2.6.1 主要更新】\n- UI 視覺美化：統一欄位長度、按鈕緊貼佈局、懸停變色效果\n- 佈局記憶：自動儲存並恢復各分頁的分欄分割位置\n- 穩定性修復：解決分頁初始化報錯並同步全域視覺風格\n"
+APP_VERSION = "V2.6.4"
+APP_VERSION_DETAIL = "\n【V2.6.4 主要更新】\n- 編輯器搜尋：新增指令編輯器搜尋功能，支援黃色底高亮與計數顯示\n- 視窗優化：放大編輯器視窗並支援 Ctrl+F 快捷鍵\n"
 
 # 生成版本資訊檔案
 with open("version_info_zh.txt", "w", encoding="utf-8") as f:
     f.write("VSVersionInfo(\n")
     f.write("  ffi=FixedFileInfo(\n")
-    f.write("    filevers=(2, 6, 1, 0),\n")
-    f.write("    prodvers=(2, 6, 1, 0),\n")
+    f.write("    filevers=(2, 6, 4, 0),\n")
+    f.write("    prodvers=(2, 6, 4, 0),\n")
     f.write("    mask=0x3f,\n")
     f.write("    flags=0x0,\n")
     f.write("    OS=0x40004,\n")

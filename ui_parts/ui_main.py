@@ -1047,18 +1047,11 @@ class TabManager:
         # 分頁標籤字體、大小、padding，預設灰底黑字，選取為藍底白字
 
 
-        style.configure('TNotebook.Tab', font=('Microsoft JhengHei UI', 13, 'bold'), padding=[16, 6], background='#d9d9d9', foreground='black')
-
-
+        # 分頁標籤樣式 (統一風格：預設灰底黑字，選中/hover藍底白字)
+        style.configure('TNotebook.Tab', font=('Microsoft JhengHei UI', 13, 'bold'), padding=[16, 6])
         style.map('TNotebook.Tab',
-
-
-            background=[('selected', '#2196f3'), ('active', '#0056d6'), ('!active', '#d9d9d9')],
-
-
+            background=[('selected', '#2196f3'), ('active', '#2196f3'), ('!active', '#d9d9d9')],
             foreground=[('selected', 'white'), ('active', 'white'), ('!active', 'black')]
-
-
         )
 
 
@@ -1071,40 +1064,40 @@ class TabManager:
         style.layout('Green.TNotebook.Tab', style.layout('TNotebook.Tab'))
 
 
-        style.configure('Green.TNotebook.Tab', background='#1abc1a', foreground='white')
-
-
+        # Green.TNotebook.Tab 樣式 (統一風格：預設灰底黑字，選中/hover藍底白字)
+        style.configure('Green.TNotebook.Tab', background='#d9d9d9', foreground='black')
         style.map('Green.TNotebook.Tab',
-
-
-            background=[('selected', '#1abc1a'), ('active', '#1abc1a'), ('!active', '#d9d9d9')],
-
-
+            background=[('selected', '#2196f3'), ('active', '#2196f3'), ('!active', '#d9d9d9')],
             foreground=[('selected', 'white'), ('active', 'white'), ('!active', 'black')]
-
-
         )
 
 
-        # 一般TButton維持灰底黑字hover藍底白字
+        # 一般TButton改為灰底黑字，hover藍底白字
         style.configure('TButton', font=('Microsoft JhengHei UI', 12), padding=[8, 4])
         style.map('TButton',
-            background=[('active', '#003a80'), ('!active', '#f5f5f5')],
+            background=[('active', '#2196f3'), ('!active', '#d9d9d9')],
             foreground=[('active', 'white'), ('!active', 'black')]
         )
 
-        # Blue.TButton 藍色按鈕樣式
+        # Blue.TButton 統一為相同風格
         style.configure('Blue.TButton', font=('Microsoft JhengHei UI', 12), padding=[8, 4])
         style.map('Blue.TButton',
-            background=[('active', '#1976D2'), ('!active', '#2196F3')],
-            foreground=[('active', 'white'), ('!active', 'white')]
+            background=[('active', '#2196f3'), ('!active', '#d9d9d9')],
+            foreground=[('active', 'white'), ('!active', 'black')]
         )
 
-        # Orange.TButton 橙色按鈕樣式
+        # Orange.TButton 統一為相同風格
         style.configure('Orange.TButton', font=('Microsoft JhengHei UI', 12), padding=[8, 4])
         style.map('Orange.TButton',
-            background=[('active', '#F57C00'), ('!active', '#FF9800')],
-            foreground=[('active', 'white'), ('!active', 'white')]
+            background=[('active', '#2196f3'), ('!active', '#d9d9d9')],
+            foreground=[('active', 'white'), ('!active', 'black')]
+        )
+
+        # Accent.TButton 統一為相同風格
+        style.configure('Accent.TButton', font=('Microsoft JhengHei UI', 12, 'bold'), padding=[10, 5])
+        style.map('Accent.TButton',
+            background=[('active', '#2196f3'), ('!active', '#d9d9d9')],
+            foreground=[('active', 'white'), ('!active', 'black')]
         )
 
 
