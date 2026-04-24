@@ -58,7 +58,7 @@ class CommandProcessor:
             # 檢查命令文件是否存在
             if not os.path.exists(command_file_path):
                 print(f"命令文件不存在: {command_file_path}")
-                return
+                return {"全部指令": {}}
             
             with open(command_file_path, 'r', encoding='utf-8') as f:
                 lines = f.readlines()

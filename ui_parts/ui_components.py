@@ -340,7 +340,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.parent.commands_by_section = new_cmds
         
         # 獲取區段列表
-        self.sections = list(new_cmds.keys())
+        self.sections = list(new_cmds.keys()) if new_cmds else ['全部指令']
         if not self.sections:
             self.sections = ['全部指令']
 
