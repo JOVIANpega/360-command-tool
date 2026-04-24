@@ -22,7 +22,7 @@
     "Default_IP_Address": "192.168.11.143",
     "Command_File_Path": "Command_TABLE/Taurus7_20260415.txt",
     "Single_Command_Timeout": "10",
-    "Pane_Sash_Position": "326",
+    "Pane_Sash_Position": "574",
     "Auto_Execute": false,
     "IP_History": [
       "192.168.11.143"

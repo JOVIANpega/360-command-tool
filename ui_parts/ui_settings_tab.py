@@ -75,7 +75,14 @@ class SettingsTab(ttk.Frame):
                 pos = self.main_container.sashpos(0)
                 if pos > 100:
                     self._last_known_sash_pos = pos
-                    print(f"[DEBUG] 記錄設定頁面分欄位置: {pos}")
+                    # 即時同步到全域管理器 (SharedConfig)
+                    try:
+                        from ui_parts.shared_config import get_shared_config
+                        shared_config = get_shared_config()
+                        if 'settings_sash_position' in shared_config.vars:
+                            shared_config.vars['settings_sash_position'].set(str(pos))
+                    except: pass
+                    print(f"[DEBUG] 記錄並同步設定頁面分欄位置: {pos}")
             except: pass
         self.main_container.bind("<ButtonRelease-1>", on_sash_pos_changed_local)
         

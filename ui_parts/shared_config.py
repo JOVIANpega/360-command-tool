@@ -80,8 +80,8 @@ class SharedConfigManager:
         self.vars['window_width'] = tk.StringVar(root)
         self.vars['window_height'] = tk.StringVar(root)
         
-        # 標籤頁名稱設定
-        for i in range(4):
+        # 標籤頁名稱設定 (支援 5 個標籤)
+        for i in range(5):
             self.vars[f'tab_name_{i}'] = tk.StringVar(root)
         
         # UI設定
@@ -187,10 +187,10 @@ class SharedConfigManager:
             if not h: h = '768'
             self.vars['window_height'].set(h)
             
-            # 載入標籤頁名稱
+            # 載入標籤頁名稱 (支援 5 個標籤)
             tab_names = self.setup_data.get('tab_names', {})
-            default_tab_names = ['DUT 控制', '治具控制', '使用說明', '設定']
-            for i in range(4):
+            default_tab_names = ['DUT 控制', '治具控制', '手動輸入', 'DOS 工具', '設定']
+            for i in range(5):
                 self.vars[f'tab_name_{i}'].set(tab_names.get(f'tab{i}', default_tab_names[i]))
             
             # 載入UI設定
