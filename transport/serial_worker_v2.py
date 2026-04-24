@@ -99,44 +99,94 @@ class SerialWorkerV2(BaseWorker):
     
     def execute_command(self, cmd: str) -> Tuple[int, str, str]:
         """
-        執行序列埠指令
-        
-        Args:
-            cmd: 要執行的指令
-            
-        Returns:
-            Tuple[int, str, str]: (返回碼, 標準輸出, 標準錯誤)
+        執行序列埠指令 (支援先等後送邏輯)
         """
         try:
             if not self.serial_connection:
                 return -1, "", "序列埠未連線"
             
-            # 發送指令
-            self.serial_connection.write((cmd + '\r\n').encode())
-            self.serial_connection.flush()
+            # 預置變數
+            wait_before_str = None
+            final_cmd = cmd
+            current_end_str = self.end_str
             
-            # 讀取回應
+            # 檢查是否有自定義預期字串 (格式: <<WaitStr>>Command)
+            if cmd.startswith("<<") and ">>" in cmd:
+                end_tag_pos = cmd.find(">>")
+                wait_before_str = cmd[2:end_tag_pos].lower() # 提取並轉小寫，以便不區分大小寫比對
+                final_cmd = cmd[end_tag_pos+2:]      # 提取要發送的指令
+                log_info(f"[提示] 本步驟改為：先等待 \"{wait_before_str}\" (不分大小寫)")
+            
             buffer = ""
             cmd_start_time = time.time()
             
+            # --- 階段 1: 等待模式 (加入靜默偵測) ---
+            if wait_before_str:
+                self.on_data(f"[系統] 正在等待提示符: \"{wait_before_str}\" ...\n", "purple")
+                while not self.stop_event.is_set():
+                    if (time.time() - cmd_start_time) > self.cmd_timeout:
+                        self.on_data(f'\n[警告] 等不到 "{wait_before_str}" (超時)，強行發送\n', "warning")
+                        break
+                    
+                    data = self.serial_connection.read(1024)
+                    if data:
+                        text = data.decode(errors='ignore')
+                        buffer += text
+                        self.global_buffer += text
+                        self.on_data(text, None)
+                        
+                        # 核心修改：智慧匹配
+                        # 如果是 password，我們放寬匹配條件，只要包含 password 即可
+                        # (解決 [sudo] password for pega: 中間夾雜文字的問題)
+                        match_target = wait_before_str.replace(":", "") if "password" in wait_before_str else wait_before_str
+                        
+                        if match_target in buffer.lower():
+                            # 看到提示符了！接著進行「靜默偵測」：
+                            # 持續讀取直到連續 0.3 秒沒新字噴出來，確保畫面已停止
+                            self.on_data(f"\n[系統] 偵測到 \"{match_target}\"，等待畫面靜止 (0.3s)...\n", "purple")
+                            last_read_time = time.time()
+                            while (time.time() - last_read_time) < 0.3:
+                                # 檢查是否有新資料傳入
+                                if self.serial_connection.in_waiting > 0:
+                                    more_data = self.serial_connection.read(self.serial_connection.in_waiting)
+                                    if more_data:
+                                        self.on_data(more_data.decode(errors='ignore'), None)
+                                        last_read_time = time.time()
+                                time.sleep(0.05)
+                            break
+                    time.sleep(0.05)
+            
+            # --- 階段 2: 發送指令 ---
+            if wait_before_str:
+                # 對於敏感指令（登入、密碼），採用仿人類慢速打字，每個字元停 0.05 秒
+                for char in final_cmd:
+                    self.serial_connection.write(char.encode())
+                    time.sleep(0.05)
+                self.serial_connection.write('\r'.encode()) # 修正為單一 \r (CR)
+            else:
+                self.serial_connection.write((final_cmd + '\r').encode()) # 修正為單一 \r
+            self.serial_connection.flush()
+            
+            # --- 階段 3: 等待回顯或後續提示符 ---
+            if wait_before_str:
+                time.sleep(1.0) # 密碼送出後多等一秒讓設備反應
+                return 0, buffer, ""
+
+            # 原有邏輯：發送後等待結束字串
             while not self.stop_event.is_set():
                 elapsed = time.time() - cmd_start_time
                 if elapsed > self.cmd_timeout:
-                    # 單個指令超時：顯示警告，但繼續執行（返回成功）
-                    self.on_data(f'\n[警告] 命令 "{cmd}" 等待響應超過 {self.cmd_timeout} 秒，繼續執行下一步\n', "warning")
-                    return 0, buffer, ""  # 返回成功，讓流程繼續
+                    self.on_data(f'\n[警告] 命令 "{final_cmd}" 等待響應超過 {self.cmd_timeout} 秒，繼續執行下一步\n', "warning")
+                    return 0, buffer, ""
                 
                 data = self.serial_connection.read(1024)
                 if data:
                     text = data.decode(errors='ignore')
                     buffer += text
                     self.global_buffer += text
-                    
-                    # 即時輸出到介面
                     self.on_data(text, None)
                     
-                    # 檢查是否收到結束字串
-                    if self.end_str and self.end_str in buffer:
+                    if current_end_str and current_end_str in buffer:
                         return 0, buffer, ""
                 
                 time.sleep(0.1)

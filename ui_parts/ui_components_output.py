@@ -413,210 +413,97 @@ class UIComponentsOutput:
         except Exception as e:
             print(f"[ERROR] 隱藏進度條時發生錯誤: {e}")
     def add_to_buffer(self, text, tag=None):
-
-
+        """將內容添加到緩衝區，準備批量輸出"""
         # 如果正在顯示使用說明，則不添加內容
-
-
         if hasattr(self.parent, 'showing_guide') and self.parent.showing_guide:
-
-
             return
 
+        # 確保緩衝區存在
+        if not hasattr(self.parent, 'text_buffer'):
+            self.parent.text_buffer = []
+        
+        # 標記是否為重要訊息 (系統、發送、結束、錯誤等)
+        is_important = tag in ["send", "end", "error", "success", "warning", "purple"] or text.startswith('[發送]') or text.startswith('[結束]')
+        
+        # 將文字與標籤加入暫存
+        self.parent.text_buffer.append((text, tag))
 
-
-
-
-        # 設為可編輯狀態
-
-
-        self.text_output.configure(state='normal')
-
-
-
-
-
-        # 若是 [送出] 開頭自動用 send tag
-
-
-        if text.startswith('[發送]'):
-
-
-            self.text_output.insert(tk.END, text, "send")
-
-
-        # 若是 [結束] 開頭自動用 end tag
-
-
-        elif text.startswith('[結束]'):
-
-
-            self.text_output.insert(tk.END, text, "end")
-
-
-        # 若是包含 inserted 的行，使用 purple tag
-
-
-        elif "inserted" in text:
-
-
-            self.text_output.insert(tk.END, text, "purple")
-
-
-        # 其他情況使用指定的 tag
-
-
-        elif tag:
-
-
-            self.text_output.insert(tk.END, text, tag)
-
-
+        # 如果緩衝區太大或收到重要訊息，立即觸發一次刷新 (但限制頻率)
+        if len(self.parent.text_buffer) > 50 or is_important:
+            self._request_flush()
         else:
-
-
-            # 關鍵字高亮：每行只要包含 color_word.txt 的任一關鍵字就上色
-
-
-            if hasattr(self.parent, 'highlight_keywords') and self.parent.highlight_keywords and hasattr(self, 'keyword_tag_map'):
-
-
-                start_pos = self.text_output.index(tk.END)
-
-
-                self.text_output.insert(tk.END, text)
-
-
-
-
-
-                # 按關鍵字長度降序排列，讓較長的關鍵字優先匹配
-
-
-                sorted_keywords = sorted(self.keyword_tag_map.items(), key=lambda x: len(x[0]), reverse=True)
-
-
-
-
-
-                found_keywords = []  # 記錄找到的關鍵字，用於調試
-
-
-
-
-
-                for keyword, tag_name in sorted_keywords:
-
-
-                    search_start = start_pos
-
-
-                    keyword_found = False
-
-
-                    while True:
-
-
-                        idx = self.text_output.search(keyword, search_start, tk.END)
-
-
-                        if not idx:
-
-
-                            break
-
-
-
-
-
-                        end_idx = f"{idx}+{len(keyword)}c"
-
-
-                        try:
-
-
-                            # 先移除該區域的其他標籤，確保關鍵字標籤優先
-
-
-                            for tag in self.text_output.tag_names(idx):
-
-
-                                if not tag.startswith('keyword_'):
-
-
-                                    self.text_output.tag_remove(tag, idx, end_idx)
-
-
-
-
-
-                            self.text_output.tag_add(tag_name, idx, end_idx)
-
-
-
-
-
-                            if not keyword_found:
-
-
-                                found_keywords.append(keyword)
-
-
-                                keyword_found = True
-
-
-
-
-
-                            # print(f"[DEBUG] 成功應用關鍵字高亮: '{keyword}' 於位置 {idx}-{end_idx}, 標籤: {tag_name}")
-
-
-                        except Exception as e:
-
-
-                            print(f"[ERROR] tag_add 失敗: {e}")
-
-
-
-
-
-                        search_start = end_idx
-
-
-
-
-
-                if found_keywords:
-
-
-                    # print(f"[INFO] 本行找到關鍵字: {found_keywords}")
-
-
-                    pass
-
-
-            else:
-
-
-                # 如果沒有關鍵字，直接插入文字
-
-
-                self.text_output.insert(tk.END, text)
-
-
-
-
-
-        # 自動捲到最底
-
-
-        self.text_output.see(tk.END)
-
-
-        # 設回唯讀狀態
-
-
-        self.text_output.configure(state='disabled')
+            # 否則排程在 100ms 後刷新
+            if not hasattr(self, '_flush_pending') or not self._flush_pending:
+                self._flush_pending = True
+                self.parent.root.after(100, self._perform_flush)
+
+    def _request_flush(self):
+        """請求立即刷新緩衝區"""
+        if not hasattr(self, '_flush_pending') or not self._flush_pending:
+            self._flush_pending = True
+            self.parent.root.after(10, self._perform_flush)
+
+    def _perform_flush(self):
+        """執行批量重新整理 UI"""
+        self._flush_pending = False
+        self.flush_buffer()
+
+    def flush_buffer(self):
+        """將緩衝區的文字一次性添加到輸出區域 (優化版)"""
+        if not hasattr(self.parent, 'text_buffer') or not self.parent.text_buffer:
+            return
+
+        if not hasattr(self, 'text_output'):
+            return
+
+        try:
+            self.text_output.configure(state='normal')
+            
+            # 批量插入所有文字
+            for text, tag in self.parent.text_buffer:
+                # 決定標籤
+                final_tag = tag
+                if not tag:
+                    if text.startswith('[發送]'): final_tag = "send"
+                    elif text.startswith('[結束]'): final_tag = "end"
+                    elif "inserted" in text: final_tag = "purple"
+                
+                # 插入文字
+                insert_pos = self.text_output.index(tk.END + "-1c")
+                self.text_output.insert(tk.END, text, final_tag)
+                
+                # 如果沒有標籤，則嘗試關鍵字高亮 (只針對剛插入的部分)
+                if not final_tag and hasattr(self.parent, 'highlight_keywords') and self.parent.highlight_keywords:
+                    self._apply_highlighting(insert_pos, text)
+
+            # 滾動到底部
+            self.text_output.see(tk.END)
+            self.text_output.configure(state='disabled')
+            
+            # 清空緩衝區
+            self.parent.text_buffer = []
+            
+        except Exception as e:
+            print(f"[ERROR] flush_buffer 失敗: {e}")
+            self.text_output.configure(state='disabled')
+
+    def _apply_highlighting(self, start_pos, text):
+        """針對特定區塊應用關鍵字高亮"""
+        if not hasattr(self, 'keyword_tag_map'): return
+        
+        # 降序匹配關鍵字
+        sorted_keywords = sorted(self.keyword_tag_map.items(), key=lambda x: len(x[0]), reverse=True)
+        
+        for keyword, tag_name in sorted_keywords:
+            if keyword in text:
+                search_start = start_pos
+                while True:
+                    idx = self.text_output.search(keyword, search_start, tk.END)
+                    if not idx: break
+                    
+                    end_idx = f"{idx}+{len(keyword)}c"
+                    self.text_output.tag_add(tag_name, idx, end_idx)
+                    search_start = end_idx
 
 
 

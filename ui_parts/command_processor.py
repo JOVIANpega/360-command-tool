@@ -96,18 +96,33 @@ class CommandProcessor:
                     if current_section not in self.commands_by_section:
                          self.commands_by_section[current_section] = {}
                     
-                    if '=' in line:
-                        parts = line.split('=', 1)
+                    # 決定分段符號
+                    main_sep = self.setup.get('DUT_Control', {}).get('Command_Separator', '=')
+                    
+                    found_sep = None
+                    if main_sep in line:
+                        found_sep = main_sep
+                    elif '=' in line:
+                        found_sep = '='
+                    
+                    if found_sep:
+                        parts = line.split(found_sep, 1)
                         cmd_name = parts[0].strip()
                         cmd_value = parts[1].strip()
                         
-                        # [修正] 強力清理開頭的所有分隔符號殘留 (如 =>, ==>, ===> 等)
-                        while cmd_value and (cmd_value.startswith('=') or cmd_value.startswith('>')):
+                        # 清理開頭的分隔符號殘留 (如 =>, ==>, ### 等)
+                        # 如果符號是 ==> 或 =，則清理 = 和 >
+                        # 如果符號是 ##，則清理 #
+                        chars_to_strip = "=>" if "=" in found_sep or ">" in found_sep else ""
+                        chars_to_strip += found_sep.strip()
+                        
+                        while cmd_value and any(cmd_value.startswith(c) for c in chars_to_strip):
                             cmd_value = cmd_value[1:].strip()
-                                
-                        self.commands_by_section[current_section][cmd_name] = cmd_value
-                        # 同步到全部指令
-                        self.commands_by_section["全部指令"][cmd_name] = cmd_value
+                            
+                        if cmd_name:
+                            self.commands_by_section[current_section][cmd_name] = cmd_value
+                            # 同步到全部指令
+                            self.commands_by_section["全部指令"][cmd_name] = cmd_value
                     else:
                         # 純指令名稱與指令相同
                         cmd_name = line.strip()
@@ -210,6 +225,13 @@ class CommandProcessor:
                 # 使用 Console 模式 (原有邏輯)
                 print(f"[DEBUG] 使用 Console 模式執行命令: {command}")
 
+                # 分割指令 - 使用設定中的間隔符號
+                separator = self.setup.get('DUT_Control', {}).get('Command_Separator', '|')
+                cmd_list = command.split(separator)
+                
+                # 去除每個指令的多餘空白
+                cmd_list = [c.strip() for c in cmd_list if c.strip()]
+
                 # 獲取單個指令超時時間
                 try:
                     cmd_timeout = float(self.setup.get('DUT_Control', {}).get('Single_Command_Timeout', 10.0))
@@ -219,7 +241,7 @@ class CommandProcessor:
                 # 創建新的串口工作器 (使用 V2)
                 self.serial_worker = SerialWorkerV2(
                     com=com_port,
-                    cmd_list=[command],
+                    cmd_list=cmd_list,  # 傳遞拆分後的列表
                     end_str=end_string,
                     timeout=timeout,
                     on_data=on_data_callback,

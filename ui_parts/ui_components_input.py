@@ -897,21 +897,44 @@ class UIComponentsInput:
                 
 
 
-            # 更新說明文字，顯示指令內容
+            # --- 更新預覽區塊邏輯 (智慧簡化版) ---
+            if hasattr(self, 'cmd_content_label'):
+                if cmd_content:
+                    import re
+                    # 定義一個過濾標籤的函數
+                    def clean_cmd(text):
+                        # 移除 <<...>> 標籤
+                        return re.sub(r'<<.*?>>', '', text).strip()
 
+                    # 處理多重指令
+                    if "==>" in cmd_content:
+                        steps = cmd_content.split("==>")
+                        # 格式化為：1. cmd1 ➔ 2. cmd2 ...
+                        formatted_steps = []
+                        for i, step in enumerate(steps):
+                            cleaned = clean_cmd(step)
+                            formatted_steps.append(f"{i+1}. {cleaned}")
+                        
+                        display_text = "  ➔  ".join(formatted_steps)
+                    else:
+                        display_text = clean_cmd(cmd_content)
 
-            if cmd_content:
-
-
-                if hasattr(self, 'cmd_content_label'):
-                    self.cmd_content_label.config(text=f"指令內容: {cmd_content}")
-
-
+                    # 設定顯示文字
+                    self.cmd_content_label.config(text=display_text)
+                    
+                    # [重點] 將完整的原始指令設定為 ToolTip，供使用者隨時查看詳情
+                    if hasattr(self.parent, 'tooltip_manager') and self.parent.tooltip_manager:
+                        # 先處理換行，避開 f-string 裡面不能有反斜線的限制
+                        full_detail = cmd_content.replace('==>', '\n➔ ')
+                        self.parent.tooltip_manager.add_tooltip_with_text(self.cmd_content_label, f"完整指令詳情：\n{full_detail}")
+                else:
+                    self.cmd_content_label.config(text="選中分類後，請選擇上方指令進行預覽")
+                    if hasattr(self.parent, 'tooltip_manager') and self.parent.tooltip_manager:
+                        self.parent.tooltip_manager.remove_tooltip(self.cmd_content_label)
             else:
-
-
-                if hasattr(self, 'cmd_content_label'):
-                    self.cmd_content_label.config(text="無法獲取指令內容")
+                print(f"[WARNING] 找不到預覽框實體: {selected_cmd}")
+        except Exception as e:
+            print(f"[ERROR] on_cmd_selected 發生嚴重錯誤: {e}")
 
 
                 

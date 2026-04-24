@@ -51,5 +51,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='PEGA指令通_V2.6.3',
+    name='PEGA指令通_V2.6.4',
 )

@@ -2,6 +2,52 @@ import os
 import sys
 import shutil
 import PyInstaller.__main__
+import json
+import re
+
+def increment_version(version_str):
+    """
+    將版本號進版 (V2.6.4 -> V2.6.5)
+    傳回 (新版本字串, (major, minor, patch, build))
+    """
+    # 支援 V2.6.4 或 2.6.4 格式
+    match = re.search(r'(\d+)\.(\d+)\.(\d+)', version_str)
+    if match:
+        major = int(match.group(1))
+        minor = int(match.group(2))
+        patch = int(match.group(3))
+        new_patch = patch + 1
+        new_version = f"V{major}.{minor}.{new_patch}"
+        return new_version, (major, minor, new_patch, 0)
+    return version_str, (1, 0, 0, 0)
+
+def update_version_info_file(file_path, version_tuple):
+    """
+    同步更新 version_info_zh.txt 中的版本資訊
+    version_tuple: (major, minor, patch, build)
+    """
+    if not os.path.exists(file_path):
+        print(f"[WARN] Version info file not found: {file_path}")
+        return
+
+    with open(file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    v_str = f"{version_tuple[0]}.{version_tuple[1]}.{version_tuple[2]}"
+    v_tuple_str = f"({version_tuple[0]}, {version_tuple[1]}, {version_tuple[2]}, {version_tuple[3]})"
+
+    # 替換 filevers=(2, 6, 4, 0)
+    content = re.sub(r'filevers=\(\d+,\s*\d+,\s*\d+,\s*\d+\)', f'filevers={v_tuple_str}', content)
+    # 替換 prodvers=(2, 6, 4, 0)
+    content = re.sub(r'prodvers=\(\d+,\s*\d+,\s*\d+,\s*\d+\)', f'prodvers={v_tuple_str}', content)
+    # 替換 FileVersion 字串
+    content = re.sub(r"u'FileVersion',\s*u'[\d\.]+'", f"u'FileVersion', u'{v_str}'", content)
+    # 替換 ProductVersion 字串
+    content = re.sub(r"u'ProductVersion',\s*u'[\d\.]+'", f"u'ProductVersion', u'{v_str}'", content)
+
+    with open(file_path, 'w', encoding='utf-8') as f:
+        f.write(content)
+    print(f"[Info] Updated {file_path} to version {v_str}")
 
 def main():
     # ==========================================
@@ -15,36 +61,51 @@ def main():
     project_root = os.path.abspath(os.path.join(script_dir, '..'))
     
     # 強制切換工作目錄到專案根目錄
-    # 這是最關鍵的一步！讓 PyInstaller 能正確找到 core, ui_parts 等模組
     os.chdir(project_root)
     print(f"[INFO] Project Root: {project_root}")
     print(f"[INFO] Working Directory: {os.getcwd()}")
 
     # ==========================================
-    # 2. 用戶模式選擇 (預設使用 Onedir 以獲得更快的啟動速度)
+    # 2. 用戶模式選擇 
     # ==========================================
     print("\n========================================")
     print("   PEGA Command Tool - Python Build System")
-    print("   Mode: Onedir (Fast Startup) - Default")
+    print("   Mode: Advance Version & Package EXE")
     print("========================================")
     
-    # 強制使用 Onedir 模式 (速度快)
     onefile = False
     mode_str = "Onedir"
-    print(f"[Mode] Selected: {mode_str}")
 
     # ==========================================
-    # 3. 讀取版本號 (從 setup.json)
+    # 3. 讀取並自動進版 (Increment Version)
     # ==========================================
-    import json
     setup_path = os.path.join(project_root, 'setup.json')
-    app_version = "V2.6.3" # 預設值
+    app_version = "V2.6.4" 
+    version_tuple = (2, 6, 4, 0)
+    
     try:
-        with open(setup_path, 'r', encoding='utf-8') as f:
-            setup_data = json.load(f)
-            app_version = setup_data.get('version', 'V2.6.3')
+        if os.path.exists(setup_path):
+            with open(setup_path, 'r', encoding='utf-8') as f:
+                setup_data = json.load(f)
+                old_version = setup_data.get('version', 'V2.6.4')
+            
+            # 執行進版
+            app_version, version_tuple = increment_version(old_version)
+            print(f"[Info] Version incremented: {old_version} -> {app_version}")
+            
+            # 寫回到 setup.json
+            setup_data['version'] = app_version
+            with open(setup_path, 'w', encoding='utf-8') as f:
+                json.dump(setup_data, f, indent=2, ensure_ascii=False)
+            print(f"[Info] Updated setup.json to version {app_version}")
+            
+            # 同步更新 version_info_zh.txt
+            vinfo_path = os.path.join(project_root, 'version_info_zh.txt')
+            update_version_info_file(vinfo_path, version_tuple)
+        else:
+            print(f"[WARN] setup.json not found at {setup_path}")
     except Exception as e:
-        print(f"[WARN] 無法讀取 setup.json 中的版本號: {e}")
+        print(f"[ERROR] 自動進版失敗: {e}")
 
     app_name = f"PEGA指令通_{app_version}"
     print(f"[Info] Building: {app_name}")
@@ -60,7 +121,6 @@ def main():
         try: shutil.rmtree(build_dir)
         except: pass
         
-    # 不完全刪除 dist，只刪除我們目標的那個
     target_exe = os.path.join(dist_dir, f"{app_name}.exe")
     target_folder = os.path.join(dist_dir, app_name)
     
@@ -72,48 +132,33 @@ def main():
         except: pass
 
     # ==========================================
-    # 4. 建構 PyInstaller 參數
+    # 5. 建構 PyInstaller 參數
     # ==========================================
     print("[Step 2/4] Preparing PyInstaller arguments...")
     
-    # 圖示絕對路徑
     icon_path = os.path.join(project_root, 'assets', 'icon.ico')
-    if not os.path.exists(icon_path):
-        print(f"[WARN] Icon not found at {icon_path}, using default icon.")
-        icon_arg = []
-    else:
-        icon_arg = ['--icon', icon_path]
+    icon_arg = ['--icon', icon_path] if os.path.exists(icon_path) else []
 
-    # 基礎參數
     args = [
-        os.path.join(project_root, 'main.py'),  # 入口腳本也用絕對路徑
+        os.path.join(project_root, 'main.py'),
         '--name', app_name,
         '--noconfirm',
         '--clean',
         '--noconsole',
         '--distpath', dist_dir,
         '--workpath', build_dir,
-        '--version-file', os.path.join(project_root, 'build_scripts', 'version_info_zh.txt'),
+        '--version-file', os.path.join(project_root, 'version_info_zh.txt'),
         '--paths', project_root,
     ]
     
-    # 加入圖示參數
     args.extend(icon_arg)
+    args.append('--onefile' if onefile else '--onedir')
 
-    # 模式參數
-    if onefile:
-        args.append('--onefile')
-    else:
-        args.append('--onedir')
-
-    # 資源映射 (Source:Dest)
     sep = os.pathsep
     
     add_data = [
         ('setup.json', '.'),
         ('sign_DOC.txt', '.'),
-        # color_word.txt now managed inside Command_TABLE
-        # version_info handled via --version-file only
         ('assets', 'assets'),
         ('Command_TABLE', 'Command_TABLE'),
         ('FIXTURE', 'FIXTURE'),
@@ -124,102 +169,68 @@ def main():
     ]
 
     for src, dst in add_data:
-        # src 路徑必須是絕對路徑
-        src_abs = os.path.join(project_root, src)
-        src_abs = src_abs.replace('/', os.sep) # 確保分隔符號正確
+        src_abs = os.path.join(project_root, src).replace('/', os.sep)
         if os.path.exists(src_abs):
             args.extend(['--add-data', f'{src_abs}{sep}{dst}'])
         else:
             print(f"[WARN] Resource not found, skipping: {src_abs}")
 
-    # 隱藏導入 (解決 SSH / Cryptography 崩潰)
     hidden_imports = [
-        # SSH 核心
-        'cryptography',
-        'cryptography.hazmat.bindings._rust',  
-        'cryptography.hazmat.backends.openssl.backend',
-        'paramiko',
-        
-        # 常用標準庫 (PyInstaller 有時會漏)
+        'cryptography', 'cryptography.hazmat.bindings._rust', 
+        'cryptography.hazmat.backends.openssl.backend', 'paramiko',
         'json', 'threading', 'queue', 'logging',
-        
-        # GUI 相關
         'tkinter', 'tkinter.ttk', 'tkinter.messagebox', 
         'tkinter.filedialog', 'tkinter.scrolledtext'
     ]
     for imp in hidden_imports:
         args.extend(['--hidden-import', imp])
         
-    # 強制收集 SSH 資源
     args.extend(['--collect-all', 'cryptography'])
     args.extend(['--collect-all', 'paramiko'])
 
-    # 排除不需要的庫 (瘦身)
     excludes = ['scipy', 'pandas', 'selenium', 'matplotlib', 'numpy', 'PIL', 'notebook', 'jedi', 'IPython']
     for exc in excludes:
         args.extend(['--exclude-module', exc])
 
     # ==========================================
-    # 5. 執行打包
+    # 6. 執行打包
     # ==========================================
     print(f"[Step 3/4] Running PyInstaller ({mode_str})...")
     PyInstaller.__main__.run(args)
 
     # ==========================================
-    # 6. 後續處理 (外部檔案複製)
+    # 7. 後續處理 (外部檔案複製)
     # ==========================================
     print("[Step 4/4] Post-processing file copy...")
     
-    # 這些檔案需要複製到 user 可見的地方，方便他們修改配置
-    # 我們的 resource_manager 會優先讀取這裡的檔案
-    
-    if onefile:
-        # Onefile: 複製到 EXE 旁 (dist 根目錄)
-        user_config_dir = dist_dir
-    else:
-        # Onedir: 複製到 EXE 同目錄 (dist/AppName)
-        user_config_dir = os.path.join(dist_dir, app_name)
+    user_config_dir = dist_dir if onefile else os.path.join(dist_dir, app_name)
     
     if not os.path.exists(user_config_dir):
         os.makedirs(user_config_dir, exist_ok=True)
         
-    # 定義需要複製的檔案與目錄
-    # 使用 (來源路徑, 目標父目錄, 類型)
-    # 類型: 'file' 或 'dir'
     items_to_copy = [
         ('setup.json', '.', 'file'),
         ('sign_DOC.txt', '.', 'file'),
         ('Command_TABLE', '.', 'dir'),          # 整個 Command_TABLE 目錄
         ('FIXTURE', '.', 'dir'),                # 整個 FIXTURE 目錄
-        ('IMAGES', '.', 'dir'),                 # 圖片資料夾 (手冊皆引用此處)
+        ('IMAGES', '.', 'dir'),                 # 圖片資料夾
         ('docs/PEGA指令通使用指南.html', 'docs', 'file'),
     ]
 
     for src_rel, dst_parent, item_type in items_to_copy:
         src_path = os.path.join(project_root, src_rel)
-        
-        # 計算目標目錄
-        if dst_parent == '.':
-            target_base = user_config_dir
-        else:
-            target_base = os.path.join(user_config_dir, dst_parent)
+        target_base = user_config_dir if dst_parent == '.' else os.path.join(user_config_dir, dst_parent)
             
         if not os.path.exists(target_base):
             os.makedirs(target_base, exist_ok=True)
 
-        # 計算目標路徑
-        base_name = os.path.basename(src_path)
-        dst_path = os.path.join(target_base, base_name)
+        dst_path = os.path.join(target_base, os.path.basename(src_path))
 
         if os.path.exists(src_path):
             if item_type == 'dir':
-                # 如果目標目錄已存在，先刪除以確保乾淨複製
                 if os.path.exists(dst_path):
-                    try:
-                        shutil.rmtree(dst_path)
-                    except Exception as e:
-                        print(f"[WARN] Failed to remove existing dir {dst_path}: {e}")
-                
+                    try: shutil.rmtree(dst_path)
+                    except: pass
                 print(f"Copying Directory {src_rel} -> {dst_path}")
                 shutil.copytree(src_path, dst_path)
             else:
@@ -230,6 +241,7 @@ def main():
 
     print("\n========================================")
     print(f"[SUCCESS] Build Complete!")
+    print(f"Version: {app_version}")
     print(f"Output Location: {user_config_dir}")
     print("========================================")
 

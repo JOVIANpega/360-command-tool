@@ -1,0 +1,704 @@
+
+=== 批量執行: MB Pretest單板 所有指令 ===
+總計指令數: 42
+
+
+01  發送指令 012_Show Information=show system version
+[Console 發送] show system version
+show system version
+mfg_path:'/home/pega/charles/diag_cli/pdiag/project/taurus7/mfg/mfg_sources'
+ [Info] PROJECT_NAME=TAURUS7_BDXDE
+ # MFG log folder init skipped (Ubuntu IFCS)
+
+Hardware Information
+  CPU: 8-core, Intel(R) Pentium(R) CPU D1517 @ 1.60GHz
+  MAC: Device 1d98:1b58 (rev 10) , LnkSta: Speed 8GT/s (ok) , Width x4 (ok)
+  DDR: 7.66 GB (8037344 kB)
+  SSD: ATA 30GB SATA Flash , 30.0GB
+  eMMC: Multiple Card Reader , 15.6GB
+  CPU Board : BDX-DE-BMC_CPU REV. 1.00
+  Main Board : TAURUS7 REV. 1.00
+  Fan Board : 5X40MM_FC_DB REV:1.00 , Maximum 5pcs Fan Modules ( FtB ) [ Board-ID : 0x57 ]
+  Fan Board EEPROM Info : 0x0957001f
+
+Firmware Version
+  DIAG  : 0.6.0
+  Linux: 5.4.0-144-generic (buildd@
+  BIOS: v5.11.1.3 , date: 01/25/2022
+  CPLD A (0x74) - FW Ver: 2 (HW Ver: 0)
+  CPLD B (0x75) - FW Ver: 2 (HW Ver: 0)
+  CPLD C (0x76) - FW Ver: 2 (HW Ver: 0)
+  CPLD  (CPU) - FW ver: 6  (HW ver value: 4 )
+  MCU - Main Board: TAURUS7 (01000), ver. 1.3 
+  MCU - Fan  Board: ver. 1.2 
+  PMBus FW checksum (CPU 0x63) : 0x841e4474
+  PMBus FW checksum (CPU 0x64) : 0xd50129b2
+
+pega> 
+
+####################
+
+02  發送指令 013_Power Source Test=psu status
+[Console 發送] psu status
+pega> psu status
+Syntax error: Unknown command
+pega> 
+pega> 
+####################
+
+03  發送指令 014_Set S/N=/mfg_sources/mb_eeprom_rw.sh w serial_number pega-1234...
+[Console 發送] /mfg_sources/mb_eeprom_rw.sh w serial_number pega-1234...
+/mfg_sources/mb_eeprom_rw.sh w serial_number pega-1234...
+Syntax error: Unknown command
+pega> 
+pega> 
+####################
+
+04  發送指令 015_Check S/N=/mfg_sources/mb_eeprom_rw.sh r serial_number
+[Console 發送] /mfg_sources/mb_eeprom_rw.sh r serial_number
+/mfg_sources/mb_eeprom_rw.sh r serial_number
+Syntax error: Unknown command
+pega> 
+pega> 
+####################
+
+05  發送指令 016_Write MAC=/mfg_sources/mb_eeprom_rw.sh w mac_address 00:a0:c9:11:22:33
+[Console 發送] /mfg_sources/mb_eeprom_rw.sh w mac_address 00:a0:c9:11:22:33
+/mfg_sources/mb_eeprom_rw.sh w mac_address 00:a0:c9:11:22:33
+Syntax error: Unknown command
+pega> 
+pega> 
+####################
+
+06  發送指令 017_Check MAC=/mfg_sources/mb_eeprom_rw.sh r mac_address
+[Console 發送] /mfg_sources/mb_eeprom_rw.sh r mac_address
+/mfg_sources/mb_eeprom_rw.sh r mac_address
+Syntax error: Unknown command
+pega> 
+pega> 
+####################
+
+07  發送指令 018_Read whole EEPROM=[no command example]
+[Console 發送] [no command example]
+[no command example]
+Syntax error: Unknown command
+pega> 
+pega> 
+####################
+
+08  發送指令 019_eMMC Read/Write=emmc test config size 16 count 1 mode 0,1
+[Console 發送] emmc test config size 16 count 1 mode 0,1
+emmc test config size 16 count 1 mode 0,1
+Starting eMMC testing...
+pega> 
+pega> 
+####################
+
+09  發送指令 020_DRAM Read/Write=memory test config size 16 count 1
+[Console 發送] memory test config size 16 count 1
+memory test config size 16 count 1
+Starting Memory testing...
+pega> 
+pega> 
+####################
+
+10  發送指令 021_SSD Read/Write=ssd test config size 64 count 1 mode 0,1
+[Console 發送] ssd test config size 64 count 1 mode 0,1
+ssd test config size 64 count 1 mode 0,1
+Starting SSD testing...
+pega> 
+pega> 
+####################
+
+11  發送指令 022_USB Read/Write=usb test config size 16 count 1 mode 0,1
+[Console 發送] usb test config size 16 count 1 mode 0,1
+usb test config size 16 count 1 mode 0,1
+Starting USB testing...
+pega> 
+Please insert USB first or check USB has at least one partition !!!
+USB Test Final Result: Fail
+
+pega> 
+####################
+
+12  發送指令 023_SPI Flash Read/Write=/mfg_sources/SPI_test.sh 1024
+[Console 發送] /mfg_sources/SPI_test.sh 1024
+/mfg_sources/SPI_test.sh 1024
+Syntax error: Unknown command
+pega> 
+pega> 
+####################
+
+13  發送指令 024_Reset Button Test=[no command example]
+[Console 發送] [no command example]
+[no command example]
+Syntax error: Unknown command
+pega> 
+pega> 
+####################
+
+14  發送指令 025_LED Green On (sys)=led system sys green
+[Console 發送] led system sys green
+led system sys green
+pega> 
+pega> 
+####################
+
+15  發送指令 026_LED Green On (pwr)=led system pwr green
+[Console 發送] led system pwr green
+led system pwr green
+MEMORY Test 1 Result: Pass
+
+MEMORY Test Final Result: Pass
+
+pega> 
+pega> 
+####################
+
+16  發送指令 027_LED Green On (fan)=led system fan green
+[Console 發送] led system fan green
+led system fan green
+pega> 
+pega> 
+####################
+
+17  發送指令 028_LED Green On (bmc)=led system bmc green
+[Console 發送] led system bmc green
+led system bmc green
+eMMC Test 1 Result: Pass
+
+eMMC Test Final Result: Pass
+
+pega> 
+pega> 
+####################
+
+18  發送指令 029_LED Green On (fan_tray)=led system fan_tray green
+[Console 發送] led system fan_tray green
+led system fan_tray green
+SSD Test 1 Result: Pass
+
+SSD Test Final Result: Pass
+
+pega> 
+
+####################
+
+19  發送指令 030_LED Green On (port)=led port all all green
+[Console 發送] led port all all green
+pega> led port all all green
+
+####################
+
+20  發送指令 031_LED Amber On=led system fan_tray amber
+[Console 發送] led system fan_tray amber
+led system fan_tray amber
+
+pega> 
+pega> led system fan_tray amber
+
+####################
+
+21  發送指令 032_LED Blue On (loc)=led system loc blue
+[Console 發送] led system loc blue
+led system loc blue
+
+pega> 
+pega> led system loc blue
+
+####################
+
+22  發送指令 033_LED Blue On (loc)=led system loc blue
+[Console 發送] led system loc blue
+pega> 
+pega> led system loc blue
+
+####################
+
+23  發送指令 034_LED All Off (sys)=led system sys off
+[Console 發送] led system sys off
+pega> 
+pega> led system sys off
+
+####################
+
+24  發送指令 035_LED All Off (pwr)=led system pwr off
+[Console 發送] led system pwr off
+pega> 
+pega> led system pwr off
+
+####################
+
+25  發送指令 036_LED All Off (fan)=led system fan off
+[Console 發送] led system fan off
+pega> 
+pega> led system fan off
+
+####################
+
+26  發送指令 037_LED All Off (loc)=led system loc off
+[Console 發送] led system loc off
+pega> 
+pega> led system loc off
+
+####################
+
+27  發送指令 038_LED All Off (bmc)=led system bmc off
+[Console 發送] led system bmc off
+pega> 
+pega> led system bmc off
+
+####################
+
+28  發送指令 039_LED All Off (fan_tray)=led system fan_tray off
+[Console 發送] led system fan_tray off
+pega> 
+pega> led system fan_tray off
+
+####################
+
+29  發送指令 040_LED All Off (port)=led port all all off
+[Console 發送] led port all all off
+led port all all off
+
+pega> 
+pega> led port all all off
+
+####################
+
+30  發送指令 041_LED Auto (Default)=led port all all normal
+[Console 發送] led port all all normal
+led port all all normal
+
+pega> 
+
+####################
+
+31  發送指令 042_Show Temperature=show system temp_sensor
+[Console 發送] show system temp_sensor
+pega> led port all all normal
+show system temp_sensor
+
+
+####################
+
+32  發送指令 043_Show Adc Voltage=show system adc
+[Console 發送] show system adc
+pega> 
+pega> show system temp_sensor
+
+show system temp_sensor
+
+	{ Temperature }
+	G751[NPU (Addr:0x4A)]:	34.0 C
+	LM75B[PCB (Addr:0x48)]:	24.0 C
+show system adc
+
+	LM75B[MAC (Addr:0x49)]:	37.0 C
+
+####################
+
+33  發送指令 044_Set Fan Status (mode)=fan mode [auto|manual]
+[Console 發送] fan mode [auto|manual]
+	LM75B[FanBoard (Addr:0x4A)]:	27.0 C
+
+	{ Temperature Alert }
+	LM75B[PCB (Addr:0x48)]:		Normal
+	LM75B[MAC (Addr:0x49)]:		Normal
+	LM75B[FanBoard (Addr:0x4A)]:	Normal
+
+	{ MAC Temperature }
+fan mode [auto|manual]
+
+	MCP3425[MAC]:		50.8 C
+
+	{ CPU Core Temperature }
+	Core 0:        +52.0°C  (high = +82.0°C, crit = +104.0°C)
+	Core 1:        +52.0°C  (high = +82.0°C, crit = +104.0°C)
+	Core 2:        +52.0°C  (high = +82.0°C, crit = +104.0°C)
+	Core 3:        +52.0°C  (high = +82.0°C, crit = +104.0°C)
+
+pega> 
+pega> show system adc
+
+show system adc
+
+
+####################
+
+34  發送指令 045_Set Fan Status (speed)=fan all speed [0-100]
+[Console 發送] fan all speed [0-100]
+	{ ADC }
+	[P3.6 (12V)]:	12141 mV
+	[P4.0 (4V)]:	4061 mV
+	[P4.1 (3.3V)]:	3355 mV
+	[P4.2 (1.8V)]:	1816 mV
+	[P4.3 (1.1V)]:	1104 mV
+	[P4.4 (0.94V_PLL2)]:	941 mV
+fan all speed [0-100]
+
+	[P4.5 (0.9V)]:	901 mV
+	[P4.6 (0.94V_PLL1)]:	954 mV
+	[P4.7 (0.8V_CORE)]:	819 mV
+	[P1.6 (0.9V_PLL)]:	904 mV
+
+pega> 
+pega> fan mode [auto|manual]
+Syntax error: Illegal command line
+pega> 
+pega> fan all speed [0-100]
+Syntax error: Illegal command line
+pega> 
+pega> 
+####################
+
+35  發送指令 046_Set Fan to Auto Mode=fan mode [auto|manual]
+[Console 發送] fan mode [auto|manual]
+fan mode [auto|manual]
+Syntax error: Illegal command line
+pega> 
+pega> 
+####################
+
+36  發送指令 047_Read Fan Status=show fan
+[Console 發送] show fan
+show fan
+
+show fan
+
+	Fan PWM:	39 (percent)
+	SmartFan:	Enable
+
+	AlertMode:	Auto Clear
+
+	{ [Fan 1] - [Fan 5] R.P.M }
+	[Fan 1] Inner R.P.M:	13455 rpm
+	[Fan 2] Inner R.P.M:	13365 rpm
+	[Fan 3] Inner R.P.M:	13455 rpm
+	[Fan 4] Inner R.P.M:	13380 rpm
+	[Fan 5] Inner R.P.M:	13455 rpm
+
+	[Fan 1] Outer R.P.M:	12090 rpm
+	[Fan 2] Outer R.P.M:	12060 rpm
+	[Fan 3] Outer R.P.M:	12045 rpm
+	[Fan 4] Outer R.P.M:	12045 rpm
+	[Fan 5] Outer R.P.M:	12075 rpm
+
+	{ [Fan 1] - [Fan 5] Status }
+		    [Present]   [Enable]   [LED Auto]   [LED Green]   [LED Amber]   [Airflow]   [Fan Alert]
+	[Fan 1]     Y           Y          N            Off           Off           FtB         N  
+	[Fan 2]     Y           Y          N            Off           Off           FtB         N  
+	[Fan 3]     Y           Y          N            Off           Off           FtB         N  
+	[Fan 4]     Y           Y          N            Off           Off           FtB         N  
+	[Fan 5]     Y           Y          N            Off           Off           FtB         N  
+
+	{ [Fan 1] - [Fan 5] Alert }
+		    [Not Connect]  [In rpm Zero]  [In rpm Under]  [In rpm Over]  [Out rpm Zero]  [Out rpm Under]  [Out rpm Over]  [Wrong Airflow]
+	[Fan 1]     N              N              N             N                N               N                N               N  
+	[Fan 2]     N              N              N             N                N               N                N               N  
+	[Fan 3]     N              N              N             N                N               N                N               N  
+	[Fan 4]     N              N              N             N                N               N                N               N  
+	[Fan 5]     N              N              N             N                N               N                N               N  
+
+	{ [Fan 1] - [Fan 5] Right FTM }
+	[Fan 1]     N  need 0x57 but using 0xfe
+	[Fan 2]     N  need 0x57 but using 0xfe
+	[Fan 3]     N  need 0x57 but using 0xfe
+	[Fan 4]     N  need 0x57 but using 0xfe
+	[Fan 5]     N  need 0x57 but using 0xfe
+pega> 
+pega> 
+####################
+
+37  發送指令 048_OOB Ping=/mfg_sources/OOB_ping_test.sh 192.168.1.1 192.168.1.254 5
+[Console 發送] /mfg_sources/OOB_ping_test.sh 192.168.1.1 192.168.1.254 5
+/mfg_sources/OOB_ping_test.sh 192.168.1.1 192.168.1.254 5
+Syntax error: Unknown command
+pega> 
+pega> 
+####################
+
+38  發送指令 049_I2C Test=i2c device test
+[Console 發送] i2c device test
+i2c device test
+mfg_path:'/home/pega/charles/diag_cli/pdiag/project/taurus7/mfg/mfg_sources'
+
+ [Info] PROJECT_NAME=TAURUS7_BDXDE
+ # MFG log folder init skipped (Ubuntu IFCS)
+
+ ==== I2C bus test Start ====
+2026-04-17 02:58:27
+
+ ---- Round 1 ----
+2026-04-17 02:58:27
+ # PSU-A i2c access PASS
+ # PSU-B i2c access PASS
+ # MCU i2c access PASS
+ # CPLD i2c access PASS
+ # Fan LED i2c access PASS
+ # FB EEPROM i2c access PASS
+ # CPU 2K EEPROM i2c access PASS
+
+[警告] 命令 "i2c device test" 等待響應超過 15.0 秒，繼續執行下一步
+
+####################
+
+39  發送指令 050_MB control signal test=/mfg_sources/factory_mb_module_connection_check.sh
+[Console 發送] /mfg_sources/factory_mb_module_connection_check.sh
+ [Info] PROJECT_NAME=TAURUS7_BDXDE
+ # MFG log folder init skipped (Ubuntu IFCS)
+/mfg_sources/factory_mb_module_connection_check.sh
+
+  # SFP I2C detect SKIP because NO SFP modules inserted.
+ 
+ [Info] PROJECT_NAME=TAURUS7_BDXDE
+ # MFG log folder init skipped (Ubuntu IFCS)
+     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f    0123456789abcdef
+00: 54 6c 76 49 6e 66 6f 00 01 00 7e 21 0a 46 4e 38    TlvInfo.?.~!?FN8
+10: 30 33 32 2d 42 4e 46 26 01 00 27 01 30 28 1d 78    032-BNF&?.'?0(?x
+20: 38 36 5f 36 34 2d 70 65 67 61 74 72 6f 6e 5f 66    86_64-pegatron_f
+30: 6e 38 30 33 32 5f 62 6e 66 2d 72 30 29 1e 70 65    n8032_bnf-r0)?pe
+40: 67 61 74 72 6f 6e 5f 63 6f 6d 6d 6f 6e 5f 62 64    gatron_common_bd
+50: 65 2d 32 30 32 31 2e 30 32 2d 31 30 2a 02 01 05    e-2021.02-10*???
+60: 2b 08 50 65 67 61 74 72 6f 6e 2c 02 54 57 2d 08    +?Pegatron,?TW-?
+70: 50 65 67 61 74 72 6f 6e 2e 09 4d 46 47 5f 30 2e    Pegatron.?MFG_0.
+80: 30 2e 38 fe 04 85 e6 c4 5b ff ff ff ff ff ff ff    0.8?????[.......
+90: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff    ................
+a0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff    ................
+b0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff    ................
+c0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff    ................
+d0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff    ................
+e0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff ff    ................
+f0: ff ff ff ff ff ff ff ff ff ff ff ff ff ff 88 ff    ..............?.
+ # EEPROM r/w test PASS
+ 
+     0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f
+00:          -- -- -- -- -- 08 -- -- -- -- -- -- -- 
+10: -- -- -- -- -- -- -- -- 18 -- -- -- -- -- -- -- 
+20: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+30: -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- -- 
+40: -- -- -- -- 44 -- -- -- 48 -- 4a -- -- -- -- -- 
+50: -- -- -- -- -- -- -- 57 58 -- 5a -- 5c -- -- -- 
+60: -- -- -- 63 64 -- -- -- -- -- -- -- -- -- -- -- 
+70: -- 71 72 73 74 -- -- --                         
+ # multiphase controller monitor (MB) test PASS
+ [Info] PROJECT_NAME=TAURUS7_BDXDE
+ # MFG log folder init skipped (Ubuntu IFCS)
+2026-04-17 02:58:49
+[MFG] Hardware Monitor Information:
+ [Info] PROJECT_NAME=TAURUS7_BDXDE
+ # MFG log folder init skipped (Ubuntu IFCS)
+	{ ADC }
+	[P3.6 (12V)]:	12154 mV
+	[P4.0 (4V)]:	4061 mV
+	[P4.1 (3.3V)]:	3355 mV
+	[P4.2 (1.8V)]:	1816 mV
+	[P4.3 (1.1V)]:	1104 mV
+	[P4.4 (0.94V_PLL2)]:	941 mV
+	[P4.5 (0.9V)]:	901 mV
+	[P4.6 (0.94V_PLL1)]:	954 mV
+	[P4.7 (0.8V_CORE)]:	823 mV
+	[P1.6 (0.9V_PLL)]:	904 mV
+
+ [Info] PROJECT_NAME=TAURUS7_BDXDE
+ # MFG log folder init skipped (Ubuntu IFCS)
+	Fan PWM:	39 (percent)
+	SmartFan:	Enable
+
+	AlertMode:	Auto Clear
+
+	{ [Fan 1] - [Fan 5] R.P.M }
+	[Fan 1] Inner R.P.M:	13425 rpm
+	[Fan 2] Inner R.P.M:	13395 rpm
+	[Fan 3] Inner R.P.M:	13440 rpm
+	[Fan 4] Inner R.P.M:	13380 rpm
+	[Fan 5] Inner R.P.M:	13440 rpm
+
+	[Fan 1] Outer R.P.M:	12105 rpm
+	[Fan 2] Outer R.P.M:	12060 rpm
+	[Fan 3] Outer R.P.M:	12030 rpm
+	[Fan 4] Outer R.P.M:	12030 rpm
+	[Fan 5] Outer R.P.M:	12075 rpm
+
+	{ [Fan 1] - [Fan 5] Status }
+		    [Present]   [Enable]   [LED Auto]   [LED Green]   [LED Amber]   [Airflow]   [Fan Alert]
+	[Fan 1]     Y           Y          Y            On            Off           FtB         N  
+	[Fan 2]     Y           Y          N            Off           Off           FtB         N  
+	[Fan 3]     Y           Y          N            Off           Off           FtB         N  
+	[Fan 4]     Y           Y          N            Off           Off           FtB         N  
+	[Fan 5]     Y           Y          N            Off           Off           FtB         N  
+
+	{ [Fan 1] - [Fan 5] Alert }
+		    [Not Connect]  [In rpm Zero]  [In rpm Under]  [In rpm Over]  [Out rpm Zero]  [Out rpm Under]  [Out rpm Over]  [Wrong Airflow]
+	[Fan 1]     N              N              N             N                N               N                N               N  
+	[Fan 2]     N              N              N             N                N               N                N               N  
+	[Fan 3]     N              N              N             N                N               N                N               N  
+	[Fan 4]     N              N              N             N                N               N                N               N  
+	[Fan 5]     N              N              N             N                N               N                N               N  
+
+	{ [Fan 1] - [Fan 5] Right FTM }
+	[Fan 1]     N  need 0x57 but using 0xfe
+	[Fan 2]     N  need 0x57 but using 0xfe
+	[Fan 3]     N  need 0x57 but using 0xfe
+	[Fan 4]     N  need 0x57 but using 0xfe
+	[Fan 5]     N  need 0x57 but using 0xfe
+
+[警告] 命令 "/mfg_sources/factory_mb_module_connection_check.sh" 等待響應超過 15.0 秒，繼續執行下一步
+
+####################
+
+40  發送指令 051_SFP + QSFP Port Loopback Test (SDK)=/appDemo
+[Console 發送] /appDemo
+
+ [Info] PROJECT_NAME=TAURUS7_BDXDE
+ # MFG log folder init skipped (Ubuntu IFCS)
+	{ Temperature }
+/appDemo
+
+	LM75B[NPU (Addr:0x4A)]:		34.1 degrees Celsius.
+	LM75B[PCB (Addr:0x48)]:		24.0 degrees Celsius.
+	LM75B[PCB (Addr:0x49)]:		37.0 degrees Celsius.
+	LM75B[FanBoard (Addr:0x4A)]:	27.0 degrees Celsius.
+
+	{ Temperature Alert }
+	LM75B[PCB (Addr:0x48)]:		Normal
+	LM75B[PCB (Addr:0x49)]:		Normal
+	LM75B[FanBoard (Addr:0x4A)]:	Normal
+
+
+	{ MAC Temperature }
+	MCP3425[MAC]:		51.40 degrees Celsius.
+
+	{ CPU core Temperature }
+        Core 0: +52.0°C (high = +82.0°C, crit = +104.0°C)
+        Core 1: +52.0°C (high = +82.0°C, crit = +104.0°C)
+        Core 2: +52.0°C (high = +82.0°C, crit = +104.0°C)
+        Core 3: +52.0°C (high = +82.0°C, crit = +104.0°C)
+
+ [Info] PROJECT_NAME=TAURUS7_BDXDE
+ # MFG log folder init skipped (Ubuntu IFCS)
+	{ Multiphase Controller Information }
+
+  [INFO] Skip multiphase controller monitor for TAURUS7_BDXDE
+	TPS53679 (NPU 0x63) Info :
+	Input Voltage  (Shared Channel) : 12.125 (V)
+	Input Current  (Shared Channel) : 1.611 (A)
+	Temperature-1  (Simul Ch-A & Ch-B) : 40.06 (Celsius degree)
+	Output Power   (Simul Ch-A & Ch-B) : 12.859 (W)
+	Input Power    (Simul Ch-A & Ch-B) : 18.531 (W)
+	Output Voltage (Ch-A) : 1.790 (V)
+	Output Current (Ch-A, Simul Phase) : 6.898 (A)
+	Output Current (Ch-A, Simul Phase) : 6.468 (A)
+	Output Voltage (Ch-B) : 1.050 (V)
+	Output Current (Ch-B, Simul Phase) : 2.320 (A)
+	Output Current (Ch-B, Simul Phase) : 2.472 (A)
+
+	TPS53679 (NPU 0x64) Info :
+	Input Voltage  (Shared Channel) : 12.093 (V)
+	Input Current  (Shared Channel) : 0.341 (A)
+	Temperature-1  (Simul Ch-A & Ch-B) : 37.12 (Celsius degree)
+	Output Power   (Simul Ch-A & Ch-B) : 0.000 (W)
+	Input Power    (Simul Ch-A & Ch-B) : 3.765 (W)
+	Output Voltage (Ch-A) : 0.000 (V)
+	Output Current (Ch-A, Simul Phase) : 0.000 (A)
+	Output Current (Ch-A, Simul Phase) : 0.000 (A)
+	Output Voltage (Ch-B) : 1.200 (V)
+	Output Current (Ch-B, Simul Phase) : 1.464 (A)
+	Output Current (Ch-B, Simul Phase) : 1.144 (A)
+
+
+ [Info] PROJECT_NAME=TAURUS7_BDXDE
+ # MFG log folder init skipped (Ubuntu IFCS)
+	{ PSU CPLD Information }
+	 @ PSU-A (PS1)
+	Existance    : insert
+	Output Power : OK
+	 @ PSU-B (PS2)
+	Existance    : insert
+	Output Power : NOT OK
+
+	{ PSU-A (PS1) Information }
+	READ V_in:       120.250
+	READ V_out:      12.113
+	READ I_in:       1.640
+	READ I_out:      15.042
+	READ P_in:       197.000
+	READ P_out:      181.750
+	READ Speed_fan:  8496
+	READ Temp_1:     38.875
+	READ Temp_2:     48.250
+	READ Temp_3:     41.875
+
+	{ PSU-B (PS2) Information }
+	READ V_in:       0.000
+	READ V_out:      0.000
+	READ I_in:       0.000
+	READ I_out:      0.000
+	READ P_in:       0.000
+	READ P_out:      0.000
+	READ Speed_fan:    0
+	Skip detect Temperature data
+
+
+ [Info] PROJECT_NAME=TAURUS7_BDXDE
+ # MFG log folder init skipped (Ubuntu IFCS)
+[MFG Msg] PSU (0x58) Alert Status Check:
+   Vout Over Voltage Fault ---> N
+   Vout Over Voltage Warning ---> N
+   Vout Under Voltage Warning ---> N
+   Vout Under Voltage Fault ---> N
+   ----------------------------------------
+   Iout Over Current Fault ---> N
+   Iout Over Current Warning ---> N
+   ----------------------------------------
+   Vin Under Voltage Warning ---> N
+   Vin Under Voltage Fault ---> N
+   ----------------------------------------
+   Over Temperature Fault ---> N
+   Over Temperature Warning ---> N
+   ----------------------------------------
+   FAN 1 Fault ---> N
+   FAN 1 Warning ---> N
+   FAN 1 Speed Overridden ---> N
+   FAN 2 Fault ---> N
+   FAN 2 Warning ---> N
+   FAN 2 Speed Overridden ---> N
+[MFG Msg] PSU (0x59) power not ok !!!
+
+ # I2C Little round 1 Test Result : PASS  ( Total : 1 / Fail : 0 )
+ 
+
+[警告] 命令 "/appDemo" 等待響應超過 15.0 秒，繼續執行下一步
+
+####################
+
+41  發送指令 052_SFP + QSFP Port Loopback Test (Execute)=shell-execute PT_Pretest_Request 100 25 500
+[Console 發送] shell-execute PT_Pretest_Request 100 25 500
+shell-execute PT_Pretest_Request 100 25 500
+
+2026-04-17 02:59:21
+ ==== I2C bus test done ====
+
+ ===> Round  # I2C Test Result : PASS 
+ 
+pega> 
+pega> /mfg_sources/factory_mb_module_connection_check.sh
+Syntax error: Unknown command
+pega> 
+pega> /appDemo
+Syntax error: Unknown command
+pega> 
+pega> shell-execute PT_Pretest_Request 100 25 500
+Syntax error: Unknown command
+pega> 
+pega> 
+####################
+
+42  發送指令 053_SFP + QSFP Port Loopback Test (Exit)=CLIexit -> exit
+[Console 發送] CLIexit -> exit
+CLIexit -> exit
+Syntax error: Unknown command
+pega> 
+pega> 
+[結束] 收到指定結束字串 pega>
+

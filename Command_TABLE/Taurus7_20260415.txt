@@ -1,5 +1,10 @@
 ===CPU 單板===
+[Taurus7 專用腳本]一鍵進入診斷模式 = <<login:>>pega ==> <<password:>>1234 ==> <<~$>>sudo -i ==> <<password:>>1234 ==> <<#>>cd /home/pega/charles/diag_cli/pdiag ==> <<#>>./run_pega_cli.sh ==> <<pega>>> ==> fan speed all 25
+
+
 001_Show Information==>>show system version
+fan speed 25=fan speed all 25
+fan speed 40=fan speed all 40
 002_Read CPU Board intel and I210 SPI flash version==>>/intel_nvm_flash_update_tool/eeupdate64e /ALL /ADAPTERINFO
 003_eMMC Read/Write==>>emmc test config size 16 count 1 mode 0,1
 004_DRAM Read/Write==>>memory test config size 16 count 1
@@ -10,71 +15,23 @@
 009_Enable Burn-In (rst-conf)==>/diag_test --rst-conf Gemini pt
 010_Enable Burn-In (Burn-in)==>/diag_test --burn-in-set on --pwr-cyc-num 16 --tfc-pkt-t 28
 011_Enable Burn-In (PT-4C)==>/diag_test --burn-in-set on --pwr-cyc-num 16 --tfc-pkt-t 28
+012_LED All test==>led port all all off==>led port all all red==>led port all all yellow==>led port all all white==>led port all all green
 
-===MB Pretest單板===
-012_Show Information==>show system version
-013_Power Source Test==>psu status
-014_Set S/N==>/mfg_sources/mb_eeprom_rw.sh w serial_number pega-1234...
-015_Check S/N==>/mfg_sources/mb_eeprom_rw.sh r serial_number
-016_Write MAC==>/mfg_sources/mb_eeprom_rw.sh w mac_address 00:a0:c9:11:22:33
-017_Check MAC==>/mfg_sources/mb_eeprom_rw.sh r mac_address
-018_Read whole EEPROM==>[no command example]
-019_eMMC Read/Write==>emmc test config size 16 count 1 mode 0,1
-020_DRAM Read/Write==>memory test config size 16 count 1
-021_SSD Read/Write==>ssd test config size 64 count 1 mode 0,1
-022_USB Read/Write==>usb test config size 16 count 1 mode 0,1
-023_SPI Flash Read/Write==>/mfg_sources/SPI_test.sh 1024
-024_Reset Button Test==>[no command example]
-025_LED Green On (sys)==>led system sys green
-026_LED Green On (pwr)==>led system pwr green
-027_LED Green On (fan)==>led system fan green
-028_LED Green On (bmc)==>led system bmc green
-029_LED Green On (fan_tray)==>led system fan_tray green
-030_LED Green On (port)==>led port all all green
-031_LED Amber On==>led system fan_tray amber
-032_LED Blue On (loc)==>led system loc blue
-033_LED Blue On (loc)==>led system loc blue
-034_LED All Off (sys)==>led system sys off
-035_LED All Off (pwr)==>led system pwr off
-036_LED All Off (fan)==>led system fan off
-037_LED All Off (loc)==>led system loc off
-038_LED All Off (bmc)==>led system bmc off
-039_LED All Off (fan_tray)==>led system fan_tray off
-040_LED All Off (port)==>led port all all off
-041_LED Auto (Default)==>led port all all normal
-042_Show Temperature==>show system temp_sensor
-043_Show Adc Voltage==>show system adc
-044_Set Fan Status (mode)==>fan mode [auto|manual]
-045_Set Fan Status (speed)==>fan all speed [0-100]
-046_Set Fan to Auto Mode==>fan mode [auto|manual]
-047_Read Fan Status==>show fan
-048_OOB Ping==>/mfg_sources/OOB_ping_test.sh 192.168.1.1 192.168.1.254 5
-049_I2C Test==>i2c device test
-050_MB control signal test==>/mfg_sources/factory_mb_module_connection_check.sh
-051_SFP + QSFP Port Loopback Test (SDK)==>/appDemo
-052_SFP + QSFP Port Loopback Test (Execute)==>shell-execute PT_Pretest_Request 100 25 500
-053_SFP + QSFP Port Loopback Test (Exit)==>CLIexit -> exit
-
-===Final test===
-054_Get FCB & FTM EEPROM data==>/mfg_sources/ftm_eeprom_check.sh
-055_Show Burn-In Result (short)==>/diag_test --show 2
-056_Enable Burn-In (cycle 10)==>/diag_test --burn-in-set on --pwr-cyc-num 10 --tfc-pkt-t 1
-057_Check MB CPLD UpgradeFunction==>/mfg_sources/cpld_upgrade.sh mb /home/root/mfg/cpld_fw...
-058_Check MB MCU HW Upgrade Function==>/mfg_sources/mcu_fw_upgrade.sh mb EFM8BB3_MainBoard_...
-059_Check MB MCU SW Upgrade Function==>/mfg_sources/mcu_fw_upgrade.sh mb EFM8BB3_MainBoard_...
-060_Check FAN MCU HW Upgrade Function==>/mfg_sources/mcu_fw_upgrade.sh fb EFM8BB3_FanBoard_...
-061_Check FAN MCU SW Upgrade Function==>/mfg_sources/mcu_fw_upgrade.sh fb EFM8BB3_FanBoard_...
-062_VLAN Setting==>./sdk_start vlan=on if=fiber fec=on
-063_Port Status Check (Check Status)==>show interfaces status all
-064_Port Status Check (Exit)==>CLIexit -> exit
-
-===Additional items===
-065_Upgrade CPLD through NPU-board's JTAG interface==>/mfg_sources/cpld_upgrade.sh mb /home/root/mfg/cpld_fw_upgrade/gemini-b7a3c5_bgm_verify-20221025.vme
-066_Upgrade MCU through NPU-board's UART interface (MB HW)==>/mfg_sources/mcu_fw_upgrade.sh mb EFM8BB3_MainBoard_UART_InterfaceTest.efm8 hw
-067_Upgrade MCU through NPU-board's UART interface (MB SW)==>/mfg_sources/mcu_fw_upgrade.sh mb EFM8BB3_MainBoard_UART_InterfaceTest.efm8 sw
-068_Upgrade MCU through NPU-board's UART interface (FB HW)==>/mfg_sources/mcu_fw_upgrade.sh fb EFM8BB3_FanBoard_UART_InterfaceTest.efm8 hw
-069_Upgrade MCU through NPU-board's UART interface (FB SW)==>/mfg_sources/mcu_fw_upgrade.sh fb EFM8BB3_FanBoard_UART_InterfaceTest.efm8 sw
-070_Voltage measure (ADC)==>show system adc
-071_Voltage measure (Monitor)==>/mfg_sources/multiphase_controller_monitor.sh
-072_Hardware Monitor==>show system adc; show fan; show system temp_sensor
-073_MB control signal test (QSFP-DD)==>/mfg_sources/factory_mb_module_connection_check.sh
+===SW_V0415_table===
+001_Show Information==>show system version
+002_eMMC Read/Write==>emmc test config size 16 count 1 mode 0,1
+003_DRAM Read/Write==>memory test config size 16 count 1
+004_SSD Read/Write==>ssd test config size 64 count 1 mode 0,1
+005_Temperature status==>show system temp_sensor
+006_Show Information==>show system version
+007_eMMC Read/Write==>emmc test config size 16 count 1 mode 0,1
+008_DRAM Read/Write==>memory test config size 16 count 1
+009_SSD Read/Write==>ssd test config size 64 count 1 mode 0,1
+010_USB Read/Write==>usb test config size 16 count 1 mode 0,1
+011_LED Green On==>led system sys green==>led system pwr green==>led system fan green==>led system bmc green
+012_LED All Off==>led system sys off==>led system pwr off==>led system fan off==>led system loc off==>led system bmc off==>led system fan_tray off==>led port all all off
+013_Show Temperature==>show system temp_sensor
+014_Show Adc Voltage==>show system adc
+015_Read Fan Status==>show fan
+016_I2C Test==>i2c device test
+017_Hardware Monitor==>show system adc==>show fan==>show system temp_sensor

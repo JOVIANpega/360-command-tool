@@ -480,15 +480,36 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.btn_execute.bind("<Enter>", self.on_enter_exec)
         self.btn_execute.bind("<Leave>", self.on_leave_exec)
 
-        # 指令內容顯示標籤（放在指令下拉選單下方）
-        self.cmd_content_label = ttk.Label(
-            self.cmd_frame, 
-            text='', 
-            style="TLabel", 
-            wraplength=500,
-            foreground='#666666'
+        # --- 指令預覽區域 (固定高度容器) ---
+        self.cmd_preview_frame = tk.Frame(self.cmd_frame, bg='#f0f4f8')
+        self.cmd_preview_frame.grid(row=1, column=0, columnspan=4, sticky='ew', padx=5, pady=(5, 5))
+        
+        # 指令標題
+        self.cmd_hint_label = tk.Label(
+            self.cmd_preview_frame, text="指令預覽 (Step Preview)：", 
+            font=('Microsoft JhengHei UI', 8, 'bold'), 
+            bg='#f0f4f8', fg='#607d8b'
         )
-        self.cmd_content_label.grid(row=1, column=0, columnspan=4, sticky='w', padx=5, pady=(2, 0))
+        self.cmd_hint_label.pack(side='top', anchor='w', padx=8, pady=(2, 0))
+
+        # 使用一個「固定高度」的 Frame，並關閉傳播功能，防止裡面的 Label 把框撐大
+        self.text_fixed_box = tk.Frame(self.cmd_preview_frame, bg='#f0f4f8', height=80)
+        self.text_fixed_box.pack_propagate(False) # <--- 最關鍵：強制高度不變
+        self.text_fixed_box.pack(fill='x', expand=True, padx=5, pady=5)
+        
+        self.cmd_content_label = tk.Label(
+            self.text_fixed_box,
+            text='',
+            bg='#f0f4f8',
+            fg='#2c3e50',
+            font=('Consolas', 10),
+            wraplength=700, # 自動換行寬度
+            justify='left',
+            anchor='nw'     # 靠左上對齊
+        )
+        self.cmd_content_label.pack(fill='both', expand=True)
+
+        self.combobox_cmd.bind('<Return>', lambda event: self.parent.handlers.on_execute())
 
         self.combobox_cmd.bind('<Return>', lambda event: self.parent.handlers.on_execute())
         
@@ -1764,33 +1785,6 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
     # 移除自動執行相關方法 - 功能已不需要
 
     # 指保留原本的 show_notification，不重複 override
-
-    def on_cmd_selected(self):
-        """當選擇指令時的回調函數"""
-        cmd_key = self.combobox_cmd.get()
-        if cmd_key:
-            section = self.section_var.get()
-            cmd = self.parent.commands_by_section.get(section, {}).get(cmd_key, "")
-            if not cmd:
-                cmd = self.parent.commands_by_section.get("全部指令", {}).get(cmd_key, "")
-            
-            # 顯示選擇的指令內容
-            self.show_notification(get_notification_text("cmd_selected", cmd_key), "blue", 3000)
-            
-            # 更新指令內容標籤（在指令下拉選單下方）
-            if hasattr(self, 'cmd_content_label'):
-                self.cmd_content_label.config(text=f"指令內容: {cmd}")
-                print(f"[DEBUG] 更新指令內容顯示: {cmd}")
-            
-            # 如果是特殊指令，顯示提示
-            if cmd.startswith("DELAY:"):
-                delay_time = cmd.split(":")[1]
-                self.show_notification(get_notification_text("delay_cmd", delay_time), "purple", 3000)
-            elif cmd.startswith("SHOW:"):
-                message = cmd.split(":")[1]
-                self.show_notification(get_notification_text("show_msg", message), "green", 3000)
-
-
 
     def copy_selected_text(self):
         # 實現複製選中文字的功能
