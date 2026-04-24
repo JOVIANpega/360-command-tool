@@ -26,11 +26,12 @@ class ToolTip:
     # 類別變數，用於儲存當前字體大小
     current_font_size = 9
 
-    def __init__(self, widget, text='', delay=500, wraplen=250):
+    def __init__(self, widget, text='', delay=200, wraplen=250, side='bottom'):
         self.widget = widget
         self.text = text
         self.delay = delay
         self.wraplen = wraplen
+        self.side = side # 新增側邊參數: 'bottom' 或 'right'
         self.id = None
         self.tw = None
         self.enabled = True
@@ -130,38 +131,52 @@ class ToolTip:
         
         box_x_offset = -text_width // 2 # 水平置中
         
-        # 預設：元件下方 20px
-        target_y_base = widget_y + widget_h
-        box_top = target_y_base + 20
-        box_left = (widget_x + widget_w // 2) + box_x_offset
-        
-        is_above = False
-        
-        # 邊界檢查與調整
-        # FIX: 檢測是否在主螢幕範圍內。如果在副螢幕（座標超出 screen_w），則不強制的 clamp 到主螢幕範圍
-        # 這樣避免了在副螢幕時，Tooltip 被硬拉回主螢幕導致指引線過長
+        # 決定位置的邏輯
         is_on_primary_screen = (0 <= widget_x < screen_w)
-        
-        if is_on_primary_screen:
-            if box_left + text_width > screen_w:
-                box_left = screen_w - text_width - 10
-            if box_left < 0:
-                box_left = 10
-        
-        # 垂直方向通常較少有多螢幕拼接問題，或者較難判斷，暫時保留基本檢查
-        # 如果在副螢幕且 y 超界，可能需要更複雜的判斷，這裡暫時只對 primary 做保護
-        if is_on_primary_screen and (box_top + text_height > screen_h):
-            # 下方空間不足，改到上方
-            target_y_base = widget_y
-            box_top = target_y_base - 20 - text_height
-            is_above = True
-        
-        # 計算指引線的目標點 (widget 上的點)
-        # 根據 box 的位置，選擇 widget 最近的邊緣中心點
-        if is_above:
-            target_y = widget_y # 上邊緣
+        is_above = False
+        is_left_side = False
+
+        if self.side == 'right':
+            # --- 右側顯示模式 ---
+            target_y_base = widget_y + (widget_h // 2) - (text_height // 2)
+            box_left = widget_x + widget_w + 20
+            box_top = target_y_base
+            
+            if is_on_primary_screen:
+                if box_left + text_width > screen_w:
+                    box_left = widget_x - text_width - 20
+                    is_left_side = True
+                if box_top + text_height > screen_h:
+                    box_top = screen_h - text_height - 10
+                if box_top < 0:
+                    box_top = 10
+            
+            if is_left_side:
+                target_x = widget_x
+            else:
+                target_x = widget_x + widget_w
+            target_y = widget_y + (widget_h // 2)
         else:
-            target_y = widget_y + widget_h # 下邊緣
+            # --- 預設：上下顯示模式 (原本最穩定的邏輯) ---
+            box_x_offset = -text_width // 2
+            box_left = (widget_x + widget_w // 2) + box_x_offset
+            box_top = widget_y + widget_h + 20
+            
+            if is_on_primary_screen:
+                if box_left + text_width > screen_w:
+                    box_left = screen_w - text_width - 10
+                if box_left < 0:
+                    box_left = 10
+                
+                if box_top + text_height > screen_h:
+                    box_top = widget_y - text_height - 20
+                    is_above = True
+            
+            target_x = widget_x + (widget_w // 2)
+            if is_above:
+                target_y = widget_y
+            else:
+                target_y = widget_y + widget_h
 
         # 優化：所有元件都使用「滑動錨點」邏輯
         # 讓指引線指向元件上最接近 Tooltip 的點，減少線段長度
@@ -227,6 +242,16 @@ class ToolTip:
                           font=current_font, 
                           anchor='nw',
                           width=self.wraplen)
+
+    def update_text(self, text):
+        """更新提示文字內容"""
+        self.text = text
+        if self.tw:
+            try:
+                self.tw.destroy()
+            except:
+                pass
+            self.tw = None
 
     def hide_tooltip(self):
         """隱藏 tooltip"""
@@ -416,11 +441,12 @@ class ToolTipManager:
         self.enabled = True
         return True
     
-    def add_tooltip(self, widget, widget_name):
+    def add_tooltip(self, widget, widget_name, side='bottom'):
         """
         為元件添加 tooltip
         widget: 要添加 tooltip 的元件
         widget_name: 在 tooltips.ini 中對應的鍵名
+        side: 顯示位置 ('bottom' 或 'right')
         """
         if not self.enabled or not widget:
             return
@@ -437,13 +463,13 @@ class ToolTipManager:
                 del self.tooltips[widget_id]
             
             # 創建新的 tooltip
-            tooltip = ToolTip(widget, tooltip_text)
+            tooltip = ToolTip(widget, tooltip_text, side=side)
             self.tooltips[widget_id] = tooltip
             
         except Exception:
             pass
     
-    def add_tooltip_with_text(self, widget, text):
+    def add_tooltip_with_text(self, widget, text, side='bottom'):
         """
         直接用文字為元件添加 tooltip
         """
@@ -452,11 +478,15 @@ class ToolTipManager:
             
         try:
             widget_id = id(widget)
+            # [核心修正]：如果已經存在，只更新文字與方向，不要重新綁定事件
             if widget_id in self.tooltips:
-                self.tooltips[widget_id].hide_tooltip()
-                del self.tooltips[widget_id]
+                tip = self.tooltips[widget_id]
+                tip.update_text(text)
+                tip.side = side
+                return
             
-            tooltip = ToolTip(widget, text)
+            # 如果不存在，才建立新的
+            tooltip = ToolTip(widget, text, side=side)
             self.tooltips[widget_id] = tooltip
             
         except Exception:

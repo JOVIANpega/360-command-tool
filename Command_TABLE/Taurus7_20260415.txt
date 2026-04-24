@@ -15,7 +15,7 @@ fan speed 40=fan speed all 40
 009_Enable Burn-In (rst-conf)==>/diag_test --rst-conf Gemini pt
 010_Enable Burn-In (Burn-in)==>/diag_test --burn-in-set on --pwr-cyc-num 16 --tfc-pkt-t 28
 011_Enable Burn-In (PT-4C)==>/diag_test --burn-in-set on --pwr-cyc-num 16 --tfc-pkt-t 28
-012_LED All test==>led port all all off==>led port all all red==>led port all all yellow==>led port all all white==>led port all all green
+012_LED All test==>led port all all off==>led port all all red==>led port all all yellow==>led port all all white==>led port all all green==>led port all all yellow
 
 ===SW_V0415_table===
 001_Show Information==>show system version

@@ -154,7 +154,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         # 獲取 COM 口列表
         com_values = list_com_ports()
         
-        self.combobox_com = ttk.Combobox(com_frame, values=com_values, state='readonly', width=20, font=('Microsoft JhengHei UI', 10), style='Red.TCombobox')
+        self.combobox_com = ttk.Combobox(com_frame, values=com_values, state='readonly', width=20, font=('Microsoft JhengHei UI', 10))
         self.combobox_com.grid(row=0, column=1, padx=(5, 0), sticky='w')
         self.combobox_com.bind("<<ComboboxSelected>>", self.handlers.on_com_port_changed)
         
@@ -177,12 +177,12 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         else:
             refresh_command = lambda: None
             print("[WARNING] handlers 不存在或沒有 refresh_com_ports 方法")
-        self.btn_refresh = tk.Button(com_frame, text='刷新', command=refresh_command,
+        self.btn_refresh = tk.Button(com_frame, text='🔄', command=refresh_command,
                                    bg='#d9d9d9', fg='black', 
                                    activebackground='#2196F3', activeforeground='white',
-                                   height=2, font=('Microsoft JhengHei UI', 9, 'bold'),
+                                   width=3, height=1, font=('Microsoft JhengHei UI', 10, 'bold'),
                                    relief='raised', borderwidth=1)
-        self.btn_refresh.grid(row=0, column=2, padx=10, sticky='w', rowspan=2) # 改為 sticky='w' 靠近欄位，並增加左側間距
+        self.btn_refresh.grid(row=0, column=2, padx=(8, 0), sticky='w')
 
         # 懸停效果
         def on_refresh_enter(e):
@@ -204,8 +204,8 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             
         self.transport_mode_var = tk.StringVar(value=current_mode)
         self.combobox_transport = ttk.Combobox(com_frame, textvariable=self.transport_mode_var,
-                                             values=['Console', 'ADB', 'SSH'], state='readonly', width=20, font=('Microsoft JhengHei UI', 10), style='Red.TCombobox')
-        self.combobox_transport.grid(row=1, column=1, padx=(5, 0), sticky='w', pady=(5, 0))
+                                             values=['Console', 'ADB', 'SSH'], state='readonly', width=20, font=('Microsoft JhengHei UI', 10))
+        self.combobox_transport.grid(row=1, column=1, padx=(5, 0), sticky='w', pady=(8, 0))
         self.combobox_transport.bind("<<ComboboxSelected>>", self.on_transport_mode_changed)
 
         # 根據傳輸方式設定 COM 口的啟用狀態
@@ -479,35 +479,6 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.btn_execute.grid(row=0, column=3, sticky='e', padx=(5, 5))
         self.btn_execute.bind("<Enter>", self.on_enter_exec)
         self.btn_execute.bind("<Leave>", self.on_leave_exec)
-
-        # --- 指令預覽區域 (固定高度容器) ---
-        self.cmd_preview_frame = tk.Frame(self.cmd_frame, bg='#f0f4f8')
-        self.cmd_preview_frame.grid(row=1, column=0, columnspan=4, sticky='ew', padx=5, pady=(5, 5))
-        
-        # 指令標題
-        self.cmd_hint_label = tk.Label(
-            self.cmd_preview_frame, text="指令預覽 (Step Preview)：", 
-            font=('Microsoft JhengHei UI', 8, 'bold'), 
-            bg='#f0f4f8', fg='#607d8b'
-        )
-        self.cmd_hint_label.pack(side='top', anchor='w', padx=8, pady=(2, 0))
-
-        # 使用一個「固定高度」的 Frame，並關閉傳播功能，防止裡面的 Label 把框撐大
-        self.text_fixed_box = tk.Frame(self.cmd_preview_frame, bg='#f0f4f8', height=80)
-        self.text_fixed_box.pack_propagate(False) # <--- 最關鍵：強制高度不變
-        self.text_fixed_box.pack(fill='x', expand=True, padx=5, pady=5)
-        
-        self.cmd_content_label = tk.Label(
-            self.text_fixed_box,
-            text='',
-            bg='#f0f4f8',
-            fg='#2c3e50',
-            font=('Consolas', 10),
-            wraplength=700, # 自動換行寬度
-            justify='left',
-            anchor='nw'     # 靠左上對齊
-        )
-        self.cmd_content_label.pack(fill='both', expand=True)
 
         self.combobox_cmd.bind('<Return>', lambda event: self.parent.handlers.on_execute())
 

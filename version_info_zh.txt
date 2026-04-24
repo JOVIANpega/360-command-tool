@@ -1,28 +1,42 @@
+# UTF-8
+#
+# For more details about fixed file info 'ffi' see:
+# http://msdn.microsoft.com/en-us/library/ms646997.aspx
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(2, 6, 6, 0),
-    prodvers=(2, 6, 6, 0),
+    # filevers and prodvers should be always a tuple with four items: (1, 2, 3, 4)
+    # Set not needed items to zero 0.
+    filevers=(2, 6, 7, 0),
+    prodvers=(2, 6, 7, 0),
+    # Contains a bitmask that specifies the valid bits 'flags'
     mask=0x3f,
+    # Contains a bitmask that specifies the attributes of the file.
     flags=0x0,
-    OS=0x40004,
+    # The operating system for which this file was designed.
+    # 0x4 - NT and windows 32bit
+    OS=0x4,
+    # The general type of file.
+    # 0x1 - the file is an application.
     fileType=0x1,
+    # The function of the file.
+    # 0x0 - the function is not defined.
     subtype=0x0,
+    # Creation date and time stamp.
     date=(0, 0)
-  ),
+    ),
   kids=[
     StringFileInfo(
       [
-        StringTable(
-          u'040904B0',
-          [StringStruct(u'CompanyName', u'PEGA'),
-           StringStruct(u'FileDescription', u'PEGA指令通'),
-           StringStruct(u'FileVersion', u'2.6.6'),
-           StringStruct(u'InternalName', u'PEGA指令通'),
-           StringStruct(u'LegalCopyright', u'Copyright (C) 2026 PEGA'),
-           StringStruct(u'OriginalFilename', u'PEGA指令通.exe'),
-           StringStruct(u'ProductName', u'PEGA指令通'),
-           StringStruct(u'ProductVersion', u'2.6.6')]
-        )
+      StringTable(
+        u'040904B0',
+        [StringStruct(u'CompanyName', u'PEGA'),
+         StringStruct(u'FileDescription', u'PEGA指令通'),
+         StringStruct(u'FileVersion', u'2.6.7.0'),
+         StringStruct(u'InternalName', u'PEGA_Command_Tool'),
+         StringStruct(u'LegalCopyright', u'Copyright (C) 2024'),
+         StringStruct(u'OriginalFilename', u'PEGA_Command_Tool.exe'),
+         StringStruct(u'ProductName', u'PEGA Command Tool'),
+         StringStruct(u'ProductVersion', u'2.6.7.0')])
       ]),
     VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
   ]
