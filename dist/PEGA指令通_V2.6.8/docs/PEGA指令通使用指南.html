@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PEGA指令通 V2.6.3 使用指南</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft JhengHei UI', 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        h1 {
+            color: #1a73e8;
+            text-align: center;
+            border-bottom: 3px solid #1a73e8;
+            padding-bottom: 15px;
+            margin-bottom: 40px;
+            font-size: 2.2em;
+        }
+
+        h2 {
+            color: #1967d2;
+            border-left: 5px solid #1a73e8;
+            padding-left: 15px;
+            margin-top: 50px;
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 0 8px 8px 0;
+            font-size: 1.6em;
+        }
+
+        h3 {
+            background-color: #fff176;
+            color: #000;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            border-left: 8px solid #fbc02d;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        h3::before {
+            display: none;
+        }
+
+        .img-box {
+            text-align: center;
+            margin: 25px 0;
+            padding: 15px;
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        }
+
+        .img-box img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            transition: transform 0.2s;
+        }
+
+        .img-box img:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .img-caption {
+            display: block;
+            margin-top: 12px;
+            color: #5f6368;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .feature-box {
+            background: #e8f0fe;
+            border: 1px solid #d2e3fc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .warning-box {
+            background: #fff4e5;
+            border: 1px solid #ffe2b7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .code-box {
+            background: #282c34;
+            color: #abb2bf;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Consolas', 'Courier New', monospace;
+            overflow-x: auto;
+            line-height: 1.5;
+            font-size: 0.95em;
+        }
+
+        .step {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-left: 5px solid #34a853;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .step-title {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #202124;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .button-demo {
+            display: inline-block;
+            background: #1a73e8;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: bold;
+            margin: 0 4px;
+            vertical-align: middle;
+        }
+
+        .version-info {
+            text-align: center;
+            color: #70757a;
+            font-size: 14px;
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid #e8eaed;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95em;
+        }
+
+        th,
+        td {
+            border: 1px solid #dadce0;
+            padding: 12px 16px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f1f3f4;
+            color: #202124;
+            font-weight: 600;
+        }
+
+        .highlight {
+            background-color: #fce8e6;
+            color: #c5221f;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="img-box">
+            <img src="../IMAGES/01_app_title.jpg" alt="PEGA指令通主畫面">
+            <span class="img-caption">圖 1：PEGA指令通 (GEMINI TOOL) 主程式介面，頂部顯示版本號 V2.6.3</span>
+        </div>
+
+        <h1>🚀 PEGA指令通 V2.6.3 使用指南</h1>
+
+        <h2>📋 內容目錄</h2>
+        <ul>
+            <li><a href="#overview">程式概述</a></li>
+            <li><a href="#interface">界面分區詳解</a></li>
+            <li><a href="#basic-usage">基本操作流程</a></li>
+            <li><a href="#command-file">如何自訂指令檔案</a></li>
+            <li><a href="#advanced">進階網路功能</a></li>
+            <li><a href="#troubleshooting">常見問題排除</a></li>
+        </ul>
+
+        <h2 id="overview">📖 程式概述</h2>
+        <div class="feature-box">
+            <p><strong>PEGA指令通（GEMINI TOOL）</strong> 是專為 PEGA 產線與研發單位設計的綜合控制工具。它整合了多種通訊協定，讓使用者可以在單一介面完成所有設備控制需求。</p>
+            <ul>
+                <li>⚡ <strong>Console 模式</strong>：傳統 COM Port 連線，支援自動偵測與波特率調整。</li>
+                <li>📱 <strong>ADB 模式</strong>：針對 Android/Linux 設備，透過 USB 進行高效調試。</li>
+                <li>🌐 <strong>SSH 模式</strong>：支援遠端網路控制，內建智慧認證與環境變數載入。</li>
+                <li>🛠️ <strong>治具控制</strong>：獨立的硬體治具控制面板，支援快速操作。</li>
+            </ul>
+        </div>
+
+        <h2 id="interface">🖥️ 界面分區詳解</h2>
+
+        <h3>1. 功能標籤頁 (Tabs)</h3>
+        <p>程式頂部提供了五個主要功能分頁，對應不同的使用場景：</p>
+        <div class="img-box">
+            <img src="../IMAGES/02_main_tabs.jpg" alt="標籤頁介紹">
+            <span class="img-caption">圖 2：主要功能分頁導覽</span>
+        </div>
+        <table>
+            <tr>
+                <th width="20%">分頁名稱</th>
+                <th>功能用途</th>
+            </tr>
+            <tr>
+                <td><strong>DUT (藍色)</strong></td>
+                <td><strong>核心控制區</strong>。執行大部分的設備指令（Console/ADB/SSH），包含分類按鈕與指令選單。</td>
+            </tr>
+            <tr>
+                <td><strong>FIXTURE</strong></td>
+                <td><strong>治具控制區</strong>。用於控制測試治具的動作（如氣缸、繼電器等），介面獨立但字體與主畫面連動。</td>
+            </tr>
+            <tr>
+                <td><strong>MANUAL CMD</strong></td>
+                <td><strong>手動輸入區</strong>。當需要輸入非預設指令，或進行互動式操作時使用。支援「強制停止」功能。</td>
+            </tr>
+            <tr>
+                <td><strong>DOS</strong></td>
+                <td><strong>系統工具區</strong>。執行本機 Windows DOS 指令。</td>
+            </tr>
+            <tr>
+                <td><strong>設定</strong></td>
+                <td><strong>全域設定區</strong>。設定 SSH 連線資訊、預設 IP、介面字體大小等。</td>
+            </tr>
+        </table>
+
+        <h3>2. 介面佈局與邏輯</h3>
+        <p>程式介面設計邏輯為「上導覽、中操作、右監控」。</p>
+
+        <h2 id="detailed-features">🔍 功能分頁詳解</h2>
+        <p>本章節將依據程式頂部的五個標籤頁 (Tabs)，逐一說明各項功能的操作方式。</p>
+
+        <h3>1. DUT 控制 (DUT Control)</h3>
+        <p>這是程式啟動後的預設畫面，也是最核心的控制區域。所有針對測試設備 (DUT) 的指令發送、狀態監控都在此進行。</p>
+        <div class="img-box">
+            <img src="../IMAGES/tab01_dut_control.jpg" alt="DUT 控制分頁">
+            <span class="img-caption">圖 3：【DUT 控制】分頁全貌</span>
+        </div>
+
+        <h4>1.1 指令分類按鈕 (Categories)</h4>
+        <p>程式讀取 <code>command.txt</code> 後自動生成的快速按鈕。</p>
+        <div class="img-box">
+            <img src="../IMAGES/03_category_buttons.jpg" alt="分類按鈕">
+            <span class="img-caption">圖 3-1：點擊按鈕可快速切換下方的指令列表</span>
+        </div>
+        <div class="step">
+            <span class="step-title">🧪 如何新增按鈕？</span>
+            <p>在 <code>command.txt</code> 中使用 <code>==分類名稱==</code> 即可建立新群組。</p>
+        </div>
+
+        <h4>1.2 指令選擇與執行</h4>
+        <p>確認 COM Port 或網路連線正常後，您有兩種執行方式：</p>
+        <div class="img-box">
+            <img src="../IMAGES/07_execute_btns.jpg" alt="執行按鈕">
+            <span class="img-caption">圖 3-2：操作按鈕區。左側橙色為「執行腳本」（批次），右側綠色為「執行單條指令」</span>
+        </div>
+        <div class="img-box">
+            <img src="../IMAGES/04_command_dropdown.jpg" alt="指令選單">
+            <span class="img-caption">圖 3-3：指令下拉選單，支援關鍵字搜尋</span>
+        </div>
+
+        <table style="width: 100%;">
+            <tr>
+                <th style="width: 50%; background-color: #e8f5e9; color: #2e7d32;">✅ 執行指令 (單條)</th>
+                <th style="width: 50%; background-color: #fff3e0; color: #ef6c00;">🟧 執行腳本 (批次)</th>
+            </tr>
+            <tr>
+                <td style="vertical-align: top;">
+                    <strong>用途：</strong> 執行下拉選單中當前選中的那一個指令。<br><br>
+                    <strong>適用場景：</strong>
+                    <ul>
+                        <li>日常手動測試</li>
+                        <li>驗證單一功能</li>
+                        <li>除錯 (Debug)</li>
+                    </ul>
+                </td>
+                <td style="vertical-align: top;">
+                    <strong>用途：</strong> 讀取外部純文字檔 (.txt)，依序執行檔案內的所有指令。<br><br>
+                    <strong>適用場景：：</strong>
+                    <ul>
+                        <li>自動化燒機測試 (Burn-in)</li>
+                        <li>複雜的初始化流程</li>
+                        <li>需要連續執行數十條指令時</li>
+                    </ul>
+                    <small>提示：腳本檔內一行一個指令，程式會自動等待每條指令完成才執行下一條。</small>
+                </td>
+            </tr>
+        </table>
+
+        <div class="warning-box">
+            <strong>⚠️ 注意：</strong> 若執行的指令需要較長時間由（如 <code>fw_update</code>），請務必先將「超時」時間調大，以免執行到一半被中斷。
+        </div>
+
+        <h4>1.3 執行結果 (Log)</h4>
+        <p>右側的 Log 視窗會即時顯示設備的回應。V2.6.1 版本優化了顯示效果：</p>
+        <div class="img-box">
+            <img src="../IMAGES/08_log_output.jpg" alt="Log 輸出">
+            <span class="img-caption">圖 3-4：執行結果輸出範例</span>
+        </div>
+        <ul>
+            <li><span style="color: purple;">=== 執行指令 ===</span>：標示指令開始。</li>
+            <li><span style="color: blue;">[Console 發送]</span>：顯示實際送出的字串。</li>
+            <li><span style="color: red;">[已中止執行]</span>：若手動停止或超時，會顯示紅字提示。</li>
+        </ul>
+
+        <h4>1.4 網路診斷 (Ping)</h4>
+        <p>在進行 SSH 連線前，建議先使用內建的 Ping 工具確認網路通暢。</p>
+        <div class="img-box">
+            <img src="../IMAGES/05_ping_tool.jpg" alt="Ping 功能">
+            <span class="img-caption">圖 3-5：Ping 工具。輸入 IP 後點擊 Ping，結果會顯示在 Log 視窗</span>
+        </div>
+        <div class="step">
+            <span class="step-title">操作步驟：</span>
+            1. 在 IP 欄位輸入目標位址（如下拉選單有歷史紀錄可直接選）。<br>
+            2. 點擊 <span class="button-demo" style="background: #81d4fa; color: black;">Ping</span> 按鈕。<br>
+            3. 若 Log 顯示 <code>Reply from...</code> 代表連線成功；若顯示 <code>Request timed out</code> 代表失敗。
+        </div>
+
+        <h4>1.5 如何自訂指令檔案 (Command File)</h4>
+        <p>點擊介面上的 <span class="button-demo" style="background: #fb8c00;">open CMD table</span> 按鈕，會用記事本開啟指令設定檔。</p>
+
+        <div class="step">
+            <span class="step-title">📄 command.txt 格式範例：</span>
+            <div class="code-box">
+                ==分類標題==
+                指令顯示名稱 | 實際執行指令
+                Read RTC | date
+
+                ==系統測試==
+                # 井號開頭為註解，不會被讀取
+                Check CPU | cat /proc/cpuinfo
+                Check Mem | free -m
+
+                ==多重指令==
+                # 使用 ==> 符號串接多個指令
+                Reboot Sequence | sync ==> echo b > /proc/sysrq-trigger
+            </div>
+            <ul>
+                <li><strong>==分類標題==</strong>：定義一個新的按鈕群組。</li>
+                <li><strong>| (垂直線)</strong>：分隔顯示名稱與實際指令。</li>
+                <li><strong>==></strong>：分隔多個連續指令（由左至右依序執行）。</li>
+            </ul>
+        </div>
+
+        <hr>
+
+        <h3>2. 治具控制 (Fixture Control)</h3>
+        <p>專為產線治具設計的控制面板，提供直觀的開關與狀態燈號。字體大小會與 DUT 頁面連動。</p>
+        <div class="img-box">
+            <img src="../IMAGES/tab02_fixture_control.jpg" alt="治具分頁">
+            <span class="img-caption">圖 4：【FIXTURE】分頁，包含氣缸、繼電器等硬體控制項</span>
+        </div>
+        <div class="img-box">
+            <img src="../IMAGES/10_manual_stop.jpg" alt="治具參數">
+            <span class="img-caption">圖 4-1：治具專用的串列通訊參數 (Serial Settings)</span>
+        </div>
+
+        <hr>
+
+        <h3>3. 手動指令 (Manual Command)</h3>
+        <p>提供一個自由輸入的終端機環境，適合執行非預設指令或需要互動的場景。</p>
+        <div class="img-box">
+            <img src="../IMAGES/tab03_manual_input.jpg" alt="手動指令分頁">
+            <span class="img-caption">圖 5：【MANUAL CMD】分頁，支援多行指令輸入</span>
+        </div>
+
+        <div class="step">
+            <span class="step-title">🛑 強制停止 (Force Stop)</span>
+            <p>當執行無窮迴圈指令 (如 <code>ping -t</code>) 時，此分頁會出現紅色的停止按鈕 (位於介面右方)。點擊即可強制中斷當前指令。</p>
+        </div>
+
+        <hr>
+
+        <h3>4. DOS 系統工具 (DOS Tool)</h3>
+        <p>在不離開程式的情況下，快速執行 Windows 本機的系統指令。</p>
+        <div class="img-box">
+            <img src="../IMAGES/tab04_dos_tool.jpg" alt="DOS 分頁">
+            <span class="img-caption">圖 6：【DOS】分頁，內建常用的網路診斷指令</span>
+        </div>
+
+        <h4>常用功能：</h4>
+        <ul>
+            <li><strong>IP Config</strong>：查看本機網路配置。</li>
+            <li><strong>Ping</strong>：測試網路連通性。</li>
+        </ul>
+
+        <hr>
+
+        <h3>5. 設定 (Settings)</h3>
+        <p>集中管理所有全域設定，包含連線參數與介面觀感。</p>
+        <div class="img-box">
+            <img src="../IMAGES/tab05_settings.jpg" alt="設定分頁">
+            <span class="img-caption">圖 7：【設定】分頁全貌</span>
+        </div>
+
+        <h4>5.1 測試檔案與啟動設定</h4>
+        <p>設定指令檔案路徑 (.txt) 與程式啟動時的視窗標題。</p>
+        <div class="img-box">
+            <img src="../IMAGES/16_ssh_config.jpg" alt="測試檔案設定">
+            <span class="img-caption">圖 7-1：選擇測試指令檔與設定啟動名稱</span>
+        </div>
+
+        <h4>5.2 多指令分隔與腳本邏輯</h4>
+        <p>設定多條指令之間的執行邏輯。預設使用 <code>==></code> 符號來串接連續指令。</p>
+        <div class="img-box">
+            <img src="../IMAGES/18_font_config.jpg" alt="多指令設定">
+            <span class="img-caption">圖 7-2：設定指令分隔符號 (Splitter)</span>
+        </div>
+
+        <div class="step">
+            <span class="step-title">🧪 串接指令範例：</span>
+            <p>若您希望一次執行多個動作，可使用分隔符號將指令串起來。程式會等待前一個指令完成後，再發送下一個。</p>
+            <div class="code-box">
+                Get Microchip SN = cryptoauth_test sernum==>diag -g status emmc
+            </div>
+            <ul>
+                <li>第一步執行：<code>cryptoauth_test sernum</code></li>
+                <li>第二步執行：<code>diag -g status emmc</code></li>
+            </ul>
+        </div>
+
+        <h4>5.3 SSH 連線操作</h4>
+        <p>設定 SSH 遠端連線的詳細參數，包含 IP、Port 與帳號密碼。</p>
+        <div class="img-box">
+            <img src="../IMAGES/17_baud_setting.jpg" alt="SSH 操作">
+            <span class="img-caption">圖 7-3：SSH 連線參數與連線按鈕</span>
+        </div>
+
+        <h4>5.4 標籤名稱自定義</h4>
+        <p>您可以自定義主畫面上五個標籤頁 (Tabs) 的顯示名稱，方便辨識。</p>
+        <div class="img-box">
+            <img src="../IMAGES/14_fixture_detail.jpg" alt="標籤設定">
+            <span class="img-caption">圖 7-4：修改各分頁的標題文字</span>
+        </div>
+
+
+        <hr>
+
+        <h2 id="developer">🚀 開發者指南</h2>
+
+        <h3>如何打包 EXE (Build EXE)</h3>
+        <p>本專案提供了一鍵打包腳本，讓開發者能快速將 Python 原始碼封裝為可執行的 Windows EXE 檔案。</p>
+
+        <div class="step">
+            <span class="step-title">📦 打包步驟：</span>
+            <ol>
+                <li>確保您已安裝所有必要的 Python 套件 (<code>pip install -r requirements.txt</code>)。</li>
+                <li>前往專案目錄下的 <code>build_scripts</code> 資料夾。</li>
+                <li>雙擊執行 <strong>build_PEGA_final.bat</strong> 批次檔。</li>
+                <li>等待終端機視窗執行完畢 (約需 1-2 分鐘)。</li>
+                <li>打包完成後，EXE 檔案將會在 <code>dist</code> 資料夾中生成。</li>
+            </ol>
+            <div class="code-box">
+                rem build_PEGA_final.bat 核心指令示意
+                pyinstaller --noconfirm --onedir --windowed --name "PEGA指令通" main.py
+            </div>
+        </div>
+
+        <h2 id="troubleshooting">🔧 常見問題排除</h2>
+
+        <div class="warning-box">
+            <strong>Q1: 程式無法開啟，閃退？</strong><br>
+            請檢查程式目錄下是否有 <code>sign_DOC.txt</code> 檔案，且內容包含 <code>JOVIAN</code> 字樣。這是必要的安全驗證檔案。
+        </div>
+
+        <div class="step">
+            <strong>Q2: SSH 連線顯示 "Access Denied"？</strong><br>
+            請確認「設定」頁面中的帳號密碼是否正確。
+            <ul>
+                <li>預設帳號通常為 <code>root</code>。</li>
+                <li>若無密碼，請在密碼欄位留空，或輸入 <code>root/</code> 格式。</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <strong>Q3: 指令執行顯示亂碼？</strong><br>
+            這通常是波特率 (Baud Rate) 不匹配導致。請到「設定」頁面檢查 Console 波特率設定（預設 115200）。
+        </div>
+
+        <div class="version-info">
+            <p><strong>PEGA指令通 (GEMINI TOOL) V2.6.3</strong></p>
+            <p>穩定版 | 2026/02/13 更新</p>
+            <p>Copyright © 2026 PEGA Device Research. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+
+</html>
