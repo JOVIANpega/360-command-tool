@@ -1,0 +1,30 @@
+# 關鍵字高亮設定檔 - 格式：關鍵字=顏色
+# 統一使用藍色高亮，避免與程式預設顏色衝突
+
+# 長關鍵字優先
+BT init succeeds=blue
+192.168.11.143=blue
+
+# 常用關鍵字（統一藍色）
+success=blue
+successfully=blue
+fail=blue
+error=blue
+connect=blue
+connected=blue
+disconnect=blue
+warning=blue
+timeout=blue
+ready=blue
+complete=blue
+start=blue
+stop=blue
+pass=blue
+test=blue
+version=blue
+status=blue
+power=blue
+led=blue
+ping=blue
+response=blue
+
