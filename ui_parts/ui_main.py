@@ -1038,111 +1038,144 @@ class TabManager:
             traceback.print_exc()
 
 
+    def init_global_styles(self):
         self.apply_theme()
 
     def apply_theme(self):
-        """應用深色或淺色主題"""
+        """應用深色或淺色主題 (優化配色 V2 版本)"""
         is_dark = self.dark_mode_var.get()
         style = ttk.Style()
         
-        if is_dark:
-            # === 深色模式色彩 ===
-            bg_color = "#1e1e1e"        # 主背景 (VS Code 灰)
-            fg_color = "#d4d4d4"        # 主文字 (淺灰)
-            header_bg = "#252526"      # 標題區塊背景
-            entry_bg = "#3c3c3c"       # 輸入框背景
-            button_bg = "#333333"      # 按鈕背景
-            active_bg = "#094771"      # 選取/啟用時的背景 (深藍)
-            border_color = "#454545"   # 邊框顏色
+        # 獲取字體大小設定
+        try:
+            ui_font_size = int(self.shared_config.get_var('dut_ui_font_size').get() or 12)
+        except:
+            ui_font_size = 12
             
-            # 視窗與主框架
+        if is_dark:
+            # === 深色模式色彩 (優化版) ===
+            bg_color = "#252526"        # 柔和深灰
+            fg_color = "#e1e1e1"        # 亮灰文字
+            header_bg = "#333333"      # 區塊背景
+            entry_bg = "#1e1e1e"       # 輸入框深背景
+            button_bg = "#3c3c3c"      # 按鈕背景
+            active_blue = "#007acc"    # 亮藍色
+            
             self.root.configure(bg=bg_color)
             
-            # TTK 全域樣式更新
+            # TTK 全域樣式
             style.configure('Main.TFrame', background=bg_color)
             style.configure('TNotebook', background=bg_color, borderwidth=0)
-            style.configure('TNotebook.Tab', background=button_bg, foreground=fg_color, padding=[16, 6])
+            
+            # 標籤分頁樣式 (加大字體)
+            style.configure('TNotebook.Tab', 
+                            background=button_bg, 
+                            foreground=fg_color, 
+                            padding=[20, 8],
+                            font=('Microsoft JhengHei UI', ui_font_size + 2, 'bold'))
             style.map('TNotebook.Tab',
-                background=[('selected', active_bg), ('active', '#2a2d2e')],
+                background=[('selected', active_blue), ('active', '#454545')],
                 foreground=[('selected', 'white'), ('active', 'white')]
             )
             
-            style.configure('TLabelframe', background=bg_color, foreground=fg_color)
-            style.configure('TLabelframe.Label', background=bg_color, foreground=fg_color, font=('Microsoft JhengHei UI', 10, 'bold'))
-            style.configure('TLabel', background=bg_color, foreground=fg_color)
-            style.configure('TCheckbutton', background=bg_color, foreground=fg_color)
+            # 綠色標籤樣式 (針對 Handover/治具)
+            try:
+                style.element_create('Green.Tab', 'from', 'default')
+            except: pass
+            style.layout('Green.TNotebook.Tab', style.layout('TNotebook.Tab'))
+            style.configure('Green.TNotebook.Tab', 
+                            background="#2d2d2d", 
+                            foreground=fg_color,
+                            font=('Microsoft JhengHei UI', ui_font_size + 2, 'bold'))
+            style.map('Green.TNotebook.Tab',
+                background=[('selected', "#4caf50"), ('active', "#66bb6a")],
+                foreground=[('selected', 'white'), ('active', 'white')]
+            )
             
-            # 按鈕樣式
+            # 應用樣式到分頁
+            try:
+                for i in range(self.notebook.index('end')):
+                    tab_text = self.notebook.tab(i, 'text')
+                    if '治具' in tab_text or 'HANDOVER' in tab_text.upper():
+                        self.notebook.tab(i, style='Green.TNotebook.Tab')
+                    else:
+                        self.notebook.tab(i, style='')
+            except: pass
+            
+            style.configure('TLabelframe', background=bg_color, foreground="#4ec9b0") # 青色標題
+            style.configure('TLabelframe.Label', background=bg_color, foreground="#4ec9b0", 
+                            font=('Microsoft JhengHei UI', ui_font_size, 'bold'))
+            style.configure('TLabel', background=bg_color, foreground=fg_color, font=('Microsoft JhengHei UI', ui_font_size))
+            style.configure('TCheckbutton', background=bg_color, foreground=fg_color, font=('Microsoft JhengHei UI', ui_font_size))
+            
+            # 按鈕
             for btn_style in ['TButton', 'Blue.TButton', 'Orange.TButton', 'Accent.TButton']:
-                style.configure(btn_style, background=button_bg, foreground=fg_color)
+                style.configure(btn_style, background=button_bg, foreground=fg_color, font=('Microsoft JhengHei UI', ui_font_size))
                 style.map(btn_style,
-                    background=[('active', active_bg), ('disabled', '#2d2d2d')],
+                    background=[('active', active_blue), ('disabled', '#2d2d2d')],
                     foreground=[('active', 'white'), ('disabled', '#858585')]
                 )
 
-            # 更新所有子元件的背景顏色 (TK 原生元件)
-            def update_tk_widgets(parent):
+            # 更新所有子元件
+            def update_widgets_recursive(parent):
                 for child in parent.winfo_children():
-                    widget_type = child.winfo_class()
+                    w_class = child.winfo_class()
                     try:
-                        if widget_type in ['Label', 'Frame', 'Checkbutton', 'Radiobutton']:
+                        if w_class in ['Label', 'Frame', 'Checkbutton', 'Radiobutton', 'LabelFrame']:
                             child.configure(bg=bg_color, fg=fg_color)
-                        elif widget_type in ['Text', 'Entry', 'Listbox']:
-                            child.configure(bg=entry_bg, fg=fg_color, insertbackground=fg_color)
-                        elif widget_type == 'Canvas':
+                        elif w_class in ['Text', 'Entry', 'Listbox']:
+                            child.configure(bg=entry_bg, fg="#ffffff", insertbackground="white",
+                                          font=('Consolas' if w_class == 'Text' else 'Microsoft JhengHei UI', ui_font_size))
+                        elif w_class == 'Canvas':
                             child.configure(bg=bg_color, highlightthickness=0)
                     except: pass
-                    update_tk_widgets(child)
+                    if child.winfo_children():
+                        update_widgets_recursive(child)
             
-            # 嘗試更新文字區域
+            update_widgets_recursive(self.root)
+            
+            # 輸出區域配色
             if hasattr(self, 'dut_ui') and hasattr(self.dut_ui, 'text_output'):
-                self.dut_ui.text_output.configure(bg="#1e1e1e", fg="#d4d4d4", insertbackground="white")
+                self.dut_ui.text_output.configure(bg="#1e1e1e", fg="#d4d4d4", font=('Consolas', ui_font_size))
             
             if hasattr(self, 'manual_ui') and hasattr(self.manual_ui, 'output_text'):
-                self.manual_ui.output_text.configure(bg="#1e1e1e", fg="#d4d4d4", insertbackground="white")
-            
-            # 更新特定元件
-            if hasattr(self, 'notification_label'):
-                self.notification_label.configure(bg="#333333", fg="white")
+                self.manual_ui.output_text.configure(bg="#1e1e1e", fg="#d4d4d4", font=('Consolas', ui_font_size))
 
         else:
-            # === 淺色模式色彩 (恢復原本樣式) ===
+            # === 淺色模式 ===
             bg_color = "white"
-            fg_color = "black"
-            
             self.root.configure(bg="#f0f0f0")
             
-            style.configure('Main.TFrame', background='white')
-            style.configure('TNotebook', background='white')
-            style.configure('TNotebook.Tab', background='#d9d9d9', foreground='black')
-            style.map('TNotebook.Tab',
-                background=[('selected', '#2196f3'), ('active', '#2196f3')],
-                foreground=[('selected', 'white'), ('active', 'white')]
-            )
+            style.configure('TNotebook.Tab', background='#d9d9d9', foreground='black', 
+                            font=('Microsoft JhengHei UI', ui_font_size, 'bold'))
+            style.map('TNotebook.Tab', background=[('selected', '#2196f3')], foreground=[('selected', 'white')])
             
-            style.configure('TLabelframe', background='white', foreground='black')
-            style.configure('TLabelframe.Label', background='white', foreground='black')
-            style.configure('TLabel', background='white', foreground='black')
-            
-            # 恢復按鈕
-            for btn_style in ['TButton', 'Blue.TButton', 'Orange.TButton', 'Accent.TButton']:
-                style.configure(btn_style, background='#d9d9d9', foreground='black')
-                style.map(btn_style,
-                    background=[('active', '#2196f3')],
-                    foreground=[('active', 'white')]
-                )
-            
-            if hasattr(self, 'dut_ui') and hasattr(self.dut_ui, 'text_output'):
-                self.dut_ui.text_output.configure(bg="white", fg="black", insertbackground="black")
+            # 恢復樣式到分頁
+            try:
+                for i in range(self.notebook.index('end')):
+                    tab_text = self.notebook.tab(i, 'text')
+                    if '治具' in tab_text or 'HANDOVER' in tab_text.upper():
+                        self.notebook.tab(i, style='Green.TNotebook.Tab')
+                    else:
+                        self.notebook.tab(i, style='')
+            except: pass
 
-            if hasattr(self, 'manual_ui') and hasattr(self.manual_ui, 'output_text'):
-                self.manual_ui.output_text.configure(bg="white", fg="black", insertbackground="black")
+            # 恢復所有元件
+            def restore_widgets_recursive(parent):
+                for child in parent.winfo_children():
+                    w_class = child.winfo_class()
+                    try:
+                        if w_class in ['Label', 'Frame', 'Checkbutton', 'Radiobutton', 'LabelFrame']:
+                            child.configure(bg='white', fg='black')
+                        elif w_class in ['Text', 'Entry', 'Listbox']:
+                            child.configure(bg='white', fg='black', insertbackground='black',
+                                          font=('Consolas' if w_class == 'Text' else 'Microsoft JhengHei UI', ui_font_size))
+                    except: pass
+                    if child.winfo_children():
+                        restore_widgets_recursive(child)
+            restore_widgets_recursive(self.root)
 
-        print(f"[DEBUG] 已套用{'深色' if is_dark else '淺色'}主題")
-            background=[('active', '#2196f3'), ('!active', '#d9d9d9')],
-            foreground=[('active', 'white'), ('!active', 'black')]
-        )
-
+        print(f"[DEBUG] 已套用優化主題 V2 (字體大小: {ui_font_size})")
 
     
 

@@ -1,8 +1,8 @@
 {
-  "version": "V2.6.12",
+  "version": "V2.6.14",
   "Window_Title": "PEGA指令通",
-  "Window_Width": "1522",
-  "Window_Height": "741",
+  "Window_Width": "1536",
+  "Window_Height": "793",
   "UI_Font_Size": "11",
   "UI_ToolTip_Enabled": true,
   "SSH_Settings": {
@@ -21,22 +21,22 @@
     ],
     "Default_IP_Address": "192.168.11.143",
     "Command_File_Path": "Command_TABLE/Taurus7_20260415.txt",
-    "Single_Command_Timeout": "30",
+    "Single_Command_Timeout": "300",
     "Pane_Sash_Position": "574",
     "Auto_Execute": false,
     "IP_History": [
       "192.168.11.143"
     ],
-    "Command_Timeout_Seconds": "30",
-    "Command_End_String": "root",
+    "Command_Timeout_Seconds": "300",
+    "Command_End_String": "pega>",
     "UI_Font_Size": "13",
     "Content_Font_Size": "11",
     "Window_Title": "PEGA指令通",
     "Available_End_Strings": [
       "root"
     ],
-    "Window_Width": "1522",
-    "Window_Height": "741",
+    "Window_Width": "1536",
+    "Window_Height": "793",
     "Last_Selected_Command_Section": "全部指令",
     "Notification_Font_Size": "10",
     "Command_Interval": "1.0"
@@ -64,7 +64,7 @@
   "UIFontSize": "13",
   "ContentFontSize": "11",
   "UI_Settings": {
-    "ToolTip_Enabled": true,
+    "ToolTip_Enabled": false,
     "left_pane_width": 420,
     "Settings_Sash_Position": "636"
   },
