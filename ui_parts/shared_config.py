@@ -205,9 +205,6 @@ class SharedConfigManager:
     
     def on_var_changed(self, var_name):
         """當變數變更時調用"""
-        # 只更新UI顯示，不自動保存到檔案
-        # print(f"[DEBUG] SharedConfigManager: 變數 {var_name} 已變更，等待手動保存")
-
         # 通知相關的回調函數
         if var_name in self.callbacks:
             for callback in self.callbacks[var_name]:
@@ -215,6 +212,10 @@ class SharedConfigManager:
                     callback(var_name, self.vars[var_name].get())
                 except Exception as e:
                     print(f"[ERROR] 執行回調函數時發生錯誤 ({var_name}): {e}")
+        
+        # 如果啟用了自動保存，則安排延遲保存
+        if self._auto_save_enabled:
+            self._schedule_delayed_save()
     
     def register_callback(self, var_name, callback):
         """註冊變數變更回調函數"""

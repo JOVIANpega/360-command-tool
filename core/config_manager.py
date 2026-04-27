@@ -53,6 +53,7 @@ class ConfigManager:
                 'Pane_Sash_Position': '636',
                 'Auto_Execute': False,
                 'Command_File_Path': '',
+                'Command_Interval': '1.0',
                 'Notification_Font_Size': '10'
             },
             'Fixture_Control': {

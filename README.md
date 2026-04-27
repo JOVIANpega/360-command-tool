@@ -1,4 +1,4 @@
-# PEGA 指令通 (PEGA Command Tool) v2.5.4
+# PEGA 指令通 (PEGA Command Tool) v2.6.13
 
 [![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-Proprietary-red.svg)](LICENSE)
@@ -71,5 +71,5 @@
 本專案為內部開發工具，未經授權禁止外傳。
 
 ---
-**Last Updated**: 2026-02-12
-**Version**: 2.5.6 (Stable Release)
+**Last Updated**: 2026-04-27
+**Version**: 2.6.13 (Stable Release)

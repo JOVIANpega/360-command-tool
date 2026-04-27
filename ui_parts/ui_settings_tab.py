@@ -268,6 +268,21 @@ class SettingsTab(ttk.Frame):
         self.timeout_entry.grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
         dut_row += 1
         
+        # 跟單多重指令間隔時間 (跟單指令時間)
+        ttk.Label(dut_frame, text="跟單多重指令間隔 (秒):").grid(row=dut_row, column=0, sticky="w", pady=4)
+        self.vars["DUT_Command_Interval"] = tk.StringVar(value=str(dut_settings.get("Command_Interval", 1.0)))
+        
+        self.interval_entry = tk.Entry(
+            dut_frame, 
+            textvariable=self.vars["DUT_Command_Interval"], 
+            width=20,
+            bg='#E6F3FF',  # 淺藍色
+            relief='sunken',
+            borderwidth=1
+        )
+        self.interval_entry.grid(row=dut_row, column=1, sticky="w", padx=(10, 0), pady=4)
+        dut_row += 1
+        
 
         
 
@@ -836,6 +851,7 @@ class SettingsTab(ttk.Frame):
         current_setup["DUT_Control"]["Command_Separator"] = self.vars["DUT_Command_Separator"].get()
         current_setup["DUT_Control"]["Default_IP_Address"] = self.vars["DUT_Default_IP_Address"].get()
         current_setup["DUT_Control"]["Single_Command_Timeout"] = self.vars["DUT_Single_Command_Timeout"].get()
+        current_setup["DUT_Control"]["Command_Interval"] = self.vars["DUT_Command_Interval"].get()
         # 字體設定已移至DUT控制標籤頁，此處不再處理
         current_setup["DUT_Control"]["Pane_Sash_Position"] = self.vars["DUT_Pane_Sash_Position"].get()
         current_setup["DUT_Control"]["Auto_Execute"] = self.vars["DUT_Auto_Execute"].get()
@@ -1325,6 +1341,7 @@ class SettingsTab(ttk.Frame):
             self.vars["DUT_Command_Separator"].set(dut_settings.get("Command_Separator", "|"))
             self.vars["DUT_Default_IP_Address"].set(dut_settings.get("Default_IP_Address", "192.168.11.143"))
             self.vars["DUT_Single_Command_Timeout"].set(str(dut_settings.get("Single_Command_Timeout", 10)))
+            self.vars["DUT_Command_Interval"].set(str(dut_settings.get("Command_Interval", 1.0)))
             # 字體設定已移至DUT控制標籤頁，此處不再處理
             self.vars["DUT_Pane_Sash_Position"].set(dut_settings.get("Pane_Sash_Position", "633"))
             self.vars["DUT_Auto_Execute"].set(dut_settings.get("Auto_Execute", False))
@@ -1356,26 +1373,41 @@ class SettingsTab(ttk.Frame):
     def restore_sash(self):
         """恢復 PanedWindow 分割位置"""
         try:
-            # 優先從 setup_data 獲取，若無則從磁碟載入
-            ui_settings = self.setup_data.get("UI_Settings", {})
-            saved_sash_pos = ui_settings.get("Settings_Sash_Position")
+            # 優先從即時記錄的位置恢復
+            saved_sash_pos = getattr(self, '_last_known_sash_pos', None)
             
+            # 如果沒有，嘗試從全域管理器 (SharedConfig) 獲取
+            if not saved_sash_pos or saved_sash_pos <= 100:
+                try:
+                    from ui_parts.shared_config import get_shared_config
+                    shared_config = get_shared_config()
+                    if 'settings_sash_position' in shared_config.vars:
+                        val = shared_config.vars['settings_sash_position'].get()
+                        if val and int(val) > 100:
+                            saved_sash_pos = int(val)
+                except: pass
+
+            # 如果還是沒有，才從目前的 setup_data (可能是剛從磁碟載入的) 獲取
+            if not saved_sash_pos or saved_sash_pos <= 100:
+                ui_settings = self.setup_data.get("UI_Settings", {})
+                saved_sash_pos = ui_settings.get("Settings_Sash_Position")
+            
+            # 最後保險：從磁碟重新載入
             if not saved_sash_pos:
-                # 嘗試再次從磁碟載入
                 fresh_setup = load_setup()
                 saved_sash_pos = fresh_setup.get("UI_Settings", {}).get("Settings_Sash_Position", 450)
             
             pos = int(saved_sash_pos)
             if pos > 0:
                 self.main_container.sashpos(0, pos)
+                self._last_known_sash_pos = pos # 同步更新本地記錄
                 print(f"[DEBUG] 設定頁面分欄位置恢復成功: {pos}")
         except Exception as e:
-            # 靜默失敗或設定 50/50
+            print(f"[DEBUG] 恢復設定分欄位置異常: {e}")
             try:
                 self.main_container.sashpos(0, 450)
             except:
                 pass
-            print(f"[DEBUG] 恢復設定分欄位置異常: {e}")
 
 
 

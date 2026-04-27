@@ -455,7 +455,7 @@ class ManualCommandUI:
         
         # 顯示指令
         self.output_text.configure(state='normal')
-        self.output_text.insert(tk.END, f"{command}\n")
+        self.output_text.insert(tk.END, f"{command}\n", "send")
         self.output_text.see(tk.END)
         self.output_text.configure(state='disabled')
         
@@ -480,7 +480,9 @@ class ManualCommandUI:
         """添加彩色輸出文字，完全複製 DUT 控制頁的顯示邏輯"""
         self.output_text.configure(state='normal')
         
-        if text.startswith('[發送]'):
+        if tag:
+            self.output_text.insert(tk.END, text, tag)
+        elif text.startswith('[發送]'):
             self.output_text.insert(tk.END, text, "send")
         elif text.startswith('[錯誤]'):
             self.output_text.insert(tk.END, text, "error")
@@ -488,8 +490,6 @@ class ManualCommandUI:
             self.output_text.insert(tk.END, text, "end")
         elif text.startswith('===') or "執行指令:" in text:
             self.output_text.insert(tk.END, text, "purple")
-        elif tag:
-            self.output_text.insert(tk.END, text, tag)
         else:
             # 自動檢測關鍵字並應用顏色
             if hasattr(self, 'highlight_keywords') and self.highlight_keywords:
@@ -672,14 +672,14 @@ class ManualCommandUI:
 
         # 在輸出區域顯示指令（使用彩色顯示）
         if command.strip():
-            self.add_colored_output(f"=== 執行指令: {command} ===\n", "purple")
+            self.add_colored_output(f"=== 執行指令: {command} ===\n", "send")
             if transport_mode == "SSH":
                 self.add_colored_output(f"[SSH] 使用帳號: {display_acc}\n", "purple")
         
         # 執行指令
         self.execute_command_thread(command, com_port, timeout, transport_mode, end_string, cmd_timeout)
     
-    def execute_command_thread(self, command, com_port, timeout, transport_mode, end_string, cmd_timeout=10.0):
+    def execute_command_thread(self, command, com_port, timeout, transport_mode, end_string, cmd_timeout=10.0, cmd_interval=1.0):
         """
         在執行緒中執行指令，並即時顯示回應內容
         支援 Console, ADB 和 SSH 三種傳輸模式
@@ -700,6 +700,12 @@ class ManualCommandUI:
         # 重置停止事件
         self.stop_event.clear()
         
+        # 獲取指令間隔
+        try:
+            cmd_interval = float(self.setup.get('DUT_Control', {}).get('Command_Interval', 1.0))
+        except (ValueError, TypeError):
+            cmd_interval = 1.0
+
         # 準備指令列表
         cmd_list = [command] if command.strip() else [""]
 
@@ -715,7 +721,8 @@ class ManualCommandUI:
                     on_progress=on_progress_callback,
                     on_finish=on_finish_callback,
                     stop_event=self.stop_event,
-                    cmd_timeout=cmd_timeout
+                    cmd_timeout=cmd_timeout,
+                    cmd_interval=cmd_interval
                 )
             elif transport_mode == "SSH":
                 # 使用 SSHWorkerV2
@@ -733,7 +740,8 @@ class ManualCommandUI:
                     on_progress=on_progress_callback,
                     on_finish=on_finish_callback,
                     stop_event=self.stop_event,
-                    cmd_timeout=cmd_timeout
+                    cmd_timeout=cmd_timeout,
+                    cmd_interval=cmd_interval
                 )
             else:
                 # 預設使用 SerialWorkerV2 (Console)
@@ -755,7 +763,8 @@ class ManualCommandUI:
                     on_progress=on_progress_callback,
                     on_finish=on_finish_callback,
                     stop_event=self.stop_event,
-                    cmd_timeout=cmd_timeout
+                    cmd_timeout=cmd_timeout,
+                    cmd_interval=cmd_interval
                 )
             
             # 開始執行

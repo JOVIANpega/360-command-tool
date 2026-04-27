@@ -1816,27 +1816,27 @@ class UIHandlers(UIHandlersCore):
         print(f"[DEBUG] 傳輸模式: {transport_mode}")
 
         # 顯示執行信息
-        self.parent.components.add_to_buffer(f"\n=== 執行指令: {selected_command} ===\n", "purple")
+        self.parent.components.add_to_buffer(f"\n=== 執行指令: {selected_command} ===\n", "send")
         if transport_mode == "ADB":
-            self.parent.components.add_to_buffer(f"傳輸模式: ADB, 超時: {timeout} 秒, 結束字串: {end_string}\n", "purple")
+            self.parent.components.add_to_buffer(f"傳輸模式: ADB, 超時: {timeout} 秒, 結束字串: {end_string}\n", "send")
             # 顯示多重指令模式信息
             if len(cmd_list) > 1:
-                self.parent.components.add_to_buffer(f"多重指令模式: 將執行 {len(cmd_list)} 個指令\n", "purple")
+                self.parent.components.add_to_buffer(f"多重指令模式: 將執行 {len(cmd_list)} 個指令\n", "send")
                 for i, cmd in enumerate(cmd_list, 1):
                     cmd = cmd.strip()
                     if cmd:
-                        self.parent.components.add_to_buffer(f"  {i}. {cmd}\n", "purple")
-                self.parent.components.add_to_buffer("\n", "purple")
+                        self.parent.components.add_to_buffer(f"  {i}. {cmd}\n", "send")
+                self.parent.components.add_to_buffer("\n", "send")
         else:
-            self.parent.components.add_to_buffer(f"COM 口: {com_port}, 超時: {timeout} 秒, 結束字串: {end_string}\n", "purple")
+            self.parent.components.add_to_buffer(f"COM 口: {com_port}, 超時: {timeout} 秒, 結束字串: {end_string}\n", "send")
             # 顯示多重指令模式信息
             if len(cmd_list) > 1:
-                self.parent.components.add_to_buffer(f"多重指令模式: 將執行 {len(cmd_list)} 個指令\n", "purple")
+                self.parent.components.add_to_buffer(f"多重指令模式: 將執行 {len(cmd_list)} 個指令\n", "send")
                 for i, cmd in enumerate(cmd_list, 1):
                     cmd = cmd.strip()
                     if cmd:
-                        self.parent.components.add_to_buffer(f"  {i}. {cmd}\n", "purple")
-                self.parent.components.add_to_buffer("\n", "purple")
+                        self.parent.components.add_to_buffer(f"  {i}. {cmd}\n", "send")
+                self.parent.components.add_to_buffer("\n", "send")
 
         # 多重指令模式信息已在上面顯示，這裡不再重複
 

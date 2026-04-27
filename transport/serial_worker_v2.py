@@ -34,7 +34,7 @@ class SerialWorkerV2(BaseWorker):
     """
     
     def __init__(self, com: str, cmd_list, end_str: str, timeout: float, baudrate: int = 115200,
-                 on_data=None, on_status=None, on_progress=None, on_finish=None, stop_event=None, cmd_timeout: float = 10.0):
+                 on_data=None, on_status=None, on_progress=None, on_finish=None, stop_event=None, cmd_timeout: float = 10.0, cmd_interval: float = 1.0):
         """
         初始化序列埠工作器
         
@@ -51,7 +51,8 @@ class SerialWorkerV2(BaseWorker):
             on_progress=on_progress,
             on_finish=on_finish,
             stop_event=stop_event,
-            cmd_timeout=cmd_timeout
+            cmd_timeout=cmd_timeout,
+            cmd_interval=cmd_interval
         )
         
         # 序列埠特定參數

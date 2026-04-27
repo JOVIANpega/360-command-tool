@@ -102,7 +102,7 @@ class SSHWorkerV2(BaseWorker):
     
     def __init__(self, cmd_list, end_str: str, timeout: int,
                  host: str, port: int, username: str, password: str,
-                 on_data, on_status, on_progress, on_finish, stop_event, cmd_timeout: float = 30.0):
+                 on_data, on_status, on_progress, on_finish, stop_event, cmd_timeout: float = 30.0, cmd_interval: float = 1.0):
         """
         初始化 SSH 工作器
         
@@ -122,7 +122,8 @@ class SSHWorkerV2(BaseWorker):
             on_progress=on_progress,
             on_finish=on_finish,
             stop_event=stop_event,
-            cmd_timeout=cmd_timeout
+            cmd_timeout=cmd_timeout,
+            cmd_interval=cmd_interval
         )
         
         # SSH 特定參數

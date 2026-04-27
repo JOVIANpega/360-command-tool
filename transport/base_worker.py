@@ -41,7 +41,8 @@ class BaseWorker(threading.Thread, ABC):
                  on_progress: Callable,
                  on_finish: Callable, 
                  stop_event: threading.Event, 
-                 cmd_timeout: float = 10.0):
+                 cmd_timeout: float = 10.0,
+                 cmd_interval: float = 1.0):
         """
         初始化基礎工作器
         
@@ -67,6 +68,7 @@ class BaseWorker(threading.Thread, ABC):
         self.end_str = end_str
         self.timeout = timeout
         self.cmd_timeout = cmd_timeout
+        self.cmd_interval = cmd_interval
         
         # 回調函數
         self.on_data = on_data
@@ -232,7 +234,7 @@ class BaseWorker(threading.Thread, ABC):
         else:
             header = f"{index+1:02d}  發送指令 {cmd_str}"
         
-        self.on_data(f'\n{header}\n', "purple")
+        self.on_data(f'\n{header}\n', "send")
         self.on_data(f'[{transport_name} 發送] {cmd_str}\n', "send")
         
         # 執行指令
@@ -310,7 +312,7 @@ class BaseWorker(threading.Thread, ABC):
                 
                 # 指令間隔
                 if i < len(self.cmd_list) - 1:  # 不是最後一個指令
-                    time.sleep(1)
+                    time.sleep(self.cmd_interval)
             
             # 步驟 3: 如果沒有收到結束字串，繼續等待最終回應
             if not finished and not self.stop_event.is_set():

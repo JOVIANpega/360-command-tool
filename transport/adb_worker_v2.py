@@ -32,7 +32,7 @@ class ADBWorkerV2(BaseWorker):
     """
     
     def __init__(self, cmd_list, end_str: str, timeout: float,
-                 on_data, on_status, on_progress, on_finish, stop_event, cmd_timeout: float = 30.0):
+                 on_data, on_status, on_progress, on_finish, stop_event, cmd_timeout: float = 30.0, cmd_interval: float = 1.0):
         """
         初始化 ADB 工作器
         
@@ -48,7 +48,8 @@ class ADBWorkerV2(BaseWorker):
             on_progress=on_progress,
             on_finish=on_finish,
             stop_event=stop_event,
-            cmd_timeout=cmd_timeout
+            cmd_timeout=cmd_timeout,
+            cmd_interval=cmd_interval
         )
         
         log_debug("ADBWorkerV2 初始化")

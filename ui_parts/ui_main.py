@@ -468,13 +468,15 @@ class TabManager:
             setup = load_setup()
             tab_names = setup.get('tab_names', {})
             
-            # 預設的 TAB 按鈕名稱
-            default_tab_names = ['DUT 控制', '治具控制', 'DOS 工具', '設定']
+            # 預設的 TAB 按鈕名稱 (支援 5 個標籤)
+            default_tab_names = ['DUT 控制', '治具控制', '手動輸入', 'DOS 工具', '設定']
 
             # 更新標籤名稱 - 限制顯示最多10個字元
-            for i in range(4):  # 目前有4個標籤頁
+            for i in range(min(5, self.notebook.index('end'))):
                 tab_key = f'tab{i}'
-                raw_name = tab_names.get(tab_key, default_tab_names[i])
+                # 防止索引溢出
+                d_name = default_tab_names[i] if i < len(default_tab_names) else f"標籤 {i+1}"
+                raw_name = tab_names.get(tab_key, d_name)
                 
                 # 自動截斷邏輯
                 display_name = raw_name
@@ -1475,9 +1477,9 @@ class TabManager:
             
             # 確保保存最新的標籤頁名稱
             if hasattr(self, 'notebook'):
-                # 獲取當前標籤頁名稱
+                # 獲取所有標籤頁名稱 (支援 5 個標籤)
                 tab_names = setup.get('tab_names', {})
-                for i in range(min(4, self.notebook.index('end'))):
+                for i in range(min(5, self.notebook.index('end'))):
                     tab_names[f'tab{i}'] = self.notebook.tab(i, 'text')
                 setup['tab_names'] = tab_names
                 print(f"[DEBUG] 關閉時保存標籤頁名稱：{tab_names}")

@@ -122,7 +122,11 @@ class UIComponentsInput:
         self.label_timeout = ttk.Label(timeout_frame, text='超時(秒):', style="TLabel")
         self.label_timeout.grid(row=0, column=0, sticky='w')
 
-        self.entry_timeout = ttk.Entry(timeout_frame, width=5)
+        self.entry_timeout = ttk.Entry(
+            timeout_frame, 
+            width=5, 
+            textvariable=self.shared_config.get_var('dut_timeout')
+        )
         self.entry_timeout.grid(row=0, column=1, padx=5, sticky='w')
 
         self.label_end = ttk.Label(timeout_frame, text='結束字串:', style="TLabel")

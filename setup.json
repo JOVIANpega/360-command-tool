@@ -1,5 +1,5 @@
 {
-  "version": "V2.6.11",
+  "version": "V2.6.13",
   "Window_Title": "PEGA指令通",
   "Window_Width": "1536",
   "Window_Height": "793",
@@ -21,14 +21,14 @@
     ],
     "Default_IP_Address": "192.168.11.143",
     "Command_File_Path": "Command_TABLE/Taurus7_20260415.txt",
-    "Single_Command_Timeout": "10",
-    "Pane_Sash_Position": "326",
+    "Single_Command_Timeout": "300",
+    "Pane_Sash_Position": "574",
     "Auto_Execute": false,
     "IP_History": [
       "192.168.11.143"
     ],
-    "Command_Timeout_Seconds": "30",
-    "Command_End_String": "root",
+    "Command_Timeout_Seconds": "300",
+    "Command_End_String": "pega>",
     "UI_Font_Size": "13",
     "Content_Font_Size": "11",
     "Window_Title": "PEGA指令通",
@@ -38,7 +38,8 @@
     "Window_Width": "1536",
     "Window_Height": "793",
     "Last_Selected_Command_Section": "全部指令",
-    "Notification_Font_Size": "10"
+    "Notification_Font_Size": "10",
+    "Command_Interval": "1.0"
   },
   "Fixture_Control": {
     "Fixture_COM_Port": "",
@@ -65,7 +66,7 @@
   "UI_Settings": {
     "ToolTip_Enabled": false,
     "left_pane_width": 420,
-    "Settings_Sash_Position": "450"
+    "Settings_Sash_Position": "636"
   },
   "notification_messages": {
     "app_started": "指令通 已啟動",
@@ -76,6 +77,6 @@
     "ip_updated": "• IP地址設定已更新",
     "timeout_updated": "• 超時設定已更新"
   },
-  "Device_Label": "MU310 : root/oelinux123",
+  "Device_Label": "XXXXXXXNONE",
   "Startup_Label": "COMMND TOOL"
 }

@@ -199,11 +199,13 @@ class CommandProcessor:
                 separator = self.setup.get('DUT_Control', {}).get('Command_Separator', '|')
                 cmd_list = command.split(separator)
 
-                # 獲取單個指令超時時間
+                # 獲取單個指令超時時間和間隔
                 try:
-                    cmd_timeout = float(self.setup.get('DUT_Control', {}).get('Single_Command_Timeout', 10.0))
+                    cmd_timeout = float(self.setup.get('DUT_Control', {}).get('Single_Command_Timeout', 30.0))
+                    cmd_interval = float(self.setup.get('DUT_Control', {}).get('Command_Interval', 1.0))
                 except (ValueError, TypeError):
                     cmd_timeout = 30.0
+                    cmd_interval = 1.0
 
                 # 創建新的 ADB 工作器 (使用 V2)
                 self.adb_worker = ADBWorkerV2(
@@ -215,7 +217,8 @@ class CommandProcessor:
                     on_progress=lambda p: None,  # 進度由外部處理
                     on_finish=on_finish_callback,
                     stop_event=self.parent.stop_event,
-                    cmd_timeout=cmd_timeout
+                    cmd_timeout=cmd_timeout,
+                    cmd_interval=cmd_interval
                 )
 
                 # 啟動 ADB 工作器
@@ -232,11 +235,13 @@ class CommandProcessor:
                 # 去除每個指令的多餘空白
                 cmd_list = [c.strip() for c in cmd_list if c.strip()]
 
-                # 獲取單個指令超時時間
+                # 獲取單個指令超時時間和間隔
                 try:
                     cmd_timeout = float(self.setup.get('DUT_Control', {}).get('Single_Command_Timeout', 10.0))
+                    cmd_interval = float(self.setup.get('DUT_Control', {}).get('Command_Interval', 1.0))
                 except (ValueError, TypeError):
                     cmd_timeout = 10.0
+                    cmd_interval = 1.0
 
                 # 創建新的串口工作器 (使用 V2)
                 self.serial_worker = SerialWorkerV2(
@@ -249,7 +254,8 @@ class CommandProcessor:
                     on_progress=lambda p: None,
                     on_finish=on_finish_callback,
                     stop_event=self.parent.stop_event,
-                    cmd_timeout=cmd_timeout
+                    cmd_timeout=cmd_timeout,
+                    cmd_interval=cmd_interval
                 )
 
                 # 啟動串口工作器

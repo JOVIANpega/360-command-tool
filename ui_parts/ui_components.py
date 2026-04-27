@@ -1111,9 +1111,12 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         timeout_frame.grid(row=1, column=0, sticky='ew', pady=2)
         self.label_timeout = ttk.Label(timeout_frame, text='超時(秒):', style="TLabel")
         self.label_timeout.grid(row=0, column=0, sticky='w')
-        self.entry_timeout = ttk.Entry(timeout_frame, width=8)
+        self.entry_timeout = ttk.Entry(
+            timeout_frame, 
+            width=8, 
+            textvariable=self.shared_config.get_var('dut_timeout')
+        )
         self.entry_timeout.grid(row=0, column=1, padx=5, sticky='ew')
-        self.entry_timeout.insert(0, self.parent.setup.get('Command_Timeout_Seconds', '30'))
         
         # 第三行：字體大小設定
         font_frame = ttk.Frame(settings_frame, style="TFrame")
