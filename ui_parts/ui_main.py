@@ -141,8 +141,12 @@ class TabManager:
 
 
         self.highlight_keywords = highlight_keywords or {}
-
-
+        
+        # 取得全域設定與深色模式變數
+        from ui_parts.shared_config import get_shared_config
+        self.shared_config = get_shared_config()
+        self.dark_mode_var = self.shared_config.get_var('dark_mode')
+        
         print(f"[DEBUG] TabManager 初始化，highlight_keywords={self.highlight_keywords}")
         
         # 初始化 DOS 視窗進程追蹤變數
@@ -167,9 +171,12 @@ class TabManager:
 
 
         # 初始化全局樣式
-
-
         self.init_global_styles()
+        
+        # 監聽深色模式變更
+        self.dark_mode_var.trace('w', lambda *args: self.apply_theme())
+        # 立即應用初始主題
+        self.root.after(100, self.apply_theme)
 
 
         
@@ -1031,73 +1038,107 @@ class TabManager:
             traceback.print_exc()
 
 
-    def init_global_styles(self):
+        self.apply_theme()
 
-
+    def apply_theme(self):
+        """應用深色或淺色主題"""
+        is_dark = self.dark_mode_var.get()
         style = ttk.Style()
+        
+        if is_dark:
+            # === 深色模式色彩 ===
+            bg_color = "#1e1e1e"        # 主背景 (VS Code 灰)
+            fg_color = "#d4d4d4"        # 主文字 (淺灰)
+            header_bg = "#252526"      # 標題區塊背景
+            entry_bg = "#3c3c3c"       # 輸入框背景
+            button_bg = "#333333"      # 按鈕背景
+            active_bg = "#094771"      # 選取/啟用時的背景 (深藍)
+            border_color = "#454545"   # 邊框顏色
+            
+            # 視窗與主框架
+            self.root.configure(bg=bg_color)
+            
+            # TTK 全域樣式更新
+            style.configure('Main.TFrame', background=bg_color)
+            style.configure('TNotebook', background=bg_color, borderwidth=0)
+            style.configure('TNotebook.Tab', background=button_bg, foreground=fg_color, padding=[16, 6])
+            style.map('TNotebook.Tab',
+                background=[('selected', active_bg), ('active', '#2a2d2e')],
+                foreground=[('selected', 'white'), ('active', 'white')]
+            )
+            
+            style.configure('TLabelframe', background=bg_color, foreground=fg_color)
+            style.configure('TLabelframe.Label', background=bg_color, foreground=fg_color, font=('Microsoft JhengHei UI', 10, 'bold'))
+            style.configure('TLabel', background=bg_color, foreground=fg_color)
+            style.configure('TCheckbutton', background=bg_color, foreground=fg_color)
+            
+            # 按鈕樣式
+            for btn_style in ['TButton', 'Blue.TButton', 'Orange.TButton', 'Accent.TButton']:
+                style.configure(btn_style, background=button_bg, foreground=fg_color)
+                style.map(btn_style,
+                    background=[('active', active_bg), ('disabled', '#2d2d2d')],
+                    foreground=[('active', 'white'), ('disabled', '#858585')]
+                )
 
+            # 更新所有子元件的背景顏色 (TK 原生元件)
+            def update_tk_widgets(parent):
+                for child in parent.winfo_children():
+                    widget_type = child.winfo_class()
+                    try:
+                        if widget_type in ['Label', 'Frame', 'Checkbutton', 'Radiobutton']:
+                            child.configure(bg=bg_color, fg=fg_color)
+                        elif widget_type in ['Text', 'Entry', 'Listbox']:
+                            child.configure(bg=entry_bg, fg=fg_color, insertbackground=fg_color)
+                        elif widget_type == 'Canvas':
+                            child.configure(bg=bg_color, highlightthickness=0)
+                    except: pass
+                    update_tk_widgets(child)
+            
+            # 嘗試更新文字區域
+            if hasattr(self, 'dut_ui') and hasattr(self.dut_ui, 'text_output'):
+                self.dut_ui.text_output.configure(bg="#1e1e1e", fg="#d4d4d4", insertbackground="white")
+            
+            if hasattr(self, 'manual_ui') and hasattr(self.manual_ui, 'output_text'):
+                self.manual_ui.output_text.configure(bg="#1e1e1e", fg="#d4d4d4", insertbackground="white")
+            
+            # 更新特定元件
+            if hasattr(self, 'notification_label'):
+                self.notification_label.configure(bg="#333333", fg="white")
 
-        style.theme_use('clam')
+        else:
+            # === 淺色模式色彩 (恢復原本樣式) ===
+            bg_color = "white"
+            fg_color = "black"
+            
+            self.root.configure(bg="#f0f0f0")
+            
+            style.configure('Main.TFrame', background='white')
+            style.configure('TNotebook', background='white')
+            style.configure('TNotebook.Tab', background='#d9d9d9', foreground='black')
+            style.map('TNotebook.Tab',
+                background=[('selected', '#2196f3'), ('active', '#2196f3')],
+                foreground=[('selected', 'white'), ('active', 'white')]
+            )
+            
+            style.configure('TLabelframe', background='white', foreground='black')
+            style.configure('TLabelframe.Label', background='white', foreground='black')
+            style.configure('TLabel', background='white', foreground='black')
+            
+            # 恢復按鈕
+            for btn_style in ['TButton', 'Blue.TButton', 'Orange.TButton', 'Accent.TButton']:
+                style.configure(btn_style, background='#d9d9d9', foreground='black')
+                style.map(btn_style,
+                    background=[('active', '#2196f3')],
+                    foreground=[('active', 'white')]
+                )
+            
+            if hasattr(self, 'dut_ui') and hasattr(self.dut_ui, 'text_output'):
+                self.dut_ui.text_output.configure(bg="white", fg="black", insertbackground="black")
 
+            if hasattr(self, 'manual_ui') and hasattr(self.manual_ui, 'output_text'):
+                self.manual_ui.output_text.configure(bg="white", fg="black", insertbackground="black")
 
-        style.configure('Main.TFrame', background='white')
-
-
-        style.configure('TNotebook', background='white')
-
-
-        # 分頁標籤字體、大小、padding，預設灰底黑字，選取為藍底白字
-
-
-        # 分頁標籤樣式 (統一風格：預設灰底黑字，選中/hover藍底白字)
-        style.configure('TNotebook.Tab', font=('Microsoft JhengHei UI', 13, 'bold'), padding=[16, 6])
-        style.map('TNotebook.Tab',
-            background=[('selected', '#2196f3'), ('active', '#2196f3'), ('!active', '#d9d9d9')],
-            foreground=[('selected', 'white'), ('active', 'white'), ('!active', 'black')]
-        )
-
-
-        # HANDOVER 分頁綠底白字
-
-
-        style.element_create('Green.Tab', 'from', 'default')
-
-
-        style.layout('Green.TNotebook.Tab', style.layout('TNotebook.Tab'))
-
-
-        # Green.TNotebook.Tab 樣式 (統一風格：預設灰底黑字，選中/hover藍底白字)
-        style.configure('Green.TNotebook.Tab', background='#d9d9d9', foreground='black')
-        style.map('Green.TNotebook.Tab',
-            background=[('selected', '#2196f3'), ('active', '#2196f3'), ('!active', '#d9d9d9')],
-            foreground=[('selected', 'white'), ('active', 'white'), ('!active', 'black')]
-        )
-
-
-        # 一般TButton改為灰底黑字，hover藍底白字
-        style.configure('TButton', font=('Microsoft JhengHei UI', 12), padding=[8, 4])
-        style.map('TButton',
-            background=[('active', '#2196f3'), ('!active', '#d9d9d9')],
-            foreground=[('active', 'white'), ('!active', 'black')]
-        )
-
-        # Blue.TButton 統一為相同風格
-        style.configure('Blue.TButton', font=('Microsoft JhengHei UI', 12), padding=[8, 4])
-        style.map('Blue.TButton',
-            background=[('active', '#2196f3'), ('!active', '#d9d9d9')],
-            foreground=[('active', 'white'), ('!active', 'black')]
-        )
-
-        # Orange.TButton 統一為相同風格
-        style.configure('Orange.TButton', font=('Microsoft JhengHei UI', 12), padding=[8, 4])
-        style.map('Orange.TButton',
-            background=[('active', '#2196f3'), ('!active', '#d9d9d9')],
-            foreground=[('active', 'white'), ('!active', 'black')]
-        )
-
-        # Accent.TButton 統一為相同風格
-        style.configure('Accent.TButton', font=('Microsoft JhengHei UI', 12, 'bold'), padding=[10, 5])
-        style.map('Accent.TButton',
+        print(f"[DEBUG] 已套用{'深色' if is_dark else '淺色'}主題")
             background=[('active', '#2196f3'), ('!active', '#d9d9d9')],
             foreground=[('active', 'white'), ('!active', 'black')]
         )

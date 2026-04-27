@@ -86,6 +86,7 @@ class SharedConfigManager:
         
         # UI設定
         self.vars['tooltip_enabled'] = tk.BooleanVar(root)
+        self.vars['dark_mode'] = tk.BooleanVar(root)
         self.vars['settings_sash_position'] = tk.StringVar(root)
         
         # 為所有變數綁定變更監聽
@@ -196,6 +197,7 @@ class SharedConfigManager:
             # 載入UI設定
             ui_settings = self.setup_data.get('UI_Settings', {})
             self.vars['tooltip_enabled'].set(ui_settings.get('ToolTip_Enabled', True))
+            self.vars['dark_mode'].set(ui_settings.get('Dark_Mode', False))
             self.vars['settings_sash_position'].set(ui_settings.get('Settings_Sash_Position', '450'))
             
             print("[DEBUG] SharedConfigManager: 設定資料已載入到變數")
@@ -353,6 +355,7 @@ class SharedConfigManager:
                 if 'UI_Settings' not in setup:
                     setup['UI_Settings'] = {}
                 setup['UI_Settings']['ToolTip_Enabled'] = self.vars['tooltip_enabled'].get()
+                setup['UI_Settings']['Dark_Mode'] = self.vars['dark_mode'].get()
                 
                 # 儲存設定
                 save_setup(setup)
@@ -394,6 +397,7 @@ class SharedConfigManager:
             'fixture_stopbits': ('Fixture_Control.Serial_Settings', 'Stopbits', '1'),
             'fixture_parity': ('Fixture_Control.Serial_Settings', 'Parity', 'None'),
             'fixture_timeout': ('Fixture_Control.Serial_Settings', 'Timeout', '1.0'),
+            'dark_mode': ('UI_Settings', 'Dark_Mode', False),
         }
         
         if var_name in mapping:

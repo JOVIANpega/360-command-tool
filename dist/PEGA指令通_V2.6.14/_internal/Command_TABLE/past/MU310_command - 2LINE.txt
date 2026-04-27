@@ -1,0 +1,35 @@
+//MU310 指令可以自行修改 
+
+==錯誤指令==
+
+HW_revision=uci -P /var/state show pega.board.model|$|uci -P /var/state show pega.fw.cur_ver|$|uci -c /var/etc show cellstatus.sim.status
+
+
+
+
+==||指令==
+
+HW_revision=uci -P /var/state show pega.board.model||uci -P /var/state show pega.fw.cur_ver||uci -c /var/etc show cellstatus.sim.status
+build time=cat /etc/pega_fwinfo
+
+==新間隔指令==
+
+HW_revision=uci -P /var/state show pega.board.model==>uci -P /var/state show pega.fw.cur_ver==>uci -c /var/etc show cellstatus.sim.status
+LED signal OFF=echo 0 > /sys/class/leds/signal\:blue/brightness==>echo 0 > /sys/class/leds/signal\:green/brightness==>echo 0 > /sys/class/leds/signal\:red/brightness
+
+build time=cat /etc/pega_fwinfo
+
+LED status OFF=echo 0 > /sys/class/leds/status\:blue/brightness==>echo 0 > /sys/class/leds/status\:red/brightness==>echo 0 > /sys/class/leds/status\:green/brightness
+
+Check signal LED GREEN =echo 255 > /sys/class/leds/signal\:green/brightness==>DELAY:2==>echo 0 > /sys/class/leds/signal\:green/brightness
+Check signal LED RED=echo 255 > /sys/class/leds/signal\:red/brightness==>DELAY:2==>echo 0 > /sys/class/leds/signal\:red/brightness
+Check signal LED BLUE=echo 255 > /sys/class/leds/signal\:blue/brightness==>DELAY:2==>echo 0 > /sys/class/leds/signal\:blue/brightness
+
+Check status LED GREEN =echo 255 > /sys/class/leds/status\:green/brightness==>DELAY:2==>echo 0 > /sys/class/leds/status\:green/brightness
+Check status LED RED=echo 255 > /sys/class/leds/status\:red/brightness==>DELAY:2==>echo 0 > /sys/class/leds/status\:red/brightness
+Check status LED BLUE=echo 255 > /sys/class/leds/status\:blue/brightness==>DELAY:2==>echo 0 > /sys/class/leds/status\:blue/brightness
+```
+
+如需我幫你轉換整份檔案或做批次處理，也可以直接幫你做。
+
+

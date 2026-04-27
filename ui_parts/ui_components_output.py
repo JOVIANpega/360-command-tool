@@ -229,6 +229,8 @@ class UIComponentsOutput:
 
 
             self.output_context_menu.add_command(label="清空", command=self.parent.handlers.clear_output)
+            self.output_context_menu.add_separator()
+            self.output_context_menu.add_command(label="導出日誌", command=self.export_log)
 
 
             self.text_output.bind("<Button-3>", self.show_output_context_menu)
@@ -412,6 +414,33 @@ class UIComponentsOutput:
             print("[DEBUG] 進度條已隱藏")
         except Exception as e:
             print(f"[ERROR] 隱藏進度條時發生錯誤: {e}")
+
+    def export_log(self):
+        """將當前輸出區域的內容導出到檔案"""
+        try:
+            from tkinter import filedialog, messagebox
+            from datetime import datetime
+            
+            content = self.text_output.get(1.0, tk.END)
+            if not content.strip():
+                messagebox.showwarning("警告", "日誌內容為空，無需導出。")
+                return
+                
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = filedialog.asksaveasfilename(
+                title="導出日誌",
+                defaultextension=".txt",
+                filetypes=[("Text files", "*.txt"), ("Log files", "*.log"), ("All files", "*.*")],
+                initialfile=f"PEGA_LOG_{timestamp}.txt"
+            )
+            
+            if filename:
+                with open(filename, 'w', encoding='utf-8') as f:
+                    f.write(content)
+                messagebox.showinfo("成功", f"日誌已成功導出至:\n{filename}")
+                
+        except Exception as e:
+            messagebox.showerror("錯誤", f"導出日誌時發生錯誤: {e}")
     def add_to_buffer(self, text, tag=None):
         """將內容添加到緩衝區，準備批量輸出"""
         # 如果正在顯示使用說明，則不添加內容

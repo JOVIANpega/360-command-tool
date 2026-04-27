@@ -136,11 +136,20 @@ class SettingsTab(ttk.Frame):
             self.setup_data['UI_Settings'] = {}
         self.setup_data['UI_Settings']['ToolTip_Enabled'] = True
         
-        # ToolTip 提示功能開關 - 已移除，預設強制開啟
-        # tooltip_checkbutton = ttk.Checkbutton(ui_frame, text="啟用按鈕提示 (ToolTip)", 
-        #                                     variable=self.vars["UI_ToolTip_Enabled"],
-        #                                     command=self.on_tooltip_setting_changed)
-        # tooltip_checkbutton.grid(row=0, column=0, columnspan=2, sticky="w", pady=4)
+        # 取得全域深色模式變數
+        try:
+            from ui_parts.shared_config import get_shared_config
+            shared_config = get_shared_config()
+            self.dark_mode_var = shared_config.get_var('dark_mode')
+        except:
+            self.dark_mode_var = tk.BooleanVar(value=False)
+
+        # 深色模式開關
+        dark_mode_check = ttk.Checkbutton(ui_frame, text="啟用深色模式 (Dark Mode)", 
+                                         variable=self.dark_mode_var)
+        dark_mode_check.grid(row=0, column=0, columnspan=2, sticky="w", pady=4)
+        
+        # 綁定變更事件以立即切換主題 (選擇性，或者由 TabManager 監聽)
         
 
         
