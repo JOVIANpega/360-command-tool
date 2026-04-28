@@ -198,6 +198,21 @@ class ManualCommandUI:
         
         # 初始化 COM Port 列表
         self.refresh_com_ports()
+        
+        # === 為手動輸入分頁的所有元件添加 Tooltip ===
+        if self.tooltip_manager:
+            tt = self.tooltip_manager.add_tooltip_with_text
+            tt(self.com_port_combo, "選擇手動模式要連接的 COM 通訊埠\n與 DUT 分頁的 COM Port 獨立")
+            tt(self.refresh_com_button, "重新掃描電腦上所有可用的 COM 通訊埠\n插拔裝置後請點此刷新")
+            tt(transport_combo, "選擇指令傳輸方式\nConsole：透過 COM 埠直接傳送\nADB：透過 Android Debug Bridge\nSSH：透過網路 SSH 連線")
+            tt(self.end_string_entry, "用於判斷指令是否執行完畢的字串\n當 DUT 回應中出現此字串時\n表示指令已完成，可送出下一條\n常用值：root、pega>、$")
+            tt(self.command_entry, "輸入要手動執行的指令\n支援多行輸入，按 Enter 送出\n按↑↓鍵可瀏覽歷史指令記錄")
+            tt(self.execute_button, "將輸入框中的指令送出到 DUT 執行\n快捷鍵：Enter")
+            tt(self.stop_button, "強制中斷目前正在執行的指令\n適用於長時間運行或無窮迴圈指令")
+            tt(self.clear_button, "清空指令輸入框中的文字")
+            tt(self.open_file_button, "開啟指令檔案 (TXT)\n載入後可直接選取檔案中的指令執行")
+            tt(self.hint_label, "操作提示區域\n顯示目前可用的操作說明")
+            tt(batch_path_entry, "顯示目前選取的批次檔路徑") if 'batch_path_entry' in dir() else None
     
     def create_custom_styles(self):
         """創建自定義樣式"""
@@ -294,9 +309,16 @@ class ManualCommandUI:
         self.connection_light = tk.Label(status_frame, text="●", fg='gray', font=('Arial', 12))
         self.connection_light.pack(side='left')
         
-        # 狀態標籤
+        # 狀態文字標籤
         self.status_label = ttk.Label(status_frame, text="就緒")
         self.status_label.pack(side='left', padx=(5, 0))
+        
+        # === 為右側面板的元件添加 Tooltip ===
+        if self.tooltip_manager:
+            tt = self.tooltip_manager.add_tooltip_with_text
+            tt(self.output_text, "顯示手動指令的執行結果\n支援彩色高亮與自動捲動\n可右鍵複製內容")
+            tt(clear_output_button, "清空右側的執行結果輸出區域")
+            tt(self.connection_light, "連線狀態指示燈\n● 灰色：未連線\n● 綠色：已連線\n● 紅色：連線中斷")
         
         # 初始化輸出區域
         self.add_prompt()

@@ -181,10 +181,15 @@ class DosTab:
         
         # 為按鈕添加tooltip
         if hasattr(self, 'tooltip_manager') and self.tooltip_manager:
-            self.tooltip_manager.add_tooltip(cmd_button, "btn_open_cmd")
-            self.tooltip_manager.add_tooltip(powershell_button, "btn_open_powershell")
-            self.tooltip_manager.add_tooltip(execute_button, "btn_execute_batch")
-            self.tooltip_manager.add_tooltip(browse_button, "btn_browse_batch")
+            tt = self.tooltip_manager.add_tooltip_with_text
+            tt(cmd_button, "開啟 Windows 命令提示字元 (CMD)\n若已有一個 CMD 視窗開啟中\n將會提示而不重複開啟")
+            tt(powershell_button, "以管理員權限開啟 Windows PowerShell\n適用於需要系統權限的操作")
+            tt(execute_button, "在新的 CMD 視窗中執行選取的批次檔\n執行前請確保已選取有效的 .bat 或 .cmd 檔案")
+            tt(browse_button, "瀏覽並選取要執行的批次檔\n支援 .bat 和 .cmd 格式")
+            tt(batch_path_entry, "顯示目前選取的批次檔完整路徑\n也可以直接貼上路徑")
+            tt(dos_desc_label, "此區域提供快速開啟系統終端的功能\n不需要離開程式即可執行系統指令")
+            tt(batch_desc_label, "選取並執行外部批次檔案\n批次檔會在獨立的 CMD 視窗中運行")
+            tt(self.status_label, "顯示目前的操作狀態\n綠色：成功\n藍色：資訊\n橙色：警告\n紅色：錯誤")
     
     def open_cmd_window(self):
         """開啟CMD視窗"""

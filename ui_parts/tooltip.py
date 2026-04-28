@@ -389,6 +389,9 @@ class ToolTipManager:
             'btn_execute_batch': '執行已選取的批次檔',
             'btn_manual_save': '將設定頁面中的所有修改\n一次性儲存到 setup.json',
             'btn_browse_file': '選取新的指令 TXT 檔案\n選完後會自動儲存並即時更新指令清單',
+            'btn_ip_plus': '增加一組 IP 位址輸入欄位\n最多可同時管理多組 IP',
+            'btn_ip_minus': '移除最後一組 IP 位址輸入欄位',
+            'ip_combobox': '輸入或選擇 DUT 的 IP 位址\n下拉選單會顯示歷史記錄\n用於 SSH 連線或 Ping 測試',
             
             # ===== DUT 控制標籤頁 - 輸入框與下拉選單 =====
             'entry_window_title': '設定主視窗上方顯示的標題文字\n最多 30 個字元',
