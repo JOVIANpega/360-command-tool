@@ -849,22 +849,47 @@ class FixtureControlWindow:
             pass  # 忽略字體更新錯誤
 
     def setup_tooltips(self):
-        """設定工具提示"""
+        """設定工具提示 - 為治具頁面每個欄位提供詳細中文說明"""
         if not self.tooltip_manager:
             return
-            
-        tooltips = {
-            self.com_combobox: "選擇制具連接的 COM 埠",
-            self.command_combobox: "選擇要執行的制具指令",
-            self.execute_btn: "執行選擇的指令",
-            self.sent_command_entry: "顯示剛剛發送的指令代碼", 
-            self.clear_btn: "清除執行結果區域的所有內容",
-            self.reload_btn: "重新載入指令檔案，適用於新增或修改指令後"
-        }
         
-        for widget, text in tooltips.items():
-            if hasattr(self, widget.__class__.__name__.lower()) and widget:
-                self.tooltip_manager.add_tooltip(widget, text)
+        tt = self.tooltip_manager.add_tooltip_with_text
+        
+        # 指令控制區
+        tt(self.com_combobox, "選擇治具連接的 COM 通訊埠\n與 DUT 分頁的 COM Port 獨立")
+        tt(self.command_combobox, "選擇要執行的治具指令\n指令會依據選擇的測試類別而不同")
+        tt(self.execute_btn, "將選取的治具指令透過 COM 埠送出執行")
+        tt(self.sent_command_entry, "顯示最近一次送出的指令代碼\n（唯讀，僅供參考）")
+        tt(self.clear_btn, "清空下方的執行結果區域")
+        tt(self.reload_btn, "重新載入 Fixture_Command.txt 指令檔案\n適用於新增或修改指令後刷新清單")
+        
+        # 說明區域
+        if hasattr(self, 'desc_label'):
+            tt(self.desc_label, "此區域顯示治具指令檔案中定義的說明文字\n由 Fixture_Command.txt 中的「說明文=」欄位控制")
+        
+        # 串列設定區
+        if hasattr(self, 'baudrate_combo'):
+            tt(self.baudrate_combo, "串列埠通訊速率（每秒位元數）\n治具常用值：9600\n修改後會自動儲存")
+        if hasattr(self, 'bytesize_combo'):
+            tt(self.bytesize_combo, "每個資料封包的位元數\n預設為 8，通常不需要修改")
+        if hasattr(self, 'stopbits_combo'):
+            tt(self.stopbits_combo, "停止位元數，用於標記資料封包結束\n預設為 1，通常不需要修改")
+        if hasattr(self, 'parity_combo'):
+            tt(self.parity_combo, "奇偶校驗模式，用於檢測傳輸錯誤\nNone：不使用校驗（最常見）\nEven/Odd：偶校驗/奇校驗")
+        if hasattr(self, 'timeout_entry'):
+            tt(self.timeout_entry, "串列埠等待回應的超時時間（秒）\n超過此時間未收到資料則視為超時\n建議值：0.5~5 秒")
+        
+        # 字體設定
+        if hasattr(self, 'fixture_font_spinbox'):
+            tt(self.fixture_font_spinbox, "調整治具頁面的字體大小\n範圍 8~24，修改後即時生效")
+        
+        # 串列參數顯示
+        if hasattr(self, 'serial_info_label'):
+            tt(self.serial_info_label, "顯示目前串列埠的完整參數設定\n包含 COM 埠、波特率、資料位元等")
+        
+        # 執行結果
+        if hasattr(self, 'result_text'):
+            tt(self.result_text, "顯示治具指令的執行記錄與回應結果\n每條記錄都帶有時間戳記")
 
     def refresh_ports(self):
         """刷新 COM 埠列表 (由外部調用)"""
