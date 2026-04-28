@@ -204,7 +204,8 @@ class SettingsTab(ttk.Frame):
         # 埠號
         ttk.Label(ssh_frame, text="埠號 (Port):").grid(row=1, column=0, sticky="w", pady=4)
         self.vars["SSH_Port"] = tk.StringVar(value=str(ssh_settings.get("Port", 22)))
-        ttk.Entry(ssh_frame, textvariable=self.vars["SSH_Port"], width=30).grid(row=1, column=1, sticky="w", padx=(5, 0), pady=4)
+        self.ssh_port_entry = ttk.Entry(ssh_frame, textvariable=self.vars["SSH_Port"], width=30)
+        self.ssh_port_entry.grid(row=1, column=1, sticky="w", padx=(5, 0), pady=4)
         
         # 預設帳號
         ttk.Label(ssh_frame, text="預設帳號/密碼:").grid(row=2, column=0, sticky="w", pady=4)
@@ -231,7 +232,8 @@ class SettingsTab(ttk.Frame):
         # 連線超時
         ttk.Label(ssh_frame, text="連線超時:").grid(row=3, column=0, sticky="w", pady=4)
         self.vars["SSH_Connection_Timeout"] = tk.StringVar(value=str(ssh_settings.get("Connection_Timeout", 30)))
-        ttk.Entry(ssh_frame, textvariable=self.vars["SSH_Connection_Timeout"], width=30).grid(row=3, column=1, sticky="w", padx=(5, 0), pady=4)
+        self.ssh_conn_timeout_entry = ttk.Entry(ssh_frame, textvariable=self.vars["SSH_Connection_Timeout"], width=30)
+        self.ssh_conn_timeout_entry.grid(row=3, column=1, sticky="w", padx=(5, 0), pady=4)
         dut_frame.columnconfigure(1, weight=1)
         
         dut_settings = self.setup_data.get('DUT_Control', {})
@@ -411,6 +413,8 @@ class SettingsTab(ttk.Frame):
             self.vars[f"tab_names_{tab_key}"] = tk.StringVar(value=tab_name)
             entry = ttk.Entry(tab_frame, textvariable=self.vars[f"tab_names_{tab_key}"], width=25)
             entry.grid(row=i, column=2, sticky="w", padx=(5, 0), pady=4)
+            # 為分頁名稱輸入框命名以利 ToolTip
+            setattr(self, f"tab_name_entry_{i}", entry)
             
             count_label = ttk.Label(tab_frame, text=f"({len(tab_name)}/10)", font=('Microsoft JhengHei UI', 9), foreground='gray')
             count_label.grid(row=i, column=3, sticky="w", padx=(10, 0), pady=4)
@@ -438,8 +442,8 @@ class SettingsTab(ttk.Frame):
         self.vars["Manual_Hint_Text"] = tk.StringVar(value=self.setup_data.get("Manual_Command", {}).get("Hint_Text", "請輸入指令並按執行"))
         self.vars["Manual_Hint_Text"].trace('w', limit_manual_hint_len)
         
-        manual_hint_entry = ttk.Entry(manual_frame, textvariable=self.vars["Manual_Hint_Text"], width=35)
-        manual_hint_entry.grid(row=0, column=1, sticky="w", padx=(5, 0), pady=4)
+        self.manual_hint_entry = ttk.Entry(manual_frame, textvariable=self.vars["Manual_Hint_Text"], width=35)
+        self.manual_hint_entry.grid(row=0, column=1, sticky="w", padx=(5, 0), pady=4)
         
         self.manual_hint_count_label = ttk.Label(manual_frame, text=f"({len(self.vars['Manual_Hint_Text'].get())}/50)", 
                                                 font=('Microsoft JhengHei UI', 9), foreground='gray')
@@ -470,9 +474,9 @@ class SettingsTab(ttk.Frame):
 
         self.vars["version"].trace('w', limit_version_len)
 
-        version_entry = ttk.Entry(info_frame, textvariable=self.vars["version"], width=10,
+        self.version_entry = ttk.Entry(info_frame, textvariable=self.vars["version"], width=10,
                                  font=('Microsoft JhengHei UI', 10, 'bold'))
-        version_entry.grid(row=0, column=1, sticky="w", padx=(5, 0), pady=2)
+        self.version_entry.grid(row=0, column=1, sticky="w", padx=(5, 0), pady=2)
         
         self.version_count_label = ttk.Label(info_frame, text=f"({len(self.vars['version'].get())}/12)", 
                                            font=('Microsoft JhengHei UI', 9), foreground='gray')
@@ -534,8 +538,8 @@ class SettingsTab(ttk.Frame):
 
         self.vars["Device_Label"].trace('w', limit_device_label_len)
 
-        device_label_entry = ttk.Entry(device_label_container, textvariable=self.vars["Device_Label"], width=18)
-        device_label_entry.grid(row=0, column=0, sticky="w")
+        self.device_label_entry = ttk.Entry(device_label_container, textvariable=self.vars["Device_Label"], width=18)
+        self.device_label_entry.grid(row=0, column=0, sticky="w")
         
         self.device_count_label = ttk.Label(device_label_container, text=f"({len(self.vars['Device_Label'].get())}/25)", 
                                           font=('Microsoft JhengHei UI', 9), foreground='gray')
@@ -566,8 +570,8 @@ class SettingsTab(ttk.Frame):
 
         self.vars["Startup_Label"].trace('w', limit_startup_label_len)
 
-        startup_label_entry = ttk.Entry(startup_label_container, textvariable=self.vars["Startup_Label"], width=30)
-        startup_label_entry.grid(row=0, column=0, sticky="w")
+        self.startup_label_entry = ttk.Entry(startup_label_container, textvariable=self.vars["Startup_Label"], width=30)
+        self.startup_label_entry.grid(row=0, column=0, sticky="w")
         
         self.startup_count_label = ttk.Label(startup_label_container, text=f"({len(self.vars['Startup_Label'].get())}/15)", 
                                            font=('Microsoft JhengHei UI', 9), foreground='gray')
@@ -1244,60 +1248,50 @@ class SettingsTab(ttk.Frame):
             
         print("[DEBUG] 開始設定設定標籤頁的 tooltip...")
         
-        # 儲存按鈕
-        if hasattr(self, 'manual_save_button'):
-            self.tooltip_manager.add_tooltip(self.manual_save_button, "btn_manual_save")
-            print("[DEBUG] 已為手動儲存按鈕添加 tooltip")
-        
-        # 基本設定元件
+        # 1. 基本設定
         if hasattr(self, 'title_entry'):
             self.tooltip_manager.add_tooltip(self.title_entry, "entry_window_title")
-            print("[DEBUG] 已為視窗標題輸入框添加 tooltip")
-        if hasattr(self, 'transport_mode_combo'):
-            self.tooltip_manager.add_tooltip(self.transport_mode_combo, "combobox_transport")
-            print("[DEBUG] 已為傳輸方式下拉選單添加 tooltip")
-        if hasattr(self, 'width_entry'):
-            self.tooltip_manager.add_tooltip(self.width_entry, "entry_window_width")
-            print("[DEBUG] 已為視窗寬度輸入框添加 tooltip")
-        if hasattr(self, 'height_entry'):
-            self.tooltip_manager.add_tooltip(self.height_entry, "entry_window_height")
-            print("[DEBUG] 已為視窗高度輸入框添加 tooltip")
         
-        # UI設定元件
-        if hasattr(self, 'tooltip_checkbutton'):
-            self.tooltip_manager.add_tooltip(self.tooltip_checkbutton, "checkbox_tooltip")
-            print("[DEBUG] 已為 tooltip 開關添加 tooltip")
+        # 2. SSH 設定
+        if hasattr(self, 'ssh_host_entry'):
+            self.tooltip_manager.add_tooltip(self.ssh_host_entry, "entry_ssh_host")
+        if hasattr(self, 'ssh_port_entry'):
+            self.tooltip_manager.add_tooltip(self.ssh_port_entry, "entry_ssh_port")
+        if hasattr(self, 'ssh_acc_entry'):
+            self.tooltip_manager.add_tooltip(self.ssh_acc_entry, "entry_ssh_account")
+        if hasattr(self, 'ssh_conn_timeout_entry'):
+            self.tooltip_manager.add_tooltip(self.ssh_conn_timeout_entry, "entry_ssh_timeout")
         
-        # DUT控制設定元件
+        # 3. DUT 控制設定
         if hasattr(self, 'separator_combo'):
             self.tooltip_manager.add_tooltip(self.separator_combo, "combobox_separator")
-            print("[DEBUG] 已為指令分隔符號下拉選單添加 tooltip")
         if hasattr(self, 'custom_separator_entry'):
             self.tooltip_manager.add_tooltip(self.custom_separator_entry, "entry_custom_separator")
-            print("[DEBUG] 已為自訂間隔符號輸入框添加 tooltip")
+        if hasattr(self, 'timeout_entry'):
+            self.tooltip_manager.add_tooltip(self.timeout_entry, "entry_single_timeout")
+        if hasattr(self, 'interval_entry'):
+            self.tooltip_manager.add_tooltip(self.interval_entry, "entry_command_interval")
+            
+        # 4. 右側資訊設定
+        for i in range(5):
+            entry_name = f"tab_name_entry_{i}"
+            if hasattr(self, entry_name):
+                self.tooltip_manager.add_tooltip(getattr(self, entry_name), "entry_tab_name")
         
-        # 瀏覽按鈕
+        if hasattr(self, 'manual_hint_entry'):
+            self.tooltip_manager.add_tooltip(self.manual_hint_entry, "entry_manual_hint")
+        if hasattr(self, 'version_entry'):
+            self.tooltip_manager.add_tooltip(self.version_entry, "entry_version")
+        if hasattr(self, 'device_label_entry'):
+            self.tooltip_manager.add_tooltip(self.device_label_entry, "entry_device_label")
+        if hasattr(self, 'startup_label_entry'):
+            self.tooltip_manager.add_tooltip(self.startup_label_entry, "entry_startup_label")
         if hasattr(self, 'browse_button'):
             self.tooltip_manager.add_tooltip(self.browse_button, "btn_browse_file")
-            print("[DEBUG] 已為瀏覽按鈕添加 tooltip")
-        
-        # 為其他重要元件添加 tooltip（使用直接文字）
-        try:
-            # 找到所有 Entry 元件並添加 tooltip
-            for widget in self.winfo_children():
-                if hasattr(widget, 'winfo_children'):
-                    for child in widget.winfo_children():
-                        if hasattr(child, 'winfo_children'):
-                            for grandchild in child.winfo_children():
-                                if isinstance(grandchild, tk.Entry) or isinstance(grandchild, ttk.Entry):
-                                    # 根據父元件或標籤來判斷這是什麼輸入框
-                                    parent_text = ""
-                                    try:
-                                        # 尋找相鄰的標籤
-                                        for sibling in grandchild.master.winfo_children():
-                                            if isinstance(sibling, tk.Label) or isinstance(sibling, ttk.Label):
-                                                parent_text = sibling.cget("text")
-                                                break
+            
+        # 5. 儲存按鈕
+        if hasattr(self, 'manual_save_button'):
+            self.tooltip_manager.add_tooltip(self.manual_save_button, "btn_manual_save")
                                     except:
                                         pass
                                     
