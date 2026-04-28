@@ -80,12 +80,11 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                 print(f"[ERROR] UIComponents: 無法獲取全域 ToolTipManager: {e}")
                 self.tooltip_manager = None
         
-        # 從設定中讀取 ToolTip 啟用狀態，預設為啟用
+        # ToolTip 提示功能強制開啟 (因設定頁已移除開關)
         if self.tooltip_manager:
             try:
-                tooltip_enabled = self.parent.setup.get("UI_Settings", {}).get("ToolTip_Enabled", True)
-                self.tooltip_manager.set_all_enabled(tooltip_enabled)
-                print(f"[DEBUG] UIComponents: 設定 ToolTip 啟用狀態: {tooltip_enabled}")
+                self.tooltip_manager.set_all_enabled(True)
+                print(f"[DEBUG] UIComponents: ToolTip 已強制啟用")
             except Exception as e:
                 print(f"[ERROR] UIComponents: 設定 ToolTip 啟用狀態失敗: {e}")
         else:

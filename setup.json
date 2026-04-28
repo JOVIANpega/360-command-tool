@@ -1,5 +1,5 @@
 {
-  "version": "V2.6.28",
+  "version": "V2.6.29",
   "Window_Title": "PEGA指令通_V2.6.21",
   "Window_Width": "1536",
   "Window_Height": "793",
@@ -66,7 +66,7 @@
   "UIFontSize": "13",
   "ContentFontSize": "11",
   "UI_Settings": {
-    "ToolTip_Enabled": false,
+    "ToolTip_Enabled": true,
     "left_pane_width": 420,
     "Settings_Sash_Position": "636"
   },
