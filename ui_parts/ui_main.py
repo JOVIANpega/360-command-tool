@@ -233,30 +233,36 @@ class TabManager:
         self.manual_frame.grid_rowconfigure(0, weight=1)
         self.manual_frame.grid_columnconfigure(0, weight=1)
 
-        # 從設定檔讀取標籤名稱
+        # 從設定檔讀取標籤名稱與顯示狀態
         from config_core import load_setup
         setup = load_setup()
         tab_names = setup.get('tab_names', {})
+        tab_visibility = setup.get('tab_visibility', {})
         
-        # 使用從設定檔中讀取的標籤名稱，如果不存在則使用預設值
-        tab0_name = tab_names.get('tab0', 'DUT 控制')
-        tab1_name = tab_names.get('tab1', '治具控制')
-        tab2_name = tab_names.get('tab2', '手動輸入指令')
-        tab3_name = tab_names.get('tab3', 'DOS 工具')
-        tab4_name = tab_names.get('tab4', '設定')
+        # 定義分頁清單 (Frame, 預設名稱, 設定Key, 預設是否顯示)
+        tabs_to_init = [
+            (self.dut_frame, 'DUT 控制', 'tab0', True),
+            (self.fixture_frame, '治具控制', 'tab1', True),
+            (self.manual_frame, '手打指令', 'tab2', True),
+            (self.dos_frame, 'DOS 工具', 'tab3', True),
+            (self.settings_frame, '設定', 'tab4', True) # 設定頁永遠顯示
+        ]
         
-        print(f"[DEBUG] 從設定檔讀取的標籤名稱: {tab_names}")
-        
-
-
-        # 添加分頁到 notebook
-
-
-        self.notebook.add(self.dut_frame, text=tab0_name)
-        self.notebook.add(self.fixture_frame, text=tab1_name)
-        self.notebook.add(self.manual_frame, text=tab2_name)  # 手動輸入指令
-        self.notebook.add(self.dos_frame, text=tab3_name)  # DOS 工具
-        self.notebook.add(self.settings_frame, text=tab4_name)  # 設定
+        for frame, default_name, key, default_visible in tabs_to_init:
+            # 強力布林判定：確保隱藏功能生效
+            val = tab_visibility.get(key, default_visible)
+            is_visible = True
+            if val is False or str(val).lower() in ['false', '0', 'none']:
+                is_visible = False
+            
+            print(f"[DEBUG] 分頁 {key} ({default_name}) -> 顯示狀態: {is_visible} (原始值: {val})")
+            
+            if is_visible:
+                display_name = tab_names.get(key, default_name)
+                # 自動截斷邏輯
+                if len(display_name) > 10:
+                    display_name = display_name[:9] + "..."
+                self.notebook.add(frame, text=display_name)
 
         # 設置分頁切換事件
         self.notebook.bind('<<NotebookTabChanged>>', self.on_tab_changed)
@@ -462,42 +468,9 @@ class TabManager:
 
     def update_tab_names(self):
         """根據設定檔中的標籤名稱更新 TAB 按鈕的名稱"""
-        try:
-            # 從設定檔讀取標籤名稱
-            from config_core import load_setup
-            setup = load_setup()
-            tab_names = setup.get('tab_names', {})
-            
-            # 預設的 TAB 按鈕名稱 (支援 5 個標籤)
-            default_tab_names = ['DUT 控制', '治具控制', '手動輸入', 'DOS 工具', '設定']
+        # 直接呼叫新的物件比對同步邏輯，避免舊邏輯覆蓋正確名稱
+        self.update_tab_names_from_settings()
 
-            # 更新標籤名稱 - 限制顯示最多10個字元
-            for i in range(min(5, self.notebook.index('end'))):
-                tab_key = f'tab{i}'
-                # 防止索引溢出
-                d_name = default_tab_names[i] if i < len(default_tab_names) else f"標籤 {i+1}"
-                raw_name = tab_names.get(tab_key, d_name)
-                
-                # 自動截斷邏輯
-                display_name = raw_name
-                if len(raw_name) > 10:
-                    display_name = raw_name[:9] + "..."
-                
-                self.notebook.tab(i, text=display_name)
-                print(f"[DEBUG] 更新 TAB {i} 名稱為：{display_name}")
-        
-        except Exception as e:
-            print(f"[ERROR] 更新 TAB 按鈕名稱時發生錯誤：{e}")
-            import traceback
-            traceback.print_exc()
-            
-            # 發生錯誤時，使用預設名稱
-            default_tab_names = ['DUT 控制', '治具控制', '使用說明', '設定']
-            for i, name in enumerate(default_tab_names):
-                try:
-                    self.notebook.tab(i, text=name)
-                except Exception:
-                    pass
 
 
     def update_fixture_settings(self):
@@ -966,35 +939,45 @@ class TabManager:
             traceback.print_exc()
             
     def update_tab_names_from_settings(self):
-        """從設定檔同步更新標籤頁名稱"""
+        """從設定檔同步更新標籤頁名稱 (支援隱藏分頁下的正確對應)"""
         try:
-            # 重新載入設定
             from config_core import load_setup
             setup = load_setup()
             tab_names = setup.get('tab_names', {})
             
-            # 更新每個標籤頁的名稱
-            total_tabs = self.notebook.index('end')
-            for i in range(total_tabs):
-                tab_key = f'tab{i}'
-                if tab_key in tab_names:
-                    new_name = tab_names[tab_key]
-                else:
-                    # 預設的標籤頁名稱
-                    default_tab_names = ['DUT 控制', '治具控制', '手打指令', 'DOS 工具', '設定']
-                    new_name = default_tab_names[i] if i < len(default_tab_names) else f"標籤頁 {i+1}"
+            # 定義功能與 Key 的對照表
+            frame_map = {
+                str(self.dut_frame): 'tab0',
+                str(self.fixture_frame): 'tab1',
+                str(self.manual_frame): 'tab2',
+                str(self.dos_frame): 'tab3',
+                str(self.settings_frame): 'tab4'
+            }
+            # 與 setup.json 保持一致的預設名稱
+            default_tab_names = ['DUT 控制', '治具控制', '手打指令', 'DOS 工具', '設定']
+
+            # 遍歷目前所有「可見」的分頁
+            for tab_id in self.notebook.tabs():
+                # 找出這個 ID 對應的是哪一個功能 Key
+                tab_key = frame_map.get(tab_id)
+                if not tab_key: continue
                 
-                # 只有當名稱實際改變時才更新
+                # 取得該功能應有的名稱
+                index = int(tab_key.replace('tab', ''))
+                new_name = tab_names.get(tab_key, default_tab_names[index])
+                
+                # 自動截斷邏輯 (維持介面整齊)
+                if len(new_name) > 10:
+                    new_name = new_name[:9] + "..."
+                
+                # 更新該分頁的文字
                 try:
-                    current_name = self.notebook.tab(i, "text")
+                    current_name = self.notebook.tab(tab_id, "text")
                     if current_name != new_name:
-                        self.notebook.tab(i, text=new_name)
-                        print(f"[DEBUG] 標籤頁 {i} 名稱已更新: {current_name} → {new_name}")
+                        self.notebook.tab(tab_id, text=new_name)
+                        print(f"[DEBUG] 分頁 {tab_key} 名稱已校正: {current_name} → {new_name}")
                 except Exception as e:
-                    print(f"[WARNING] 無法更新標籤頁 {i} 名稱: {e}")
-            
-            # 顯示更新訊息
-            print("[NOTIFICATION] 標籤頁名稱已同步更新")
+                    print(f"[WARNING] 無法校正分頁 {tab_key} 名稱: {e}")
             
         except Exception as e:
             print(f"[ERROR] 更新標籤頁名稱時發生錯誤：{e}")
@@ -1126,6 +1109,29 @@ class TabManager:
         # 初始化手動輸入指令分頁
         from ui_parts.ui_manual_command import ManualCommandUI
         self.manual_ui = ManualCommandUI(self.manual_frame, self.root, self.highlight_keywords, tooltip_manager=self.tooltip_manager)
+    
+    def on_tab_changed(self, event):
+        """處理分頁切換事件，確保資源及時啟動/關閉"""
+        selected_tab = self.notebook.select()
+        
+        # 使用視窗 ID 比對，最為精確
+        if selected_tab == str(self.dut_frame):
+            if hasattr(self, 'dut_ui'):
+                self.dut_ui.activate()
+                
+        elif selected_tab == str(self.fixture_frame):
+            if hasattr(self, 'fixture_ui'):
+                self.update_fixture_settings()
+                if hasattr(self.fixture_ui, 'refresh_ports'):
+                    self.fixture_ui.refresh_ports()
+                    
+        elif selected_tab == str(self.manual_frame):
+            if hasattr(self, 'manual_ui') and hasattr(self.manual_ui, 'activate'):
+                self.manual_ui.activate()
+                
+        elif selected_tab == str(self.settings_frame):
+            if hasattr(self, 'settings_ui') and hasattr(self.settings_ui, 'activate'):
+                self.settings_ui.activate()
 
 
     def init_settings_tab(self):
@@ -1335,18 +1341,7 @@ class TabManager:
 
 
 
-    def on_tab_changed(self, event):
-
-
-        # 獲取當前選中的分頁
-
-
-        selected_tab = self.notebook.select()
-        tab_text = self.notebook.tab(selected_tab, "text")
-        try:
-            current_index = self.notebook.index("current")
-        except:
-            current_index = -1
+    # 舊版分頁切換邏輯已移除，由 1131 行新版取代
 
 
         
@@ -1355,64 +1350,7 @@ class TabManager:
         # 根據分頁切換處理資源
 
 
-        if tab_text == 'DUT 控制' or current_index == 0:
-            if hasattr(self, 'dut_ui'):
-                self.dut_ui.activate()
-        elif tab_text == '治具控制' or current_index == 1:
 
-
-            # 治具控制分頁的處理邏輯
-
-
-            if hasattr(self, 'fixture_ui'):
-
-
-                # 更新治具設定並刷新串口
-
-
-                self.update_fixture_settings()
-
-
-                if hasattr(self.fixture_ui, 'refresh_ports'):
-
-
-                    self.fixture_ui.refresh_ports()
-
-
-        elif tab_text == '使用說明' or current_index == 2:
-            # 使用說明/手動指令分頁
-            if hasattr(self, 'manual_ui') and hasattr(self.manual_ui, 'activate'):
-                self.manual_ui.activate()
-
-
-        elif tab_text == '設定' or current_index == 4:
-
-
-            # 設定分頁的處理邏輯
-
-
-            if hasattr(self, 'settings_ui'):
-
-
-                print(f"DEBUG: settings_ui type: {type(self.settings_ui)}")
-
-
-                print(f"DEBUG: settings_ui dir: {dir(self.settings_ui)}")
-
-
-                try:
-
-
-                    self.settings_ui.activate()
-
-
-                except AttributeError:
-
-
-                    print("[DEBUG] settings_ui 沒有 activate 方法，跳過。")
-
-
-                    pass
 
 
 

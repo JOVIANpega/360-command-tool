@@ -1,13 +1,7 @@
 {
-  "ERROR": "red",
-  "FAIL": "red",
-  "Failed": "red",
-  "Error": "red",
-  "TIMEOUT": "red",
-  "Timeout": "red",
-  "Warning": "orange",
-  "WARNING": "orange",
-  "Success": "green",
-  "SUCCESS": "green",
-  "OK": "green"
+    "ERROR": "red",
+    "FAIL": "red",
+    "SUCCESS": "green",
+    "OK": "green",
+    "speed": "green"
 }
