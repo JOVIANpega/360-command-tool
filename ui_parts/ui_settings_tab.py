@@ -891,17 +891,17 @@ class SettingsTab(ttk.Frame):
                         updated = True
                         
                     if updated:
-                        messagebox.showinfo("成功", f"指令檔案已成功切換！\n\n您現在可以直接在「DUT 控制」分頁中使用新的指令清單。", parent=self.winfo_toplevel())
+                        messagebox.showinfo("成功", f"指令檔案已成功切換！\n\n您現在可以直接在「DUT 控制」分頁中使用新的指令清單。")
                     else:
-                        messagebox.showinfo("提示", "檔案路徑已儲存，但無法自動更新介面，請手動重啟程式。", parent=self.winfo_toplevel())
+                        messagebox.showinfo("提示", "檔案路徑已儲存，但無法自動更新介面，請手動重啟程式。")
                 else:
-                    messagebox.showinfo("提示", "檔案路徑已儲存。請切換回主畫面查看。", parent=self.winfo_toplevel())
+                    messagebox.showinfo("提示", "檔案路徑已儲存。請切換回主畫面查看。")
                     
             except Exception as e:
                 print(f"[ERROR] 更新指令檔案時發生錯誤：{e}")
                 import traceback
                 traceback.print_exc()
-                messagebox.showerror("錯誤", f"自動更新清單時發生錯誤：\n{e}\n請嘗試手動重啟程式。", parent=self.winfo_toplevel())
+                messagebox.showerror("錯誤", f"自動更新清單時發生錯誤：\n{e}\n請嘗試手動重啟程式。")
 
     def generate_settings_dict(self):
         """根據當前設定生成字典 - 保持現有設定不丟失"""
