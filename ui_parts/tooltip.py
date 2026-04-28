@@ -57,9 +57,8 @@ class ToolTip:
         """滑鼠移動"""
         if not self.enabled or not self.text:
             return
-        # 取消當前的 tooltip 並重新安排
         self.cancel_tooltip()
-        if self.tw is None:  # 只有在 tooltip 未顯示時才重新安排
+        if self.tw is None:
             self.schedule_tooltip()
 
     def schedule_tooltip(self):
@@ -74,7 +73,7 @@ class ToolTip:
             self.id = None
 
     def show_tooltip(self):
-        """顯示 tooltip（包含指引線）"""
+        """顯示 tooltip（簡潔版 - 緊鄰元件顯示）"""
         if self.tw or not self.text or not self.enabled:
             return
 
@@ -84,164 +83,60 @@ class ToolTip:
             widget_y = self.widget.winfo_rooty()
             widget_w = self.widget.winfo_width()
             widget_h = self.widget.winfo_height()
-            
-            # 檢查是否為大型容器元件 (如 LabelFrame, Frame)
-            # (雖然下面有通用的滑動錨點邏輯，但在決定是否畫線時，大型元件仍需特殊處理以避免線條穿過元件過多)
-            is_large_widget = (widget_w > 300 and widget_h > 150)
-            
         except tk.TclError:
-            # 元件可能已被銷毀
             return
+
+        # 準備字體
+        font_size = ToolTip.current_font_size
+        current_font = ('Microsoft JhengHei UI', font_size)
 
         # 創建 tooltip 視窗
         self.tw = tk.Toplevel(self.widget)
         self.tw.wm_overrideredirect(True)
-        
-        # 設置透明背景色
-        transparent_color = '#000001' # 接近黑色但不是純黑
         self.tw.wm_attributes("-topmost", True)
-        
-        try:
-            # Windows 支援透明顏色
-            if sys.platform.startswith('win'):
-                self.tw.wm_attributes("-transparentcolor", transparent_color)
-            else:
-                self.tw.wm_attributes("-alpha", 0.9)
-        except Exception:
-            pass
 
-        # 創建 Canvas
-        canvas = tk.Canvas(self.tw, bg=transparent_color, highlightthickness=0)
-        canvas.pack(fill='both', expand=True)
+        # 使用簡單的 Label 顯示 tooltip（避免 Canvas 透明色問題導致雙重框框）
+        label = tk.Label(self.tw,
+                        text=self.text,
+                        justify='left',
+                        background="#ffffe0",
+                        foreground="#000000",
+                        relief='solid',
+                        borderwidth=1,
+                        wraplength=self.wraplen,
+                        font=current_font,
+                        padx=6, pady=4)
+        label.pack()
 
-        # 準備字體和文字
-        font_size = ToolTip.current_font_size
-        current_font = ('Microsoft JhengHei UI', font_size)
-        
-        # 計算文字大小
-        temp_label = tk.Label(self.tw, text=self.text, font=current_font, wraplength=self.wraplen)
-        text_width = temp_label.winfo_reqwidth()
-        text_height = temp_label.winfo_reqheight()
-        temp_label.destroy()
-
-        # 決定 Tooltip Box 位置
-        # 優先顯示在下方，如果空間不足則顯示在上方
+        # 計算位置
         screen_w = self.widget.winfo_screenwidth()
         screen_h = self.widget.winfo_screenheight()
-        
-        box_x_offset = -text_width // 2 # 水平置中
-        
-        # 決定位置的邏輯
-        is_on_primary_screen = (0 <= widget_x < screen_w)
-        is_above = False
-        is_left_side = False
+
+        # 取得 tooltip 尺寸
+        self.tw.update_idletasks()
+        tip_w = self.tw.winfo_reqwidth()
+        tip_h = self.tw.winfo_reqheight()
 
         if self.side == 'right':
-            # --- 右側顯示模式 ---
-            target_y_base = widget_y + (widget_h // 2) - (text_height // 2)
-            box_left = widget_x + widget_w + 20
-            box_top = target_y_base
-            
-            if is_on_primary_screen:
-                if box_left + text_width > screen_w:
-                    box_left = widget_x - text_width - 20
-                    is_left_side = True
-                if box_top + text_height > screen_h:
-                    box_top = screen_h - text_height - 10
-                if box_top < 0:
-                    box_top = 10
-            
-            if is_left_side:
-                target_x = widget_x
-            else:
-                target_x = widget_x + widget_w
-            target_y = widget_y + (widget_h // 2)
+            # 右側顯示
+            tip_x = widget_x + widget_w + 5
+            tip_y = widget_y + (widget_h - tip_h) // 2
         else:
-            # --- 預設：上下顯示模式 (原本最穩定的邏輯) ---
-            box_x_offset = -text_width // 2
-            box_left = (widget_x + widget_w // 2) + box_x_offset
-            box_top = widget_y + widget_h + 20
-            
-            if is_on_primary_screen:
-                if box_left + text_width > screen_w:
-                    box_left = screen_w - text_width - 10
-                if box_left < 0:
-                    box_left = 10
-                
-                if box_top + text_height > screen_h:
-                    box_top = widget_y - text_height - 20
-                    is_above = True
-            
-            target_x = widget_x + (widget_w // 2)
-            if is_above:
-                target_y = widget_y
-            else:
-                target_y = widget_y + widget_h
+            # 下方顯示（預設）
+            tip_x = widget_x + (widget_w - tip_w) // 2
+            tip_y = widget_y + widget_h + 5
 
-        # 優化：所有元件都使用「滑動錨點」邏輯
-        # 讓指引線指向元件上最接近 Tooltip 的點，減少線段長度
-        box_center_x_abs = box_left + text_width // 2
-        # 將目標點 clamp 在元件的左右邊界之間
-        target_x = max(widget_x, min(widget_x + widget_w, box_center_x_abs))
+        # 邊界檢查
+        if tip_x + tip_w > screen_w:
+            tip_x = screen_w - tip_w - 5
+        if tip_y + tip_h > screen_h:
+            tip_y = widget_y - tip_h - 5
+        if tip_x < 0:
+            tip_x = 5
+        if tip_y < 0:
+            tip_y = 5
 
-        # 計算 Toplevel 的邊界 (包含目標點和文字框)
-        tl_x = min(target_x, box_left) - 10
-        tl_y = min(target_y, box_top) - 10
-        br_x = max(target_x, box_left + text_width) + 10
-        br_y = max(target_y, box_top + text_height) + 10
-        
-        tl_w = br_x - tl_x
-        tl_h = br_y - tl_y
-        
-        self.tw.geometry(f"{tl_w}x{tl_h}+{tl_x}+{tl_y}")
-        
-        # 轉換座標到 Canvas 內部座標系
-        cv_target_x = target_x - tl_x
-        cv_target_y = target_y - tl_y
-        
-        cv_box_x = box_left - tl_x
-        cv_box_y = box_top - tl_y
-        
-        # 繪製指引線 (從目標點到文字框中心)
-        box_center_x = cv_box_x + text_width // 2
-        box_center_y = cv_box_y + text_height // 2
-        
-        # 計算線長
-        line_dx = cv_target_x - box_center_x
-        line_dy = cv_target_y - box_center_y
-        line_len_sq = line_dx*line_dx + line_dy*line_dy
-        
-        # 只有在滿足以下條件時才畫線：
-        # 1. 不是大型元件重疊 (vertical distance check)
-        # 2. 線長度不過長 (例如 > 500px 可能是異常座標)
-        should_draw_line = True
-        if is_large_widget and abs(cv_target_y - box_center_y) <= 30:
-            should_draw_line = False
-        
-        # 如果線長超過 500px，視為異常（例如多螢幕座標轉換問題），不畫線以免干擾視線
-        if line_len_sq > 500 * 500:
-            should_draw_line = False
-
-        if should_draw_line:
-            canvas.create_line(cv_target_x, cv_target_y, box_center_x, box_center_y, 
-                              fill='#555555', width=2, arrow=tk.FIRST, arrowshape=(8,10,3))
-        
-        # 繪製文字背景框
-        padding = 5
-        bg_color = "#ffffe0"
-        border_color = "#000000"
-        
-        canvas.create_rectangle(cv_box_x - padding, cv_box_y - padding, 
-                               cv_box_x + text_width + padding, cv_box_y + text_height + padding,
-                               fill=bg_color, outline=border_color, width=1)
-        
-        # 繪製文字
-        canvas.create_text(cv_box_x, cv_box_y, 
-                          text=self.text, 
-                          fill="#000000", 
-                          font=current_font, 
-                          anchor='nw',
-                          width=self.wraplen)
+        self.tw.geometry(f"+{tip_x}+{tip_y}")
 
     def update_text(self, text):
         """更新提示文字內容"""
