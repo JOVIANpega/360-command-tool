@@ -180,80 +180,8 @@ class ToolTipManager:
         print(f"[DEBUG] ToolTipManager 初始化完成，enabled={self.enabled}")
     
     def load_tooltip_config(self):
-        """載入 tooltip 配置"""
-        try:
-            # 檢查是否為打包後的環境
-            is_frozen = getattr(sys, 'frozen', False)
-            print(f"[DEBUG] 環境檢查: frozen={is_frozen}")
-            
-            # 在打包後的環境中，強制使用內建配置以確保功能正常
-            if is_frozen:
-                print("[DEBUG] 檢測到打包後的環境，強制使用內建配置以確保 tooltip 功能正常")
-                return self._force_use_builtin_config()
-            
-            config_path = None
-            
-            # 方法1: 使用資源管理器
-            if resource_manager:
-                try:
-                    config_path = resource_manager.get_resource_path('tooltips.ini')
-                    if os.path.exists(config_path):
-                        pass
-                    else:
-                        config_path = None
-                except Exception:
-                    config_path = None
-            
-            # 方法2: 檢查打包後的路徑
-            if not config_path and hasattr(sys, '_MEIPASS'):
-                try:
-                    meipass_path = os.path.join(sys._MEIPASS, 'tooltips.ini')
-                    if os.path.exists(meipass_path):
-                        config_path = meipass_path
-                except Exception:
-                    pass
-            
-            # 方法3: 檢查執行檔目錄
-            if not config_path and is_frozen:
-                try:
-                    exe_dir = os.path.dirname(sys.executable)
-                    exe_path = os.path.join(exe_dir, 'tooltips.ini')
-                    if os.path.exists(exe_path):
-                        config_path = exe_path
-                except Exception:
-                    pass
-            
-            # 方法4: 檢查當前工作目錄
-            if not config_path:
-                try:
-                    cwd_path = os.path.join(os.getcwd(), 'tooltips.ini')
-                    if os.path.exists(cwd_path):
-                        config_path = cwd_path
-                except Exception:
-                    pass
-            
-            # 如果找到配置文件，嘗試載入
-            if config_path:
-                print(f"[DEBUG] 最終使用配置文件: {config_path}")
-                try:
-                    config = configparser.ConfigParser()
-                    config.read(config_path, encoding='utf-8')
-                    
-                    if config.has_section('Tooltips'):
-                        self.tooltip_config = dict(config['Tooltips'])
-                        self.enabled = True
-                        return
-                    else:
-                        print("[WARNING] tooltip 配置文件中找不到 [Tooltips] 區段")
-                except Exception as e:
-                    print(f"[ERROR] 載入配置文件失敗: {e}")
-            
-            # 如果所有方法都失敗，使用內建配置
-            return self._force_use_builtin_config()
-            
-        except Exception as e:
-            print(f"[ERROR] 載入 tooltip 配置時發生錯誤: {e}")
-            return self._force_use_builtin_config()
+        """載入 tooltip 配置 - 永遠使用內建配置（最完整且最新）"""
+        return self._force_use_builtin_config()
     
     def _get_builtin_config(self):
         """獲取內建的 tooltip 配置 - 完整版本（每個欄位提供詳細操作說明）"""

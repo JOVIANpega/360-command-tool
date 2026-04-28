@@ -1836,11 +1836,10 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                 self.tooltip_manager.add_tooltip(self.btn_delete_ip, "btn_delete_ip")
             
             # IP +/- 按鈕
-            if hasattr(self, 'btn_ip_plus'):
-                self.tooltip_manager.add_tooltip(self.btn_ip_plus, "btn_ip_plus")
+            if hasattr(self, 'btn_add_ip'):
+                self.tooltip_manager.add_tooltip(self.btn_add_ip, "btn_ip_plus")
             
-            if hasattr(self, 'btn_ip_minus'):
-                self.tooltip_manager.add_tooltip(self.btn_ip_minus, "btn_ip_minus")
+            # (Note: btn_ip_minus is dynamic, so handled separately if needed)
             
             # 移除結束字串按鈕
             if hasattr(self, 'btn_remove_end'):
