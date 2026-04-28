@@ -180,8 +180,48 @@ class ToolTipManager:
         print(f"[DEBUG] ToolTipManager 初始化完成，enabled={self.enabled}")
     
     def load_tooltip_config(self):
-        """載入 tooltip 配置 - 永遠使用內建配置（最完整且最新）"""
-        return self._force_use_builtin_config()
+        """載入 tooltip 配置 - 以內建配置為基底，結合外部 INI 檔案"""
+        # 1. 取得最完整的內建配置作為基底
+        self.tooltip_config = self._get_builtin_config()
+        self.enabled = True
+        
+        try:
+            # 2. 尋找外部的 tooltips.ini
+            is_frozen = getattr(sys, 'frozen', False)
+            config_path = None
+            
+            if resource_manager:
+                try:
+                    p = resource_manager.get_resource_path('tooltips.ini')
+                    if os.path.exists(p): config_path = p
+                except Exception: pass
+            
+            if not config_path and hasattr(sys, '_MEIPASS'):
+                p = os.path.join(sys._MEIPASS, 'tooltips.ini')
+                if os.path.exists(p): config_path = p
+                    
+            if not config_path and is_frozen:
+                p = os.path.join(os.path.dirname(sys.executable), 'tooltips.ini')
+                if os.path.exists(p): config_path = p
+                    
+            if not config_path:
+                p = os.path.join(os.path.getcwd(), 'tooltips.ini')
+                if os.path.exists(p): config_path = p
+            
+            # 3. 如果找到 INI，將其內容覆蓋到內建配置上 (保留彈性)
+            if config_path:
+                print(f"[DEBUG] 找到 Tooltip 配置檔: {config_path}，將與內建配置合併")
+                config = configparser.ConfigParser()
+                config.read(config_path, encoding='utf-8')
+                if config.has_section('Tooltips'):
+                    ini_config = dict(config['Tooltips'])
+                    # 更新內建配置 (INI 有的用 INI，INI 沒有的保留內建)
+                    self.tooltip_config.update(ini_config)
+                    
+        except Exception as e:
+            print(f"[ERROR] 合併 Tooltip 配置時發生錯誤: {e}")
+            
+        return True
     
     def _get_builtin_config(self):
         """獲取內建的 tooltip 配置 - 完整版本（每個欄位提供詳細操作說明）"""
