@@ -319,7 +319,7 @@ class ToolTipManager:
         widget_name: 在 tooltips.ini 中對應的鍵名
         side: 顯示位置 ('bottom' 或 'right')
         """
-        if not self.enabled or not widget:
+        if not widget:
             return
             
         tooltip_text = self.tooltip_config.get(widget_name, '')
@@ -327,14 +327,18 @@ class ToolTipManager:
             return
             
         try:
-            # 移除舊的 tooltip
             widget_id = id(widget)
+            # [核心修正]：如果已經存在，只更新文字與方向，不要重新綁定事件
             if widget_id in self.tooltips:
-                self.tooltips[widget_id].hide_tooltip()
-                del self.tooltips[widget_id]
+                tip = self.tooltips[widget_id]
+                tip.update_text(tooltip_text)
+                tip.side = side
+                tip.enabled = self.enabled
+                return
             
             # 創建新的 tooltip
             tooltip = ToolTip(widget, tooltip_text, side=side)
+            tooltip.enabled = self.enabled
             self.tooltips[widget_id] = tooltip
             
         except Exception:
