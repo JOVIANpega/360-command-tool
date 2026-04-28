@@ -141,12 +141,8 @@ class TabManager:
 
 
         self.highlight_keywords = highlight_keywords or {}
-        
-        # 取得全域設定與深色模式變數
-        from ui_parts.shared_config import get_shared_config
-        self.shared_config = get_shared_config()
-        self.dark_mode_var = self.shared_config.get_var('dark_mode')
-        
+
+
         print(f"[DEBUG] TabManager 初始化，highlight_keywords={self.highlight_keywords}")
         
         # 初始化 DOS 視窗進程追蹤變數
@@ -171,12 +167,9 @@ class TabManager:
 
 
         # 初始化全局樣式
+
+
         self.init_global_styles()
-        
-        # 監聽深色模式變更
-        self.dark_mode_var.trace('w', lambda *args: self.apply_theme())
-        # 立即應用初始主題
-        self.root.after(100, self.apply_theme)
 
 
         
@@ -1039,143 +1032,76 @@ class TabManager:
 
 
     def init_global_styles(self):
-        self.apply_theme()
 
-    def apply_theme(self):
-        """應用深色或淺色主題 (優化配色 V2 版本)"""
-        is_dark = self.dark_mode_var.get()
+
         style = ttk.Style()
-        
-        # 獲取字體大小設定
-        try:
-            ui_font_size = int(self.shared_config.get_var('dut_ui_font_size').get() or 12)
-        except:
-            ui_font_size = 12
-            
-        if is_dark:
-            # === 深色模式色彩 (優化版) ===
-            bg_color = "#252526"        # 柔和深灰
-            fg_color = "#e1e1e1"        # 亮灰文字
-            header_bg = "#333333"      # 區塊背景
-            entry_bg = "#1e1e1e"       # 輸入框深背景
-            button_bg = "#3c3c3c"      # 按鈕背景
-            active_blue = "#007acc"    # 亮藍色
-            
-            self.root.configure(bg=bg_color)
-            
-            # TTK 全域樣式
-            style.configure('Main.TFrame', background=bg_color)
-            style.configure('TNotebook', background=bg_color, borderwidth=0)
-            
-            # 標籤分頁樣式 (加大字體)
-            style.configure('TNotebook.Tab', 
-                            background=button_bg, 
-                            foreground=fg_color, 
-                            padding=[20, 8],
-                            font=('Microsoft JhengHei UI', ui_font_size + 2, 'bold'))
-            style.map('TNotebook.Tab',
-                background=[('selected', active_blue), ('active', '#454545')],
-                foreground=[('selected', 'white'), ('active', 'white')]
-            )
-            
-            # 綠色標籤樣式 (針對 Handover/治具)
-            try:
-                style.element_create('Green.Tab', 'from', 'default')
-            except: pass
-            style.layout('Green.TNotebook.Tab', style.layout('TNotebook.Tab'))
-            style.configure('Green.TNotebook.Tab', 
-                            background="#2d2d2d", 
-                            foreground=fg_color,
-                            font=('Microsoft JhengHei UI', ui_font_size + 2, 'bold'))
-            style.map('Green.TNotebook.Tab',
-                background=[('selected', "#4caf50"), ('active', "#66bb6a")],
-                foreground=[('selected', 'white'), ('active', 'white')]
-            )
-            
-            # 應用樣式到分頁
-            try:
-                for i in range(self.notebook.index('end')):
-                    tab_text = self.notebook.tab(i, 'text')
-                    if '治具' in tab_text or 'HANDOVER' in tab_text.upper():
-                        self.notebook.tab(i, style='Green.TNotebook.Tab')
-                    else:
-                        self.notebook.tab(i, style='')
-            except: pass
-            
-            style.configure('TLabelframe', background=bg_color, foreground="#4ec9b0") # 青色標題
-            style.configure('TLabelframe.Label', background=bg_color, foreground="#4ec9b0", 
-                            font=('Microsoft JhengHei UI', ui_font_size, 'bold'))
-            style.configure('TLabel', background=bg_color, foreground=fg_color, font=('Microsoft JhengHei UI', ui_font_size))
-            style.configure('TCheckbutton', background=bg_color, foreground=fg_color, font=('Microsoft JhengHei UI', ui_font_size))
-            
-            # 按鈕
-            for btn_style in ['TButton', 'Blue.TButton', 'Orange.TButton', 'Accent.TButton']:
-                style.configure(btn_style, background=button_bg, foreground=fg_color, font=('Microsoft JhengHei UI', ui_font_size))
-                style.map(btn_style,
-                    background=[('active', active_blue), ('disabled', '#2d2d2d')],
-                    foreground=[('active', 'white'), ('disabled', '#858585')]
-                )
 
-            # 更新所有子元件
-            def update_widgets_recursive(parent):
-                for child in parent.winfo_children():
-                    w_class = child.winfo_class()
-                    try:
-                        if w_class in ['Label', 'Frame', 'Checkbutton', 'Radiobutton', 'LabelFrame']:
-                            child.configure(bg=bg_color, fg=fg_color)
-                        elif w_class in ['Text', 'Entry', 'Listbox']:
-                            child.configure(bg=entry_bg, fg="#ffffff", insertbackground="white",
-                                          font=('Consolas' if w_class == 'Text' else 'Microsoft JhengHei UI', ui_font_size))
-                        elif w_class == 'Canvas':
-                            child.configure(bg=bg_color, highlightthickness=0)
-                    except: pass
-                    if child.winfo_children():
-                        update_widgets_recursive(child)
-            
-            update_widgets_recursive(self.root)
-            
-            # 輸出區域配色
-            if hasattr(self, 'dut_ui') and hasattr(self.dut_ui, 'text_output'):
-                self.dut_ui.text_output.configure(bg="#1e1e1e", fg="#d4d4d4", font=('Consolas', ui_font_size))
-            
-            if hasattr(self, 'manual_ui') and hasattr(self.manual_ui, 'output_text'):
-                self.manual_ui.output_text.configure(bg="#1e1e1e", fg="#d4d4d4", font=('Consolas', ui_font_size))
 
-        else:
-            # === 淺色模式 ===
-            bg_color = "white"
-            self.root.configure(bg="#f0f0f0")
-            
-            style.configure('TNotebook.Tab', background='#d9d9d9', foreground='black', 
-                            font=('Microsoft JhengHei UI', ui_font_size, 'bold'))
-            style.map('TNotebook.Tab', background=[('selected', '#2196f3')], foreground=[('selected', 'white')])
-            
-            # 恢復樣式到分頁
-            try:
-                for i in range(self.notebook.index('end')):
-                    tab_text = self.notebook.tab(i, 'text')
-                    if '治具' in tab_text or 'HANDOVER' in tab_text.upper():
-                        self.notebook.tab(i, style='Green.TNotebook.Tab')
-                    else:
-                        self.notebook.tab(i, style='')
-            except: pass
+        style.theme_use('clam')
 
-            # 恢復所有元件
-            def restore_widgets_recursive(parent):
-                for child in parent.winfo_children():
-                    w_class = child.winfo_class()
-                    try:
-                        if w_class in ['Label', 'Frame', 'Checkbutton', 'Radiobutton', 'LabelFrame']:
-                            child.configure(bg='white', fg='black')
-                        elif w_class in ['Text', 'Entry', 'Listbox']:
-                            child.configure(bg='white', fg='black', insertbackground='black',
-                                          font=('Consolas' if w_class == 'Text' else 'Microsoft JhengHei UI', ui_font_size))
-                    except: pass
-                    if child.winfo_children():
-                        restore_widgets_recursive(child)
-            restore_widgets_recursive(self.root)
 
-        print(f"[DEBUG] 已套用優化主題 V2 (字體大小: {ui_font_size})")
+        style.configure('Main.TFrame', background='white')
+
+
+        style.configure('TNotebook', background='white')
+
+
+        # 分頁標籤字體、大小、padding，預設灰底黑字，選取為藍底白字
+
+
+        # 分頁標籤樣式 (統一風格：預設灰底黑字，選中/hover藍底白字)
+        style.configure('TNotebook.Tab', font=('Microsoft JhengHei UI', 13, 'bold'), padding=[16, 6])
+        style.map('TNotebook.Tab',
+            background=[('selected', '#2196f3'), ('active', '#2196f3'), ('!active', '#d9d9d9')],
+            foreground=[('selected', 'white'), ('active', 'white'), ('!active', 'black')]
+        )
+
+
+        # HANDOVER 分頁綠底白字
+
+
+        style.element_create('Green.Tab', 'from', 'default')
+
+
+        style.layout('Green.TNotebook.Tab', style.layout('TNotebook.Tab'))
+
+
+        # Green.TNotebook.Tab 樣式 (統一風格：預設灰底黑字，選中/hover藍底白字)
+        style.configure('Green.TNotebook.Tab', background='#d9d9d9', foreground='black')
+        style.map('Green.TNotebook.Tab',
+            background=[('selected', '#2196f3'), ('active', '#2196f3'), ('!active', '#d9d9d9')],
+            foreground=[('selected', 'white'), ('active', 'white'), ('!active', 'black')]
+        )
+
+
+        # 一般TButton改為灰底黑字，hover藍底白字
+        style.configure('TButton', font=('Microsoft JhengHei UI', 12), padding=[8, 4])
+        style.map('TButton',
+            background=[('active', '#2196f3'), ('!active', '#d9d9d9')],
+            foreground=[('active', 'white'), ('!active', 'black')]
+        )
+
+        # Blue.TButton 統一為相同風格
+        style.configure('Blue.TButton', font=('Microsoft JhengHei UI', 12), padding=[8, 4])
+        style.map('Blue.TButton',
+            background=[('active', '#2196f3'), ('!active', '#d9d9d9')],
+            foreground=[('active', 'white'), ('!active', 'black')]
+        )
+
+        # Orange.TButton 統一為相同風格
+        style.configure('Orange.TButton', font=('Microsoft JhengHei UI', 12), padding=[8, 4])
+        style.map('Orange.TButton',
+            background=[('active', '#2196f3'), ('!active', '#d9d9d9')],
+            foreground=[('active', 'white'), ('!active', 'black')]
+        )
+
+        # Accent.TButton 統一為相同風格
+        style.configure('Accent.TButton', font=('Microsoft JhengHei UI', 12, 'bold'), padding=[10, 5])
+        style.map('Accent.TButton',
+            background=[('active', '#2196f3'), ('!active', '#d9d9d9')],
+            foreground=[('active', 'white'), ('!active', 'black')]
+        )
+
 
     
 

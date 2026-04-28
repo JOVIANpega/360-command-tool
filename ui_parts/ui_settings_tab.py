@@ -52,8 +52,33 @@ class SettingsTab(ttk.Frame):
         self.update_separator_combo()
 
     def create_widgets(self):
-        # 創建主容器，使用 PanedWindow 來提供可調整的左右分隔
-        self.main_container = ttk.PanedWindow(self, orient='horizontal')
+        # 1. 創建捲軸容器
+        self.canvas = tk.Canvas(self, highlightthickness=0)
+        self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.scrollable_frame = ttk.Frame(self.canvas)
+
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        )
+
+        self.canvas_window = self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        
+        def _on_canvas_configure(event):
+            self.canvas.itemconfig(self.canvas_window, width=event.width)
+        self.canvas.bind('<Configure>', _on_canvas_configure)
+        
+        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+        self.scrollbar.pack(side="right", fill="y")
+        self.canvas.pack(side="left", fill="both", expand=True)
+
+        # 綁定滑鼠滾輪
+        def _on_mousewheel(event):
+            self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        self.canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+        # 2. 創建主容器，使用 PanedWindow 來提供可調整的左右分隔
+        self.main_container = ttk.PanedWindow(self.scrollable_frame, orient='horizontal')
         self.main_container.pack(fill='both', expand=True, padx=10, pady=10)
         
         # 左側容器
@@ -136,20 +161,11 @@ class SettingsTab(ttk.Frame):
             self.setup_data['UI_Settings'] = {}
         self.setup_data['UI_Settings']['ToolTip_Enabled'] = True
         
-        # 取得全域深色模式變數
-        try:
-            from ui_parts.shared_config import get_shared_config
-            shared_config = get_shared_config()
-            self.dark_mode_var = shared_config.get_var('dark_mode')
-        except:
-            self.dark_mode_var = tk.BooleanVar(value=False)
-
-        # 深色模式開關
-        dark_mode_check = ttk.Checkbutton(ui_frame, text="啟用深色模式 (Dark Mode)", 
-                                         variable=self.dark_mode_var)
-        dark_mode_check.grid(row=0, column=0, columnspan=2, sticky="w", pady=4)
-        
-        # 綁定變更事件以立即切換主題 (選擇性，或者由 TabManager 監聽)
+        # ToolTip 提示功能開關 - 已移除，預設強制開啟
+        # tooltip_checkbutton = ttk.Checkbutton(ui_frame, text="啟用按鈕提示 (ToolTip)", 
+        #                                     variable=self.vars["UI_ToolTip_Enabled"],
+        #                                     command=self.on_tooltip_setting_changed)
+        # tooltip_checkbutton.grid(row=0, column=0, columnspan=2, sticky="w", pady=4)
         
 
         
@@ -354,40 +370,52 @@ class SettingsTab(ttk.Frame):
         tab_frame.pack(fill='x', pady=(0, 10))
         tab_frame.columnconfigure(0, minsize=120)
         
-        # 獲取當前的標籤頁名稱
+        # 獲取當前的標籤頁名稱與顯示狀態
         tab_names = self.setup_data.get('tab_names', {})
+        tab_visibility = self.setup_data.get('tab_visibility', {})
         default_tab_names = ['DUT 控制', '治具控制', '手動輸入指令', 'DOS 工具', '設定']
 
-        # 創建標籤頁名稱輸入框 - 標籤頁1~5 width=30, 限制最多10個字
+        # 創建標籤頁名稱輸入框與勾選框
         self.tab_count_labels = {}
         for i in range(5):
             tab_key = f'tab{i}'
             tab_name = tab_names.get(tab_key, default_tab_names[i] if i < len(default_tab_names) else f'標籤頁 {i+1}')
-            ttk.Label(tab_frame, text=f"標籤頁 {i+1}:").grid(row=i, column=0, sticky="w", pady=4)
             
-            # 定義限制與更新計數器函式
+            # --- 勾選框邏輯 ---
+            # 分頁 1 (DUT) 與 分頁 5 (設定) 強制顯示，不提供勾選框
+            if i == 0 or i == 4:
+                # 建立一個隱藏的變數確保儲存邏輯不變，但在介面上不顯示 Checkbutton
+                self.vars[f"tab_visible_{tab_key}"] = tk.BooleanVar(value=True)
+                # 放置一個佔位 Label 或是顯示「強制顯示」字樣
+                lock_label = ttk.Label(tab_frame, text="🔒", foreground='gray')
+                lock_label.grid(row=i, column=0, sticky="w", padx=(5, 10), pady=4)
+            else:
+                is_visible = tab_visibility.get(tab_key, True)
+                v_var = tk.BooleanVar(value=is_visible)
+                self.vars[f"tab_visible_{tab_key}"] = v_var
+                cb = ttk.Checkbutton(tab_frame, variable=v_var)
+                cb.grid(row=i, column=0, sticky="w", padx=(0, 10), pady=4)
+            
+            # --- 名稱輸入與計數器 ---
+            ttk.Label(tab_frame, text=f"分頁 {i+1}:").grid(row=i, column=1, sticky="w", pady=4)
+            
             def update_tab_ui(var_name, limit=10, key=tab_key):
                 val = self.vars[var_name].get()
                 if len(val) > limit:
                     val = val[:limit]
                     self.vars[var_name].set(val)
-                # 更新計數器文字
                 if key in self.tab_count_labels:
                     color = 'red' if len(val) >= limit else 'gray'
                     self.tab_count_labels[key].config(text=f"({len(val)}/{limit})", foreground=color)
 
             self.vars[f"tab_names_{tab_key}"] = tk.StringVar(value=tab_name)
+            entry = ttk.Entry(tab_frame, textvariable=self.vars[f"tab_names_{tab_key}"], width=25)
+            entry.grid(row=i, column=2, sticky="w", padx=(5, 0), pady=4)
             
-            # 創建輸入框 - 統一視覺寬度 (30)
-            entry = ttk.Entry(tab_frame, textvariable=self.vars[f"tab_names_{tab_key}"], width=30)
-            entry.grid(row=i, column=1, sticky="w", padx=(5, 0), pady=4)
-            
-            # 創建計數器標籤 (緊貼)
             count_label = ttk.Label(tab_frame, text=f"({len(tab_name)}/10)", font=('Microsoft JhengHei UI', 9), foreground='gray')
-            count_label.grid(row=i, column=2, sticky="w", padx=(10, 0), pady=4)
+            count_label.grid(row=i, column=3, sticky="w", padx=(10, 0), pady=4)
             self.tab_count_labels[tab_key] = count_label
             
-            # 綁定追蹤
             self.vars[f"tab_names_{tab_key}"].trace('w', lambda *args, name=f"tab_names_{tab_key}", k=tab_key: update_tab_ui(name, 10, k))
         
         # 手動輸入指令提示文字設定 (全寬對齊)
@@ -817,16 +845,63 @@ class SettingsTab(ttk.Frame):
             print(f"套用治具字體變更時發生錯誤: {e}")
 
     def browse_file(self, var_name):
-        """瀏覽檔案"""
+        """瀏覽檔案並自動更新指令清單"""
         filename = filedialog.askopenfilename(
             title="選取指令檔案",
             filetypes=[("Text files", "*.txt"), ("All files", "*.*")]
         )
         if filename:
             self.vars[var_name].set(filename)
-            # 只更新UI顯示，不自動保存
-            print(f"[INFO] 指令檔案路徑已選擇: {filename}，請點擊保存按鈕以儲存變更")
-            messagebox.showinfo("提示", f"已選擇檔案：{filename}\n\n請點擊「💾 儲存設定並即刻生效」按鈕以保存變更。")
+            print(f"[INFO] 指令檔案路徑已變更為: {filename}")
+            
+            try:
+                # 1. 立即儲存設定到 setup.json
+                from config_core import load_setup, save_setup
+                setup_data = load_setup()
+                if "DUT_Control" not in setup_data:
+                    setup_data["DUT_Control"] = {}
+                setup_data["DUT_Control"]["Command_File_Path"] = filename
+                save_setup(setup_data, manual_save=True)
+                
+                # 2. 同步到全域變數 (SharedConfig)
+                from ui_parts.shared_config import get_shared_config
+                shared_config = get_shared_config()
+                if 'dut_command_file_path' in shared_config.vars:
+                    shared_config.vars['dut_command_file_path'].set(filename)
+                    
+                # 3. 尋找主視窗並即時更新 DUT UI 中的指令列表
+                parent = self.parent
+                while parent and not hasattr(parent, 'dut_ui'):
+                    parent = getattr(parent, 'master', None) or getattr(parent, 'parent', None)
+                    
+                if parent and hasattr(parent, 'dut_ui'):
+                    dut_ui = parent.dut_ui
+                    
+                    # 重新解析檔案並更新分類
+                    if hasattr(dut_ui, 'handlers') and hasattr(dut_ui.handlers, 'parse_commands_by_section'):
+                        dut_ui.commands_by_section = dut_ui.handlers.parse_commands_by_section()
+                    
+                    # 觸發 UI 更新
+                    updated = False
+                    if hasattr(dut_ui, 'components') and hasattr(dut_ui.components, 'update_cmd_list'):
+                        dut_ui.components.update_cmd_list()
+                        updated = True
+                    if hasattr(dut_ui, 'handlers') and hasattr(dut_ui.handlers, 'update_cmd_list'):
+                        dut_ui.handlers.update_cmd_list()
+                        updated = True
+                        
+                    if updated:
+                        messagebox.showinfo("成功", f"指令檔案已成功切換！\n\n您現在可以直接在「DUT 控制」分頁中使用新的指令清單。", parent=self.winfo_toplevel())
+                    else:
+                        messagebox.showinfo("提示", "檔案路徑已儲存，但無法自動更新介面，請手動重啟程式。", parent=self.winfo_toplevel())
+                else:
+                    messagebox.showinfo("提示", "檔案路徑已儲存。請切換回主畫面查看。", parent=self.winfo_toplevel())
+                    
+            except Exception as e:
+                print(f"[ERROR] 更新指令檔案時發生錯誤：{e}")
+                import traceback
+                traceback.print_exc()
+                messagebox.showerror("錯誤", f"自動更新清單時發生錯誤：\n{e}\n請嘗試手動重啟程式。", parent=self.winfo_toplevel())
 
     def generate_settings_dict(self):
         """根據當前設定生成字典 - 保持現有設定不丟失"""
@@ -848,6 +923,15 @@ class SettingsTab(ttk.Frame):
         current_setup["tab_names"]["tab2"] = self.vars["tab_names_tab2"].get()
         current_setup["tab_names"]["tab3"] = self.vars["tab_names_tab3"].get()
         current_setup["tab_names"]["tab4"] = self.vars["tab_names_tab4"].get()
+        
+        # 更新標籤頁顯示狀態 (隱藏功能關鍵)
+        if "tab_visibility" not in current_setup:
+            current_setup["tab_visibility"] = {}
+        current_setup["tab_visibility"]["tab0"] = bool(self.vars["tab_visible_tab0"].get())
+        current_setup["tab_visibility"]["tab1"] = bool(self.vars["tab_visible_tab1"].get())
+        current_setup["tab_visibility"]["tab2"] = bool(self.vars["tab_visible_tab2"].get())
+        current_setup["tab_visibility"]["tab3"] = bool(self.vars["tab_visible_tab3"].get())
+        current_setup["tab_visibility"]["tab4"] = True # 設定頁永遠顯示
         
         # 更新DUT_Control設定
         if "DUT_Control" not in current_setup:
@@ -1085,34 +1169,41 @@ class SettingsTab(ttk.Frame):
         self.manual_save_settings()
 
     def update_tab_names_immediately(self):
-        """立即更新標籤頁名稱"""
+        """立即更新主介面上的標籤頁名稱 (採用物件比對以防止名稱錯位)"""
         try:
-            # 獲取主視窗的notebook
+            # 找到主視窗的 TabManager
             root = self.parent
-            while root and not hasattr(root, 'notebook'):
+            while root and not hasattr(root, 'tab_manager'):
                 root = getattr(root, 'master', None) or getattr(root, 'parent', None)
+            
+            if root and hasattr(root, 'tab_manager'):
+                tab_manager = root.tab_manager
+                notebook = tab_manager.notebook
+                
+                # 建立物件與 Key 的對照表
+                frame_map = {
+                    str(tab_manager.dut_frame): 'tab0',
+                    str(tab_manager.fixture_frame): 'tab1',
+                    str(tab_manager.manual_frame): 'tab2',
+                    str(tab_manager.dos_frame): 'tab3',
+                    str(tab_manager.settings_frame): 'tab4'
+                }
 
-            if root and hasattr(root, 'notebook'):
-                # 重新載入設定
-                updated_setup = load_setup()
-                tab_names = updated_setup.get('tab_names', {})
-
-                # 更新每個標籤頁的名稱
-                for i in range(5):  # 現在有5個標籤頁
-                    tab_key = f'tab{i}'
-                    if tab_key in tab_names:
-                        try:
-                            current_name = root.notebook.tab(i, "text")
-                            new_name = tab_names[tab_key]
-                            if current_name != new_name:
-                                root.notebook.tab(i, text=new_name)
-                                print(f"[DEBUG] 即時更新標籤頁 {i}: {current_name} → {new_name}")
-                        except Exception as e:
-                            print(f"[WARNING] 更新標籤頁 {i} 時發生錯誤: {e}")
-
-                print("[DEBUG] 標籤頁名稱即時更新完成")
-            else:
-                print("[WARNING] 找不到主視窗的notebook，無法即時更新標籤頁名稱")
+                # 遍歷所有當前「可見」的分頁
+                for tab_id in notebook.tabs():
+                    tab_key = frame_map.get(tab_id)
+                    if tab_key and f"tab_names_{tab_key}" in self.vars:
+                        new_name = self.vars[f"tab_names_{tab_key}"].get()
+                        
+                        # 截斷長度限制
+                        if len(new_name) > 10:
+                            new_name = new_name[:9] + "..."
+                            
+                        # 更新顯示文字
+                        notebook.tab(tab_id, text=new_name)
+                print("[DEBUG] 標籤頁名稱已即時同步 (採用物件比對防錯位)")
+        except Exception as e:
+            print(f"[WARNING] 即時更新標籤頁名稱失敗: {e}")
 
         except Exception as e:
             print(f"[ERROR] 即時更新標籤頁名稱時發生錯誤: {e}")
@@ -1333,13 +1424,18 @@ class SettingsTab(ttk.Frame):
             self.vars["Window_Width"].set(self.setup_data.get("Window_Width", "1536"))
             self.vars["Window_Height"].set(self.setup_data.get("Window_Height", "793"))
             
-            # 更新標籤頁名稱
+            # 更新標籤頁名稱與顯示狀態
             tab_names = self.setup_data.get('tab_names', {})
+            tab_visibility = self.setup_data.get('tab_visibility', {})
             for i in range(5):
                 tab_key = f'tab{i}'
+                # 更新名稱
                 if f"tab_names_{tab_key}" in self.vars:
                     default_names = ['DUT 控制', '治具控制', '手動輸入指令', 'DOS 工具', '設定']
                     self.vars[f"tab_names_{tab_key}"].set(tab_names.get(tab_key, default_names[i] if i < len(default_names) else f'標籤頁 {i+1}'))
+                # 更新顯示勾選狀態
+                if f"tab_visible_{tab_key}" in self.vars:
+                    self.vars[f"tab_visible_{tab_key}"].set(tab_visibility.get(tab_key, True))
             
             # 更新 DUT 控制設定
             dut_settings = self.setup_data.get('DUT_Control', {})
