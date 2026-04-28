@@ -205,7 +205,7 @@ class ToolTipManager:
                 if os.path.exists(p): config_path = p
                     
             if not config_path:
-                p = os.path.join(os.path.getcwd(), 'tooltips.ini')
+                p = os.path.join(os.getcwd(), 'tooltips.ini')
                 if os.path.exists(p): config_path = p
             
             # 3. 如果找到 INI，將其內容覆蓋到內建配置上 (保留彈性)
@@ -320,10 +320,12 @@ class ToolTipManager:
         side: 顯示位置 ('bottom' 或 'right')
         """
         if not widget:
+            print(f"[DEBUG] add_tooltip: {widget_name} 沒有 widget 實體")
             return
             
         tooltip_text = self.tooltip_config.get(widget_name, '')
         if not tooltip_text:
+            print(f"[DEBUG] add_tooltip: 找不到 {widget_name} 的 tooltip_text")
             return
             
         try:
@@ -334,15 +336,17 @@ class ToolTipManager:
                 tip.update_text(tooltip_text)
                 tip.side = side
                 tip.enabled = self.enabled
+                print(f"[DEBUG] add_tooltip: 更新已存在的 {widget_name} tooltip")
                 return
             
             # 創建新的 tooltip
             tooltip = ToolTip(widget, tooltip_text, side=side)
             tooltip.enabled = self.enabled
             self.tooltips[widget_id] = tooltip
+            print(f"[DEBUG] add_tooltip: 成功為 {widget_name} 綁定 tooltip")
             
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[ERROR] add_tooltip 發生錯誤 ({widget_name}): {e}")
     
     def add_tooltip_with_text(self, widget, text, side='bottom'):
         """
