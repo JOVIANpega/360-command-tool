@@ -98,7 +98,12 @@ def setup_window_properties(root):
             base_title = dut_setup.get('Window_Title', 'PEGA指令通')
 
         app_version = setup.get('version', '')
-        full_title = f"{base_title}_{app_version}" if app_version else base_title
+        
+        # 避免重複出現版本號碼
+        if app_version and app_version in base_title:
+            full_title = base_title
+        else:
+            full_title = f"{base_title}_{app_version}" if app_version else base_title
 
         # 設置視窗大小
         width = int(dut_setup.get('Window_Width', 1024))

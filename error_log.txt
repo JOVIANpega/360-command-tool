@@ -1,0 +1,35 @@
+An unexpected error occurred: [Errno 22] Invalid argument
+Traceback (most recent call last):
+  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\PEGA-command-tool\ui_parts\ui_settings_tab.py", line 903, in browse_file
+    self.show_themed_info("提示", "檔案路徑已儲存。請切換回主畫面查看。")
+AttributeError: 'SettingsTab' object has no attribute 'show_themed_info'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\pega_user\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1921, in __call__
+    return self.func(*args)
+  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\PEGA-command-tool\ui_parts\ui_settings_tab.py", line 519, in <lambda>
+    self.browse_button = ttk.Button(path_container, text="瀏覽檔案", command=lambda: self.browse_file("DUT_Command_File_Path"))
+  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\PEGA-command-tool\ui_parts\ui_settings_tab.py", line 908, in browse_file
+    traceback.print_exc()
+  File "C:\Users\pega_user\AppData\Local\Programs\Python\Python310\lib\traceback.py", line 179, in print_exc
+    print_exception(*sys.exc_info(), limit=limit, file=file, chain=chain)
+  File "C:\Users\pega_user\AppData\Local\Programs\Python\Python310\lib\traceback.py", line 121, in print_exception
+    print(line, file=file, end="")
+OSError: [Errno 22] Invalid argument
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "D:\((Python TOOL\指令工具-20250428T020034Z-001\PEGA-command-tool\main.py", line 294, in <module>
+    root.mainloop()
+  File "C:\Users\pega_user\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1458, in mainloop
+    self.tk.mainloop(n)
+  File "C:\Users\pega_user\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1925, in __call__
+    self.widget._report_exception()
+  File "C:\Users\pega_user\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 1641, in _report_exception
+    root.report_callback_exception(exc, val, tb)
+  File "C:\Users\pega_user\AppData\Local\Programs\Python\Python310\lib\tkinter\__init__.py", line 2375, in report_callback_exception
+    print("Exception in Tkinter callback", file=sys.stderr)
+OSError: [Errno 22] Invalid argument

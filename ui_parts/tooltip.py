@@ -26,7 +26,7 @@ class ToolTip:
     # 類別變數，用於儲存當前字體大小
     current_font_size = 9
 
-    def __init__(self, widget, text='', delay=200, wraplen=250, side='bottom'):
+    def __init__(self, widget, text='', delay=200, wraplen=500, side='bottom'):
         self.widget = widget
         self.text = text
         self.delay = delay

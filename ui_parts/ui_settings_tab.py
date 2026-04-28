@@ -895,12 +895,14 @@ class SettingsTab(ttk.Frame):
                         dut_ui.handlers.update_cmd_list()
                         updated = True
                         
+                    fname = os.path.basename(filename)
                     if updated:
-                        messagebox.showinfo("成功", f"指令檔案已成功切換！\n\n您現在可以直接在「DUT 控制」分頁中使用新的指令清單。")
+                        self.show_themed_info("成功", f"📄 已選擇：{fname}\n\n指令檔案切換成功！您可以直接在「DUT 控制」分頁中使用新的指令清單。")
                     else:
-                        messagebox.showinfo("提示", "檔案路徑已儲存，但無法自動更新介面，請手動重啟程式。")
+                        self.show_themed_info("提示", f"📄 已選擇：{fname}\n\n檔案路徑已儲存，但無法自動更新介面，請手動重啟程式。")
                 else:
-                    messagebox.showinfo("提示", "檔案路徑已儲存。請切換回主畫面查看。")
+                    fname = os.path.basename(filename)
+                    self.show_themed_info("提示", f"📄 已選擇：{fname}\n\n檔案路徑已儲存。請切換回主畫面查看。")
                     
             except Exception as e:
                 print(f"[ERROR] 更新指令檔案時發生錯誤：{e}")
@@ -1466,6 +1468,71 @@ class SettingsTab(ttk.Frame):
             try:
                 self.main_container.sashpos(0, 450)
             except:
+                pass
+
+    def show_themed_info(self, title, message):
+        """顯示一個與 UI 字體大小連動的自訂提示視窗"""
+        try:
+            # 取得目前 UI 字體大小
+            ui_font_size = int(self.setup_data.get('UI_Font_Size', '12'))
+
+            # 建立彈窗
+            popup = tk.Toplevel(self)
+            popup.title(title)
+            popup.attributes('-topmost', True)
+
+            # 依字體大小計算視窗尺寸
+            scale = max(ui_font_size / 12, 1.0)
+            width = int(460 * scale)
+            height = int(200 * scale)
+
+            # 置中於父視窗
+            x = self.winfo_rootx() + (self.winfo_width() // 2) - (width // 2)
+            y = self.winfo_rooty() + (self.winfo_height() // 2) - (height // 2)
+            popup.geometry(f"{width}x{height}+{x}+{y}")
+            popup.configure(bg='#f9f9f9')
+            popup.resizable(False, False)
+
+            # 訊息文字
+            lbl = tk.Label(
+                popup,
+                text=message,
+                font=('Microsoft JhengHei UI', ui_font_size),
+                bg='#f9f9f9',
+                wraplength=width - 40,
+                justify='left'
+            )
+            lbl.pack(pady=20, padx=20, expand=True, fill='both')
+
+            # 確定按鈕
+            btn = tk.Button(
+                popup,
+                text='確定',
+                font=('Microsoft JhengHei UI', ui_font_size, 'bold'),
+                command=popup.destroy,
+                bg='#2196f3',
+                fg='white',
+                relief='flat',
+                cursor='hand2',
+                padx=20,
+                pady=5
+            )
+            btn.pack(pady=(0, 15))
+
+            # Enter 鍵關閉
+            popup.bind('<Return>', lambda e: popup.destroy())
+
+            # 設定模態
+            popup.transient(self)
+            popup.grab_set()
+            self.wait_window(popup)
+
+        except Exception as e:
+            print(f"[ERROR] 顯示自訂彈窗失敗: {e}")
+            # 回退到系統彈窗
+            try:
+                messagebox.showinfo(title, message)
+            except Exception:
                 pass
 
 

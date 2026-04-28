@@ -1,0 +1,91 @@
+{
+  "version": "V2.6.29",
+  "Window_Title": "PEGA指令通",
+  "Window_Width": "1522",
+  "Window_Height": "741",
+  "UI_Font_Size": "11",
+  "UI_ToolTip_Enabled": true,
+  "SSH_Settings": {
+    "Host": "192.168.11.143",
+    "Port": 22,
+    "Default_Account": "root/oelinux123",
+    "Connection_Timeout": 30
+  },
+  "DUT_Control": {
+    "Serial_COM_Port": "COM4",
+    "Command_Separator": "==>",
+    "Custom_Separators": [
+      "|",
+      "||",
+      "==>"
+    ],
+    "Default_IP_Address": "192.168.11.143",
+    "Command_File_Path": "D:/((Python TOOL/指令工具-20250428T020034Z-001/PEGA-command-tool/Command_TABLE/Taurus7_20260415.txt",
+    "Single_Command_Timeout": "300",
+    "Pane_Sash_Position": "577",
+    "Auto_Execute": false,
+    "IP_History": [
+      "192.168.11.143"
+    ],
+    "Command_Timeout_Seconds": "300",
+    "Command_End_String": "pega>",
+    "UI_Font_Size": "12",
+    "Content_Font_Size": "11",
+    "Window_Title": "PEGA指令通",
+    "Available_End_Strings": [
+      "root",
+      "pega2",
+      "pega>"
+    ],
+    "Window_Width": "1522",
+    "Window_Height": "741",
+    "Last_Selected_Command_Section": "全部指令",
+    "Notification_Font_Size": "10",
+    "Command_Interval": "1.0"
+  },
+  "Fixture_Control": {
+    "Fixture_COM_Port": "",
+    "Current_Command": "",
+    "Test_Category_FUNCTION": false,
+    "Test_Category_MB": true,
+    "Test_Category_Original_Commands": false,
+    "Fixture_Font_Size": "11"
+  },
+  "tab_names": {
+    "tab0": "DUT",
+    "tab1": "治具",
+    "tab2": "手動輸入",
+    "tab3": "DOS的工具",
+    "tab4": "設定"
+  },
+  "Manual_Command": {
+    "Hint_Text": "請輸入指令並按執行"
+  },
+  "Available_End_Strings": "[\"root\", \"login:\", \"password:\", \"$\", \"#\"]",
+  "Command_Transport_Mode": "Console",
+  "UIFontSize": "12",
+  "ContentFontSize": "11",
+  "UI_Settings": {
+    "ToolTip_Enabled": false,
+    "left_pane_width": 420,
+    "Settings_Sash_Position": "636"
+  },
+  "notification_messages": {
+    "app_started": "指令通 已啟動",
+    "settings_updated": "設定已更新！",
+    "cmd_reloaded": "• 指令檔案已重新載入",
+    "com_updated": "• COM口設定已更新",
+    "end_string_updated": "• 結束字串設定已更新",
+    "ip_updated": "• IP地址設定已更新",
+    "timeout_updated": "• 超時設定已更新"
+  },
+  "Device_Label": "XXXXXXXNONE",
+  "Startup_Label": "COMMND TOOL",
+  "tab_visibility": {
+    "tab0": true,
+    "tab1": false,
+    "tab2": false,
+    "tab3": false,
+    "tab4": true
+  }
+}

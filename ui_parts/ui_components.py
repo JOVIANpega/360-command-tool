@@ -195,17 +195,33 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
         self.label_transport = ttk.Label(com_frame, text='傳輸方式:', style="TLabel")
         self.label_transport.grid(row=1, column=0, sticky='w', pady=(5, 0))
 
-        # 預設使用 Console
-        current_mode = 'Console'
-        
-        # 更新設定檔
+        # 從設定檔讀取上次的傳輸方式
+        current_mode = self.parent.setup.get('Command_Transport_Mode', 'Console')
         self.parent.setup['Command_Transport_Mode'] = current_mode
-            
         self.transport_mode_var = tk.StringVar(value=current_mode)
-        self.combobox_transport = ttk.Combobox(com_frame, textvariable=self.transport_mode_var,
-                                             values=['Console', 'ADB', 'SSH'], state='readonly', width=20, font=('Microsoft JhengHei UI', 10))
-        self.combobox_transport.grid(row=1, column=1, padx=(5, 0), sticky='w', pady=(8, 0))
-        self.combobox_transport.bind("<<ComboboxSelected>>", self.on_transport_mode_changed)
+        
+        # 建立橫向框架並美化樣式
+        self.transport_frame = ttk.Frame(com_frame)
+        self.transport_frame.grid(row=1, column=1, columnspan=3, padx=(5, 0), sticky='w', pady=(8, 5))
+        
+        # 定義 Radiobutton 樣式
+        radio_style = {"padx": 5, "pady": 2}
+        
+        # 加入三個單選按鈕 (使用 ttk.Radiobutton 以符合系統風格)
+        self.radio_console = ttk.Radiobutton(self.transport_frame, text='Console', value='Console', 
+                                           variable=self.transport_mode_var, command=self.on_transport_mode_changed)
+        self.radio_console.pack(side='left', padx=(0, 15))
+        
+        self.radio_adb = ttk.Radiobutton(self.transport_frame, text='ADB', value='ADB', 
+                                       variable=self.transport_mode_var, command=self.on_transport_mode_changed)
+        self.radio_adb.pack(side='left', padx=(0, 15))
+        
+        self.radio_ssh = ttk.Radiobutton(self.transport_frame, text='SSH', value='SSH', 
+                                       variable=self.transport_mode_var, command=self.on_transport_mode_changed)
+        self.radio_ssh.pack(side='left', padx=(0, 10))
+        
+        # 保留相容性變數
+        self.combobox_transport = self.transport_frame
 
         # 根據傳輸方式設定 COM 口的啟用狀態
         self.update_com_state()
@@ -1571,6 +1587,12 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                 self.btn_clear, self.btn_backup, self.btn_guide, self.label_ip, self.btn_ping
             ]
             
+            # 添加傳輸方式相關組件
+            if hasattr(self, 'label_transport'):
+                widgets.append(self.label_transport)
+            if hasattr(self, 'radio_console'):
+                widgets.extend([self.radio_console, self.radio_adb, self.radio_ssh])
+
             # 更新設備標籤字體
             if hasattr(self, 'device_label'):
                 widgets.append(self.device_label)
@@ -1611,6 +1633,7 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
                 style.configure("TLabelframe.Label", font=font)
                 style.configure("TLabelframe", font=font)
                 style.configure("TLabel", font=font)
+                style.configure("TRadiobutton", font=font)
             except Exception:
                 pass
             # 強制更新 UI
@@ -1875,7 +1898,11 @@ class UIComponents(UIComponentsBase, UIComponentsInput, UIComponentsOutput, UICo
             if hasattr(self, 'combobox_end'):
                 self.tooltip_manager.add_tooltip(self.combobox_end, "combobox_end")
             
-            if hasattr(self, 'combobox_transport'):
+            if hasattr(self, 'radio_console'):
+                self.tooltip_manager.add_tooltip(self.radio_console, "combobox_transport")
+                self.tooltip_manager.add_tooltip(self.radio_adb, "combobox_transport")
+                self.tooltip_manager.add_tooltip(self.radio_ssh, "combobox_transport")
+            elif hasattr(self, 'combobox_transport'):
                 self.tooltip_manager.add_tooltip(self.combobox_transport, "combobox_transport")
             
             # 為IP下拉選單添加tooltip
